@@ -25,13 +25,24 @@
    $Id: README.famzip,v 1.5 2008/08/29 20:51:19 kevinserwin Exp $
 
 -->
+<!--
+   Portions Copyrighted (c) 2010 ForgeRock AS All Rights Reserved
+-->
+
+OpenSSO Build 9
+
+This is build 9 of OpenSSO provided for the community by ForgeRock AS.
+
+The release notes for build 9 are available here:
+
+http://wikis.sun.com/display/OpenSSO
+
+and mirrored here:
+
+http://www.forgerock/support/openam/release_notes_build9.html
 
 Before installation or configuration of OpenSSO, please refer to the Release 
 Notes for Sun OpenSSO Enterprise 8.0 which can be downloaded from
 http://opensso.dev.java.net/public/use/docs/index.html
 
-Although written for the productized version of OpenSSO, the Release Notes
-contain information applicable to other versions of the open-source software.
-
-
-
+The release notes document the new functionality and known issues in this build of OpenSSO.
