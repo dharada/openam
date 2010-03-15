@@ -71,8 +71,8 @@ import org.opends.server.types.DirectoryEnvironmentConfig;
 import org.opends.server.util.EmbeddedUtils;
 
 // Until we have apis to setup replication we will use the clin interface.
-import org.opends.guitools.replicationcli.ReplicationCliMain;
-
+// import org.opends.guitools.replicationcli.ReplicationCliMain;
+import org.opends.server.tools.dsreplication.ReplicationCliMain;
 /**
   * This class encapsulates all <code>OpenDS</code>  dependencies.
   * All the interfaces are invoked from <code>AMSetupServlet</code> class
@@ -1018,10 +1018,11 @@ public class EmbeddedOpenDS {
     // Programmatic way of rebuilding indexes in OpenDS.
     // This method simulates the OpenDS cli command rebuild-index.
     // eg., rebuild-index -b dc=example,dc=com -i uid -i mail
+    // Note: rebuilding the indexes is done whilst the server remains online;
+    // why waste precious time stopping and restarting the server unecessarily?
 
     public static void rebuildIndex(Map map) throws Exception {
 
-        shutdownServer("Rebuild index");
         String basedir = 
             (String)map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
         String odsRoot = basedir + "/" +
@@ -1044,7 +1045,7 @@ public class EmbeddedOpenDS {
             "sun-fm-saml2-nameid-infokey" };
         OutputStream bos = new ByteArrayOutputStream();
         OutputStream boe = new ByteArrayOutputStream();
-        RebuildIndex.mainRebuildIndex(args, true, bos, boe);
+        RebuildIndex.mainRebuildIndex(args, false, bos, boe);
         String outStr = bos.toString();
         String errStr = boe.toString();
         if (errStr.length() != 0) {
@@ -1061,6 +1062,5 @@ public class EmbeddedOpenDS {
             debug.message("EmbeddedOpenDS:rebuildIndex:Result:" + 
                 outStr);
         }
-        startServer(odsRoot);
     }
 }
