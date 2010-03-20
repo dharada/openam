@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,8 +18,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: defines.mk,v 1.12 2009/12/03 19:03:59 dknab Exp $
+# $Id: defines.mk,v 1.3.4.9 2010/02/23 12:11:07 rajasundarik Exp $
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 
 #
@@ -39,32 +36,31 @@ DEFINES_INCLUDED := true
 # VERSION INFO
 ###############
 
-AGENT_MAJOR_VER := 3
-AGENT_MINOR_VER := 0
-# Patch version, ex: AGENT_PATCH_VER := -01 (empty for RTM release)
-AGENT_PATCH_VER :=
+AGENT_MAJOR_VER := 2
+AGENT_MINOR_VER := 2
+# Example: AGENT_PATCH_VER := -02 (or empty for RTM release)
+AGENT_PATCH_VER := -04
 AGENT_VER := $(AGENT_MAJOR_VER).$(AGENT_MINOR_VER)$(AGENT_PATCH_VER)
 
 # Set RELEASE_TYPE to one of the following:
-#   empty: for RTM or patch release, ex: agent 3.0 or agent 3.0-01 
-#   ER: for Exception Release, ex: agent 3.0-01 ER 1
-#   FVB: for Fix Verification Binary, ex: agent 3.0-01 (Escalation 123) 
+#   empty: for patch release, for example agent 2.2-01 
+#   ER: for Exception Release, for example for agent 2.2-01 ER 1
+#   FVB: for Fix Verification Binary, for example for agent 2.2-02 (Esc 123) 
 #        (FVB is only for local workspace, should not be checked in)
-# If RELEASE_TYPE is set to ER, update AGENT_ER_VER.
-# If RELEASE_TYPE is set to FVB, update AGENT_FVB_MARKER.
+# Depending on the release type, update the appropriate version variable
 #
 RELEASE_TYPE = ER
 
 # For ER set AGENT_ER_VER (ex: AGENT_ER_VER := ER 1)
 ifeq ($(RELEASE_TYPE), ER)
-AGENT_ER_VER := ER 2
+AGENT_ER_VER := ER 1
 AGENT_ER_TEXT := Exception Release: $(AGENT_ER_VER)
 ADD_README := YES
 else
 ADD_README := NO
 endif
 
-# For FVB set AGENT_FVB_MARKER (ex: AGENT_FVB_MARKER := Escalation 123)
+# For FVB set AGENT_FVB_MARKER (ex: AGENT_FVB_MARKER := Esc 123)
 ifeq ($(RELEASE_TYPE), FVB)
 AGENT_FVB_MARKER := 
 AGENT_FVB_TEXT := Fix Verification Binary: $(AGENT_FVB_MARKER)
@@ -75,7 +71,7 @@ endif
 OS_ARCH := $(shell uname -s)
 OS_ARCH_VER := $(shell uname -r)
 BUILD_DATE := $(shell date)
-BUILD_MACHINE := $(shell uname -n)
+BUILD_MACHINE := $(shell uname -n) 
 MC_ARCH := $(shell uname -m)
 CYGWIN_ARCH := CYG32
 
@@ -179,9 +175,9 @@ endif
 AGENT_JAR_FILE := $(DEST_JAR_DIR)/am_agent.jar
 NOTIFYAPI_JAR_FILE := $(DEST_JAR_DIR)/am_notifyapi.jar
 ifeq ($(OS_ARCH), Linux)
-DSAME_DROP_FILE := common-3.0-0.$(MC_ARCH)
+DSAME_DROP_FILE := common-2.2-0.$(MC_ARCH)
 else
-DSAME_DROP_FILE := common_3_0.$(OS_ARCH)
+DSAME_DROP_FILE := common_2_2_$(OS_ARCH)
 endif
 
 include $(USERX_ROOT)/arch/defines_$(OS_ARCH).mk

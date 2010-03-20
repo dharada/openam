@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: IConstants.java,v 1.5 2008/06/25 05:54:40 qcheng Exp $
+ * $Id: IConstants.java,v 1.2 2007/03/29 20:38:13 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.sjsws;
@@ -39,6 +35,9 @@ public interface IConstants {
 
     /** Field STR_SWS_GROUP **/
     public static String STR_SWS_GROUP = "sjswsTools";
+    
+    /** Field FILE_SEP **/
+    //public static final String FILE_SEP = "/";
     
     public static final String STR_SWS_MAGNUS_FILE = "magnus.conf";
     public static final String STR_SWS_OBJ_FILE = "obj.conf";

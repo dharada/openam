@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_web.h,v 1.31 2009/12/19 00:05:46 subbae Exp $
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -56,7 +51,6 @@
 #include <stdlib.h>
 #include <am.h>
 #include "am_policy.h"
-#include "am_log.h"
 #define AM_RESERVED NULL
 
 AM_BEGIN_EXTERN_C
@@ -87,39 +81,39 @@ AM_BEGIN_EXTERN_C
 #define AUTH_USER_VAR           	"auth-user"
 #define AUTH_TYPE_VAR           	"auth-type"
 #define GOTO_PARAMETER          	"goto"
+#define REQUEST_METHOD_TYPE     	"sunwMethod"
 #define REFERER_SERVLET         	"refererservlet"
 
 /* for am_web_process_request and related functions */
-#define REQUEST_METHOD_GET                      "GET"
-#define REQUEST_METHOD_POST                     "POST"
-#define REQUEST_METHOD_HEAD                     "HEAD"
-#define REQUEST_METHOD_PUT                      "PUT"
-#define REQUEST_METHOD_DELETE                   "DELETE"
-#define REQUEST_METHOD_TRACE                    "TRACE"
-#define REQUEST_METHOD_OPTIONS                  "OPTIONS"
-#define REQUEST_METHOD_CONNECT                  "CONNECT"
-#define REQUEST_METHOD_COPY                     "COPY"
-#define REQUEST_METHOD_INVALID                  "INVALID"
-#define REQUEST_METHOD_LOCK                     "LOCK"
-#define REQUEST_METHOD_UNLOCK                   "UNLOCK"
-#define REQUEST_METHOD_MKCOL                    "MKCOL"
-#define REQUEST_METHOD_MOVE                     "MOVE"
-#define REQUEST_METHOD_PATCH                    "PATCH"
-#define REQUEST_METHOD_PROPFIND                 "PROPFIND"
-#define REQUEST_METHOD_PROPPATCH                "PROPPATCH"
-#define REQUEST_METHOD_VERSION_CONTROL          "VERSION_CONTROL"
-#define REQUEST_METHOD_CHECKOUT                 "CHECKOUT"
-#define REQUEST_METHOD_UNCHECKOUT               "UNCHECKOUT"
-#define REQUEST_METHOD_CHECKIN                  "CHECKIN"
-#define REQUEST_METHOD_UPDATE                   "UPDATE"
-#define REQUEST_METHOD_LABEL                    "LABEL"
-#define REQUEST_METHOD_REPORT                   "REPORT"
-#define REQUEST_METHOD_MKWORKSPACE              "MKWORKSPACE"
-#define REQUEST_METHOD_MKACTIVITY               "MKACTIVITY"
-#define REQUEST_METHOD_BASELINE_CONTROL         "BASELINE_CONTROL"
-#define REQUEST_METHOD_MERGE                    "MERGE"
-#define REQUEST_METHOD_UNKNOWN                  "UNKNOWN"
-
+#define REQUEST_METHOD_GET              	"GET"
+#define REQUEST_METHOD_POST              	"POST"
+#define REQUEST_METHOD_HEAD              	"HEAD"
+#define REQUEST_METHOD_PUT              	"PUT"
+#define REQUEST_METHOD_DELETE              	"DELETE"
+#define REQUEST_METHOD_TRACE              	"TRACE"
+#define REQUEST_METHOD_OPTIONS             	"OPTIONS"
+#define REQUEST_METHOD_CONNECT             	"CONNECT"
+#define REQUEST_METHOD_COPY              	"COPY"
+#define REQUEST_METHOD_INVALID             	"INVALID"
+#define REQUEST_METHOD_LOCK              	"LOCK"
+#define REQUEST_METHOD_UNLOCK              	"UNLOCK"
+#define REQUEST_METHOD_MKCOL              	"MKCOL"
+#define REQUEST_METHOD_MOVE              	"MOVE"
+#define REQUEST_METHOD_PATCH              	"PATCH"
+#define REQUEST_METHOD_PROPFIND            	"PROPFIND"
+#define REQUEST_METHOD_PROPPATCH           	"PROPPATCH"
+#define REQUEST_METHOD_VERSION_CONTROL     	"VERSION_CONTROL"
+#define REQUEST_METHOD_CHECKOUT         	"CHECKOUT"
+#define REQUEST_METHOD_UNCHECKOUT       	"UNCHECKOUT"
+#define REQUEST_METHOD_CHECKIN          	"CHECKIN"
+#define REQUEST_METHOD_UPDATE           	"UPDATE"
+#define REQUEST_METHOD_LABEL            	"LABEL"
+#define REQUEST_METHOD_REPORT            	"REPORT"
+#define REQUEST_METHOD_MKWORKSPACE        	"MKWORKSPACE"
+#define REQUEST_METHOD_MKACTIVITY        	"MKACTIVITY"
+#define REQUEST_METHOD_BASELINE_CONTROL    	"BASELINE_CONTROL"
+#define REQUEST_METHOD_MERGE            	"MERGE"
+#define REQUEST_METHOD_UNKNOWN           	"UNKNOWN"
 
 #define HTTP_PROTOCOL_STR       	"http://"
 #define HTTP_PROTOCOL_STR_LEN   	(sizeof(HTTP_PROTOCOL_STR) - 1)
@@ -127,100 +121,130 @@ AM_BEGIN_EXTERN_C
 #define HTTPS_PROTOCOL_STR_LEN  	(sizeof(HTTPS_PROTOCOL_STR) - 1)
 
 
-#define AM_WEB_LOGIN_URL_PROPERTY    AM_COMMON_PROPERTY_PREFIX "login.url"
-#define AM_WEB_CHECK_CLIENT_IP_PROPERTY		AM_COMMON_PROPERTY_PREFIX "client.ip.validation.enable"
-#define AM_WEB_ACCESS_DENIED_URL_PROPERTY AM_COMMON_PROPERTY_PREFIX "access.denied.url"
-#define AM_WEB_ANONYMOUS_USER AM_COMMON_PROPERTY_PREFIX "anonymous.user.id"
-#define AM_WEB_ANON_REMOTE_USER_ENABLE AM_COMMON_PROPERTY_PREFIX "anonymous.user.enable"
-#define AM_WEB_URL_REDIRECT_PARAM AM_COMMON_PROPERTY_PREFIX "redirect.param"
-#define AM_WEB_NOT_ENFORCED_LIST_PROPERTY AM_COMMON_PROPERTY_PREFIX "notenforced.url"
-#define AM_WEB_REVERSE_NOT_ENFORCED_LIST AM_COMMON_PROPERTY_PREFIX "notenforced.url.invert"
-#define AM_WEB_NOT_ENFORCED_IPADDRESS AM_COMMON_PROPERTY_PREFIX "notenforced.ip"
-#define AM_WEB_NOTENFORCED_URL_ATTRS_ENABLED_PROPERTY AM_COMMON_PROPERTY_PREFIX "notenforced.url.attributes.enable"
-#define AM_WEB_DO_SSO_ONLY AM_COMMON_PROPERTY_PREFIX "sso.only"
-#define AM_WEB_CDSSO_ENABLED_PROPERTY AM_COMMON_PROPERTY_PREFIX "cdsso.enable"
-#define AM_WEB_CDC_SERVLET_URL_PROPERTY AM_COMMON_PROPERTY_PREFIX "cdsso.cdcservlet.url"
+#define AM_WEB_PROPERTY_PREFIX		"com.sun.am.policy.agents.config."
+#define AM_WEB_PROPERTY_PREFIX_OLD	"com.sun.am.policy.agents."
+#define AM_WEB_AGENTS_VERSION_OLD AM_WEB_PROPERTY_PREFIX_OLD "version"
+#define AM_WEB_CHECK_CLIENT_IP_PROPERTY		AM_WEB_PROPERTY_PREFIX "client_ip_validation.enable"
+#define AM_WEB_CHECK_CLIENT_IP_PROPERTY_OLD		AM_WEB_PROPERTY_PREFIX_OLD "client_ip_validation_enable"
+#define AM_WEB_ACCESS_DENIED_URL_PROPERTY AM_WEB_PROPERTY_PREFIX "accessdenied.url"
+#define AM_WEB_ACCESS_DENIED_URL_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "accessDeniedURL"
+#define AM_WEB_ERROR_PAGE_URL_PROPERTY AM_WEB_PROPERTY_PREFIX "errorpage.url"
+#define AM_WEB_ANONYMOUS_USER AM_WEB_PROPERTY_PREFIX "anonymous_user"
+#define AM_WEB_ANONYMOUS_USER_OLD AM_WEB_PROPERTY_PREFIX_OLD "unauthenticatedUser"
+#define AM_WEB_ANON_REMOTE_USER_ENABLE AM_WEB_PROPERTY_PREFIX "anonymous_user.enable"
+#define AM_WEB_ANON_REMOTE_USER_ENABLE_OLD AM_WEB_PROPERTY_PREFIX_OLD "anonRemoteUserEnabled"
+#define AM_WEB_URL_REDIRECT_PARAM AM_WEB_PROPERTY_PREFIX "url.redirect.param"
+#define AM_WEB_URL_REDIRECT_PARAM_OLD AM_WEB_PROPERTY_PREFIX_OLD "urlRedirectParam"
+#define AM_WEB_INSTANCE_NAME_PROPERTY	AM_WEB_PROPERTY_PREFIX "instance.name"
+#define AM_WEB_INSTANCE_NAME_PROPERTY_OLD	AM_WEB_PROPERTY_PREFIX_OLD "instanceName"
+#define AM_WEB_NOT_ENFORCED_LIST_PROPERTY AM_WEB_PROPERTY_PREFIX "notenforced_list"
+#define AM_WEB_NOT_ENFORCED_LIST_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "notenforcedList"
+#define AM_WEB_REVERSE_NOT_ENFORCED_LIST AM_WEB_PROPERTY_PREFIX "notenforced_list.invert"
+#define AM_WEB_REVERSE_NOT_ENFORCED_LIST_OLD AM_WEB_PROPERTY_PREFIX_OLD "reverse_the_meaning_of_notenforcedList"
+#define AM_WEB_NOT_ENFORCED_IPADDRESS AM_WEB_PROPERTY_PREFIX "notenforced_client_ip_list"
+#define AM_WEB_NOT_ENFORCED_IPADDRESS_OLD AM_WEB_PROPERTY_PREFIX_OLD "notenforced_client_IP_address_list"
+#define AM_WEB_IGNORE_POLICY_EVALUATION_IF_NOT_ENFORCED AM_WEB_PROPERTY_PREFIX "ignore_policy_evaluation_if_notenforced"
+#define AM_WEB_DO_SSO_ONLY AM_WEB_PROPERTY_PREFIX "do_sso_only"
+#define AM_WEB_DO_SSO_ONLY_OLD AM_WEB_PROPERTY_PREFIX_OLD "do_sso_only"
+#define AM_WEB_CDSSO_ENABLED_PROPERTY AM_WEB_PROPERTY_PREFIX "cdsso.enable"
+#define AM_WEB_CDSSO_ENABLED_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "cdsso-enabled"
+#define AM_WEB_CDC_SERVLET_URL_PROPERTY AM_WEB_PROPERTY_PREFIX "cdcservlet.url"
+#define AM_WEB_CDC_SERVLET_URL_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "cdcservletURL"
+#define AM_WEB_USE_SUNWMETHOD_PROPERTY AM_WEB_PROPERTY_PREFIX "use.sunwmethod"
 
-#define AM_WEB_POST_CACHE_ENTRY_LIFETIME AM_COMMON_PROPERTY_PREFIX "postcache.entry.lifetime"
-#define AM_WEB_POST_CACHE_DATA_PRESERVE AM_COMMON_PROPERTY_PREFIX "postdata.preserve.enable"
-#define AM_WEB_POST_CACHE_DATA_PRESERVE_LBCOOKIE AM_COMMON_PROPERTY_PREFIX "postdata.preserve.lbcookie"
-#define AM_WEB_URI_PREFIX AM_COMMON_PROPERTY_PREFIX "agenturi.prefix"
+#define AM_WEB_POST_CACHE_CLEANPUP_INTERVAL AM_WEB_PROPERTY_PREFIX "postcache.cleanup.interval"
+#define AM_WEB_POST_CACHE_CLEANPUP_INTERVAL_OLD AM_WEB_PROPERTY_PREFIX_OLD "postcachecleanupinterval"
+#define AM_WEB_POST_CACHE_ENTRY_LIFETIME AM_WEB_PROPERTY_PREFIX "postcache.entry.lifetime"
+#define AM_WEB_POST_CACHE_ENTRY_LIFETIME_OLD AM_WEB_PROPERTY_PREFIX_OLD "postcacheentrylifetime"
+#define AM_WEB_POST_CACHE_DATA_PRESERVE AM_WEB_PROPERTY_PREFIX "postdata.preserve.enable"
+#define AM_WEB_POST_CACHE_DATA_PRESERVE_OLD AM_WEB_PROPERTY_PREFIX_OLD "is_postdatapreserve_enabled"
+#define AM_WEB_POST_CACHE_DATA_PRESERVE_STICKY_SESSION_MODE AM_WEB_PROPERTY_PREFIX "postdata.preserve.stickysession.mode"
+#define AM_WEB_POST_CACHE_DATA_PRESERVE_STICKY_SESSION_VALUE AM_WEB_PROPERTY_PREFIX "postdata.preserve.stickysession.value"
+#define AM_WEB_URI_PREFIX AM_WEB_PROPERTY_PREFIX "agenturi.prefix"
+#define AM_WEB_URI_PREFIX_OLD AM_WEB_PROPERTY_PREFIX_OLD "agenturiprefix"
+#define AM_LOG_ACCESS_TYPE_PROPERTY  AM_WEB_PROPERTY_PREFIX "audit.accesstype"
+#define AM_LOG_ACCESS_TYPE_PROPERTY_OLD  AM_WEB_PROPERTY_PREFIX_OLD "logAccessType"
 
-#define AM_WEB_FQDN_MAP AM_COMMON_PROPERTY_PREFIX "fqdn.mapping"
-#define AM_WEB_FQDN_DEFAULT AM_COMMON_PROPERTY_PREFIX "fqdn.default"
-#define AM_WEB_FQDN_CHECK_ENABLE AM_COMMON_PROPERTY_PREFIX "fqdn.check.enable"
+#define AM_WEB_FQDN_MAP AM_WEB_PROPERTY_PREFIX "fqdn.map"
+#define AM_WEB_FQDN_MAP_OLD AM_WEB_PROPERTY_PREFIX_OLD "fqdnMap"
+#define AM_WEB_FQDN_DEFAULT AM_WEB_PROPERTY_PREFIX "fqdn.default"
+#define AM_WEB_FQDN_DEFAULT_OLD AM_WEB_PROPERTY_PREFIX_OLD "fqdnDefault"
+#define AM_WEB_FQDN_CHECK_ENABLE AM_WEB_PROPERTY_PREFIX "fqdn.check.enable"
 
-#define AM_WEB_COOKIE_RESET_ENABLED AM_COMMON_PROPERTY_PREFIX "cookie.reset.enable"
-#define AM_WEB_COOKIE_RESET_LIST AM_COMMON_PROPERTY_PREFIX "cookie.reset"
-#define AM_WEB_CDSSO_COOKIE_DOMAIN_LIST AM_COMMON_PROPERTY_PREFIX "cdsso.cookie.domain"
-#define AM_WEB_LOGOUT_URL_PROPERTY AM_COMMON_PROPERTY_PREFIX "logout.url"
-#define AM_WEB_AGENT_LOGOUT_URL_PROPERTY AM_COMMON_PROPERTY_PREFIX "agent.logout.url"
-#define AM_WEB_LOGOUT_REDIRECT_URL_PROPERTY AM_COMMON_PROPERTY_PREFIX "logout.redirect.url"
-#define AM_WEB_LOGOUT_COOKIE_RESET_PROPERTY AM_COMMON_PROPERTY_PREFIX "logout.cookie.reset"
-#define AM_WEB_GET_CLIENT_HOSTNAME AM_COMMON_PROPERTY_PREFIX "get.client.host.name"
+#define AM_WEB_COOKIE_RESET_ENABLED AM_WEB_PROPERTY_PREFIX "cookie.reset.enable"
+#define AM_WEB_COOKIE_RESET_ENABLED_OLD AM_WEB_PROPERTY_PREFIX_OLD "cookie_reset_enabled"
+#define AM_WEB_COOKIE_RESET_LIST AM_WEB_PROPERTY_PREFIX "cookie.reset.list"
+#define AM_WEB_COOKIE_RESET_LIST_OLD AM_WEB_PROPERTY_PREFIX_OLD "cookie_reset_list"
+#define AM_WEB_COOKIE_DOMAIN_LIST AM_WEB_PROPERTY_PREFIX "cookie.domain.list"
+#define AM_WEB_COOKIE_DOMAIN_LIST_OLD AM_WEB_PROPERTY_PREFIX "cookieDomainList"
+#define AM_WEB_LOGOUT_URL_PROPERTY AM_WEB_PROPERTY_PREFIX "logout.url"
+#define AM_WEB_LOGOUT_URL_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "logout.url"
+#define AM_WEB_LOGOUT_COOKIE_RESET_PROPERTY AM_WEB_PROPERTY_PREFIX "logout.cookie.reset.list"
+#define AM_WEB_LOGOUT_COOKIE_RESET_PROPERTY_OLD AM_WEB_PROPERTY_PREFIX_OLD "logout.cookie_reset_list"
+#define AM_WEB_GET_CLIENT_HOSTNAME AM_WEB_PROPERTY_PREFIX "get_client_host_name"
+#define AM_WEB_GET_CLIENT_HOSTNAME_OLD AM_WEB_PROPERTY_PREFIX_OLD "getClientHostName"
+#define AM_WEB_CLIENT_IP_HEADER_PROPERTY AM_WEB_PROPERTY_PREFIX "client.ip.header"
+#define AM_WEB_CLIENT_HOSTNAME_HEADER_PROPERTY AM_WEB_PROPERTY_PREFIX "client.hostname.header"
 
-#define AM_WEB_CONVERT_MBYTE_ENABLE AM_COMMON_PROPERTY_PREFIX  "convert.mbyte.enable"
-#define AM_WEB_ENCODE_URL_SPECIAL_CHARS AM_COMMON_PROPERTY_PREFIX  "encode.url.special.chars.enable"
-#define AM_WEB_ENCODE_COOKIE_SPECIAL_CHARS AM_COMMON_PROPERTY_PREFIX  "encode.cookie.special.chars.enable"
-#define AM_WEB_OVERRIDE_PROTOCOL AM_COMMON_PROPERTY_PREFIX  "override.protocol"
-#define AM_WEB_OVERRIDE_HOST AM_COMMON_PROPERTY_PREFIX  "override.host"
-#define AM_WEB_OVERRIDE_PORT AM_COMMON_PROPERTY_PREFIX  "override.port"
-#define AM_WEB_OVERRIDE_NOTIFICATION_URL AM_COMMON_PROPERTY_PREFIX  "override.notification.url"
+#define AM_WEB_DENY_ON_LOG_FAILURE AM_WEB_PROPERTY_PREFIX "deny_on_log_failure"
+#define AM_WEB_DENY_ON_LOG_FAILURE_OLD AM_WEB_PROPERTY_PREFIX_OLD "denyOnLogFailure"
+#define AM_WEB_CONVERT_MBYTE_ENABLE AM_WEB_PROPERTY_PREFIX  "convert_mbyte.enable"
+#define AM_WEB_ENCODE_URL_SPECIAL_CHARS AM_WEB_PROPERTY_PREFIX  "encode_url_special_chars.enable"
+#define AM_WEB_ENCODE_COOKIE_SPECIAL_CHARS AM_WEB_PROPERTY_PREFIX  "encode_cookie_special_chars.enable"
+#define AM_WEB_CONVERT_MBYTE_ENABLE_OLD AM_WEB_PROPERTY_PREFIX_OLD  "convertMbyteEnabled"
+#define AM_WEB_OVERRIDE_PROTOCOL AM_WEB_PROPERTY_PREFIX  "override_protocol"
+#define AM_WEB_OVERRIDE_PROTOCOL_OLD AM_WEB_PROPERTY_PREFIX_OLD  "overrideProtocol"
+#define AM_WEB_OVERRIDE_HOST AM_WEB_PROPERTY_PREFIX  "override_host"
+#define AM_WEB_OVERRIDE_HOST_OLD AM_WEB_PROPERTY_PREFIX_OLD  "overrideHost"
+#define AM_WEB_OVERRIDE_PORT AM_WEB_PROPERTY_PREFIX  "override_port"
+#define AM_WEB_OVERRIDE_PORT_OLD AM_WEB_PROPERTY_PREFIX_OLD  "overridePort"
+#define AM_WEB_OVERRIDE_NOTIFICATION_URL AM_WEB_PROPERTY_PREFIX  "override_notification.url"
+#define AM_WEB_OVERRIDE_NOTIFICATION_URL_OLD AM_WEB_PROPERTY_PREFIX_OLD  "overrideNotificationUrl"
 
-#define AM_COMMON_IGNORE_PATH_INFO    AM_COMMON_PROPERTY_PREFIX "ignore.path.info"
-#define AM_COMMON_IGNORE_PATH_INFO_FOR_NOT_ENFORCED_LIST    AM_COMMON_PROPERTY_PREFIX "ignore.path.info.for.not.enforced.list"
+#define AM_COMMON_IGNORE_PATH_INFO    AM_WEB_PROPERTY_PREFIX "ignore_path_info"
+#define AM_COMMON_IGNORE_PATH_INFO_FOR_NOT_ENFORCED_LIST  AM_WEB_PROPERTY_PREFIX "ignore_path_info_for_not_enforced_list"
+#define AM_COMMON_CLIENT_IP_CHECK_ENABLED_PROPERTY   AM_WEB_PROPERTY_PREFIX "client.ip.check.enable"
+
+/* Following are log related properties */
+#define AM_COMMON_LOG_FILE_PROPERTY	AM_WEB_PROPERTY_PREFIX "local.log.file"
+#define AM_COMMON_LOG_ROTATION		AM_WEB_PROPERTY_PREFIX "local.log.rotate"
+#define AM_COMMON_LOG_FILE_SIZE		AM_WEB_PROPERTY_PREFIX "local.log.size"
+#define AM_COMMON_LOG_REMOTE_BUFFER_SIZE_PROPERTY	AM_WEB_PROPERTY_PREFIX "remote.log.buffer.size"
+#define AM_COMMON_SERVER_LOG_FILE_PROPERTY   AM_WEB_PROPERTY_PREFIX "remote.log"
 
 /* Followings are for the attribute related properties */
-#define AM_POLICY_PROFILE_ATTRS_MODE AM_COMMON_PROPERTY_PREFIX "profile.attribute.fetch.mode"
-#define AM_POLICY_PROFILE_ATTRS_MAP   AM_COMMON_PROPERTY_PREFIX "profile.attribute.mapping"
-#define AM_POLICY_PROFILE_ATTRS_COOKIE_PFX AM_COMMON_PROPERTY_PREFIX "profile.attribute.cookie.prefix"
-#define AM_POLICY_PROFILE_ATTRS_COOKIE_MAX_AGE AM_COMMON_PROPERTY_PREFIX "profile.attribute.cookie.maxage"
+#define AM_POLICY_PROFILE_ATTRS_MODE AM_WEB_PROPERTY_PREFIX "profile.attribute.fetch.mode"
+#define AM_POLICY_PROFILE_ATTRS_MAP   AM_WEB_PROPERTY_PREFIX "profile.attribute.map"
+#define AM_POLICY_PROFILE_ATTRS_COOKIE_PFX AM_WEB_PROPERTY_PREFIX "profile.attribute.cookie.prefix"
+#define AM_POLICY_PROFILE_ATTRS_COOKIE_MAX_AGE AM_WEB_PROPERTY_PREFIX "profile.attribute.cookie.maxage"
 
-#define AM_POLICY_SESSION_ATTRS_MODE	AM_COMMON_PROPERTY_PREFIX "session.attribute.fetch.mode"
-#define AM_POLICY_SESSION_ATTRS_MAP   AM_COMMON_PROPERTY_PREFIX "session.attribute.mapping"
-#define AM_POLICY_RESPONSE_ATTRS_MODE AM_COMMON_PROPERTY_PREFIX "response.attribute.fetch.mode"
-#define AM_POLICY_RESPONSE_ATTRS_MAP   AM_COMMON_PROPERTY_PREFIX "response.attribute.mapping"
-#define AM_POLICY_CLOCK_SKEW AM_COMMON_PROPERTY_PREFIX "policy.clock.skew"
-#define AM_POLICY_ATTRS_MULTI_VALUE_SEPARATOR   AM_COMMON_PROPERTY_PREFIX "attribute.multi.value.separator"
+#define AM_POLICY_SESSION_ATTRS_MODE	AM_WEB_PROPERTY_PREFIX "session.attribute.fetch.mode"
+#define AM_POLICY_SESSION_ATTRS_MAP   AM_WEB_PROPERTY_PREFIX "session.attribute.map"
+#define AM_POLICY_RESPONSE_ATTRS_MODE AM_WEB_PROPERTY_PREFIX "response.attribute.fetch.mode"
+#define AM_POLICY_RESPONSE_ATTRS_MAP   AM_WEB_PROPERTY_PREFIX "response.attribute.map"
+#define AM_POLICY_ATTRS_MULTI_VALUE_SEPARATOR AM_WEB_PROPERTY_PREFIX "attribute.multi_value_separator"
+#define AM_POLICY_CLOCK_SKEW AM_WEB_PROPERTY_PREFIX "policy_clock_skew"
+#define AM_POLICY_NUMBER_OF_TRIES AM_WEB_PROPERTY_PREFIX "policy_number_of_tries"
 
 /* Followings are for the Header attribute modes */
 #define AM_POLICY_SET_ATTRS_AS_COOKIE "HTTP_COOKIE"
+#define AM_POLICY_SET_ATTRS_AS_COOKIE_OLD "COOKIE"
 #define AM_POLICY_SET_ATTRS_AS_HEADER "HTTP_HEADER"
+#define AM_POLICY_SET_ATTRS_AS_HEADER_OLD "HEADER"
 #define AM_POLICY_SET_ATTRS_AS_NONE "NONE"
 
-#define AM_PROXY_PROPERTY_PREFIX        AM_COMMON_PROPERTY_PREFIX "proxy."
-#define AM_DOMINO_PROPERTY_PREFIX       AM_COMMON_PROPERTY_PREFIX "domino."
-#define AM_PROXY_OVERRIDE_HOST_PORT_PROPERTY  AM_PROXY_PROPERTY_PREFIX "override.host.port"
-
-#define LTPA_DEFAULT_TOKEN_NAME "LtpaToken"
-#define LTPA_DEFAULT_CONFIG_NAME "LtpaToken"
-#define LTPA_DEFAULT_ORG_NAME NULL
-
-#define AM_DOMINO_CHECK_NAME_DB_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "check.name.database"
-#define AM_DOMINO_LTPA_TOKEN_ENABLE_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "ltpa.enable"
-#define AM_DOMINO_LTPA_CONFIG_NAME_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "ltpa.config.name"
-#define AM_DOMINO_LTPA_ORG_NAME_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "ltpa.org.name"
-#define AM_DOMINO_LTPA_TOKEN_NAME_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "ltpa.cookie.name"
-
-#define AM_WEB_CONNECTION_TIMEOUT AM_COMMON_PROPERTY_PREFIX ".auth.connection.timeout"
-#define AM_WEB_AUTHTYPE_IN_IIS6_AGENT AM_COMMON_PROPERTY_PREFIX  "iis.auth.type"
+#define AM_PROXY_PROPERTY_PREFIX        AM_WEB_PROPERTY_PREFIX "proxy."
+#define AM_DOMINO_PROPERTY_PREFIX       AM_WEB_PROPERTY_PREFIX "domino."
+#define AM_DOMINO_CHECK_NAME_DB_PROPERTY  AM_DOMINO_PROPERTY_PREFIX "check_name_database"
+#define AM_DOMINO_CHECK_NAME_DB_PROPERTY_OLD  AM_DOMINO_PROPERTY_PREFIX "checkNameDatabase"
+#define AM_WEB_CONNECTION_TIMEOUT AM_WEB_PROPERTY_PREFIX "connection_timeout"
+#define AM_WEB_AUTHTYPE_IN_IIS6_AGENT AM_WEB_PROPERTY_PREFIX  "iis.auth_type"
 #define AM_COMMON_PROPERTY_PREFIX_IIS6_REPLAYPASSWD_KEY AM_COMMON_PROPERTY_PREFIX "replaypasswd.key"
-#define AM_WEB_FILTER_PRIORITY AM_COMMON_PROPERTY_PREFIX  "iis.filter.priority"
-#define AM_WEB_OWA_ENABLED AM_COMMON_PROPERTY_PREFIX  "iis.owa.enable"
-#define AM_WEB_OWA_ENABLED_CHANGE_PROTOCOL AM_COMMON_PROPERTY_PREFIX  "iis.owa_enable.change.protocol"
-#define AM_WEB_OWA_ENABLED_SESSION_TIMEOUT_URL AM_COMMON_PROPERTY_PREFIX  "iis.owa.enable.session.timeout.url"
-
-
-#define AM_WEB_AGENT_REPOSITORY_LOCATION_PROPERTY           AM_COMMON_PROPERTY_PREFIX "repository.location"
-#define AGENT_PROPERTIES_LOCAL "local"
-#define AGENT_PROPERTIES_CENTRALIZED "centralized"
-#define AM_WEB_AGENT_FREEFORM_PROPERTY           AM_COMMON_PROPERTY_PREFIX "freeformproperties"
-#define AM_COMMON_AGENTS_CONFIG_POLLING_PROPERTY AM_COMMON_PROPERTY_PREFIX "polling.interval"
-#define AM_COMMON_AGENTS_CONFIG_CLEANUP_PROPERTY AM_COMMON_PROPERTY_PREFIX "cleanup.interval"
-
-#define AM_WEB_LOCALE_PROPERTY AM_COMMON_PROPERTY_PREFIX "locale"
-#define AM_WEB_CLIENT_IP_HEADER_PROPERTY AM_COMMON_PROPERTY_PREFIX "client.ip.header"
-#define AM_WEB_CLIENT_HOSTNAME_HEADER_PROPERTY AM_COMMON_PROPERTY_PREFIX "client.hostname.header"
+#define AM_WEB_FILTER_PRIORITY AM_WEB_PROPERTY_PREFIX  "iis.filter_priority"
+#define AM_WEB_OWA_ENABLED AM_WEB_PROPERTY_PREFIX  "iis.owa_enabled"
+#define AM_WEB_OWA_ENABLED_CHANGE_PROTOCOL AM_WEB_PROPERTY_PREFIX  "iis.owa_enabled_change_protocol"
+#define AM_WEB_OWA_ENABLED_SESSION_TIMEOUT_URL AM_WEB_PROPERTY_PREFIX  "iis.owa_enabled_session_timeout_url"
+#define AM_WEB_NO_CHILD_THREAD_ACTIVATION_DELAY AM_WEB_PROPERTY_PREFIX  "no_child_thread_activation_delay"
 
 /*
  * Enough space to hold PRTime key in a string
@@ -241,71 +265,13 @@ AM_BEGIN_EXTERN_C
 #define AM_WEB_COOKIE_ERROR            -1
 
 /*
- * Auth-Type identifier for OpenSSO authentication.
+ * Auth-Type identifier for Access Manager authentication.
  */
 #define	AM_WEB_AUTH_TYPE_VALUE		"DSAME"
-
 /*
  * Liberty like Authn Response parameter
  */
-#define	LARES_PARAM		"LARES"
-
-
-/*
- * For logging access to remote IS
- */
-#define LOG_TYPE_NONE    "LOG_NONE"
-#define LOG_TYPE_ALLOW   "LOG_ALLOW"
-#define LOG_TYPE_DENY    "LOG_DENY"
-#define LOG_TYPE_BOTH    "LOG_BOTH"
-
-#define LOG_ACCESS_NONE    0x0
-#define LOG_ACCESS_ALLOW   0x1
-#define LOG_ACCESS_DENY    0x2
-
-#define IIS_FILTER_PRIORITY  "DEFAULT"
-
-#define bool_to_am_bool_t(x) (x?AM_TRUE:AM_FALSE)
-#define	HTTP_PREFIX	"http://"
-#define	HTTP_PREFIX_LEN	(sizeof(HTTP_PREFIX) - 1)
-#define	HTTP_DEF_PORT	80
-#define	HTTPS_PREFIX	"https://"
-#define	HTTPS_PREFIX_LEN (sizeof(HTTPS_PREFIX) - 1)
-#define HTTPS_DEF_PORT	443
-#define MSG_MAX_LEN 1024
-#define AM_REVISION_LEN 10
-
-#define COOKIE_ATTRIBUTE_PREFIX  "HTTP_"
-#define COOKIE_ATTRIBUTE_MAX_AGE  "300"
-#define POLICY_ATTRIBUTES_MODE_NONE "NONE"
-#define ATTR_MULTI_VALUE_SEPARATOR "|"
-#define POLICY_SESSION_ATTRIBUTES "SESSION_ATTRIBUTES"
-#define POLICY_RESPONSE_ATTRIBUTES "RESPONSE_ATTRIBUTES"
-
-typedef enum {
-    SET_ATTRS_NONE,
-    SET_ATTRS_AS_HEADER,
-    SET_ATTRS_AS_COOKIE
-} set_user_attrs_mode_t;
-
-/*
- * POST preservation related strings
-*/
-#define MAGIC_STR		"sunpostpreserve"
-#define DUMMY_NOTENFORCED	"/dummypost*"
-#define DUMMY_REDIRECT		"/dummypost/"
-#define POSTHASHTBL_INITIAL_SIZE 31
-
-/*
- * How long to wait in attempting to connect to an OpenSSO AUTH server.
- */
-
-#define CONNECT_TIMEOUT	2
-
-const char CDSSO_RESET_COOKIE_TEMPLATE[] = {
-"%s=;Max-Age=300;Path=/"
-};
-
+#define LARES_PARAM                     "LARES"
 /*
  * Auth-Type ACCESS status.
  */
@@ -313,6 +279,7 @@ typedef enum {
     AM_ACCESS_DENY = 0,
     AM_ACCESS_ALLOW
 } am_web_access_t;
+
 
 /*
  * For agents request processing
@@ -364,7 +331,7 @@ typedef struct {
     am_web_req_method_t method;     /* request method */
     char *path_info;                /* path info if any */
     char *client_ip;                /* client IP if any */
-    char *client_hostname;          /* client hostname if any */
+    char *client_hostname;
     char *cookie_header_val;	    /* the cookie header value if any */
     void *reserved;		    /* reserved - do not set this */
 } am_web_request_params_t;
@@ -519,47 +486,27 @@ typedef struct {
 
 } am_web_request_func_t;
 
-/**
- * Method to return the latest instance of agent configuration 
- * from agent configuration cache. 
- * The returned instance gets used to serve requests.
- */
-AM_WEB_EXPORT void* am_web_get_agent_configuration();
 
 /**
- * Method to delete ref counted object associated with
- * the latest instance of agent configuration. 
+ *                   -------- policy methods --------
  */
-AM_WEB_EXPORT void am_web_delete_agent_configuration(void *);
 
 /**
- * Agent plugin init function calls to load bootstrap properties file.
+ * Method to initialize the Agent Toolkit.
  */
-AM_WEB_EXPORT am_status_t am_web_init(const char *agent_bootstrap_file, 
-                                          const char *agent_config_file);
-
-/**
- * Initializes agent during first request. Creates the agent profile object 
- * and performs agent authentication to receive the initial agent configuration
- * data either from the OpenSSO server or from the local configuration file
- */
-AM_WEB_EXPORT am_status_t am_agent_init(boolean_t *pAgentAuthenticated);
+AM_WEB_EXPORT am_status_t am_web_init(const char *config_file);
 
 /**
  * Method to clean up the Agent Toolkit
  */
 AM_WEB_EXPORT am_status_t am_web_cleanup();
 
-/**
- *                   -------- policy methods --------
- */
-
 /*
  * Evaluates the access control policies for a specified web-resource and
  * action.
  *
  * Parameters:
- *   sso_token	The sso_token from the OpenSSO server cookie.  This
+ *   sso_token	The sso_token from the Access Manager cookie.  This
  *		parameter may be NULL if there is no cookie present.
  *
  *   url	The URL whose accessibility is being determined.
@@ -582,11 +529,6 @@ AM_WEB_EXPORT am_status_t am_web_cleanup();
  *   advices_map_ptr
  *		An output parameter where an am_map_t can be stored
  *		if the policy evaluation produces any advice information.
- *		This parameter may not be NULL.
- *
- *   agent_config
- *		Agent configuration instance returned by  
- *		am_web_get_agent_configuration(). 
  *		This parameter may not be NULL.
  *
  * Returns:
@@ -616,31 +558,31 @@ AM_WEB_EXPORT am_status_t
 am_web_is_access_allowed(const char *sso_token, const char *url,
 			 const char *path_info, const char *action_name,
 			 const char *client_ip, const am_map_t env_parameter_map,
-			 am_policy_result_t *result, void* agent_config);
+			 am_policy_result_t *result);
 
 /*
- * Determines whether the request contains is an OpenSSO server 
+ * Determines whether the request contains is an Access Manager
  * notification message intended for the policy SDK.
  */
-AM_WEB_EXPORT boolean_t am_web_is_notification(const char *request_url, void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_notification(const char *request_url);
 
 /*
  * Returns true if the URL being accessed by the user is in the not
  * enforced list.
  */
 AM_WEB_EXPORT boolean_t am_web_is_in_not_enforced_list(const char *url,
-						       const char *path_info, void* agent_config);
+						       const char *path_info);
 
 /*
  * Returns true if the given IP address is present in the list of
  * not enforced IP addresses.
  */
-AM_WEB_EXPORT boolean_t am_web_is_in_not_enforced_ip_list(const char *ip, void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_in_not_enforced_ip_list(const char *ip);
 
 /*
  * Returns if the requested URL is a Valid FQDN resource.
  */
-AM_WEB_EXPORT boolean_t am_web_is_valid_fqdn_url(const char *url, void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_valid_fqdn_url(const char *url);
 
 
 /*
@@ -649,8 +591,7 @@ AM_WEB_EXPORT boolean_t am_web_is_valid_fqdn_url(const char *url, void* agent_co
  * occur during the processing of the notification.
  */
 AM_WEB_EXPORT void am_web_handle_notification(const char *data,
-                                              size_t data_length,
-                                              void* agent_config);
+					    size_t data_length);
 
 /*
  * This function returns a string representing the URL for redirection that
@@ -659,7 +600,7 @@ AM_WEB_EXPORT void am_web_handle_notification(const char *data,
  * the access denied URL.  If the redirection is to the login URL then the
  * URL will include any exsisting information specified in the URL from the
  * configuration file, like org value etc., followed by the specified goto
- * parameter value, which will be used by OpenSSO server after the user has
+ * parameter value, which will be used by Access Manager after the user has
  * successfully authenticated.
  *
  * The function am_web_get_redirect_url(), has been deprecated and
@@ -675,8 +616,7 @@ AM_WEB_EXPORT am_status_t am_web_get_url_to_redirect(am_status_t status,
 					  	     const char *goto_url,
 						     const char* method,
 						     void *reserved,
-					  	     char ** redirect_url,
-                                                     void* agent_config);
+					  	     char ** redirect_url);
 
 /*
  * This function sets the LDAP attributes in header.
@@ -776,7 +716,7 @@ am_web_result_attr_map_set(
               am_web_result_set_header_attr_in_response_func_t setCookieRespFunc,
               am_web_result_set_header_attr_in_request_func_t  setCookieReqFunc,
               am_web_get_cookie_sync_func_t  getCookieSyncFunc,
-              void **args, void* agent_config);
+              void **args);
 
 /*
  * This function the reset_cookie headers for the cookies
@@ -785,7 +725,7 @@ am_web_result_attr_map_set(
  */
 AM_WEB_EXPORT am_status_t
 am_web_do_cookies_reset(am_status_t (*setFunc)(const char *, void **),
-			void **args, void* agent_config);
+			void **args);
 
 
 /*
@@ -794,22 +734,22 @@ am_web_do_cookies_reset(am_status_t (*setFunc)(const char *, void **),
  * It builds the set-cookie header for each domain specified in the
  * property, and calls the callback function 'setFunc' in the first
  * argument to actually set the cookie.
- * This function is called by am_web_check_cookie_in_query() and
- * am_web_check_cookie_in_post() which are called in CDSSO mode
- * to set the iPlanetDirectoryPro cookie in the cdsso response.
+ * This function is called by am_web_check_cookie_in_post() 
+ * which are called in CDSSO mode to set the iPlanetDirectoryPro cookie
+ * in the cdsso response.
  */
 AM_WEB_EXPORT am_status_t
 am_web_do_cookie_domain_set(am_status_t (*setFunc)(const char *, void **),
-			    void **args, const char *cookie, void* agent_config);
+			    void **args, const char *cookie);
 
 
 /*
  * This function is used to get the cookie sent in the SAML assertion
- * from the OpenSSO server 
+ * from the Access Manager
  */
 
 AM_WEB_EXPORT am_status_t
-am_web_get_token_from_assertion(char *assertion, char **token, void* agent_config);
+am_web_get_token_from_assertion(char *assertion, char **token);
 
 AM_WEB_EXPORT am_status_t
 am_web_remove_parameter_from_query(const char* inpString, const char *remove_str, char **outString );
@@ -818,7 +758,13 @@ AM_WEB_EXPORT am_status_t
 am_web_get_parameter_value(const char *inpQuery, const char *param_name, char **param_value);
 
 AM_WEB_EXPORT boolean_t
-am_web_is_cdsso_enabled(void* agent_config);
+am_web_is_cdsso_enabled();
+
+AM_WEB_EXPORT boolean_t
+am_web_use_sunwmethod();
+
+AM_WEB_EXPORT boolean_t
+am_web_is_dummypost_url(const char *url, const char *path_info);
 
 AM_WEB_EXPORT am_status_t am_web_check_cookie_in_post(
 		void ** args, char ** dpro_cookie,
@@ -827,20 +773,8 @@ AM_WEB_EXPORT am_status_t am_web_check_cookie_in_post(
 		char *response,
 		boolean_t responseIsCookie,
 		am_status_t (*set_cookie)(const char *, void **),
-		void (*set_method)(void **, char *),
-                void* agent_config
+		void (*set_method)(void **, char *)
 		);
-AM_WEB_EXPORT am_status_t am_web_check_cookie_in_query(
-		void **args, char **dpro_cookie,
-		const char *query, char **request_url,
-		char ** orig_req, char *method,
-		am_status_t (*set_cookie)(const char *, void **),
-		void (*set_method)(void **, char *),
-                void* agent_config
-		);
-
-
-
 
 /*
  * Free memory previously allocated by a am_web_* routine.
@@ -848,27 +782,15 @@ AM_WEB_EXPORT am_status_t am_web_check_cookie_in_query(
 AM_WEB_EXPORT void am_web_free_memory(void *memory);
 
 /*
- * Method to retrieve the name of the OpenSSO server cookie.
+ * Method to retrieve the name of the Access Manager cookie.
  */
 
-AM_WEB_EXPORT const char *am_web_get_cookie_name(void* agent_config);
+AM_WEB_EXPORT const char *am_web_get_cookie_name();
 
 /*
- * Method to retrieve the name of the OpenSSO server notification Url.
+ * Method to retrieve the name of the Access Manager notification Url.
  */
-AM_WEB_EXPORT const char *am_web_get_notification_url(void* agent_config);
-
-
-/*
- * Method to retrieve the name of the Agent Server Host.
- */
-AM_WEB_EXPORT const char *am_web_get_agent_server_host(void* agent_config);
-
-/*
- * Method to retrieve the name of the Agent Server Port.
- */
-AM_WEB_EXPORT int am_web_get_agent_server_port(void* agent_config);
-
+AM_WEB_EXPORT const char *am_web_get_notification_url();
 
 /**
  *                        -------- logging --------
@@ -878,9 +800,7 @@ AM_WEB_EXPORT boolean_t am_web_is_debug_on();
 AM_WEB_EXPORT boolean_t am_web_is_max_debug_on();
 
 AM_WEB_EXPORT void am_web_log_always(const char *fmt, ...);
-AM_WEB_EXPORT boolean_t am_web_log_auth(am_web_access_t access_type, 
-                                        const char *fmt, 
-                                        void* agent_config, ...);
+AM_WEB_EXPORT boolean_t am_web_log_auth(am_web_access_t access_type, const char *fmt, ...);
 AM_WEB_EXPORT void am_web_log_error(const char *fmt, ...);
 AM_WEB_EXPORT void am_web_log_warning(const char *fmt, ...);
 AM_WEB_EXPORT void am_web_log_info(const char *fmt, ...);
@@ -942,16 +862,24 @@ typedef struct post_urls {
  *        preservation is switched on or off.
  *
  */
-AM_WEB_EXPORT boolean_t am_web_is_postpreserve_enabled(void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_postpreserve_enabled();
 
 /*
- * Method to get the value of the set-cookie header for the lb cookie
+ * Method to get the set-cookie header for the lb cookie
  * when using a LB in front of the agent with post preservation
- * enabled
+ * enabled and sticky session mode set to COOKIE.
  */
-AM_WEB_EXPORT am_status_t
-am_web_get_postdata_preserve_lbcookie(const char **headerValue, 
-                          boolean_t isValueNull, void* agent_config);
+AM_WEB_EXPORT am_status_t 
+am_web_get_postdata_preserve_lbcookie(char **headerValue, 
+                                      boolean_t isValueNull);
+
+/*
+ * Method to get the query parameter that should be added to the
+ * dummy url when using a LB in front of the agent with post 
+ * preservation enabled and sticky session mode set to URL.
+ */
+AM_WEB_EXPORT am_status_t 
+am_web_get_postdata_preserve_URL_parameter(char **queryParameter);
 
 /*
  * Method to insert POST data entry in the POST cache
@@ -968,8 +896,7 @@ am_web_get_postdata_preserve_lbcookie(const char **headerValue,
  *
  */
 AM_WEB_EXPORT boolean_t am_web_postcache_insert(const char *key,
-						const am_web_postcache_data_t *value,
-                                                void* agent_config);
+						const am_web_postcache_data_t *value);
 
 /*
  * Method to lookup POST data in the POST cache
@@ -986,8 +913,7 @@ AM_WEB_EXPORT boolean_t am_web_postcache_insert(const char *key,
 
 AM_WEB_EXPORT boolean_t
 am_web_postcache_lookup(const char *key,
-			am_web_postcache_data_t *postdata_entry,
-                        void* agent_config);
+			am_web_postcache_data_t *postdata_entry);
 
 /*
  * Method to remove POST data from the POST cache
@@ -999,8 +925,7 @@ am_web_postcache_lookup(const char *key,
  * Returns:
  *
  */
-AM_WEB_EXPORT void am_web_postcache_remove(const char *key,
-                                           void* agent_config);
+AM_WEB_EXPORT void am_web_postcache_remove(const char *key);
 
 
 /*
@@ -1019,9 +944,8 @@ AM_WEB_EXPORT void am_web_postcache_remove(const char *key,
  *        preservation.
  *
  */
-AM_WEB_EXPORT post_urls_t * am_web_create_post_preserve_urls(const
-					   char *request_url,
-                                           void* agent_config);
+AM_WEB_EXPORT am_status_t am_web_create_post_preserve_urls(
+                    const char *request_url, post_urls_t **url_data);
 
 /*
  * Method to clean up datastructure containing dummy post url, action url and
@@ -1071,8 +995,7 @@ am_web_postcache_data_cleanup(am_web_postcache_data_t * const postentry_struct);
 */
 AM_WEB_EXPORT char * am_web_create_post_page(const char *key,
 					     const char *postdata,
-					     const char *actionurl,
-                                             void* agent_config);
+					     const char *actionurl);
 
 /*
  * Check whether a cookie is present.
@@ -1100,23 +1023,14 @@ AM_WEB_EXPORT int am_web_is_cookie_present(const char *cookie,
  */
 AM_WEB_EXPORT am_status_t
 am_web_logout_cookies_reset(am_status_t (*setFunc)(const char *, void **),
-                            void **args, void* agent_config);
+                            void **args);
 
 
 
 /*
- * Returns true if url is a opensso logout url, false otherwise.
- * For example: http://amhost:amport/opensso/UI/Logout
+ * Returns true if url is a logout url, false otherwise.
  */
-AM_WEB_EXPORT boolean_t am_web_is_logout_url(const char *url, void* agent_config);
-
-
-/*
- * Returns true if url is a agent logout url, false otherwise.
- * When this URL is accessed, the user gets logged out of the OpenSSO session.
- * For example : http://agenthost:agentport/logout.html
- */
-AM_WEB_EXPORT boolean_t am_web_is_agent_logout_url(const char *url, void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_logout_url(const char *url);
 
 
 /**
@@ -1153,7 +1067,7 @@ am_web_remove_authnrequest(char *inpString, char **outString);
 AM_WEB_EXPORT am_web_result_t
 am_web_process_request(am_web_request_params_t *req_params,
 		       am_web_request_func_t *req_func,
-		       am_status_t *render_sts, void* agent_config);
+		       am_status_t *render_sts);
 
 
 /**
@@ -1202,11 +1116,15 @@ am_web_build_advice_response(const am_policy_result_t *policy_result,
                              const char *redirect_url,
                              char **advice_response);
 
+AM_WEB_EXPORT am_status_t
+am_web_build_advice_redirect_url(const am_policy_result_t *policy_result,
+                             const char *redirect_url,
+                             char **redirect_url_with_advice);
 /*
  * Method to determine if the auth-type value "dsame"
  * in the IIS6 agent should be replaced by "Basic"
  */
-AM_WEB_EXPORT const char *am_web_get_authType(void* agent_config);
+AM_WEB_EXPORT const char *am_web_get_authType();
 
 /**
  * Method will take the host header, server host name
@@ -1236,7 +1154,7 @@ AM_WEB_EXPORT am_status_t
 am_web_get_request_url(const char *host_hdr, const char *protocol,
 		       const char *hostname, size_t port,
 		       const char *uri, const char *query,
-		       char **req_url, void* agent_config);
+		       char **req_url);
 
 /**
  * Sets original request url and request url.
@@ -1251,98 +1169,82 @@ am_web_get_all_request_urls(const char *host_hdr,
                        size_t port,
                        const char *uri,
                        const char *query,
-                       void* agent_config,
                        char **request_url,
                        char **orig_request_url);
 
 /*
- * Method to determine if the override_host_port is set
- * for the Proxy agent
+ * Method to determine if the composite advice should be
+ * redirect rather than POST
  */
-AM_WEB_EXPORT boolean_t am_web_is_proxy_override_host_port_set(void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_use_redirect_for_advice();
+/*
+ * Method to determine if the sunwMethod query parameter should be  
+ * removed in CDSSO
+ */
+AM_WEB_EXPORT boolean_t am_web_remove_sunwmethod();
 
 /*
- * Method to if ltpa_enable is set for IBM Lotus Domino agent
+ * Method to determine the version number of AM with which the agent is
+ * interacting
  */
-AM_WEB_EXPORT boolean_t am_web_is_domino_check_name_database(void* agent_config);
+AM_WEB_EXPORT char * am_web_get_am_revision_number();
 
 /*
- * Method to if ltpa_enable is set for IBM Lotus Domino agent
+ * Method to get the access denied url
  */
-AM_WEB_EXPORT boolean_t am_web_is_domino_ltpa_enable(void* agent_config);
-
-/*
- * Method to get ltpa_config_name
- */
-AM_WEB_EXPORT const char *am_web_domino_ltpa_config_name(void* agent_config);
-
-/*
- * Method to get ltpa_org_name
- */
-AM_WEB_EXPORT const char *am_web_domino_ltpa_org_name(void* agent_config);
-
-/* 
- * Method to get ltpa_token_name
- */
-AM_WEB_EXPORT const char *am_web_domino_ltpa_token_name(void* agent_config);
+AM_WEB_EXPORT const char * am_web_get_accessdenied_url();
 
 /*
  * Method to determine if a url is enforced
  */
 AM_WEB_EXPORT boolean_t
-am_web_is_url_enforced(const char *url_str,const char *path_info,const char *client_ip, void* agent_config);
+am_web_is_url_enforced(const char *url_str,const char *path_info,const char *client_ip);
 
 /*
  * Method to get the value of user id param
  */
-AM_WEB_EXPORT const char * am_web_get_user_id_param(void* agent_config);
+AM_WEB_EXPORT const char * am_web_get_user_id_param();
 AM_WEB_EXPORT void am_web_clear_attributes_map(am_policy_result_t *result);
 
-AM_WEB_EXPORT boolean_t am_web_is_owa_enabled(void* agent_config);
-AM_WEB_EXPORT boolean_t am_web_is_owa_enabled_change_protocol(void* agent_config);
-AM_WEB_EXPORT const char * am_web_is_owa_enabled_session_timeout_url(void* agent_config);
-
-AM_WEB_EXPORT am_status_t am_web_get_logout_url(char** logout_url, void* agent_config);
+AM_WEB_EXPORT boolean_t am_web_is_owa_enabled();
+AM_WEB_EXPORT boolean_t am_web_is_owa_enabled_change_protocol();
+AM_WEB_EXPORT const char * am_web_is_owa_enabled_session_timeout_url();
+AM_WEB_EXPORT const char * am_web_get_iis6_replaypasswd_key();
 
 /**
  * Returns client.ip.header property value
  */
 AM_WEB_EXPORT const char *
-    am_web_get_client_ip_header_name(void* agent_config);
+    am_web_get_client_ip_header_name();
 
 /**
  * Returns client.hostname.header property value
  */
 AM_WEB_EXPORT const char *
-    am_web_get_client_hostname_header_name(void* agent_config);
+    am_web_get_client_hostname_header_name();
 
-/**
- * Returns client ip value from client ip header.
- * If the clientIP contains comma separated values,
- * then first value is taken into consideration.
+/*
+ * Returns client IP and hostname value from client IP and hostname headers.
+ * If the client IP header or client host name header contains comma 
+ * separated values, then first value is taken into consideration.
  */
-AM_WEB_EXPORT am_status_t am_web_get_client_ip(const char* clientIPHeader,
-                                               char** clientIP);
-
-/**
- * Returns client hostname value from client hostname header.
- * If the clientHostname contains comma separated values,
- * then first value is taken into consideration.
- */
-AM_WEB_EXPORT am_status_t am_web_get_client_hostname(const char* clientHostnameHeader,
-                                                     char** clientHostname);
+AM_WEB_EXPORT am_status_t
+    am_web_get_client_ip_host(const char *clientIPHeader,
+                              const char *clientHostHeader,
+                              char **clientIP,
+                              char **clientHost);
 
 /**
  * Sets client ip (and client hostname) in environment map
  * which then sent as part of policy request.
  */
-AM_WEB_EXPORT void
-    am_web_set_host_ip_in_env_map(const char *client_ip,
+AM_WEB_EXPORT am_status_t
+am_web_set_host_ip_in_env_map(const char *client_ip,
                               const char *client_hostname,
-                              const am_map_t env_parameter_map,
-                              void* agent_config);
-
-
+                              const am_map_t env_parameter_map);
+#if (defined(WINNT) || defined(_AMD64_))
+//AM_WEB_EXPORT DWORD am_web_get_iis_filter_priority(); 
+#endif
 AM_END_EXTERN_C
 
 #endif	/* not AM_WEB_H */

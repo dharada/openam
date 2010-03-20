@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: connection.h,v 1.4 2008/06/25 08:14:31 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  *
  * Abstract:
@@ -205,15 +200,6 @@ public:
     //
     static am_status_t shutdown(void);
 
-    //
-    // Performs SSL handshake on a TCP socket
-    //
-    PRFileDesc *secureSocket(const std::string &certDBPasswd,
-                             const std::string &certNickName,
-                             bool alwaysTrustServerCert,
-                             PRFileDesc *rawSocket);
-
-
 private:
     Connection(const Connection&);		// Not implemented
     Connection& operator=(const Connection&);	// Not implemented
@@ -222,8 +208,8 @@ private:
     * Throws NSPRException upon NSPR error
     */
     PRFileDesc *createSocket(const PRNetAddr& address, bool useSSL,
-			     const std::string &certDBPasswd,
-			     const std::string &certNickName,
+			     char* certDBPasswd,
+			     char* certNickName,
 			     bool alwaysTrustServerCert); 
 
     char *growBuffer(char *oldBuffer, std::size_t oldBufferLen,
@@ -233,6 +219,7 @@ private:
     static bool initialized;
     PRFileDesc *socket;
     char *certdbpasswd;
+    char *certnickname; 
 };
 
 END_PRIVATE_NAMESPACE

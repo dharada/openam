@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,6 +18,7 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 #
 USERX_ROOT := ../../..
@@ -41,15 +38,11 @@ vpath %.cpp $(REAL_SRC_DIR)
 
 AM_DIR := ..
 
-ifneq ($(OS_ARCH), AIX)
 LIBS = -L$(DEST_LIB_DIR) -L$(LIBXML_LIB_DIR) -L$(NSS_LIB_DIR) -L$(NSPR_LIB_DIR) -lamsdk $(LIBXML_LIBS) $(NSPR_LIBS) $(NSS_LIBS)
-else
-LIBS = -brtl -L$(DEST_LIB_DIR) -L$(LIBXML_LIB_DIR) -L$(NSS_LIB_DIR) -L$(NSPR_LIB_DIR) -lamsdk $(LIBXML_LIBS) $(NSPR_LIBS) $(NSS_LIBS)
-endif
 
 ifeq ($(OS_ARCH), WINNT)
 ifdef   OS_IS_CYGWIN
-LIBS = -DEBUG -LIBPATH:$(DEST_LIB_DIR) -LIBPATH:$(LIBXML_LIB_DIR) -LIBPATH:$(NSS_LIB_DIR) -LIBPATH:$(NSPR_LIB_DIR) amsdk.lib $(LIBXML_LIBS) $(NSPR_LIBS) $(NSS_LIBS)
+LIBS = -LIBPATH:$(DEST_LIB_DIR) -LIBPATH:$(LIBXML_LIB_DIR) -LIBPATH:$(NSS_LIB_DIR) -LIBPATH:$(NSPR_LIB_DIR) amsdk.lib $(LIBXML_LIBS) $(NSPR_LIBS) $(NSS_LIBS)
 endif
 endif
 
@@ -119,7 +112,7 @@ am_web_agent_test$(EXE_EXT): $(am_web_agent_test_OBJS)
 	$(MAKE_C_PROGRAM)
 
 clean: clean_objs clean_samples
-	$(RM) $(PROGRAMS) *.ilk *.pdb *.exe.manifest
+	$(RM) $(PROGRAMS)
 ifeq ($(OS_ARCH), WINNT)
 	$(RM) $(OBJS)
 endif

@@ -1,9 +1,5 @@
 #!/bin/sh
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -23,8 +19,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: agentadmin,v 1.4 2009/08/27 21:41:32 subbae Exp $
+# $Id: agentadmin,v 1.1 2006/10/06 18:27:35 subbae Exp $
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 
 if [ -z "$AGENT_HOME" ]; then
@@ -39,9 +36,4 @@ fi
 
 AGENT_CLASSPATH=${AGENT_HOME}/lib/opensso-installtools-launcher.jar
 
-$JAVA_VM -classpath "$AGENT_CLASSPATH" com.sun.identity.install.tools.launch.AdminToolLauncher $*
-
-#
-# If IBM JDK/JRE in use, then comment the above line and uncomment the below line
-#
-#$JAVA_VM -DamKeyGenDescriptor.provider=IBMJCE -DamCryptoDescriptor.provider=IBMJCE -DamRandomGenProvider=IBMJCE -classpath "$AGENT_CLASSPATH" com.sun.identity.install.tools.launch.AdminToolLauncher $*
+$JAVA_VM -classpath $AGENT_CLASSPATH com.sun.identity.install.tools.launch.AdminToolLauncher $*

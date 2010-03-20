@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -96,10 +92,10 @@ BOOL iisaPropertiesFilePathGet(CHAR** propertiesFileFullPath, char *instanceId);
 
 void logPrimitive(CHAR *message);
 
-char* string_case_insensitive_search(char *HTTPHeaders, char *KeY);
+char *string_case_insensitive_search(char *HTTPHeaders, char *KeY);
 
-am_status_t get_header_value(EXTENSION_CONTROL_BLOCK *pECB, char* header_name, 
-        char* header_value);
+am_status_t get_header_value(EXTENSION_CONTROL_BLOCK *pECB, char* header_name,
+       char* header_value);
 
 tAgentConfig agentConfig;
 

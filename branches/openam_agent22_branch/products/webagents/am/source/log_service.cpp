@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: log_service.cpp,v 1.6 2008/07/15 20:12:39 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -36,8 +31,6 @@
 USING_PRIVATE_NAMESPACE
 
 namespace {
-
-    const unsigned long DEFAULT_BUFFER_SIZE = 5;
 
     const char requestPrefix[] = {
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
@@ -208,7 +201,7 @@ LogService::LogService(const ServiceInfo &svcInfo, const SSOToken &ssoToken,
     loggedByToken(ssoToken), 
     cookieList(ckieList), 
     remoteLogName(logFileName),
-    bufferSize(DEFAULT_BUFFER_SIZE),
+    bufferSize(1),
     bufferCount(0),
     remoteBodyChunkListInitialized(false)
 { 

@@ -17,9 +17,9 @@
 ' your own identifying information:
 ' "Portions Copyrighted [year] [name of copyright owner]"
 '
-' $Id: IIS6CreateConfig.vbs,v 1.3 2009/07/28 18:41:45 robertis Exp $
+' $Id: IIS6CreateConfig.vbs,v 1.1.2.1 2008/02/10 00:17:42 robertis Exp $
 '
-' Copyright 2009 Sun Microsystems Inc. All Rights Reserved
+' Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 '
 '
 '--------------------------------------------------------------------
@@ -28,19 +28,19 @@ Dim installDir, setInstallDir, configInstallDir, portNumber,setPortNumber
 Dim objWWW, Item, setIdentifier, protocol, setProtocol, agentDeploymentURI
 Dim setAgentDeploymentURI, setPrimaryServerHost, primaryServerPort
 Dim setPrimaryServerPort, primaryServerProtocol, setPrimaryServerProtocol
-Dim primaryServerDeploymentURI, setPrimaryServerDeploymentURI, userName 
+Dim primaryServerDeploymentURI, setPrimaryServerDeploymentURI, userName
+Dim primaryServerConsoleURI, setPrimaryServerConsoleURI, failoverServer
 Dim setFailoverServerPort, failoverServerProtocol, setFailoverServerProtocol
 Dim failoverServerDeploymentURI, setFailoverServerDeploymentURI, orgName
 Dim failoverServerConsoleURI, setFailoverServerConsoleURI, failoverServerPort
-Dim setOrgName, setUserName, setUserPassword, setPasswdKey, encryptFile, primaryServerURL
+Dim setOrgName, setUserName, setUserPassword, encryptFile, primaryServerURL
 Dim encrypt, encryptedPwd, delEncryptedFile, cdssoEnabled, setCDSSOEnabled
 Dim isVersion, correctVersion, setISVersionNumber, correctAgentPort
 Dim correctIdentifier, correctAgentProtocol, correctPrimaryServerPort
 Dim correctPrimaryServerProtocol, correctFailoverServerPort, tmpInstallDir
 Dim correctFailoverServerProtocl, correctPassword, correctCDSSOFlag, dict
-Dim setHostName, expHostName, encryptedPasswd, setFailoverServerHost, failoverServerURL
+Dim setHostName, encryptedPasswd, setFailoverServerHost, failoverServerURL
 Dim scriptFullName, currDir, WshShell
-Dim agentUrl, serverUrl, correctAgentUrl, correctServerUrl
 
 Set Args = WScript.Arguments
 if Args.Count < 1 Then
@@ -50,7 +50,7 @@ if Args.Count < 1 Then
 end if
 
 WScript.Echo ""
-WScript.Echo "Copyright c 2009 Sun Microsystems, Inc. All rights reserved"
+WScript.Echo "Copyright c 2007 Sun Microsystems, Inc. All rights reserved"
 WScript.Echo "Use is subject to license terms"
 
 Set oFSO = CreateObject("Scripting.FileSystemObject")
@@ -147,24 +147,10 @@ Function GetAgentDetails(oFSO, dict)
   configInstallDir = Replace(installDir,"/","\")
   computerName = WshNetwork.ComputerName
 
-
-  correctAgentUrl = false
-  do 
-    WScript.Echo dict("101")
-    agentUrl = LCase(WScript.StdIn.ReadLine)
-    
-    if (IsValidUrl(agentUrl,true)) then
-       correctAgentUrl = true
-    else
-       WScript.Echo ""
-       WScript.Echo dict("105")
-       WScript.Echo ""
-    end if
-  loop until (correctAgentUrl = true)
+  WScript.Echo dict("101")
+  setHostName = WScript.StdIn.ReadLine
   WScript.Echo ""
 
-
-  'Displaying the web sites instances
   WScript.Echo dict("102")
   WScript.Echo dict("103")
   Set objWWW = GetObject("IIS://" & computerName & "/W3SVC")
@@ -192,7 +178,49 @@ Function GetAgentDetails(oFSO, dict)
       end if
   loop until (correctIdentifier = true)
 
-  setAgentDeploymentURI="/amagent"
+  WScript.Echo ""
+  correctAgentProtocol = false
+  do 
+    protocol = "http"
+    WScript.Echo dict("105")
+    setProtocol = LCase(WScript.StdIn.ReadLine)
+    if (setProtocol="") then
+       setProtocol = protocol
+    end if
+    if ((setProtocol = "http") or (setProtocol = "https")) then
+       correctAgentProtocol = true
+    else
+       WScript.Echo dict("122")
+    end if
+  loop until (correctAgentProtocol = true)
+
+  WScript.Echo ""
+  correctAgentPort = false
+  do 
+    if (setProtocol = "http") then
+       portNumber = "80"
+    elseif (setProtocol = "https") then
+       portNumber = "443"
+    end if
+    WScript.Echo dict("106") & " [" & portNumber & "] :"
+    setPortNumber = WScript.StdIn.ReadLine
+    if setPortNumber="" then
+       setPortNumber = portNumber
+    end if
+    if (isNumeric(setPortNumber)) then
+       correctAgentPort = true
+    else 
+       WScript.Echo dict("123")
+    end if
+  loop until (correctAgentPort = true)
+
+  WScript.Echo ""
+  agentDeploymentURI = "/amagent"
+  WScript.Echo dict("107")
+  setAgentDeploymentURI = WScript.StdIn.ReadLine
+  if (setAgentDeploymentURI="") then
+     setAgentDeploymentURI = agentDeploymentURI
+  end if
 
 End Function
 
@@ -209,58 +237,100 @@ End Function
 Function GetAccessManagerDetails(oFSO, dict, WshShell)
 
   WScript.Echo "------------------------------------------------"
-  WScript.Echo "Sun OpenSSO Enterprise 8.0" 
+  WScript.Echo "Sun Java (TM) Enterprise System Access Manager "
   WScript.Echo "------------------------------------------------"
 
-  correctServerUrl = false
-  do 
-    WScript.Echo dict("108")
-    serverUrl = LCase(WScript.StdIn.ReadLine)
-    
-    if (IsValidUrl(serverUrl,false)) then
-       correctServerUrl = true
-    else
-       WScript.Echo ""
-       WScript.Echo dict("109")
-       WScript.Echo ""
+  WScript.Echo dict("108")
+  setPrimaryServerHost = WScript.StdIn.ReadLine
+
+  WScript.Echo ""
+  correctPrimaryServerProtocol = false
+  do
+    primaryServerProtocol = "http"
+    WScript.Echo dict("109")
+    setPrimaryServerProtocol = LCase(WScript.StdIn.ReadLine)
+    if (setPrimaryServerProtocol="") then
+       setPrimaryServerProtocol = primaryServerProtocol
     end if
-  loop until (correctServerUrl = true)
-
+    if (setPrimaryServerProtocol = "http") or (setPrimaryServerProtocol="https") then
+       correctPrimaryServerProtocol = true
+    else
+       WScript.Echo dict("122")
+    end if
+  loop until correctPrimaryServerProtocol = true
 
   WScript.Echo ""
-  WScript.Echo dict("145")
-  setUserName = WScript.StdIn.ReadLine
-  WScript.Echo ""
+  correctPrimaryServerPort = false
   do 
-    WScript.Echo dict("106")
-    passwdFile = WScript.StdIn.ReadLine
+    if (setPrimaryServerProtocol = "http") then
+       primaryServerPort = "58080"
+    elseif (setPrimaryServerProtocol = "https") then
+       primaryServerPort = "443"
+    end if
+    WScript.Echo dict("110") & " [" & primaryServerPort & "] :"
+    setPrimaryServerPort = WScript.StdIn.ReadLine
+    if (setPrimaryServerPort="") then
+       setPrimaryServerPort = primaryServerport
+    end if
+    if (isNumeric(setPrimaryServerPort)) then
+       correctPrimaryServerPort = true
+    else
+     WScript.Echo dict("124")
+    end if
+  loop until (correctPrimaryServerPort = true)
+
+  WScript.Echo ""
+  primaryServerDeploymentURI = "/amserver"
+  WScript.Echo dict("111")
+  setPrimaryServerDeploymentURI = WScript.StdIn.ReadLine
+  if (setPrimaryServerDeploymentURI="") then
+     setPrimaryServerDeploymentURI = primaryServerDeploymentURI
+  end if
+
+  WScript.Echo ""
+  primaryServerConsoleURI = "/amconsole"
+  WScript.Echo dict("112")
+  setPrimaryServerConsoleURI = WScript.StdIn.ReadLine
+  if (setPrimaryServerConsoleURI="") then
+     setPrimaryServerConsoleURI = primaryServerConsoleURI
+  end if
+
+  setUserName = "UrlAccessAgent"
+
+  WScript.Echo ""
+  correctPassword = false
+  do 
+    do 
+      WScript.Echo dict("118")
+      Set objPassword = CreateObject("ScriptPW.Password")
+      setUserPassword = objPassword.GetPassword()
+      if (setUserPassword = "") then
+         WScript.Echo ""
+         WScript.Echo dict("126")
+      end if
+    loop until (setUserPassword <> "")
     WScript.Echo
-    'First check if the file exist.
-    if(oFSO.FileExists(passwdFile)) then
-        Set passwdFile = oFSO.GetFile(passwdFile)
-        if(passwdFile.Size > 0) then
-            Set passwd = oFSO.OpenTextFile(passwdFile,ForReading,True)
-            setUserPassword = passwd.ReadLine
-            passwd.Close
-            if (Trim(setUserPassword) = "") then
-                WScript.Echo ""
-                WScript.Echo dict("119")
-                WScript.Echo ""
-            end if
-        else
-            WScript.Echo dict("119")
-        end if
-    else
-        WScript.Echo dict("107")
+    do 
+      WScript.Echo dict("119")
+      Set objPassword1 = CreateObject("ScriptPW.Password")
+      setUserPassword1 = objPassword1.GetPassword()
+      if (setUserPassword1 = "") then
+         WScript.Echo ""
+         WScript.Echo dict("126")
+      end if
+    loop until (setUserPassword <> "")
+    if (setUserPassword = SetUserPassword1) then
+       correctPassword = true
+    else 
+       WScript.Echo ""
+       WScript.Echo dict("127")
+       WScript.Echo ""
     end if
-  loop until (Trim(setUserPassword) <> "")
-
-  setUserPassword = Trim(setUserPassword)
+  loop until (correctPassword = true)
 
   '// Encrypt the password
   encryptFile = configInstallDir + "\encryptPasswd"
-  setPasswdKey = GetRandomString(10)
-  WshShell.Run "cmd /c cd " + configInstallDir + "\bin" + "& cryptit.exe " + setUserPassword + " "+ setPasswdKey + " > " + encryptFile, 0, true
+  WshShell.Run "cmd /c cd " + configInstallDir + "\bin" + "& cryptit.exe " + setUserPassword + " > " + encryptFile, 0, true
 
   Set encrypt = oFSO.OpenTextFile(encryptFile,ForReading,True)
   encryptedPasswd = encrypt.ReadLine
@@ -279,7 +349,7 @@ End Function
 ' Output : None
 ' Description : The WriteConfigFile() function performs the following tasks:
 ' 1.Creates the config file
-' 2 Populates the name and value pairs to be used by the IIS6Admin.vbs
+' 2 Populates the name and value pairs to be used by the IIS6admin.vbs
 '----------------------------------------------------------------------------
 Function WriteConfigFile(oFSO, configFile)
 
@@ -301,18 +371,11 @@ Function WriteConfigFile(oFSO, configFile)
                                       
   wTF.WriteLine "@AGENT_PROFILE_NAME@ = " + setUserName
   wTF.WriteLine "@AGENT_ENCRYPTED_PASSWORD@ = " + encryptedPasswd
-  wTF.WriteLine "@AGENT_ENCRYPT_KEY@ = " + setPasswdKey
 
+  wTF.WriteLine "AGENT_URL_PREFIX = " + setProtocol + "://" + setHostName + ":" + setPortNumber + agentDeploymentURI
 
-  wTF.WriteLine "AGENT_URL_PREFIX = " + setProtocol + "://" + setHostName + ":" + setPortNumber + setAgentDeploymentURI
-
-  wTF.WriteLine "@DEBUG_LOGS_DIR@ = " + setInstallDir + "/Identifier_" + setIdentifier + "/logs/debug"
+  wTF.WriteLine "@DEBUG_LOGS_DIR@ = " + setInstallDir + "/Identifier_" + setIdentifier + "/debug"
   wTF.WriteLine "TEMP_DIR_PREFIXDEBUG_DIR_PREFIX = " + setInstallDir 
-
-  wTF.WriteLine "@AUDIT_LOGS_DIR@ = " + setInstallDir + "/Identifier_" + setIdentifier + "/logs/audit"
-
-  expHostName = Replace(setHostName,".","_")
-  wTF.WriteLine "@AUDIT_LOG_FILENAME@ = " + "amAgent_"+ expHostName + ".log"
 
   wTF.WriteLine "SERVER_DIR =  "  + setInstallDir + "/iis6/cert"
 
@@ -321,109 +384,10 @@ Function WriteConfigFile(oFSO, configFile)
   wTF.WriteLine "AGENT_CERT_PREFIX =  " 
 
   WScript.Echo "-----------------------------------------------------"
-  WScript.Echo dict("110") + " " + configFile
+  WScript.Echo "Agent Configuration file created ==>  " + configFile
   WScript.Echo "-----------------------------------------------------"
   wTF.Close
 
   Set oFSO = nothing
 
 End Function
-
-' Return a random string 
-Function GetRandomString(len) 
-  dim i, s, a, rndm, rndm1, tmp, tmp1
-  a=Array("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9")
-
-  const startChr ="a", range = 36 
-  Randomize 
-  s = "" 
-  for i = 0 to len-1   
-     rndm1 = Rnd()
-     rndm = rndm1 * range
-     rndm = rndm Mod 35
-     s = s + a(rndm)
-  next 
-  GetRandomString = s 
-end function  
-' 
-
-Function IsValidUrl(url, isAgent)
-
-  Dim urlArray,i,protocol,hostname,portnum,deployuri,currStr
-  IsValidUrl = true
-
-  urlArray=split(url,":", -1, 1)
-  bound=UBound(urlArray)
-  Erase urlArray
-  if(bound <> 2) then
-    IsValidUrl = false
-    Exit Function
-  end if 
-
-  urlArray=split(url,"://", -1, 1)
-  bound=UBound(urlArray)
-  if (bound <> 1) then
-    IsValidUrl = false
-    Exit Function
-  else
-    protocol = urlArray(0)
-    currStr = urlArray(1)
-    if ((Len(protocol)=0) or (Len(currStr)=0)) then
-      IsValidUrl = false
-      Exit Function
-    end if 
-    if ((protocol <> "http") and (protocol <> "https")) then
-      IsValidUrl = false
-      Exit Function
-    end if
-  end if
-  Erase urlArray
-  
-  urlArray=split(currStr,":", -1, 1)
-  bound=UBound(urlArray)
-  if (bound <> 1) then
-    IsValidUrl = false
-    Exit Function
-  else
-    hostname = urlArray(0)
-    currStr = urlArray(1)
-    if ((Len(hostname)=0) or (Len(currStr)=0)) then
-      IsValidUrl = false
-      Exit Function
-    end if 
-  end if
-  Erase urlArray
-
-  if(isAgent = true)then
-    portnum = currStr
-    if (IsNumeric(portnum) = false) then
-      IsValidUrl = false
-      Exit Function
-    end if
-    setProtocol=protocol
-    setHostName=hostname
-    setPortNumber=portnum
-  else
-    urlArray=split(currStr,"/", -1, 1)
-    bound=UBound(urlArray)
-    if (bound <> 1) then
-      IsValidUrl = false
-      Exit Function
-    else
-      portnum = urlArray(0)
-      deployuri = urlArray(1)
-      if ((Len(portnum)=0) or (Len(deployuri)=0)) then
-        IsValidUrl = false
-        Exit Function
-      end if 
-    end if
-    Erase urlArray
-    setPrimaryServerProtocol=protocol
-    setPrimaryServerHost=hostname
-    setPrimaryServerPort=portnum
-    setPrimaryServerDeploymentURI="/"+deployuri
-  end if
-
-End Function
-
-

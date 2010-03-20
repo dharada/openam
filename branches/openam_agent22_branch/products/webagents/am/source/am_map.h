@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_map.h,v 1.7 2008/08/19 19:15:04 veiming Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -30,8 +25,7 @@
  * Abstract:
  *
  * Types and functions for creating, destroying, and manipulating the
- * map objects used by the OpenSSO Access Management 
- * SDK.
+ * map objects used by the Sun Java System Access Manager Access Management SDK.
  *
  */
 

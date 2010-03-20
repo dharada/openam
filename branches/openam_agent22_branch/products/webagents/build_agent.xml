@@ -1,8 +1,4 @@
 <!--
-   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-   Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-  
    The contents of this file are subject to the terms
    of the Common Development and Distribution License
    (the License). You may not use this file except in
@@ -22,8 +18,9 @@
    your own identifying information:
    "Portions Copyrighted [year] [name of copyright owner]"
 
-   $Id: build_agent.xml,v 1.18 2009/11/04 22:13:29 leiming Exp $
+   $Id: build_agent.xml,v 1.5.2.2 2009/04/13 21:58:34 dknab Exp $
 
+   Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 -->
 
 <project name="open-source-web-agents" default="usage">
@@ -37,16 +34,10 @@
         location="${webagents.basedir}/agents/source/apache"/>
     <property name="webagents.sjsws.src.dir" 
         location="${webagents.basedir}/agents/source/sjsws"/>
-    <property name="webagents.proxy40.src.dir"
-        location="${webagents.basedir}/agents/source/proxy40"/>
     <property name="webagents.apache22.src.dir" 
         location="${webagents.basedir}/agents/source/apache22"/>
     <property name="webagents.iis6.src.dir"
         location="${webagents.basedir}/agents/source/iis6"/>
-    <property name="webagents.iis7.src.dir"
-        location="${webagents.basedir}/agents/source/iis7"/>
-    <property name="webagents.domino.src.dir"
-        location="${webagents.basedir}/agents/source/domino"/>
 
     <!-- top level directory structure -->
     <property name="webagents.container.extlib.dir" 
@@ -80,7 +71,7 @@
     <property name="container.web_agent.locale.dir" 
         location="${container.web_agent.dir}/locale"/>   
     <property name="container.web_agent.logs.dir" 
-        location="${container.web_agent.dir}/installer-logs"/>   
+        location="${container.web_agent.dir}/logs"/>   
 
     <!-- build class path for container -->
     <path id="build.class.path">
@@ -88,6 +79,7 @@
         <fileset dir="${webagents.container.extlib.dir}">
             <include name="**/*.jar"/>
         </fileset>
+	<pathelement location="../installtools/built/classes"/>
     </path>
 
     <target name="preparebuild">
@@ -117,44 +109,19 @@
         </copy>
 
         <!-- Copy README file -->
+        <available file="${webagents.basedir}/.copyReadme" property="copy.readme"/>
+        <antcall target="copyreadme"/>
+
+        <!-- Copy AMAgent.template file -->
+        <copy file="${webagents.basedir}/conf/AMAgent.properties"
+              tofile="${container.web_agent.config.dir}/AMAgent.template"/>
+    </target>
+
+    <target name="copyreadme" if="copy.readme">
+        <!-- Copy README file -->
         <copy todir="${container.web_agent.dir}">
             <fileset dir="${webagents.basedir}">
                 <include name="README"/>
-            </fileset>
-        </copy>
-
-        <!-- Copy OpenSSOAgentBootstrap.template file -->
-        <copy todir="${container.web_agent.config.dir}">
-            <fileset dir="${webagents.basedir}/conf">
-                <include name="OpenSSOAgentBootstrap.template"/>
-            </fileset>
-        </copy>
-
-        <!-- Copy OpenSSOAgentConfiguration.template file -->
-        <copy todir="${container.web_agent.config.dir}">
-            <fileset dir="${webagents.basedir}/conf">
-                <include name="OpenSSOAgentConfiguration.template"/>
-            </fileset>
-        </copy>
-
-        <!-- Copy OpenSSOAgentMigration.template file -->
-        <copy todir="${container.web_agent.config.dir}">
-            <fileset dir="${webagents.basedir}/conf">
-                <include name="OpenSSOAgentMigration.properties"/>
-            </fileset>
-        </copy>
-
-        <!-- Copy RELEASE_NOTES file -->
-        <available file="${webagents.basedir}/.copyReleaseNotes" property="copy.release.notes"/>
-        <antcall target="copyreleasenotes"/>
-
-    </target>
-
-    <target name="copyreleasenotes" if="copy.release.notes">
-        <!-- Copy RELEASE_NOTES file -->
-        <copy todir="${container.web_agent.dir}">
-            <fileset dir="${webagents.basedir}">
-                <include name="RELEASE_NOTES"/>
             </fileset>
         </copy>
     </target>

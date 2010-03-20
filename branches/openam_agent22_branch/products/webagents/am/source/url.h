@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: url.h,v 1.6 2009/10/13 01:40:42 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __URL_H__
@@ -38,13 +33,13 @@ BEGIN_PRIVATE_NAMESPACE
 class URL {
  public:
     typedef enum {
-	PROTOCOL_HTTP = 0,
-	PROTOCOL_HTTPS,
-	PROTOCOL_FTP,
-	PROTOCOL_TELNET,
-	PROTOCOL_GOPHER,
-	PROTOCOL_LDAP,
-	PROTOCOL_UNKNOWN
+        PROTOCOL_HTTP = 0,
+        PROTOCOL_HTTPS,
+        PROTOCOL_FTP,
+        PROTOCOL_TELNET,
+        PROTOCOL_GOPHER,
+        PROTOCOL_LDAP,
+        PROTOCOL_UNKNOWN
     } Protocol;
 
     /* constructors */
@@ -53,51 +48,51 @@ class URL {
      * The exception will contain an message for the error.
      */
     URL(const std::string &urlStr,
-	bool ignore_case=true, bool useOld=false); 
+    bool ignore_case=true, bool useOld=false); 
 
     URL(const std::string &urlStr,
-	const std::string &path_info,
-	bool ignore_case=true, bool useOld=false); 
+    const std::string &path_info,
+    bool ignore_case=true, bool useOld=false); 
 
     URL(const std::string &urlStr,
-	std::size_t url_len,
-	bool ignore_case=true, bool useOld=false); 
+    std::size_t url_len,
+    bool ignore_case=true, bool useOld=false); 
 
     URL(const URL &);
 
     URL() {
-	protocol = PROTOCOL_HTTP;
-	port = defaultPort[protocol];
-	portStr = defaultPortStr[protocol];
+        protocol = PROTOCOL_HTTP;
+        port = defaultPort[protocol];
+        portStr = defaultPortStr[protocol];
     }
 
     inline void setHost(const std::string &newHost) {
-	host = newHost;
+        host = newHost;
     }
 
     inline void setPort(std::size_t newPort) {
-	if (newPort <= 0 || newPort > 65535) {
-	    port = defaultPort[protocol];
-	    portStr = defaultPortStr[protocol];
-	} else {
-	    port = newPort;
-	    portStr = Utils::toString(port);
-	}
+        if (newPort <= 0 || newPort > 65535) {
+            port = defaultPort[protocol];
+            portStr = defaultPortStr[protocol];
+        } else {
+            port = newPort;
+            portStr = Utils::toString(port);
+        }
     }
 
     inline void setProtocol(const std::string& newProtocol) {
-	protocol = whichProtocol(newProtocol);
-	port = defaultPort[protocol];
-	portStr = defaultPortStr[protocol];
+        protocol = whichProtocol(newProtocol);
+        port = defaultPort[protocol];
+        portStr = defaultPortStr[protocol];
     }
 
     inline void setURI(const std::string& newURI) {
-	uri = newURI;
+        uri = newURI;
     }
 
     inline void setQuery(const std::string& newQuery) {
-	splitQParams(newQuery);
-	query = newQuery;
+        splitQParams(newQuery);
+        query = newQuery;
         checkQueryFormat();
     }
 
@@ -107,30 +102,30 @@ class URL {
 
     /* Get functions */
     URL::Protocol getProtocol() const {
-	return protocol;
+        return protocol;
     }
 
     const char *getProtocolString() const;
 
-
     inline const std::string &getHost() const {
-	return host;
+        return host;
     }
 
     inline std::size_t getPort() const {
-	return port;
+        return port;
     }
 
     inline const std::string &getPortStr() const {
-	return portStr;
+        return portStr;
     }
 
     inline const std::string &getURI() const {
-	return uri;
+        return uri;
     }
 
     void getURLString(std::string& urlString, size_t capacity = 0);
-    void getCanonicalizedURLString(std::string& urlString, size_t capacity = 0); 
+    
+    void getCanonicalizedURLString(std::string& urlString, size_t capacity = 0);
 
     void removeQueryParameter(const std::string &key);
     bool findQueryParameter(const std::string &key);
@@ -146,35 +141,33 @@ class URL {
      * of the URL, such as invalid protocol or port number.
      * The exception will contain an message for the error.  */
     void parseURLStr(const std::string &urlStr,
-		     const std::string &pathInfo=std::string(""), 
-		     bool useOld=true);
+                const std::string &pathInfo=std::string(""), 
+                bool useOld=true);
 
     void parseURLStrNew(const std::string &urlStr,
-		     const std::string &pathInfo=std::string(""));
+                const std::string &pathInfo=std::string(""));
     void parseURLStrOld(const std::string &urlStr,
-		     const std::string &pathInfo=std::string(""));
+                const std::string &pathInfo=std::string(""));
 
     inline bool validatePort() {
-	return (port < 0 || port > 65535)?false:true;
+        return (port < 0 || port > 65535)?false:true;
     }
 
     URL::Protocol whichProtocol(const std::string &proto) {
-	std::size_t p;
-	for(p = 0; p < PROTOCOL_UNKNOWN; ++p) {
-	    if(strcasecmp(proto.c_str(), protocolStr[p]) == 0) {
-		break;
-	    }
-	}
-	return (URL::Protocol)(p);
+        std::size_t p;
+        for(p = 0; p < PROTOCOL_UNKNOWN; ++p) {
+            if(strcasecmp(proto.c_str(), protocolStr[p]) == 0) {
+                break;
+            }
+        }
+        return (URL::Protocol)(p);
     }
 
     /* Throws InternalException if the query parameter has invalid format */
     void splitQParams(const std::string &qparam); 
-
-    std::string construct_query_parameter_string() const;
     void checkQueryFormat();
     std::string get_query_parameter_string() const;
-    std::string get_canonicalized_query_parameter_string() const; 
+    std::string get_canonicalized_query_parameter_string() const;
 
     Protocol protocol;
     std::string host;

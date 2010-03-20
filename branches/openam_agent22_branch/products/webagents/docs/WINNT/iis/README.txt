@@ -2,10 +2,6 @@
 README file for Open Web Single Sign-On - Web Agents
 ------------------------------------------------------------------------------
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -25,13 +21,14 @@ README file for Open Web Single Sign-On - Web Agents
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: README.txt,v 1.3 2009/06/26 21:35:23 robertis Exp $
+# $Id: README.txt,v 1.1 2007/06/05 19:36:43 subbae Exp $
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 %% Contents:
     %% 1. Build requirements
     %% 2. Library dependencies
-        %% 2.1 Obtaining Visual Studio 6 or 7, cygwin or MKS Tool Kit
+        %% 2.1 Obtaining Visual Studio 6 or 7, MKS Tool Kit
         %% 2.2 Obtaining LIBXML2 2.6.23
         %% 2.3 Obtaining NSS 3.11
         %% 2.4 Obtaining NSPR 4.6.1
@@ -65,10 +62,10 @@ the library vendor or distributor. Some of these libraries are available in
 source distribution form and must be built locally before they can be used. 
 The libraries needed for compiling OpenSSO sources are:
 
-        - Visual Studio 6 or 7, cygwin or MKS Tool Kit
-        - LIBXML2 2.7.3
+        - Visual Studio 6 or 7, MKS Tool Kit
+        - LIBXML2 2.6.23
         - NSS 3.11
-	    - NSPR 4.6.1
+	- NSPR 4.6.1
 
 The following subsections briefly describe how these libraries may be 
 obtained. These instructions are provided for your convenience only and
@@ -81,25 +78,18 @@ must disregard those instructions and instead follow the ones provided by
 the library vendor or distributor in accordance with their terms and 
 conditions.
 
-%% 2.1 Obtaining Visual Studio 6 or 7, cygwin or MKS Tool Kit
+%% 2.1 Obtaining Visual Studio 6 or 7, MKS Tool Kit
 
-Please install Visual Studio 6 or 7 and cygwin or MKS Tool Kit before compiling the 
+Please install Visual Studio 6 or 7 and MKS Tool Kit before compiling the 
 sources. Make sure that the PATH variable is updated with the locations of 
-Visual Studio 6 or 7 and MKS Tool Kit. You can run vsvars32.bat in a command 
-prompt and set the variables. 
+Visual Studio 6 or 7 and MKS Tool Kit
 
-Please note that while using cygwin to build the samples, PATH, INCLUDE and LIB 
-environment variables have to be set manually. You can start a Visual Studio 
-command prompt and run echo %PATH%, echo %LIB% and echo %INCLUDE% to get the values. 
-You can then set them either by using export in cygwin shell or through the 
-system properties of Windows. 
-
-%% 2.2 Obtaining LIBXML2 2.7.3
+%% 2.2 Obtaining LIBXML2 2.6.23
 
 Follow these steps to obtain the LIBXML2:
 
 2.2.1 Open the web page: http://www.zlatkovic.com/pub/libxml/
-2.2.2 Download libxml2-2.7.3.win32.zip
+2.2.2 Download libxml2-2.6.23+.win32.zip
 2.2.3 Uncompress the zip file.
 2.2.4 cp <libxml2-install-dir>\include\libxml\* <opensso_webagent>\extlib\WINNT\libxml2\include\libxml2\libxml
 2.2.5 cp <libxml2-install-dir>\lib\* <opensso_webagent>\extlib\WINNT\libxml2\lib

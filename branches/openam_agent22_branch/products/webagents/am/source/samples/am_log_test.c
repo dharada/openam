@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdio.h>
@@ -53,18 +49,19 @@ void Usage(char **argv) {
     " -l <logged_by_token_id>"
     " -m <log_message>"
     " [-d <log_module>]"
-    " [-f <bootstrap_properties_file>]\n",
+    " [-f <properties_file>]\n",
     argv[0]);
 }
 
-void do_remote_logging(const char *loggingUrl, am_properties_t prop, const char *user_token_id, const char *log_name, const char *log_message, const char *logged_by_token_id, const char *log_module);
 
 int main(int argc, char *argv[])
 {
 
-    const char* prop_file = "../../config/OpenSSOAgentBootstrap.properties";
+    const char* prop_file = "../../config/AMAgent.properties";
     am_status_t status = AM_FAILURE;
     am_properties_t prop = AM_PROPERTIES_NULL;
+    am_log_record_t log_record = NULL;
+    boolean_t log_result = B_FALSE;
 
     const char *user_token_id = NULL;
     const char *log_name = NULL;
@@ -74,8 +71,8 @@ int main(int argc, char *argv[])
     const char *loggingservice = "loggingservice";
     int j;
     char c;
-    char *serverUrl = NULL;
-    const char *loggingUrl = NULL;
+    const char *serverUrl = NULL;
+    char *tmpUrl = NULL;
     int usage = 0;
 
     for (j=1; j < argc; j++) {
@@ -137,41 +134,17 @@ int main(int argc, char *argv[])
     status = am_log_init(prop);
     fail_on_error(status, "am_log_init");
 
-    serverUrl = (char *) malloc(512);
-    memset(serverUrl,0,512);
-
-    do_remote_logging(serverUrl, prop, user_token_id, log_name, log_message, logged_by_token_id, log_module);
+    serverUrl = (char *) malloc(250);
 
     if (serverUrl != NULL) {
-        free(serverUrl);
-    }
-
-    exit(0);
-}
-
-void do_remote_logging(const char *loggingUrl, am_properties_t prop, const char *user_token_id, const char *log_name, const char *log_message, const char *logged_by_token_id, const char *log_module)
-{
-    char *tmpUrl = NULL;
-    am_status_t status = AM_FAILURE;
-    boolean_t log_result = B_FALSE;
-    am_log_record_t log_record = NULL;
-
-    if (loggingUrl != NULL) {
-	status = am_properties_get(prop, 
-		   "com.sun.identity.agents.config.naming.url", &loggingUrl);
-        if (strlen(loggingUrl) == 0) {
-	    // The c-sdk is 2.2, the naming url property is different
-	    status = am_properties_get(prop, "com.sun.am.naming.url", 
-                                       &loggingUrl);
-        }
-	if ((status == AM_SUCCESS) && (loggingUrl != NULL)) {
-
-	   tmpUrl = strstr(loggingUrl, "namingservice");
+	status = am_properties_get(prop, "com.sun.am.naming.url", &serverUrl);
+	if ((status == AM_SUCCESS) && (serverUrl != NULL)) {
+	   tmpUrl = strstr(serverUrl, "namingservice");
 	   if (tmpUrl != NULL) {
-              strcpy(tmpUrl,"loggingservice");
+	      strncpy(tmpUrl,"loggingservice",strlen(loggingservice));
 
               /* log a message with fixed SSO Token ID */
-              status = am_log_set_remote_info(loggingUrl,logged_by_token_id,
+              status = am_log_set_remote_info(serverUrl,logged_by_token_id,
                                               log_name, prop);
               fail_on_error(status, "am_log_set_remote_info");
 
@@ -220,5 +193,6 @@ void do_remote_logging(const char *loggingUrl, am_properties_t prop, const char 
         printf("Logging Completed!\n");
     }
 
+    exit(0);
 }
 

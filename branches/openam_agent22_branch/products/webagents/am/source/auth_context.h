@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: auth_context.h,v 1.4 2008/06/25 08:14:31 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef _AUTH_CONTEXT_H_
@@ -84,7 +79,6 @@ class AuthContext {
     std::vector<am_auth_callback_t> callbacks;
     void cleanupCharArray(const char* &char_array);
     void cleanupStringList(const char** &string_list, size_t list_size);
-    friend class AgentProfileService;
 
 };
 

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: sso_token_service.h,v 1.7 2008/09/13 01:11:53 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 #ifndef __SSO_TOKEN_SERVICE_H__
@@ -164,7 +159,6 @@ private:
 			const am_sso_token_event_type_t event_type, 
 			const long event_time);
 
-
     am_status_t callTheListener(
 			SSOTokenListenerThreadFunc *listenerThrFunc,
 			const std::string& sessionID, 
@@ -217,6 +211,9 @@ public:
     am_status_t destroySession(const ServiceInfo& serviceInfo,
 			       const std::string& ssoTokenID);
 
+    am_status_t logoutSession(const ServiceInfo& serviceInfo,
+			       const std::string& ssoTokenID);
+
     am_status_t setProperty(const ServiceInfo& serviceInfo,
 			    SessionInfo& sessionInfo,
                             const std::string& name,
@@ -239,6 +236,7 @@ public:
 
     am_status_t removeSSOListener(
 			const am_sso_token_listener_func_t listener);
+
     inline void removeSSOTokenTableEntry(string ssoToken)
     {
         mSSOTokenTable.remove(ssoToken);

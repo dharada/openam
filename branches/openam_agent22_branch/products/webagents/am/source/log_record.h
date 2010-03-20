@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: log_record.h,v 1.4 2008/08/04 19:22:12 huacui Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef LOG_RECORD_H
@@ -50,7 +45,7 @@ public:
         L_FINER = 400,
         L_FINEST = 300,
 
-	/* Log Levels defined by OpenSSO
+	/* Log Levels defined by Access Manager 
 	 * keeping names consistent with IS LogLevel names */
 	LL_SECURITY = 950,
 	LL_CATASTROPHE = 850,

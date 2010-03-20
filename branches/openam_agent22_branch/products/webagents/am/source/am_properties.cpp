@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_properties.cpp,v 1.6 2008/06/25 08:14:28 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -542,89 +537,4 @@ am_properties_iter_get_value(am_properties_iter_t properties_iter)
     }
 
     return result;
-}
-
-/**
- * This function sets null terminator "\0" to a property. This is
- * needed in certain situations where a property is present, but no
- * value set to it. Particually useful in CAC, where certain properties
- * returned by AM, may not hold a value, but they are present.
- *
-*/
-extern "C" am_status_t
-am_properties_set_null(am_properties_t properties, const char *key,
-		     const char *value)
-{
-    am_status_t status;
-    Properties *propPtr = reinterpret_cast<Properties *>(properties);
-
-    if (propPtr && key) {
-	try {
-	    propPtr->set(key, value);
-	    status = AM_SUCCESS;
-	} catch (const std::bad_alloc&) {
-	    status = AM_NO_MEMORY;
-	} catch (const std::exception&) {
-	    status = AM_FAILURE;
-	} catch (...) {
-	    status = AM_FAILURE;
-	}
-    } else {
-	status = AM_INVALID_ARGUMENT;
-    }
-
-    return status;
-}
-
-extern "C" am_status_t
-am_properties_set_list(am_properties_t properties, 
-                       const char *key,
-                       const char *valueSep)
-{
-    am_status_t status;
-    Properties *propPtr = reinterpret_cast<Properties *>(properties);
-
-    if (propPtr && key) {
-	try {
-	    propPtr->set_list(key, valueSep);
-	    status = AM_SUCCESS;
-	} catch (const std::bad_alloc&) {
-	    status = AM_NO_MEMORY;
-	} catch (const std::exception&) {
-	    status = AM_FAILURE;
-	} catch (...) {
-	    status = AM_FAILURE;
-	}
-    } else {
-	status = AM_INVALID_ARGUMENT;
-    }
-
-    return status;
-}
-
-extern "C" am_status_t
-am_properties_set_map(am_properties_t properties, 
-                      const char *key,
-                      const char *mapSep,
-                      const char *valueSep)
-{
-    am_status_t status;
-    Properties *propPtr = reinterpret_cast<Properties *>(properties);
-
-    if (propPtr && key) {
-	try {
-	    propPtr->set_map(key, mapSep, valueSep);
-	    status = AM_SUCCESS;
-	} catch (const std::bad_alloc&) {
-	    status = AM_NO_MEMORY;
-	} catch (const std::exception&) {
-	    status = AM_FAILURE;
-	} catch (...) {
-	    status = AM_FAILURE;
-	}
-    } else {
-	status = AM_INVALID_ARGUMENT;
-    }
-
-    return status;
 }

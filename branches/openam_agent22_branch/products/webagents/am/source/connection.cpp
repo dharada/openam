@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: connection.cpp,v 1.9 2008/11/10 22:56:37 madan_ranganath Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 #include <stdexcept>
@@ -94,8 +89,6 @@ PRIntervalTime receive_timeout;
 PRIntervalTime connect_timeout;
 bool tcp_nodelay_is_enabled = false;
 
-std::string defaultHostName(" ");
-
 am_status_t Connection::initialize(const Properties& properties)
 {
     am_status_t status = AM_SUCCESS;
@@ -140,7 +133,7 @@ am_status_t Connection::initialize(const Properties& properties)
 		 "calling NSS_Initialize() with directory = \"%s\" and "
 		 "prefix = \"%s\"", certDir.c_str(), dbPrefix.c_str());
 	Log::log(Log::ALL_MODULES, Log::LOG_DEBUG, "Connection::initialize() "
-		 "Connection timeout when receiving data = %i milliseconds",timeout);
+		 "Connection timeout wen receiving data = %i milliseconds",timeout);
 	if (tcp_nodelay_is_enabled) {
 		Log::log(Log::ALL_MODULES, Log::LOG_DEBUG, "Connection::initialize() "
 		   "Socket option TCP_NODELAY is enabled");
@@ -161,12 +154,15 @@ am_status_t Connection::initialize(const Properties& properties)
 	}
 
 	if(secStatus != SECSuccess) {
-	    secStatus = NSS_NoDB_Init(NULL);
-	    if (secStatus != SECSuccess) {
+	    // Original call to NSS_Initialize() with cert db failed, 
+	    // proceed further with the below call to initialize the
+	    // NSS library without the cert db
+            secStatus = NSS_NoDB_Init(NULL);
+            if (secStatus != SECSuccess) {
 	        Log::log(Log::ALL_MODULES, Log::LOG_ERROR,
-		         "Connection::initialize() unable to initialize SSL "
-		         "libraries: %s returned %d", nssMethodName,
-		         PR_GetError());
+		     "Connection::initialize() unable to initialize SSL "
+		     "libraries: %s returned %d", nssMethodName,
+		     PR_GetError());
 	        status = AM_NSPR_ERROR;
             }
 	}
@@ -194,8 +190,8 @@ am_status_t Connection::shutdown(void)
  * Throws NSPRException upon NSPR error
  */
 PRFileDesc *Connection::createSocket(const PRNetAddr& address, bool useSSL,
-				     const std::string &certDBPasswd,
-				     const std::string &certNickName,
+				     char* certdbpasswd,
+				     char* certnickname,
 				     bool alwaysTrustServerCert) 
 {
     PRFileDesc *rawSocket = PR_NewTCPSocket();
@@ -212,11 +208,58 @@ PRFileDesc *Connection::createSocket(const PRNetAddr& address, bool useSSL,
     }
     
     PRFileDesc *sslSocket;
-    certdbpasswd = strdup(certDBPasswd.c_str());
-
     if (static_cast<PRFileDesc *>(NULL) != rawSocket) {
 	if (useSSL) {
-		sslSocket = secureSocket(certDBPasswd, certNickName, alwaysTrustServerCert, rawSocket);
+	    sslSocket = SSL_ImportFD(NULL, rawSocket);
+	    if (static_cast<PRFileDesc *>(NULL) != sslSocket) {
+		SECStatus secStatus;
+		const char *sslMethodName = "SSL_OptionSet";
+
+		secStatus = SSL_OptionSet(sslSocket, SSL_SECURITY, PR_TRUE);
+		if (SECSuccess == secStatus) {
+		    secStatus = SSL_OptionSet(sslSocket,
+					      SSL_HANDSHAKE_AS_CLIENT,
+					      PR_TRUE);
+		    if (SECSuccess == secStatus && alwaysTrustServerCert) {
+			sslMethodName = "SSL_AuthCertificateHook";
+			secStatus = SSL_AuthCertificateHook(sslSocket,
+							    acceptAnyCert,
+							    NULL);
+		    }
+		    if(SECSuccess == secStatus && certdbpasswd != NULL) {
+			sslMethodName = "SSL_SetPKCS11PinArg";
+			secStatus = SSL_SetPKCS11PinArg(sslSocket,
+                                                        certdbpasswd);
+		    }
+		    
+		    if(SECSuccess == secStatus) {
+			sslMethodName = "SSL_GetClientAuthDataHook";
+			secStatus = SSL_GetClientAuthDataHook(sslSocket,
+							      NSS_GetClientAuthData,
+							      static_cast<void *>(certnickname));
+		    }
+		    if( SECSuccess == secStatus) {
+			sslMethodName = "SSL_HandshakeCallback";
+			secStatus = SSL_HandshakeCallback(sslSocket,
+							  (SSLHandshakeCallback)finishedHandshakeHandler,
+							  NULL);
+		    }
+		}
+
+		if (SECSuccess != secStatus) {
+		    PRErrorCode error = PR_GetError();
+
+		    PR_Close(sslSocket);
+		    throw NSPRException("Connection::createSocket",
+					sslMethodName, error);
+		}
+	    } else {
+		PRErrorCode error = PR_GetError();
+
+		PR_Close(rawSocket);
+		throw NSPRException("Connection::createSocket", "SSL_ImportFD",
+				    error);
+	    }
 	} else {
 	    sslSocket = rawSocket;
 	}
@@ -228,117 +271,42 @@ PRFileDesc *Connection::createSocket(const PRNetAddr& address, bool useSSL,
 }
 
 /**
- * Performs SSL handshake on a TCP socket.
- */
-PRFileDesc *Connection::secureSocket(const std::string &certDBPasswd,
-	const std::string &certNickName,
-	bool alwaysTrustServerCert,
-	PRFileDesc *rawSocket) {
-	bool upgradeExisting = false;
-	// Use object's socket if none passed
-	if (rawSocket == static_cast<PRFileDesc *>(NULL)) {
-		rawSocket = socket;
-		upgradeExisting = true;
-	}
-	PRFileDesc *sslSocket = SSL_ImportFD(NULL, rawSocket);
-	if (static_cast<PRFileDesc *>(NULL) != sslSocket) {
-	    SECStatus secStatus = SECSuccess;
-	    const char *sslMethodName;
-	
-	    // In case there was any communication on the socket
-	    // before the upgrade we should call a reset
-	    if (upgradeExisting) {
-                sslMethodName = "SSL_ResetHandshake";
-                secStatus = SSL_ResetHandshake(sslSocket, false);
-	    }
-
-	    if (SECSuccess == secStatus) {
-                sslMethodName = "SSL_OptionSet";
-                secStatus = SSL_OptionSet(sslSocket, SSL_SECURITY, PR_TRUE);
-	    }
-
-	    if (SECSuccess == secStatus) {
-                secStatus = SSL_OptionSet(sslSocket,
-                                      SSL_HANDSHAKE_AS_CLIENT, PR_TRUE);
-                if (SECSuccess == secStatus && alwaysTrustServerCert) {
-                    sslMethodName = "SSL_AuthCertificateHook";
-                    secStatus = SSL_AuthCertificateHook(sslSocket, acceptAnyCert,
-                                                    NULL);
-                }
-
-                if (SECSuccess == secStatus && certDBPasswd.size() > 0) {
-                    sslMethodName = "SSL_SetPKCS11PinArg";
-                    secStatus = SSL_SetPKCS11PinArg(sslSocket, certdbpasswd);
-                }
-
-                if (SECSuccess == secStatus) {
-                    char *nickName = NULL;
-		    if (certNickName.size() > 0) {
-                        nickName = (char *)certNickName.c_str();
-                    }
-                    sslMethodName = "SSL_GetClientAuthDataHook";
-                    secStatus = SSL_GetClientAuthDataHook(sslSocket,
-                                                   NSS_GetClientAuthData,
-                                                   static_cast<void *>(nickName));
-                }
-
-                if (SECSuccess == secStatus) {
-                    sslMethodName = "SSL_HandshakeCallback";
-                    secStatus = SSL_HandshakeCallback(sslSocket,
-                                (SSLHandshakeCallback)finishedHandshakeHandler,
-                                 NULL);
-		}
-	    }
-
-	    if (SECSuccess != secStatus) {
-		PRErrorCode error = PR_GetError();
-
-		PR_Close(sslSocket);
-		throw NSPRException("Connection::secureSocket",
-				sslMethodName, error);
-	    }
-	} else {
-	    PRErrorCode error = PR_GetError();
-
-	    PR_Close(rawSocket);
-	    throw NSPRException("Connection::secureSocket", "SSL_ImportFD",
-				error);
-	}
-
-	socket = sslSocket;
-	return sslSocket;
-}
-
-/**
  * Throws NSPRException upon NSPR error
  */
 Connection::Connection(const ServerInfo& server,
 		       const std::string &certDBPasswd,
 		       const std::string &certNickName,
 		       bool alwaysTrustServerCert) 
-    : socket(NULL)
+    : socket(NULL), certdbpasswd(NULL), certnickname(NULL)
 {
-    char      buffer[PR_NETDB_BUF_SIZE];
-    PRNetAddr address;
-    PRHostEnt hostEntry;
-    PRIntn    hostIndex;
+    char	buffer[PR_NETDB_BUF_SIZE];
+    PRNetAddr	address;
+    PRHostEnt	hostEntry;
+    PRIntn	hostIndex;
     PRStatus	prStatus;
     SECStatus	secStatus;
 
     prStatus = PR_GetHostByName(server.getHost().c_str(), buffer,
 				sizeof(buffer), &hostEntry);
     if (PR_SUCCESS != prStatus) {
-        throw NSPRException("Connection::Connection", "PR_GetHostByName");
+	throw NSPRException("Connection::Connection", "PR_GetHostByName");
     }
-
+ 
     hostIndex = PR_EnumerateHostEnt(0, &hostEntry, server.getPort(), &address);
     if (hostIndex < 0) {
-        throw NSPRException("Connection::Connection", "PR_EnumerateHostEnt");
+	throw NSPRException("Connection::Connection", "PR_EnumerateHostEnt");
     }
 
+    certdbpasswd = strdup(certDBPasswd.c_str());
+    if (certdbpasswd != NULL && strlen(certdbpasswd) <= 0)
+        certdbpasswd = NULL;
+    certnickname = strdup(certNickName.c_str());
+    if (certnickname != NULL && strlen(certnickname) <= 0)
+        certnickname = NULL;
+
     socket = createSocket(address, server.useSSL(),
-			  certDBPasswd,
-			  certNickName,
+			  certdbpasswd,
+			  certnickname,
 			  alwaysTrustServerCert);
 
     if (server.useSSL()) {
@@ -383,6 +351,10 @@ Connection::~Connection()
     if (NULL != certdbpasswd) {
         free(certdbpasswd);
         certdbpasswd = NULL;
+    }
+    if (NULL != certnickname) {
+        free(certnickname);
+        certnickname = NULL;
     }
 }
 

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,14 +17,14 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_log.h,v 1.8 2008/08/19 19:15:04 veiming Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
 /*
  * Abstract:
  *
- * Types and functions for using OpenSSO Access 
+ * Types and functions for using Sun Java System Access Manager Access 
  * Management SDK log objects.
  *
  */
@@ -67,7 +62,7 @@ typedef enum am_log_record_log_level {
     AM_LOG_LEVEL_FINER = 400,
     AM_LOG_LEVEL_FINEST = 300,
 
-    /* Log Levels defined by OpenSSO */
+    /* Log Levels defined by Access Manager */
 
     AM_LOG_LEVEL_SECURITY = 950,
     AM_LOG_LEVEL_CATASTROPHE = 850,
@@ -288,21 +283,6 @@ AM_EXPORT am_status_t am_log_log_record(am_log_record_t record,
 
 /* Flush all the log records in the log buffer */
 AM_EXPORT am_status_t am_log_flush_remote_log();
-
-/*
- * Set agent's debug file size.
- * debugFileSize must be > DEBUG_FILE_SIZE else
- * default value gets used.
- */
-AM_EXPORT am_status_t
-am_log_set_debug_file_size(const long debugFileSize);
-
-/*
- * Set agent's debug file rotate or not.
- */
-AM_EXPORT am_status_t
-am_log_set_debug_file_rotate(boolean_t debugFileRotate);
-
 
 AM_END_EXTERN_C
 

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: key_value_map.cpp,v 1.4 2009/10/13 01:38:15 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -123,41 +118,39 @@ void KeyValueMap::parseKeyValuePairString(const std::string &keyValStr,
     PUSH_BACK_CHAR(kvpsepStr, kvpsep);
 
     do {
-      tmpPos = keyValStr.find(kvpsepStr, startPos);
-	std::string nvpair = keyValStr.substr(startPos, tmpPos - startPos);
-	if(nvpair.size() > 0) {
-	    std::string key;
-	    std::size_t eqPos = nvpair.find(kvsepStr);
-
-        std::string value;
-        if (eqPos != string::npos) {
-            key = nvpair.substr(0, eqPos);
-            value = nvpair.substr(eqPos + 1, tmpPos - eqPos);
-        } else {
-            key.assign(nvpair);
-            value = "";
+        tmpPos = keyValStr.find(kvpsepStr, startPos);
+        std::string nvpair = keyValStr.substr(startPos, tmpPos - startPos);
+        if(nvpair.size() > 0) {
+            std::string key;
+            std::size_t eqPos = nvpair.find(kvsepStr);
+            std::string value;
+            if (eqPos != string::npos) {
+                key = nvpair.substr(0, eqPos);
+                value = nvpair.substr(eqPos + 1, tmpPos - eqPos);
+            } else {
+                key.assign(nvpair);
+                value = "";
+            }
+            iterator iter = find(key);
+            if(iter != end()) {
+                mapped_type &values = iter->second;
+                values.push_back(value);
+            } else {
+                mapped_type values;
+                values.push_back(value);
+                KeyValueMapBaseClassType::insert(KeyValueMap::value_type(key,
+                                values));
+            }
         }
-
-	    iterator iter = find(key);
-	    if(iter != end()) {
-		mapped_type &values = iter->second;
-		values.push_back(value);
-	    } else {
-		mapped_type values;
-		values.push_back(value);
-		KeyValueMapBaseClassType::insert(KeyValueMap::value_type(key,
-									 values));
-	    }
-	}
-	startPos = tmpPos + 1;
+        startPos = tmpPos + 1;
     } while(tmpPos != std::string::npos);
 
     if(sortValues) {
-	for(iterator iter = begin(); iter != end(); ++iter) {
-	    KeyValueMap::mapped_type &values = iter->second;
-	    std::stable_sort(values.begin(), values.end(),
-			     Utils::CmpFunc(sortValueCaseIgnore));
-	}
+        for(iterator iter = begin(); iter != end(); ++iter) {
+            KeyValueMap::mapped_type &values = iter->second;
+            std::stable_sort(values.begin(), values.end(),
+                Utils::CmpFunc(sortValueCaseIgnore));
+        }
     }
     return;
 }

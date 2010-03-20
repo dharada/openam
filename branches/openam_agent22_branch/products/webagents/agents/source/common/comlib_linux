@@ -1,35 +1,25 @@
-#
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
-# The contents of this file are subject to the terms
-# of the Common Development and Distribution License
-# (the License). You may not use this file except in
-#
-# The contents of this file are subject to the terms
-# of the Common Development and Distribution License
-# (the License). You may not use this file except in
-# compliance with the License.
-#
-# You can obtain a copy of the License at
-# https://opensso.dev.java.net/public/CDDLv1.0.html or
-# opensso/legal/CDDLv1.0.txt
-# See the License for the specific language governing
-# permission and limitations under the License.
-#
-# When distributing Covered Code, include this CDDL
-# Header Notice in each file and include the License file
-# at opensso/legal/CDDLv1.0.txt.
-# If applicable, add the following below the CDDL Header,
-# with the fields enclosed by brackets [] replaced by
-# your own identifying information:
-# "Portions Copyrighted [year] [name of copyright owner]"
-#
-# $Id: comlib_linux,v 1.6 2009/08/27 21:41:30 subbae Exp $
-#
-#
-
+/* The contents of this file are subject to the terms
+ * of the Common Development and Distribution License
+ * (the License). You may not use this file except in
+ * compliance with the License.
+ *
+ * You can obtain a copy of the License at
+ * https://opensso.dev.java.net/public/CDDLv1.0.html or
+ * opensso/legal/CDDLv1.0.txt
+ * See the License for the specific language governing
+ * permission and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL
+ * Header Notice in each file and include the License file
+ * at opensso/legal/CDDLv1.0.txt.
+ * If applicable, add the following below the CDDL Header,
+ * with the fields enclosed by brackets [] replaced by
+ * your own identifying information:
+ * "Portions Copyrighted [year] [name of copyright owner]"
+ *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
+ *
+ */ 
 ##############################################################
 #
 # Initialization routines
@@ -74,7 +64,7 @@ init_common_pkg_variables() {
     AGENT_DEPLOY_URI=/amagent
     AGENT_CERT_PREFIX=
 
-    #OpenSSO Server info
+    #Sun Java(tm) System Access Manager info
     PRIMARY_SERVER_PROTOCOL=http
     PRIMARY_SERVER_HOST=$localhost
     PRIMARY_SERVER_PORT=$def_id_server_port
@@ -138,7 +128,7 @@ init_variables() {
     init_common_pkg_variables $3
 
     AGENT_ACCESS_DENY_FILE=$COMMON_PKG_DIR/html/URLAccessDenied.html
-    AGENT_PROPERTIES_FILE_NAME=OpenSSOAgentBootstrap.properties
+    AGENT_PROPERTIES_FILE_NAME=AMAgent.properties
     AGENT_PROPERTIES_FILE_ORIG=$COMMON_PKG_DIR/config/$AGENT_PROPERTIES_FILE_NAME.orig
 
     agent_init_variables
@@ -435,13 +425,13 @@ get_agent_uri() {
 
 get_failover_server_host() {
     typeset value=
-    get_value "Enter the Failover OpenSSO Server Hostname:" "Invalid failover OpenSSO server hostname !" "$FAILOVER_SERVER_HOST" is_valid_host
+    get_value "Enter the Failover Access Manager Hostname:" "Invalid failover Access Manager hostname !" "$FAILOVER_SERVER_HOST" is_valid_host
     FAILOVER_SERVER_HOST=$value
 }
 
 get_failover_server_port() {
     typeset value=
-    get_value "Enter the Failover OpenSSO Server Port:" "Invalid failover OpenSSO server port number !" "$FAILOVER_SERVER_PORT" is_valid_port
+    get_value "Enter the Failover Access Manager Port:" "Invalid failover Access Manager port number !" "$FAILOVER_SERVER_PORT" is_valid_port
     FAILOVER_SERVER_PORT=$value
 }
 
@@ -476,31 +466,31 @@ is_failover_server_present() {
 
 get_failover_server_uri() {
     typeset value=
-    get_value "Enter the OpenSSO Server Deployment URI" "Invalid OpenSSO server deployment URI !" "$PRIMARY_SERVER_DEPLOY_URI" is_valid_uri
+    get_value "Enter the Access Manager Deployment URI" "Invalid Access Manager deployment URI !" "$PRIMARY_SERVER_DEPLOY_URI" is_valid_uri
     FAILOVER_SERVER_DEPLOY_URI=$value
 }
 
 get_failover_console_uri() {
     typeset value=
-    get_value "Enter the OpenSSO Server's Console Deployment URI" "Invalid OpenSSO server's console deployment URI !" "$PRIMARY_CONSOLE_DEPLOY_URI" is_valid_uri
+    get_value "Enter the Access Manager's Console Deployment URI" "Invalid Access Manger's console deployment URI !" "$PRIMARY_CONSOLE_DEPLOY_URI" is_valid_uri
     FAILOVER_CONSOLE_DEPLOY_URI=$value
 }
 
 get_primary_server_host() {
     typeset value=
-    get_value "Enter the OpenSSO Server Hostname:" "Invalid OpenSSO server hostname !" "$PRIMARY_SERVER_HOST" is_valid_host
+    get_value "Enter the Access Manager Hostname:" "Invalid Access Manager hostname !" "$PRIMARY_SERVER_HOST" is_valid_host
     PRIMARY_SERVER_HOST=$value
 }
 
 get_primary_server_port() {
     typeset value=
-    get_value "Enter the OpenSSO Server Port:" "Invalid OpenSSO server port number !" "$PRIMARY_SERVER_PORT" is_valid_port
+    get_value "Enter the Access Manager Port:" "Invalid Access Manager port number !" "$PRIMARY_SERVER_PORT" is_valid_port
     PRIMARY_SERVER_PORT=$value
 }
 
 get_primary_server_protocol() {
     typeset value=
-    get_value "Select OpenSSO Server Protocol: [1] http [2] https -->" "Invalid OpenSSO server protocol !" "1" is_valid_protocol
+    get_value "Select Access Manager Protocol: [1] http [2] https -->" "Invalid Access Manager protocol !" "1" is_valid_protocol
     if [ "$value" = "1" ]; then
 	PRIMARY_SERVER_PROTOCOL=http
     elif [ "$value" = "2" ]; then
@@ -510,13 +500,13 @@ get_primary_server_protocol() {
 
 get_primary_server_uri() {
     typeset value=
-    get_value "Enter the OpenSSO Server Deployment URI" "Invalid OpenSSO server deployment URI !" "$PRIMARY_SERVER_DEPLOY_URI" is_valid_uri
+    get_value "Enter the Access Manager Deployment URI" "Invalid Access Manager deployment URI !" "$PRIMARY_SERVER_DEPLOY_URI" is_valid_uri
     PRIMARY_SERVER_DEPLOY_URI=$value
 }
 
 get_primary_console_uri() {
     typeset value=
-    get_value "Enter the OpenSSO Server's Console Deployment URI" "Invalid OpenSSO server's console deployment URI !" "$PRIMARY_CONSOLE_DEPLOY_URI" is_valid_uri
+    get_value "Enter the Access Manger's Console Deployment URI" "Invalid Access Manager's console deployment URI !" "$PRIMARY_CONSOLE_DEPLOY_URI" is_valid_uri
     PRIMARY_CONSOLE_DEPLOY_URI=$value
 }
 
@@ -531,10 +521,10 @@ get_shared_secret() {
     typeset error_msg="Shared secret may not be empty or contain spaces!"
 
     while true; do
-	get_value "Enter Agent-OpenSSO Server shared secret:" "$error_msg" "" is_valid_shared_secret noecho
+	get_value "Enter Agent-Access Manager shared secret:" "$error_msg" "" is_valid_shared_secret noecho
 	SHARED_SECRET=$value
 	$ECHO 
-	get_value "Re-enter Agent-OpenSSO Server shared secret:" "$error_msg" "" is_valid_shared_secret noecho
+	get_value "Re-enter Agent-Access Manager shared secret:" "$error_msg" "" is_valid_shared_secret noecho
 	$ECHO 
 	if [[ "$SHARED_SECRET" = "$value" ]]; then
 	    return 0;

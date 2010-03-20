@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: policy_entry.cpp,v 1.5 2008/06/25 08:14:34 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -42,7 +37,8 @@ PolicyEntry::PolicyEntry(const SSOToken &ssoTok,
 						  rsrcTraits(rTraits),
 						  lock(), cookies(),
 						  dirty(false),
-						  map(env) {
+						  map(env),
+						  attrMap(attr_map) {
 }
 
 PolicyEntry::~PolicyEntry() {
@@ -107,7 +103,7 @@ PolicyEntry::create_policy_tree(XMLElement& resultNode, KVMRefCntPtr env) {
     if(!resultNode.isNamed(RESOURCE_RESULT))
 	return false;
 
-    Tree *newTree = new Tree(resultNode, rsrcTraits, env);
+    Tree *newTree = new Tree(resultNode, rsrcTraits, env, attrMap);
     forest.push_back(newTree);
     return true;
 }
@@ -129,7 +125,8 @@ PolicyEntry::append_policy_to_tree(Tree &tree, XMLElement &elem,
 	PDRefCntPtr pDec =
 	    PolicyDecision::construct_policy_decision(resName,
 						      policyDec,
-						      env);
+						      env,
+						      attrMap);
 	tree.insert(pDec);
     }
 
@@ -205,3 +202,4 @@ PolicyEntry::removePolicy(const ResourceName &resName) {
     }
     return retVal;
 }
+

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,11 +17,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_policy.h,v 1.12 2008/09/13 01:11:52 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
- * Types and functions for using OpenSSO Access 
+ * Types and functions for using Sun Java System Access Manager Access 
  * Management SDK policy objects.
  *
  */
@@ -137,18 +132,6 @@ am_policy_destroy(am_policy_t policy);
  * Method to evaluate a non-boolean policy question for a resource.
  */
 AM_EXPORT am_status_t
-am_policy_evaluate(am_policy_t policy_handle,
-		      const char *sso_token,
-		      const char *resource_name,
-		      const char *action_name,
-		      const am_map_t env_parameter_map,
-		      am_map_t policy_response_map_ptr,
-		      am_policy_result_t *policy_result);
-
-/*
- * Method to evaluate a non-boolean policy question for a resource.
- */
-AM_EXPORT am_status_t
 am_policy_evaluate_ignore_url_notenforced(am_policy_t policy_handle,
 		      const char *sso_token,
 		      const char *resource_name,
@@ -157,7 +140,19 @@ am_policy_evaluate_ignore_url_notenforced(am_policy_t policy_handle,
 		      am_map_t policy_response_map_ptr,
 		      am_policy_result_t *policy_result,
 		      am_bool_t ignorePolicyResult,
-		      am_properties_t properties);
+		      char **am_revision_number);
+
+/*
+ * Method to evaluate a non-boolean policy question for a resource.
+ */
+AM_EXPORT am_status_t
+am_policy_evaluate(am_policy_t policy_handle,
+		      const char *sso_token,
+		      const char *resource_name,
+		      const char *action_name,
+		      const am_map_t env_parameter_map,
+		      am_map_t policy_response_map_ptr,
+		      am_policy_result_t *policy_result);
 
 /*
  * Method to check if notification is enabled in the SDK.
@@ -176,8 +171,7 @@ am_policy_is_notification_enabled(am_policy_t policy_handle);
 AM_EXPORT am_status_t
 am_policy_notify(am_policy_t policy_handle,
 		    const char *notification_data,
-		    size_t notification_data_len,
-		    boolean_t configChangeNotificationEnabled);
+		    size_t notification_data_len);
 
 /**
  * Method will take two url resources compare and return an appropriate
@@ -223,10 +217,7 @@ am_policy_resource_canonicalize(const char *, char **);
 AM_EXPORT am_status_t
 am_policy_invalidate_session(am_policy_t policy_handle,
                              const char *ssoTokenId);
-AM_EXPORT am_status_t
-am_policy_user_logout(am_policy_t policy_handle,
-                             const char *ssoTokenId,
-                             am_properties_t properties);
+
 
 AM_END_EXTERN_C
 

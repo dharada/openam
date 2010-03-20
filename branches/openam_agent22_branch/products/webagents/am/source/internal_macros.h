@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: internal_macros.h,v 1.6 2008/09/13 01:11:53 robertis Exp $
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -41,7 +36,6 @@ extern const char *POLICY_SERVICE;
 extern const char *POLICY_RESPONSE;
 extern const char *RESOURCE_RESULT;
 extern const char *SESSION_NOTIFICATION;
-extern const char *AGENT_CONFIG_CHANGE_NOTIFICATION;
 extern const char *ADD_LISTENER_RESPONSE;
 extern const char *REMOVE_LISTENER_RESPONSE;
 extern const char *SESSION;

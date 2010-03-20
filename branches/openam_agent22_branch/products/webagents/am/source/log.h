@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: log.h,v 1.5 2009/07/22 22:59:06 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -274,50 +269,11 @@ public:
      */
     static am_status_t rlog(ModuleId module, int remotelevel, 
 	  const char *user_sso_token, const char *format, ...) throw();
-    
-    /*
-     * Log url access audit message to local audit log file.
-     *
-     */
-    static void doLocalAuditLog(ModuleId module, 
-        Level level,
-        const char* auditLogMsg,
-        bool localAuditLogRotate,
-        long localAuditFileSize) throw();
-    
-    /*
-     * Log url access audit message to remote audit log file.
-     *
-     */
-    static am_status_t doRemoteAuditLog(ModuleId module,
-            int remote_log_level,
-            const char *user_sso_token,
-            const char *logMsg);
-
-    /*
-     * Log url access audit message. This calls doLocalAuditLog()
-     * or doRemoteAuditLog() or both methods based on 
-     * log.disposition property value.
-     */
-    static am_status_t
-    auditLog(const char* auditDisposition,
-            bool localAuditLogRotate,
-            long localAuditFileSize,
-            ModuleId module,
-            int remoteLogLevel,
-            const char *userSSOToken,
-            const char *format,
-            ...);
 
     /* Flush all log records in the log buffer */
     static am_status_t rmtflush() throw();
 
     static am_status_t initialize() throw();
-
-    static am_status_t 
-	setDebugFileSize(const long DebugFileSize); 
-    static am_status_t 
-	setDebugFileRotate(bool debugFileRotate); 
 
 private:
     struct Module {
@@ -343,17 +299,9 @@ private:
     static am_status_t pSetLevelsFromString(
 		    const std::string& moduleLevelString) throw();
 
-    static bool setAuditLogFile(const std::string& name,
-                    bool localAuditLogRotate,
-                    long localAuditFileSize) throw();
-    
     static bool logRotation;
     static long maxLogFileSize;
     static int currentLogFileSize;
-    
-    // Local Audit log related variables.
-    static int currentAuditLogFileSize;
-
 };
 
 END_PRIVATE_NAMESPACE

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: p_cache.cpp,v 1.4 2008/06/25 08:14:34 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -62,9 +57,11 @@ namespace {
 PostCache::PostCache(const Properties &initParams)
     : logID(Log::addModule(POST_CACHE)), 
     svcParams(initParams, logID),
-    postTPool(1, DEFAULT_MAX_THREADS),
+    postTPool(1,svcParams.getUnsigned(AM_POLICY_MAX_THREADS_PROPERTY,
+				      DEFAULT_MAX_THREADS)),
     postCleaner(NULL),
-    postCacheTable(DEFAULT_HASH_SIZE,
+    postCacheTable(svcParams.getUnsigned(AM_POLICY_HASH_BUCKET_SIZE_PROPERTY,
+					 DEFAULT_HASH_SIZE),
 		   svcParams.getPositiveNumber(AM_WEB_POST_CACHE_ENTRY_LIFETIME,
 					 DEFAULT_TIMEOUT)) {
 

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: base_service.h,v 1.5 2008/06/25 08:14:31 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  *
  * Abstract:
@@ -135,12 +130,6 @@ protected:
 			 const char *expectedId) const;
 
     Log::ModuleId logModule;
-    bool getUseProxy() { return useProxy; }
-    bool getUseAuth() { return useProxyAuth; }
-    const char * getProxyHost() { return proxyHost.c_str(); }
-    unsigned short getProxyPort() { return proxyPort; }
-
-
 
 private:
     typedef unsigned int IdType;
@@ -193,16 +182,6 @@ private:
     std::string certNickName;
     std::string poll_primary_server;
     bool alwaysTrustServerCert;
-
-    /* proxy parameters */
-    bool useProxy;
-    bool useProxyAuth;
-    std::string proxyHost;
-    unsigned short proxyPort;
-    std::string proxyUser;
-    std::string proxyPassword;
-
-
 };
 
 END_PRIVATE_NAMESPACE

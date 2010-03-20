@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,10 +17,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
-#pragma ident  "$Id: prototype,v 1.4 2008/08/04 19:22:10 huacui Exp $ Sun Microsystems"
+#pragma ident  "$Id: prototype,v 1.1 2006/05/03 22:39:24 madan_ranganath Exp $ Sun Microsystems"
 #
 
 i copyright
@@ -41,7 +37,7 @@ i preremove
 !include $ws_dir/am/prototype
 
 d none $PRODUCT_DIR/config $def_dir_perm
-f none $PRODUCT_DIR/config/OpenSSOAgentBootstrap.properties.orig=$ws_dir/conf/OpenSSOAgentBootstrap.properties
+f none $PRODUCT_DIR/config/AMAgent.properties.orig=$ws_dir/conf/AMAgent.properties
 
 f none $PRODUCT_DIR/lib/comlib=comlib $def_exe_perm
 # libxml_license.txt

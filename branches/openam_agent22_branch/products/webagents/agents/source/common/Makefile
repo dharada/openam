@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,6 +18,7 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 # Makefile file for building the Sun ONE Identity Server Agent Toolkit
 #
@@ -99,16 +96,11 @@ endif
 
 ifeq ($(OS_ARCH), SunOS)
 ZIP_DIR:=$(DEST_PACKAGE_SCRATCH_DIR)/is_csdk
-ZIP_SUB_DIRS:=lib include config samples bin
+ZIP_SUB_DIRS:=lib include config samples
 EXTRA_PACKAGE_FILES += prototype $(USERX_ROOT)/am/source/prototype \
 	copyright pkginfo request preinstall postinstall preremove \
 	comlib \
 	$(LIBXML_LIB_DIR)/libxml2.so.2 \
-	$(NSPR_LIB_DIR)/libnspr4.so \
-	$(NSPR_LIB_DIR)/libplc4.so \
-	$(NSPR_LIB_DIR)/libplds4.so \
-	$(NSS_LIB_DIR)/libnss3.so \
-	$(NSS_LIB_DIR)/libssl3.so \
 	$(DEST_LIB_DIR)/libamsdk.so.$(AGENT_MAJOR_VER)
 
 all: $(DEST_PACKAGE_SCRATCH_DIR) $(DEST_PACKAGE_SCRATCH_DIR)/$(ZIP_DIR)
@@ -117,11 +109,7 @@ $(DEST_PACKAGE_SCRATCH_DIR)/$(ZIP_DIR): $(DEST_PACKAGE_SCRATCH_DIR) $(EXPORTED_H
 	$(RM) -r $(ZIP_DIR)
 	$(MKDIR) $(patsubst %, $(ZIP_DIR)/%, $(ZIP_SUB_DIRS))
 	$(CP) $(filter %$(SO_EXT).$(AGENT_MAJOR_VER), $^) $(ZIP_DIR)/lib
-	$(CP) $(LIBXML_LIB_DIR)/libxml2.so.2 $(ZIP_DIR)/lib
-	$(CP) -r $(NSPR_LIB_DIR)/* $(ZIP_DIR)/lib
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentBootstrap.template $(ZIP_DIR)/config/OpenSSOAgentBootstrap.template.orig
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentConfiguration.template $(ZIP_DIR)/config/OpenSSOAgentConfiguration.template.orig
-	$(CP) $(USERX_ROOT)/am/source/crypt_util $(ZIP_DIR)/bin
+	$(CP) $(USERX_ROOT)/conf/AMAgent.properties $(ZIP_DIR)/config/AMAgent.properties.orig
 	$(CP) $(filter %.h, $^) $(ZIP_DIR)/include
 	$(CP) $(filter %THIRD_PARTY_LICENSE.TXT, $^) $(ZIP_DIR)
 	$(CP) $(filter %README.TXT, $^) $(ZIP_DIR)/samples
@@ -134,22 +122,14 @@ ZIP_FILE := $(PKG_DIR).zip
 ZIP_DIRS := bin config include samples
 EXTRA_PACKAGE_FILES += $(DEST_LIB_DIR)/amsdk.dll $(DEST_LIB_DIR)/amsdk.lib \
 	$(LIBXML_LIB_DIR)/libxml2.dll $(LIBXML_LIB_DIR)/libxml2.lib \
-	$(NSS_BIN_DIR)/certutil.exe $(NSS_LIB_DIR)/softokn3.dll \
-	$(NSS_LIB_DIR)/softokn3.chk $(NSS_LIB_DIR)/freebl3.chk \
-	$(NSS_LIB_DIR)/freebl3.dll $(NSS_LIB_DIR)/jss4.dll \
-	$(NSS_LIB_DIR)/nssckbi.dll $(NSS_LIB_DIR)/nssdbm3.dll \
-	$(NSS_LIB_DIR)/nssdbm3.chk $(NSS_LIB_DIR)/nssutil3.dll \
-	$(NSS_LIB_DIR)/smime3.dll $(NSS_LIB_DIR)/sqlite3.dll \
-	$(NSS_LIB_DIR)/nssutil3.lib $(NSS_LIB_DIR)/smime3.lib 
+	$(NSS_BIN_DIR)/certutil.exe
 
 $(ZIP_FILE): $(DEST_PACKAGE_SCRATCH_DIR) $(EXPORTED_HEADERS) $(EXPORTED_LIBS) $(EXTRA_PACKAGE_FILES)
 	$(RM) -r $(PKG_DIR)
 	$(MKDIR) $(patsubst %, $(PKG_DIR)/%, $(ZIP_DIRS))
 	$(CP) $(filter %.exe, $^) $(PKG_DIR)/bin
 	$(CP) $(filter %$(SO_EXT), $^) $(PKG_DIR)/bin
-	$(CP) $(filter %.chk, $^) $(PKG_DIR)/bin
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentBootstrap.template $(PKG_DIR)/config/OpenSSOAgentBootstrap.template.orig
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentConfiguration.template $(PKG_DIR)/config/OpenSSOAgentConfiguration.template.orig
+	$(CP) $(USERX_ROOT)/conf/AMAgent.properties $(PKG_DIR)/config/AMAgent.properties.orig
 	$(CP) $(filter %.h, $^) $(PKG_DIR)/include
 	$(CP) $(filter %THIRD_PARTY_LICENSE.TXT, $^) $(PKG_DIR)
 	$(CP) $(filter %.lib, $^) $(PKG_DIR)/bin
@@ -162,51 +142,24 @@ all: $(ZIP_FILE)
 endif
 
 ifeq ($(OS_ARCH), HP-UX)
-ZIP_FILE := $(ZIP_DIR).zip
-ZIP_DIR := $(PKG_DIR)/is_csdk
-ZIP_SUB_DIRS := bin config debug include lib samples
+ZIP_FILE := $(PKG_DIR).zip
+ZIP_DIRS := bin config debug include lib samples
 EXTRA_PACKAGE_FILES += $(DEST_LIB_DIR)/libamsdk.sl \
 	$(LIBXML_LIB_DIR)/libxml2.sl $(NSS_BIN_DIR)/certutil
 
 $(ZIP_FILE): $(DEST_PACKAGE_SCRATCH_DIR) $(EXPORTED_HEADERS) $(EXPORTED_LIBS) $(EXTRA_PACKAGE_FILES)
-	$(RM) -rf $(ZIP_DIR)
-	$(MKDIR) $(patsubst %, $(ZIP_DIR)/%, $(ZIP_SUB_DIRS))
-	$(CP) $(USERX_ROOT)/am/source/crypt_util $(ZIP_DIR)/bin
-	$(CP) comlib_HP-UX $(ZIP_DIR)/lib/comlib
-	$(CP) $(filter %$(SO_EXT), $^) $(ZIP_DIR)/lib
-	$(CP) THIRD_PARTY_LICENSE.TXT $(ZIP_DIR)
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentBootstrap.template $(ZIP_DIR)/config/OpenSSOAgentBootstrap.template.orig
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentConfiguration.template $(ZIP_DIR)/config/OpenSSOAgentConfiguration.template.orig
-	$(CP) $(filter %.h, $^) $(ZIP_DIR)/include
-	$(CP) $(filter %README.TXT, $^) $(ZIP_DIR)/samples
-	$(CP) $(filter %.c, $^) $(ZIP_DIR)/samples
-	$(CP) $(filter %.mk, $^) $(ZIP_DIR)/samples/Makefile
-	cd $(ZIP_DIR); zip -r ../$(notdir $@) *
-
-all: $(ZIP_FILE)
-endif
-
-ifeq ($(OS_ARCH), AIX)
-ZIP_FILE := $(ZIP_DIR).zip
-ZIP_DIR := $(PKG_DIR)/is_csdk
-ZIP_SUB_DIRS := bin config debug include lib samples
-EXTRA_PACKAGE_FILES += $(DEST_LIB_DIR)/libamsdk.so \
-	$(LIBXML_LIB_DIR)/libxml2.so.2 $(NSS_BIN_DIR)/certutil
-
-$(ZIP_FILE): $(DEST_PACKAGE_SCRATCH_DIR) $(EXPORTED_HEADERS) $(EXPORTED_LIBS) $(EXTRA_PACKAGE_FILES)
-	$(RM) -rf $(ZIP_DIR)
-	$(MKDIR) $(patsubst %, $(ZIP_DIR)/%, $(ZIP_SUB_DIRS))
-	$(CP) $(USERX_ROOT)/am/source/crypt_util $(ZIP_DIR)/bin
-	$(CP) comlib_AIX $(ZIP_DIR)/lib/comlib
-	$(CP) $(filter %$(SO_EXT), $^) $(ZIP_DIR)/lib
-	$(CP) THIRD_PARTY_LICENSE.TXT $(ZIP_DIR)
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentBootstrap.template $(ZIP_DIR)/config/OpenSSOAgentBootstrap.template.orig
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentConfiguration.template $(ZIP_DIR)/config/OpenSSOAgentConfiguration.template.orig
-	$(CP) $(filter %.h, $^) $(ZIP_DIR)/include
-	$(CP) $(filter %README.TXT, $^) $(ZIP_DIR)/samples
-	$(CP) $(filter %.c, $^) $(ZIP_DIR)/samples
-	$(CP) $(filter %.mk, $^) $(ZIP_DIR)/samples/Makefile
-	cd $(ZIP_DIR); zip -r ../$(notdir $@) *
+	$(RM) -rf $(PKG_DIR)
+	$(MKDIR) $(patsubst %, $(PKG_DIR)/%, $(ZIP_DIRS))
+	$(CP) $(USERX_ROOT)/am/source/crypt_util $(PKG_DIR)/bin
+	$(CP) comlib_HP-UX $(PKG_DIR)/lib/comlib
+	$(CP) $(filter %$(SO_EXT), $^) $(PKG_DIR)/lib
+	$(CP) THIRD_PARTY_LICENSE.TXT $(PKG_DIR)
+	$(CP) $(USERX_ROOT)/conf/AMAgent.properties $(PKG_DIR)/config/AMAgent.properties.orig
+	$(CP) $(filter %.h, $^) $(PKG_DIR)/include
+	$(CP) $(filter %README.TXT, $^) $(PKG_DIR)/samples
+	$(CP) $(filter %.c, $^) $(PKG_DIR)/samples
+	$(CP) $(filter %.mk, $^) $(PKG_DIR)/samples/Makefile
+	cd $(PKG_DIR); zip -r ../$(notdir $@) *
 
 all: $(ZIP_FILE)
 endif
@@ -229,11 +182,14 @@ $(RPM):
 	$(MKDIR) $(BUILDROOT_SAMPLES_DIR)
 	$(MKDIR) $(BUILDROOT_RPM_DIR)
 	$(CP) $(DEST_LIB_DIR)/libamsdk.so.$(AGENT_MAJOR_VER) $(BUILDROOT_LIB_DIR)
-	$(CP)  $(NSPR_LIB_DIR)/* $(BUILDROOT_LIB_DIR)
+	$(CP) $(NSPR_LIB_DIR)/libnspr4.so $(BUILDROOT_LIB_DIR)
+	$(CP) $(NSPR_LIB_DIR)/libplc4.so $(BUILDROOT_LIB_DIR)
+	$(CP) $(NSPR_LIB_DIR)/libplds4.so $(BUILDROOT_LIB_DIR)
+	$(CP) $(NSS_LIB_DIR)/libnss3.so $(BUILDROOT_LIB_DIR)
+	$(CP) $(NSS_LIB_DIR)/libssl3.so $(BUILDROOT_LIB_DIR)
 	$(CP) THIRD_PARTY_LICENSE.TXT $(BUILDROOT_LIB_DIR)/..
 	$(CP) $(LIBXML_LIB_DIR)/libxml2.so.2 $(BUILDROOT_LIB_DIR)
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentBootstrap.template $(BUILDROOT_CONF_DIR)/OpenSSOAgentBootstrap.template.orig
-	$(CP) $(USERX_ROOT)/conf/OpenSSOAgentConfiguration.template $(BUILDROOT_CONF_DIR)/OpenSSOAgentConfiguration.template.orig
+	$(CP) $(USERX_ROOT)/conf/AMAgent.properties $(BUILDROOT_CONF_DIR)/AMAgent.properties.orig
 	$(CP) $(USERX_ROOT)/am/source/crypt_util $(BUILDROOT_BIN_DIR)
 	$(CP) comlib_linux $(BUILDROOT_LIB_DIR)
 	$(CP) $(DEST_SAMPLES_DIR)/README.TXT $(BUILDROOT_SAMPLES_DIR)
@@ -242,7 +198,7 @@ $(RPM):
 	$(CP) $(DEST_INC_DIR)/*.h $(BUILDROOT_INC_DIR)
 	if [ -f $(HOME)/.rpmmacros ] ; then mv $(HOME)/.rpmmacros $(HOME)/.rpmmacros.agent ; fi
 	echo "%_topdir $(BUILDROOT)" > $(HOME)/.rpmmacros
-	rpmbuild -bb --buildroot $(BUILDROOT) --target $(MC_ARCH) common-3.0-0.spec
+	rpmbuild -bb --buildroot $(BUILDROOT) --target $(MC_ARCH) common-2.2-0.spec
 	$(RM) $(HOME)/.rpmmacros
 	if [ -f $(HOME)/.rpmmacros.agent ] ; then mv $(HOME)/.rpmmacros.agent $(HOME)/.rpmmacros ; fi
 	$(MV) $(BUILDROOT_RPM_DIR)/$(DSAME_DROP_FILE).rpm $(RPM_DIR)

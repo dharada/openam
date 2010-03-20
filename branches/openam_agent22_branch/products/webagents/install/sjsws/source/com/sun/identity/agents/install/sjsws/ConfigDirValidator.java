@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: ConfigDirValidator.java,v 1.3 2008/06/25 05:54:40 qcheng Exp $
+ * $Id: ConfigDirValidator.java,v 1.1 2007/01/17 23:15:24 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.sjsws;
@@ -105,11 +101,11 @@ public class ConfigDirValidator extends ValidatorBase
                            STR_KEY_SWS_MAGNUS_FILE, sjswsMagnusFile);
 
                 // store SWS agent specific value for notification
-                // enable property in agent's configuration properties file
+                // enable property in AMAgent.properties 
                 state.put(STR_KEY_NOTIFICATION_ENABLE, STR_TRUE);
 
                 // store SWS agent specific value for log
-                // rotation property in agent's configuration properties file 
+                // rotation property in AMAgent.properties 
                 state.put(STR_KEY_LOG_ROTATION, STR_TRUE);
    
                 returnMessage =

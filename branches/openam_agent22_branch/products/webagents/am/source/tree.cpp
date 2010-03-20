@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,10 +17,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: tree.cpp,v 1.6 2008/08/29 17:35:40 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include "tree.h"
+#include "properties.h"
 #include "am_policy.h"
 
 using std::string;
@@ -63,21 +59,24 @@ void Node::destroyNode() {
 // Tree
 ///////////////
 Tree::Tree(PDRefCntPtr &root,
-	   am_resource_traits_t rTraits): rsrcTraits(rTraits),
-            rootNode(new Node(Node::NULL_NODE, root)) {
+	   am_resource_traits_t rTraits,
+	   const Properties &attr_map): rsrcTraits(rTraits),
+					rootNode(new Node(Node::NULL_NODE, root)),
+					attrMap(attr_map) {
 }
 
 Tree::~Tree() {
-    // fix for memory leak issue 2883
-    rootNode->removeAllChildren();
+	rootNode->destroyNode();
 }
 
 /* Throws std::invalid_argument if any argument is invalid */
 Tree::Tree(XMLElement &elem,
 	   am_resource_traits_t rTraits,
-	   KVMRefCntPtr env)
+	   KVMRefCntPtr env,
+	   const Properties &attr_map)
     : rsrcTraits(rTraits),
-      rootNode(Node::NULL_NODE)
+      rootNode(Node::NULL_NODE),
+      attrMap(attr_map)
 {
     if(elem.isNamed(RESOURCE_RESULT)) {
 	try {
@@ -106,7 +105,7 @@ Tree::addSubNodes(NodeRefPtr parent, XMLElement &thisNode,
 	if(thisNode.getSubElement(POLICY_DECISION, decn)) {
 	    PDRefCntPtr decision =
 		PolicyDecision::construct_policy_decision(resName, decn,
-							  env);
+							  env, attrMap);
 
 	    newNode = new Node(parent, decision);
 
@@ -260,8 +259,7 @@ Tree::search_recursive(const ResourceName &resName,
 	results.push_back(node->getPolicyDecision());
 	// fall through to the following
     case AM_SUB_RESOURCE_MATCH:
-    case AM_NO_MATCH:
-	for(iter = node->begin(); iter != node->end(); iter++) {
+	for(iter  = node->begin(); iter != node->end(); iter++) {
 	    search_recursive(resName, *iter, results, usePatterns);
 	}
 	break;

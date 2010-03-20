@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: service.cpp,v 1.34 2009/10/28 21:56:20 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -60,15 +55,12 @@ using std::string;
 namespace {
     const unsigned long DEFAULT_HASH_SIZE = 131;
     const unsigned long DEFAULT_TIMEOUT = 3;
-    const unsigned long DEFAULT_AGENT_CONFIG_POLLING_INTERVAL = 60;
-    const unsigned long DEFAULT_AGENT_CONFIG_CLEANUP_INTERVAL = 30;
-    const unsigned long DEFAULT_AUDIT_LOG_POLLING_INTERVAL = 5;
     const PRUint32 DEFAULT_MAX_THREADS = 10;
     const char *DEFAULT_SESSION_USER_ID_PARAM = "UserToken";
     const char *DEFAULT_LDAP_USER_ID_PARAM = "entrydn";
 }
 extern smi::SSOTokenService *get_sso_token_service();
-extern AgentProfileService* agentProfileService;
+std::string attrMultiValueSeparator = "|";
 
 string trimUriOrgEntry(const string& uriString) {
     string retVal(uriString);
@@ -96,14 +88,10 @@ string trimUriOrgEntry(const string& uriString) {
 }
 
 bool isValidAttrsFetchMode(const std::string &svcName) {
-    bool retValue = false;
-    if (!svcName.empty()) {
-        if ((!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_HEADER)) ||
-	    (!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_COOKIE))) {
-	     retValue = true;
-         }
-    }
-    return retValue;
+	return ((!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_HEADER)) ||
+	    (!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_HEADER_OLD)) ||
+	    (!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_COOKIE)) ||
+	    (!strcasecmp(svcName.c_str(), AM_POLICY_SET_ATTRS_AS_COOKIE_OLD)));
 }
 
 
@@ -120,25 +108,23 @@ Service::Service(const char *svcName,
       svcParams(initParams, logID),
       initialized(false),
       threadPoolCreated(false),
-      threadPoolAgentFetchCreated(false),
-      threadPoolAgentConfigCleanupCreated(false),
-      threadPoolAuditLogCreated(false),
       serviceName(), instanceName(),
       notificationEnabled(svcParams.getBool(
                               AM_COMMON_NOTIFICATION_ENABLE_PROPERTY, false)),
+      do_sso_only(svcParams.getBool(AM_WEB_DO_SSO_ONLY, false)),
+      policy_number_of_tries(svcParams.getUnsigned(
+                              AM_POLICY_NUMBER_OF_TRIES, 0)),
       notificationURL(),
-      policyTable(DEFAULT_HASH_SIZE,
+      policyTable(svcParams.getUnsigned(AM_POLICY_HASH_BUCKET_SIZE_PROPERTY,
+				      DEFAULT_HASH_SIZE),
 	       svcParams.getPositiveNumber(AM_POLICY_HASH_TIMEOUT_MINS_PROPERTY,
 				      DEFAULT_TIMEOUT)),
-       rsrcTraits(rTraits),
+      fetchProfileAttrs(false),
+      fetchSessionAttrs(false),
+      fetchResponseAttrs(false),
+      rsrcTraits(rTraits),
 	  tPool(NULL),
       htCleaner(NULL),
-      tPoolAgentFetch(NULL),
-      tPoolAgentConfigCleanup(NULL),
-      tPoolAuditLog(NULL),
-      agentConfigFetch(NULL),
-      agentConfigCleanup(NULL),
-      auditLog(NULL),
       lock(),
       namingSvcInfo(svcParams.get(AM_COMMON_NAMING_URL_PROPERTY)),
 		    alwaysTrustServerCert(
@@ -151,24 +137,117 @@ Service::Service(const char *svcName,
                 svcParams.get(AM_AUTH_CERT_ALIAS_PROPERTY,""),
                 alwaysTrustServerCert),
       policySvc(NULL),
+      mFetchFromRootResource(
+			     svcParams.getBool(AM_POLICY_FETCH_FROM_ROOT_RSRC_PROPERTY, true)),
+      mOrdNum(svcParams.getUnsigned(AM_COMMON_ORDINAL_NUMBER, 0)),
+      mUserIdParamType(USER_ID_PARAM_TYPE_SESSION),
+      mUserIdParam(""),
+      mLoadBalancerEnable(false),
       mSSOTokenSvc(*(get_sso_token_service())) {
+    if(svcName == NULL)
+	throw std::invalid_argument("Invalid service name during service initialization");
+
+    try {
+	// Fetch the profile mode
+	fetchProfileAttrs = isValidAttrsFetchMode(svcParams.get(AM_POLICY_PROFILE_ATTRS_MODE, ""));
+
+	// Fetch the session mode
+	fetchSessionAttrs = isValidAttrsFetchMode(svcParams.get(AM_POLICY_SESSION_ATTRS_MODE, ""));
+
+	// Fetch the response mode
+	fetchResponseAttrs = isValidAttrsFetchMode(svcParams.get(AM_POLICY_RESPONSE_ATTRS_MODE, ""));
+    }
+    catch (std::invalid_argument& ex) {
+	// for backwards compatibility, check if fetchHeaders property is
+	// there.
+	bool fetchHeaders = false;
+	try {
+	    fetchHeaders = svcParams.getBool(AM_POLICY_FETCH_HEADER_ATTRS_PROPERTY);
+	    if (true == fetchHeaders)
+		fetchProfileAttrs = true;
+	}
+	catch (invalid_argument& iex) {
+	    fetchProfileAttrs = false;
+	}
+    }
+
+    {
+	std::string userIdParamType =
+	    svcParams.get(AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY, "Session");
+	if (strcasecmp(userIdParamType.c_str(), "SESSION")==0) {
+	    mUserIdParamType = USER_ID_PARAM_TYPE_SESSION;
+	}
+	else if (strcasecmp(userIdParamType.c_str(), "LDAP")==0) {
+	    mUserIdParamType = USER_ID_PARAM_TYPE_LDAP;
+	}
+	else {
+	    const char *msg = "Invalid value for property "
+				        AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY;
+	    throw std::invalid_argument(msg);
+	}
+	if (mUserIdParamType == USER_ID_PARAM_TYPE_SESSION) {
+	    mUserIdParam = svcParams.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
+					 DEFAULT_SESSION_USER_ID_PARAM);
+	}
+	else { // LDAP
+	    mUserIdParam = svcParams.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
+					 DEFAULT_LDAP_USER_ID_PARAM);
+	}
+    }
+
+    if(rsrcTraits.cmp_func_ptr == NULL ||
+       rsrcTraits.get_resource_root == NULL ||
+       rsrcTraits.canonicalize == NULL ||
+       rsrcTraits.str_free == NULL) {
+	throw std::invalid_argument("Invalid resource traits "
+		"structure contents passed during service creation.");
+    }
 
     string func("Service constructor");
 
-    if (svcName == NULL)
-	    throw std::invalid_argument("Invalid service name during service "
-                                    "initialization");
-     
-    if (rsrcTraits.cmp_func_ptr == NULL ||
-        rsrcTraits.get_resource_root == NULL ||
-        rsrcTraits.canonicalize == NULL ||
-        rsrcTraits.str_free == NULL) {
-        throw std::invalid_argument("Invalid resource traits "
-		    "structure contents passed during service creation.");
-    }
-    
     serviceName = svcName;
     instanceName = instName;
+    if(fetchProfileAttrs) {
+	profileAttributesMap.parsePropertyKeyValue(
+		svcParams.get(AM_POLICY_PROFILE_ATTRS_MAP, ""),
+		',', '|');
+	Properties::iterator iter;
+	for(iter = profileAttributesMap.begin(); 
+		iter != profileAttributesMap.end(); iter++) {
+	    string attr = (*iter).first;
+	    Log::log(logID, Log::LOG_MAX_DEBUG,
+		     "Service::Service() Profile Attribute=%s", attr.c_str());
+	    attrList.push_back(attr);
+	}
+    }
+
+    if(fetchSessionAttrs) {        
+	sessionAttributesMap.parsePropertyKeyValue(
+		svcParams.get(AM_POLICY_SESSION_ATTRS_MAP, ""),
+		',', '|');
+    }
+
+    if(fetchResponseAttrs) {        
+	responseAttributesMap.parsePropertyKeyValue(
+		svcParams.get(AM_POLICY_RESPONSE_ATTRS_MAP, ""),
+		',', '|');
+    }
+
+    attrMultiValueSeparator =
+        svcParams.get(AM_POLICY_ATTRS_MULTI_VALUE_SEPARATOR, "|");
+
+    // if user id parameter comes from an ldap attribute, add it also
+    // to the list of ldap attributes to fetch and parse.
+    if (mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
+	// Set parameter in the attributes to parse in the response.
+	// if fetch headers was set to true and the parameter is already
+	// there then no need to add it again; if not, add it.
+	if (!profileAttributesMap.isSet(mUserIdParam)) {
+	    profileAttributesMap.set(mUserIdParam, mUserIdParam);
+	}
+	// Now set the parameter in attributes to get in the request.
+	attrList.push_back(mUserIdParam);
+    }
 
     if (notificationEnabled) {
 	notificationURL = svcParams.get(AM_COMMON_NOTIFICATION_URL_PROPERTY,"");
@@ -186,15 +265,9 @@ Service::Service(const char *svcName,
 	Log::log(logID, Log::LOG_INFO,
 		 "Service() notification disabled");
     }
-    //call initialize finally
-    initialize();
 }
 
 /*
- * This function is used by CAC enabled agents.
- * If Agent already authenticated, then 
- * just app ssotoken gets set to policy_entry.
- *
  * Throws:
  *	std::invalid_argument if any argument is invalid
  *	XMLTree::ParseException upon XML parsing error
@@ -225,118 +298,36 @@ Service::initialize() {
 	}
     }
 
-    if (threadPoolCreated == false) {
-        if (tPool == NULL) {
-            try {
-                tPool = new ThreadPool(1, 1 + notificationEnabled?
-                                DEFAULT_MAX_THREADS:0);
-            } catch(std::bad_alloc &bae) {
-                throw InternalException(func,
-                                        "Memory allocation failure while"
-                                        " creating thread pool.",
-                                        AM_NO_MEMORY);
-            }
-        }
+    if(threadPoolCreated == false) {
+	if(tPool == NULL) {
+		try {
+		    tPool = new ThreadPool(1, 1 + notificationEnabled?
+			    svcParams.getUnsigned(AM_POLICY_MAX_THREADS_PROPERTY,
+						  DEFAULT_MAX_THREADS):0);
+		} catch(std::bad_alloc &bae) {
+		    throw InternalException(func,
+					    "Memory allocation failure while"
+					    " creating thread pool.",
+					    AM_NO_MEMORY);
+		}
+	}
 
-        /* Adding cleanup thread for the policyEntry hash table */
+	/* Adding cleanup thread for the policyEntry hash table */
         /* thread pool will free htCleaner pointer when it is done
          * executing, when am_cleanup() is called. */
-        if (tPool->dispatch(htCleaner) == false) {
-            string msg("Cleaner thread dispatch failed.");
-            Log::log(logID, Log::LOG_ERROR, msg.c_str());
-            throw InternalException(func, msg, AM_INIT_FAILURE);
-        }
-        threadPoolCreated = true;
-    }
-
-      // Start a thread pool to fetch latest Agent Config properties
-      if (agentConfigFetch == NULL) {
-        try {
-            agentConfigFetch = new AgentConfigFetch(agentProfileService,
-                                   svcParams.getPositiveNumber(
-                                       AM_COMMON_AGENTS_CONFIG_POLLING_PROPERTY,
-				       DEFAULT_AGENT_CONFIG_POLLING_INTERVAL),
-                                       "Agent Config Fetch");
-        } catch(std::bad_alloc &bae) {
-            throw InternalException(func,
-                                    "Memory allocation failure while "
-                                    "creating Agent Config Fetch.",
-                                    AM_NO_MEMORY);
-        } catch(InternalException &ie) {
-	    throw ie;
+	if(tPool->dispatch(htCleaner) == false) {
+	    string msg("Cleaner thread dispatch failed.");
+	    Log::log(logID, Log::LOG_ERROR, msg.c_str());
+	    throw InternalException(func, msg, AM_INIT_FAILURE);
 	}
+	threadPoolCreated = true;
     }
-
-    if (threadPoolAgentFetchCreated == false) {
-        if (tPoolAgentFetch == NULL) {
-            try {
-                tPoolAgentFetch = new ThreadPool(1, DEFAULT_MAX_THREADS);
-            } catch(std::bad_alloc &bae) {
-                throw InternalException(func,
-                                        "Memory allocation failure while"
-                                        " creating thread pool.",
-                                        AM_NO_MEMORY);
-            }
-        }
-
-	if (tPoolAgentFetch->dispatch(agentConfigFetch) == false) {
-            string msg("Agent Config Fetch thread dispatch failed.");
-            Log::log(logID, Log::LOG_ERROR, msg.c_str());
-            throw InternalException(func, msg, AM_INIT_FAILURE);
-        }
-        threadPoolAgentFetchCreated = true;
-    }
-    
-     // Start a thread pool to cleanup old agent configuration
-     if (agentConfigCleanup == NULL) {
-        try {
-            agentConfigCleanup = new AgentConfigCacheCleanup(agentProfileService,
-                                     svcParams.getPositiveNumber(
-                                       AM_COMMON_AGENTS_CONFIG_CLEANUP_PROPERTY,
-				       DEFAULT_AGENT_CONFIG_CLEANUP_INTERVAL),
-                                       "Agent Config Cleanup");
-        } catch(std::bad_alloc &bae) {
-            throw InternalException(func,
-                                    "Memory allocation failure while "
-                                    "creating Agent Config Fetch.",
-                                    AM_NO_MEMORY);
-        } catch(InternalException &ie) {
-            throw ie;
-        }
-    }
-
-    if (threadPoolAgentConfigCleanupCreated == false) {
-        if (tPoolAgentConfigCleanup == NULL) {
-            try {
-                tPoolAgentConfigCleanup = new ThreadPool(1,DEFAULT_MAX_THREADS);
-            } catch(std::bad_alloc &bae) {
-                throw InternalException(func,
-                            "Memory allocation failure while"
-                            " creating Agent config cleanup thread pool.",
-                            AM_NO_MEMORY);
-            }
-        }
-
-        if (tPoolAgentConfigCleanup->dispatch(agentConfigCleanup) == false) {
-            string msg("Agent Config Fetch thread dispatch failed.");
-            Log::log(logID, Log::LOG_ERROR, msg.c_str());
-            throw InternalException(func, msg, AM_INIT_FAILURE);
-        }
-        threadPoolAgentConfigCleanupCreated = true;
-    }
-
-
 
     Log::log(logID, Log::LOG_MAX_DEBUG,
 	     "Service communication with server started.");
     am_status_t status;
-    mPolicyEntry = new PolicyEntry(rsrcTraits);
-    SSOToken& ssoTok = mPolicyEntry->getSSOToken();
-    const SSOToken appSSOToken(
-              agentProfileService->getAgentSSOToken(),
-              Http::encode(agentProfileService->getAgentSSOToken()));
-
-    ssoTok = appSSOToken;
+    mPolicyEntry = new PolicyEntry(rsrcTraits, profileAttributesMap);
+    construct_auth_svc(mPolicyEntry);
 
     // Do naming query
     if(AM_SUCCESS !=
@@ -360,6 +351,12 @@ Service::initialize() {
 	throw InternalException(func, msg, status);
     }
 
+   if (do_sso_only && !fetchProfileAttrs && !fetchResponseAttrs) {
+       Log::log(logID, Log::LOG_INFO,"do_sso_only is set to true, profile and response attributes fetch mode is set to NONE");
+   } else {
+    // Do policy init.
+    string policydata;
+    KeyValueMap env;
     policySvc = new PolicyService(
 		    mPolicyEntry->getSSOToken(),
 		    svcParams,
@@ -388,17 +385,17 @@ Service::initialize() {
 	KeyValueMap::const_iterator result = advicesMap.find(SERVER_HANDLED_ADVICES);
 	const std::vector<std::string> adviceNames = (*result).second;
         if (!serverHandledAdvicesList.empty()) {
-            serverHandledAdvicesList.clear();
-            Log::log(logID, Log::LOG_MAX_DEBUG, 
-                "Server handled Advice list not empty, so cleared ");
+            	serverHandledAdvicesList.clear();
+   		Log::log(logID, Log::LOG_MAX_DEBUG,"Server handled Advice list not empty, so cleared ");
         }
-
 	serverHandledAdvicesList.insert(serverHandledAdvicesList.begin(),
 				       adviceNames.begin(), adviceNames.end());
     }
+   }
 
-    string remoteLogName = svcParams.get(AM_AUDIT_SERVER_LOG_FILE_PROPERTY,
+    string remoteLogName = svcParams.get(AM_COMMON_SERVER_LOG_FILE_PROPERTY,
 					 "");
+
     LogService *newLogSvc =
 	   new LogService(mPolicyEntry->namingInfo.getLoggingSvcInfo(),
 			  mPolicyEntry->getSSOToken(),
@@ -410,47 +407,8 @@ Service::initialize() {
 
 
     Log::setRemoteInfo(newLogSvc);
-      // Start a thread pool to audit log 
-      if (auditLog == NULL) {
-        try {
-            auditLog = new AuditLog(newLogSvc,
-                                    agentProfileService,
-                                    svcParams.getPositiveNumber(
-                                        AM_AUDIT_SERVER_LOG_INTERVAL_PROPERTY,
-                                        DEFAULT_AUDIT_LOG_POLLING_INTERVAL),
-                                       "Audit Log");
-        } catch(std::bad_alloc &bae) {
-            throw InternalException(func,
-                                    "Memory allocation failure while "
-                                    "creating Audit Log.",
-                                    AM_NO_MEMORY);
-        } catch(InternalException &ie) {
-            throw ie;
-        }
-    }
-
-    if (threadPoolAuditLogCreated == false) {
-        if (tPoolAuditLog == NULL) {
-            try {
-                tPoolAuditLog = new ThreadPool(1, DEFAULT_MAX_THREADS);
-            } catch(std::bad_alloc &bae) {
-                throw InternalException(func,
-                                        "Memory allocation failure while"
-                                        " creating thread pool.",
-                                        AM_NO_MEMORY);
-            }
-        }
-
-        if (tPoolAuditLog->dispatch(auditLog) == false) {
-            string msg("Audit Log thread dispatch failed.");
-            Log::log(logID, Log::LOG_ERROR, msg.c_str());
-            throw InternalException(func, msg, AM_INIT_FAILURE);
-        }
-        threadPoolAuditLogCreated = true;
-    }
 
     initialized = true;
-    isLocalRepo = false;
     Log::log(logID, Log::LOG_MAX_DEBUG,
 	     "Service communication with finished successfully.");
     return;
@@ -610,34 +568,13 @@ Service::policy_notify(const string &resName,
     return;
 }
 
-/*
- * Agent Config Change notification
- */
-void
-Service::agent_config_change_notify() {
-    const char *thisfunc = "Service::agent_config_change_notify()";
-    am_status_t status;
-    status = agentProfileService->fetchAndUpdateAgentConfigCache();
-    if (status == AM_REST_ATTRS_SERVICE_FAILURE) {
-        reinitialize();
-        status = agentProfileService->fetchAndUpdateAgentConfigCache();
-        if (status!=AM_SUCCESS) {
-            am_web_log_error("%s:There was an error while fetching "
-                    "REST attributes after agent login. Status : %s", 
-                    thisfunc, am_status_to_string(status));
-        }
-
-    }
-    return;
-}
-
 /* Throws
  *	std::invalid_argument if any argument is invalid
  *	InternalException upon other errors.
  *	XMLTree::ParseException upon XML Parsing error.
  */
 void
-Service::process_policy_response(PolicyEntryRefCntPtr &policyEntry,
+Service::process_policy_response(PolicyEntryRefCntPtr policyEntry,
 				 const KeyValueMap &env,
 				 const string &xmlData)
 {
@@ -678,10 +615,7 @@ Service::~Service() {
     Log::log(logID, Log::LOG_MAX_DEBUG, "Service::~Service(): "
 	    "Cleaning up %s service.",
 	    serviceName.c_str());
-    if(isLocalRepo == true){
-	(void)do_agent_auth_logout();
-    }
-    
+    (void)do_agent_auth_logout();
     // Thread pool will free htCleaner pointer when it has stopped
     // executing.
     if (htCleaner != NULL) {
@@ -701,11 +635,6 @@ Service::~Service() {
 	     "Service::Service(): Thread pool was not yet initialized.");
     }
     if (policySvc != NULL) {
-        policySvc->sendNotificationMsg(false,
-                        mPolicyEntry->namingInfo.getPolicySvcInfo(),
-                        serviceName, mPolicyEntry->cookies,
-                        notificationURL);
-
         delete(policySvc);
     	Log::log(logID, Log::LOG_MAX_DEBUG,
 	     "Service::Service(): Policy service destroyed.");
@@ -713,193 +642,181 @@ Service::~Service() {
     	Log::log(logID, Log::LOG_MAX_DEBUG,
 	     "Service::Service(): Policy service was not yet initialized.");
     }
-    
-    // Thread pool will free AgentConfigFetch pointer when it has stopped
-    // executing.
-    if (agentConfigFetch != NULL) {
-	agentConfigFetch->stopCleaning();
-	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service(): Agent Config Fetch stopped.");
-    } else {
-	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): Agent Config Fetch was not yet initialized.");
-    }
-    if (tPoolAgentFetch != NULL) {
-	delete(tPoolAgentFetch);
-    	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service(): Thread pool Agent Fetch cleaned up.");
-    } else {
-    	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): Thread pool Agent Fetch "
-             "was not yet initialized.");
-    }    
-    
-    // Thread pool will free AgentConfigFetch pointer when it has stopped
-    // executing.
-    if (agentConfigCleanup != NULL) {
-	agentConfigCleanup->stopCleaning();
-	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service(): Agent Config Cleanup stopped.");
-    } else {
-	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): Agent Config Cleanup not yet initialized.");
-    }
-    if (tPoolAgentConfigCleanup != NULL) {
-	delete(tPoolAgentConfigCleanup);
-    	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service():Thread pool Agent Config Cleanup cleaned up.");
-    } else {
-    	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): Thread pool Agent Config Cleanup "
-             "was not yet initialized.");
-    }    
-
-    // Thread pool will free AuditLog pointer when it has stopped
-    // executing.
-    if (auditLog != NULL) {
-	auditLog->stopFlushing();
-	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service(): AuditLog stopped.");
-    } else {
-	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): AuditLog not yet initialized.");
-    }
-    if (tPoolAuditLog != NULL) {
-	delete(tPoolAuditLog);
-    	Log::log(logID, Log::LOG_MAX_DEBUG,
-	     "Service::Service():Thread pool AuditLog cleaned up.");
-    } else {
-    	Log::log(logID, Log::LOG_DEBUG,
-	     "Service::Service(): Thread pool AuditLog "
-             "was not yet initialized.");
-    }    
 }
 
 void 
 Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
-                            PolicyEntryRefCntPtr &uPolicyEntry,
-                            const SessionInfo sessionInfo,
-                            std::string& resName,
-                            const std::vector<PDRefCntPtr>& results,
-                            Properties& properties,
-                            Properties& profileAttributesMap,
-                            Properties& sessionAttributesMap,
-                            Properties& responseAttributesMap) const
+                       PolicyEntryRefCntPtr uPolicyEntry,
+                       const SessionInfo sessionInfo,
+                       std::string& resName,
+                       const std::vector<PDRefCntPtr>& results) const
 {
     const char *func = "Service::setRemUserAndAttrs()";
     am_status_t  status = AM_SUCCESS;
-    int mUserIdParamType = 0;
-    std::string mUserIdParam;
-
-    bool mFetchFromRootResource = 
-        properties.getBool(
-              AM_POLICY_FETCH_FROM_ROOT_RSRC_PROPERTY, true);
-    
-    // Fetch the profile mode
-   bool fetchProfileAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_PROFILE_ATTRS_MODE));
-
-    // Fetch the session mode
-    bool fetchSessionAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_SESSION_ATTRS_MODE));
-
-    // Fetch the response mode
-    bool fetchResponseAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_RESPONSE_ATTRS_MODE));
-
-    std::string userIdParamType =
-	   properties.get(
-               AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY,"Session");
-
-    if (strcasecmp(userIdParamType.c_str(), "SESSION")==0) {
-        mUserIdParamType = USER_ID_PARAM_TYPE_SESSION;
-    } else if (strcasecmp(userIdParamType.c_str(), "LDAP")==0) {
-        mUserIdParamType = USER_ID_PARAM_TYPE_LDAP;
-    } else {
-        const char *msg = "Invalid value for property "
-                                    AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY;
-	throw std::invalid_argument(msg);
-    }
-    if (mUserIdParamType == USER_ID_PARAM_TYPE_SESSION) {
-        mUserIdParam = 
-            properties.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
-                                      DEFAULT_SESSION_USER_ID_PARAM);
-    } else { // LDAP
-        mUserIdParam = 
-            properties.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
-                                      DEFAULT_LDAP_USER_ID_PARAM);
-    }
-       
-    // if remote user id param type was session, set the
-    // remote from the session property.
 
     policy_res->remote_user = NULL;
+    policy_res->attr_profile_map = AM_MAP_NULL;
+    policy_res->attr_session_map = AM_MAP_NULL;
+    policy_res->attr_response_map = AM_MAP_NULL;
 
+    // if remote user id param type was session, set the
+    // remote from the session property.
     if (mUserIdParamType == USER_ID_PARAM_TYPE_SESSION) {
-        const char *msg = "%s:User Id parameter %s not found in user's session"
-	                      "properties. Setting user Id to null (unknown).";
+        const char *msg = "%s:User Id parameter %s not found in "
+                          "user's session properties. "
+                          "Setting user Id to null (unknown).";
         try {
             const std::string &remoteUser =
-                sessionInfo.getProperties().get(mUserIdParam);
-            if (remoteUser.size() > 0) {
+                    sessionInfo.getProperties().get(mUserIdParam);
+            if(remoteUser.size() > 0) {
                 policy_res->remote_user = strdup(remoteUser.c_str());
                 if (policy_res->remote_user == NULL) {
                     throw InternalException(func,
-                        "No more memory for setting remote user", AM_NO_MEMORY);
+                             "No more memory for setting remote user",
+                             AM_NO_MEMORY);
                 }
             } else {
-                Log::log(logID,Log::LOG_WARNING,msg,func,mUserIdParam.c_str());
+                Log::log(logID, Log::LOG_WARNING, msg, func,
+                   mUserIdParam.c_str());
             }
         } catch(std::invalid_argument &ex) {
             Log::log(logID, Log::LOG_WARNING, msg, func, mUserIdParam.c_str());
         }
     }
 
-    policy_res->attr_profile_map = AM_MAP_NULL;
-    policy_res->attr_session_map = AM_MAP_NULL;
-    policy_res->attr_response_map = AM_MAP_NULL;
+    // if remote user id param type was ldap or if fetch ldap attributes
+    // is true, get the ldap attributes and set remote user and
+    // the ldap attribute map in the policy result.
+    // set the ldap attributes if any and set the remote user from
+    // ldap attribute if user id param is an ldap attribute.
 
-    std::string attrMultiValueSeparator = 
-        properties.get(AM_POLICY_ATTRS_MULTI_VALUE_SEPARATOR,
-            ATTR_MULTI_VALUE_SEPARATOR);
-    
-    if (fetchProfileAttrs || fetchSessionAttrs || fetchResponseAttrs ||
-        mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
+    // This is an egregious patch work for retriving ldap attributes.
+    // Once the Node object in the tree gets replaced by the Policy
+    // decision object. This must be done fetched by doing a getParent.
+    // This fix is based on the assumption that we know we query for
+    // root resource always and that the LDAP attributes are returned
+    // as a part of the first policy decision, in our case is the root
+    // resource.
+
+    if(fetchProfileAttrs || fetchSessionAttrs || fetchResponseAttrs ||
+         mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) 
+    {
         ResourceName resObj(resName);
         string rootRes;
 
-        // Set the session attribute map
-        if (fetchSessionAttrs) {
-            KeyValueMap &session_attributes_map = *(new KeyValueMap());
-	    time_t retVal = (time_t)-1;
-            policy_res->attr_session_map =
-                          reinterpret_cast<am_map_t>(&session_attributes_map);
+        if(mFetchFromRootResource == false) {
+            rootRes = resName;
+        }
 
-             // Next construct the session attribute map
-             Properties::const_iterator iter_session_attr;
-             for (iter_session_attr = sessionAttributesMap.begin(); 
-                  iter_session_attr != sessionAttributesMap.end(); 
-                  iter_session_attr++) {
-                     std::string sessionKey = (*iter_session_attr).first;
-                     std::string sessionAttr = (*iter_session_attr).second;
-                     std::string sessionValue; 
-                     std::string tmpValue; 
-                     if (session_attributes_map.size() > 0) {
+        if((mFetchFromRootResource == true) && 
+            !resObj.getResourceRoot(rsrcTraits, rootRes))
+        {
+            Log::log(logID, Log::LOG_WARNING,
+                "%s: Error getting root resource for %s while getting "
+                "user Id from LDAP attribute %s. "
+                "Setting to user to null (unknown).", func,
+                resName.c_str(), mUserIdParam.c_str());
+        } else {
+            PDRefCntPtr rootPolicy = uPolicyEntry->getPolicyDecision(rootRes);
+            if (rootPolicy == PolicyDecision::INVALID_POLICY_DECISION) {
+                Log::log(logID, Log::LOG_ERROR,"%s: Root policy could "
+                      "not be found for resource %s. "
+                      "The attributes will not be set.", func, rootRes.c_str());
+                return;
+            }
+            const KeyValueMap &attrResp = rootPolicy->getAttributeResponses();
+            if (mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
+                KeyValueMap::const_iterator iter = attrResp.find(mUserIdParam);
+                if (iter == attrResp.end() || iter->second.size() <= 0) {
+                    Log::log(logID, Log::LOG_WARNING,
+                           "%s: User Id parameter %s not found in user's LDAP "
+                           "attributes. Setting user Id to null (unknown).",
+                           func, mUserIdParam.c_str());
+                } else {
+                    policy_res->remote_user = strdup(iter->second[0].c_str());
+                }
+            }
+
+            // Construct the profile attribute map
+            if (fetchProfileAttrs) {
+                KeyValueMap &profile_attributes_map = *(new KeyValueMap());
+                policy_res->attr_profile_map =
+                   reinterpret_cast<am_map_t>(&profile_attributes_map);
+
+                Properties::const_iterator iter_profile_attr;
+                for (iter_profile_attr = profileAttributesMap.begin(); 
+                    iter_profile_attr != profileAttributesMap.end(); 
+                    iter_profile_attr++) 
+                {
+                    std::string profileKey = (*iter_profile_attr).first;
+                    std::string profileAttr = (*iter_profile_attr).second;
+                    std::string profileValue; 
+                    std::string tmpValue; 
+                    if (profile_attributes_map.size() > 0) {
+                        KeyValueMap::const_iterator iter = profile_attributes_map.find(profileAttr);
+                        if (iter != profile_attributes_map.end() && 
+                           iter->second.size() > 0) 
+                        {
+                            tmpValue = iter->second[0];
+                            profile_attributes_map.erase(profileAttr);
+                        }
+                    }
+                    KeyValueMap::const_iterator iter_profile = 
+                                           attrResp.find(profileKey);
+                    if (iter_profile != attrResp.end()) {
+                        for(std::size_t i=0;i<iter_profile->second.size();++i) {
+                            profileValue.append(iter_profile->second[i]);
+                            if (i < (iter_profile->second.size()-1)) {
+                                profileValue.append(attrMultiValueSeparator);
+                            }
+                        }
+                    }
+                    if (tmpValue.size() > 0) {
+                        profileValue =  profileValue + attrMultiValueSeparator + tmpValue;
+                    }
+                    Log::log(logID, Log::LOG_MAX_DEBUG, 
+                            "Attribute value for %s found in ldap = %s", 
+                            profileKey.c_str(), profileValue.c_str());
+                    if (!profileAttr.empty() ) {
+                        profile_attributes_map.insert(profileAttr, 
+                                                      profileValue);
+                    }
+                }
+            }
+
+            // Set the session attribute map
+            if (fetchSessionAttrs) {
+                KeyValueMap &session_attributes_map = *(new KeyValueMap());
+                time_t retVal = (time_t)-1;
+                policy_res->attr_session_map =
+                          reinterpret_cast<am_map_t>(&session_attributes_map);
+                // Next construct the session attribute map
+                Properties::const_iterator iter_session_attr;
+                for (iter_session_attr = sessionAttributesMap.begin(); 
+                    iter_session_attr != sessionAttributesMap.end(); 
+                    iter_session_attr++)
+                {
+                    std::string sessionKey = (*iter_session_attr).first;
+                    std::string sessionAttr = (*iter_session_attr).second;
+                    std::string sessionValue; 
+                    std::string tmpValue; 
+                    if (session_attributes_map.size() > 0) {
                         KeyValueMap::const_iterator iter = 
                                  session_attributes_map.find(sessionAttr);
                         if (iter != session_attributes_map.end() && 
-                            iter->second.size() > 0) {
-                               tmpValue = iter->second[0];
-                               session_attributes_map.erase(sessionAttr);
+                             iter->second.size() > 0)
+                        {
+                            tmpValue = iter->second[0];
+                            session_attributes_map.erase(sessionAttr);
                         }
-                     }
-                     try {
-                         char dataStr[50];
-                         if (!strcmp(sessionKey.c_str(),"maxtime")) {
-                             retVal = (time_t)(sessionInfo.getMaxSessionTime());
-                             PR_snprintf(dataStr, 50, "%ld", retVal);
-                             std::string tmpStr(dataStr);
-                             sessionValue = tmpStr;
+                    }
+                    try {
+                        char dataStr[50];
+                        if (!strcmp(sessionKey.c_str(),"maxtime")) {
+                            retVal = (time_t)(sessionInfo.getMaxSessionTime());
+                            PR_snprintf(dataStr, 50, "%ld", retVal);
+                            std::string tmpStr(dataStr);
+                            sessionValue = tmpStr;
                         } else if (!strcmp(sessionKey.c_str(),"maxidle")) {
                             retVal = (time_t)(sessionInfo.getMaxIdleTime());
                             PR_snprintf(dataStr, 50, "%ld", retVal);
@@ -907,208 +824,89 @@ Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
                             sessionValue = tmpStr;
                         } else {
                             sessionValue = 
-                                sessionInfo.getProperties().get(sessionKey);
+                               sessionInfo.getProperties().get(sessionKey);
                             if (tmpValue.size() > 0) {
-                               sessionValue = sessionValue + 
+                                sessionValue = sessionValue + 
                                             attrMultiValueSeparator + tmpValue;
                             }
-                             Log::log(logID, Log::LOG_MAX_DEBUG, "Attribute "
+                            Log::log(logID, Log::LOG_MAX_DEBUG, "Attribute "
                                   "value for %s found in session = %s", 
                                   sessionKey.c_str(), sessionValue.c_str());
                         }
-                     } catch(std::invalid_argument &ex) {
-                           Log::log(logID, Log::LOG_MAX_DEBUG, "Attribute "
-                                    " value for %s not found in Session", 
-                                    sessionKey.c_str());
-                     }
-                     if (!sessionAttr.empty() && !sessionValue.empty()) {
-                         session_attributes_map.insert(sessionAttr, 
-                                                       sessionValue);
-                     }
-                }
-        }
-
-        if (fetchProfileAttrs || mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
-            if (mFetchFromRootResource == false) {
-                rootRes = resName;
-            }
-        
-            if ((mFetchFromRootResource == true) && 
-                !resObj.getResourceRoot(rsrcTraits, rootRes)) {
-                Log::log(logID, Log::LOG_WARNING,
-                        "%s: Error getting root resource for %s while getting "
-                        "user Id from LDAP attribute %s. "
-                        "Setting to user to null (unknown).", func,
-                        resName.c_str(), mUserIdParam.c_str());
-            } else {
-                PDRefCntPtr rootPolicy = 
-		    uPolicyEntry->getPolicyDecision(rootRes);
-	        if (rootPolicy != NULL) {
-                    const KeyValueMap &attrResp = 
-				  rootPolicy->getAttributeResponses();
-                    if (attrResp.size() > 0) {
-		        if (mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
-                            KeyValueMap::const_iterator iter = 
-						attrResp.find(mUserIdParam);
-                            if (iter == attrResp.end() || 
-				iter->second.size()<= 0) {
-                                Log::log(logID, Log::LOG_WARNING,
-                                     "%s:User Id parameter %s not found in "
-                                     "user's LDAP attributes. Setting user Id " 
-                                     "to null (unknown).", func, 
-                                     mUserIdParam.c_str());
-                            } else {
-                                policy_res->remote_user = 
-                                     strdup(iter->second[0].c_str());
-                            }
-                        }
-
-                        // Construct the profile attribute map
-                        if (fetchProfileAttrs) {
-                            KeyValueMap &profile_attributes_map = 
-					     *(new KeyValueMap());
-                            policy_res->attr_profile_map =
-                            reinterpret_cast<am_map_t>(&profile_attributes_map);
-
-                            Properties::const_iterator iter_profile_attr;
-                            for (iter_profile_attr = 
-				 profileAttributesMap.begin(); 
-                               iter_profile_attr != profileAttributesMap.end(); 
-                               iter_profile_attr++) {
-                                    std::string profileKey = 
-				        (*iter_profile_attr).first;
-                                    std::string profileAttr = 
-				        (*iter_profile_attr).second;
-                                    std::string profileValue; 
-                                    std::string tmpValue; 
-                                    if (profile_attributes_map.size() > 0) {
-                                        KeyValueMap::const_iterator iter = 
-                                            profile_attributes_map.find(
-								  profileAttr);
-                                        if (iter != 
-					    profile_attributes_map.end() && 
-					    iter->second.size() > 0) {
-                                            tmpValue = iter->second[0];
-                                            profile_attributes_map.erase(
-								  profileAttr);
-                                        }
-                                    }
-                                    KeyValueMap::const_iterator iter_profile = 
-                                              attrResp.find(profileKey);
-                                    if (iter_profile != attrResp.end()) {
-                                        for (std::size_t i=0;
-				             i < iter_profile->second.size(); 
-					     ++i) {
-                                            profileValue.append(
-						iter_profile->second[i]);
-                                            if (i < 
-					       (iter_profile->second.size()-1)){
-                                                profileValue.append(
-						    attrMultiValueSeparator);
-                                           }
-                                        }
-                                    }
-                                    if (tmpValue.size() > 0) {
-                                        profileValue =  profileValue + 
-                                                attrMultiValueSeparator + 
-                                                tmpValue;
-                                    }
-                                    if (!profileAttr.empty() && 
-					!profileValue.empty()) {
-                                        Log::log(logID, Log::LOG_MAX_DEBUG, 
-                                        "Attribute value for %s found "
-                                        "in ldap = %s", profileKey.c_str(), 
-                                        profileValue.c_str());
-                                        profile_attributes_map.insert(
-                                                              profileAttr,
-                                                              profileValue);
-                                    }
-                             }
-                        }
-                    } else {
-                        Log::log(logID, Log::LOG_ERROR,
-                                 "%s: Attribute Response set is empty. "
-                                 "No remote user or profile attribute is set"
-                                 "as headers or cookies", func);
-		    }
-                } else {
-                    Log::log(logID, Log::LOG_ERROR, 
-                             " %s: No Profile Attribute or remote user set as " 
-			     "empty policy decision is received", func);
-	        }
-            }
-        }
-
-        // Set the response attribute map
-        if (fetchResponseAttrs) {
-		std::vector<PDRefCntPtr>::const_iterator iter;
-                Properties::const_iterator iter_response_attr;
-                KeyValueMap &response_attributes_map = *(new KeyValueMap());
-
-                policy_res->attr_response_map =
-                   reinterpret_cast<am_map_t>(&response_attributes_map);
-                
-                if (results.size() > 0) {
-                    for (iter=results.begin(); iter!=results.end(); iter++) {
-                        PDRefCntPtr policy = *iter;
-                        const KeyValueMap &responseAttrs = 
-                                     policy->getResponseAttributes();                
-                        if (responseAttrs.size() > 0) {
-                        for (iter_response_attr =responseAttributesMap.begin(); 
-                             iter_response_attr != responseAttributesMap.end(); 
-                             iter_response_attr++) {
-                            std::string responseKey =
-				(*iter_response_attr).first;
-                            std::string responseAttr = 
-                                (*iter_response_attr).second;
-                            std::string responseValue; 
-                            std::string tmpValue; 
-                            if (response_attributes_map.size() > 0) {
-                                KeyValueMap::const_iterator iter = 
-                                    response_attributes_map.find(responseAttr);
-                                if (iter != response_attributes_map.end() && 
-                                    iter->second.size() > 0) {
-                                    tmpValue = iter->second[0];
-                                }
-                            }
-                            KeyValueMap::const_iterator iter_response = 
-                                              responseAttrs.find(responseKey);
-                            if (iter_response != responseAttrs.end()) {
-                                for (std::size_t i=0;
-				     i<iter_response->second.size(); ++i) {
-                                 responseValue.append(iter_response->second[i]);
-                                 if (i < (iter_response->second.size()-1)) {
-                                    responseValue.append(
-                                                  attrMultiValueSeparator);
-                                  }
-                                }
-                            }
-                            if ((!tmpValue.empty() > 0) && 
-                                (!responseValue.empty() > 0)) {
-				// Clear the old value so that we replace
-				// it with the new values
-                                response_attributes_map.erase(responseAttr);
-                                responseValue =  responseValue +
-                                    attrMultiValueSeparator + tmpValue;
-                            }
-                            if (!responseAttr.empty() && 
-                                !responseValue.empty()) {
-                                Log::log(logID, Log::LOG_MAX_DEBUG, 
-                                     "Response Attribute value for %s found "
-                                     "in response = %s", 
-                                responseKey.c_str(), responseValue.c_str());
-                                response_attributes_map.insert(responseAttr,
-                                                               responseValue);
-                            }
-                      }
+                    } catch(std::invalid_argument &ex) {
+                        Log::log(logID, Log::LOG_MAX_DEBUG, "Attribute "
+                                " value for %s not found in Session", 
+                                sessionKey.c_str());
                     }
-                  }
-                } else {
-                    Log::log(logID, Log::LOG_ERROR, 
-                             "No Response Attribute set as the policy result "
-                             "is empty");
+                    if (!sessionAttr.empty()) {
+                        session_attributes_map.insert(sessionAttr, 
+                                                       sessionValue);
+                    }
                 }
             }
+
+            // Set the response attribute map
+            if (fetchResponseAttrs) {
+                KeyValueMap &response_attributes_map = *(new KeyValueMap());
+                policy_res->attr_response_map =
+                          reinterpret_cast<am_map_t>(&response_attributes_map);
+
+                PDRefCntPtr responsePolicy = 
+                                    uPolicyEntry->getPolicyDecision(resName);
+                if (responsePolicy != NULL) {
+                    const KeyValueMap &responseAttrs = 
+                                     responsePolicy->getResponseAttributes();
+                    KeyValueMap::const_iterator iter_response =
+                                               responseAttrs.begin();
+                    for(;(iter_response!=responseAttrs.end());iter_response++) {
+                        const KeyValueMap::key_type &keyRef = iter_response->first;
+                        std::string tmpResponseKey(keyRef.c_str());
+                        std::string responseKey; 
+                        std::string responseValue; 
+                        std::string tmpValue; 
+                     
+                        if (responseAttributesMap.size() > 0) {
+                            try {
+                                responseKey = responseAttributesMap.get(tmpResponseKey);
+                            } catch (invalid_argument& iex) {
+                                responseKey = tmpResponseKey;
+                            }
+                        } else {
+                            responseKey = tmpResponseKey;
+                        }
+                        if (response_attributes_map.size() > 0) {
+                            KeyValueMap::const_iterator iter = 
+                                response_attributes_map.find(responseKey);
+                             if (iter != response_attributes_map.end() && 
+                                iter->second.size() > 0)
+                            {
+                                tmpValue = iter->second[0];
+                                response_attributes_map.erase(responseKey);
+                            }
+                        }
+                        const KeyValueMap::mapped_type &valueRef = 
+                                                   iter_response->second;
+                        for(std::size_t i = 0; i < valueRef.size(); ++i) {
+                            responseValue.append(valueRef[i]);
+                            if (i < (valueRef.size()-1)) {
+                                responseValue.append(attrMultiValueSeparator);
+                            }
+                        }
+                        if (tmpValue.size() > 0) {
+                            responseValue = responseValue + 
+                                         attrMultiValueSeparator + tmpValue;
+                        }
+                        if (!responseKey.empty() && !responseValue.empty()) {
+                            Log::log(logID, Log::LOG_MAX_DEBUG, "Attribute value "
+                                "for %s found in response = %s", 
+                                responseKey.c_str(), responseValue.c_str());
+                            response_attributes_map.insert(responseKey, 
+                                                      responseValue);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1121,14 +919,21 @@ Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
  */
 void
 Service::getPolicyResult(const char *userSSOToken,
-                         const char *rName,
-                         const char *actionName,
-                         const KeyValueMap &env,
-                         am_map_t responsePtr,
-                         am_policy_result_t *policy_res,
-                         am_bool_t ignorePolicyResult,
-                         Properties& properties)
+               const char *rName,
+               const char *actionName,
+               const KeyValueMap &env,
+               am_map_t responsePtr,
+               am_policy_result_t *policy_res,
+               am_bool_t ignorePolicyResult,
+               char **am_revision_number)
 {
+    const char *am_70_revision_number = "7.0";
+    const char *am_63_revision_number = "6.3";
+
+    if(initialized == false) {
+        initialize();
+    }
+
     assert(userSSOToken != NULL);
     assert(rName != NULL);
     assert(actionName != NULL);
@@ -1140,315 +945,210 @@ Service::getPolicyResult(const char *userSSOToken,
     const ActionDecision *ad = static_cast<ActionDecision *>(NULL);
     bool cookieEncoded=strchr(userSSOToken,'%')!=NULL;
     const SSOToken ssoToken(
-		    cookieEncoded?Http::decode(userSSOToken):userSSOToken, 
-                    cookieEncoded?userSSOToken:Http::encode(userSSOToken));
-
+            cookieEncoded?Http::decode(userSSOToken):userSSOToken, 
+            cookieEncoded?userSSOToken:Http::encode(userSSOToken));
     SessionInfo uSessionInfo;
     PolicyEntryRefCntPtr uPolicyEntry;
-    std::list<std::string> attrList;
-    Properties profileAttributesMap;
-    Properties sessionAttributesMap;
-    Properties responseAttributesMap;
-    int mUserIdParamType = 0;
-    std::string mUserIdParam;
-    bool mFetchFromRootResource;
-    int policyRequestCount = 0;
-
-    if(initialized == false) {
-        initialize();
-    }
 
     rsrcTraits.canonicalize(rName, &c_res);
     if(c_res == NULL) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "%s:rsrcTraits.canonicalize(...) did not suceeed.", func);
-	throw InternalException(func,
-		"rsrcTraits.canonicalize(...) did not suceeed.", AM_FAILURE);
+        Log::log(logID, Log::LOG_ERROR,
+            "%s:rsrcTraits.canonicalize(...) did not suceeed.", func);
+        throw InternalException(func,
+            "rsrcTraits.canonicalize(...) did not suceeed.", AM_FAILURE);
     } else {
-	resName = c_res;
-#if (defined (_AMD64_))
-    free(c_res);
-#else
-	rsrcTraits.str_free(c_res);
-#endif
-	c_res = NULL;
+        resName = c_res;
+        rsrcTraits.str_free(c_res);
+        c_res = NULL;
     }
 
-    string agent_logout_url="";
-    bool isAgentLogoutUrl=false;
-    try{
-        agent_logout_url = properties.get(AM_WEB_AGENT_LOGOUT_URL_PROPERTY);
-        if(agent_logout_url.compare(resName) == 0)
-            isAgentLogoutUrl=true;
-    }
-    catch(std::exception& e){
-        //catch it here.
-    } 
-    catch(...){
-        //catch it here.
-    }
-
-    bool do_sso_only = 
-         properties.getBool(AM_WEB_DO_SSO_ONLY, false);
-    
-    // Fetch the profile mode
-   bool fetchProfileAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_PROFILE_ATTRS_MODE));
-
-    // Fetch the session mode
-    bool fetchSessionAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_SESSION_ATTRS_MODE));
-
-    // Fetch the response mode
-    bool fetchResponseAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_RESPONSE_ATTRS_MODE));
-
-    if (fetchProfileAttrs) {
-	profileAttributesMap.parsePropertyKeyValue(
-		properties.get(AM_POLICY_PROFILE_ATTRS_MAP, ""),
-		',', '|');
-	Properties::iterator iter;
-	for(iter = profileAttributesMap.begin(); 
-		iter != profileAttributesMap.end(); iter++) {
-	    string attr = (*iter).first;
-	    Log::log(logID, Log::LOG_MAX_DEBUG,
-		     "Service::Service() Profile Attribute=%s", attr.c_str());
-	    attrList.push_back(attr);
-	}
-    }
-
-    if(fetchSessionAttrs) {
-	sessionAttributesMap.parsePropertyKeyValue(
-		properties.get(AM_POLICY_SESSION_ATTRS_MAP, ""),
-		',', '|');
-    }
-
-    if(fetchResponseAttrs) {
-	responseAttributesMap.parsePropertyKeyValue(
-		properties.get(AM_POLICY_RESPONSE_ATTRS_MAP, ""),
-		',', '|');
-    }
-
-    std::string userIdParamType =
-	   properties.get(
-               AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY,"Session");
-
-    if (strcasecmp(userIdParamType.c_str(), "SESSION")==0) {
-        mUserIdParamType = USER_ID_PARAM_TYPE_SESSION;
-    } else if (strcasecmp(userIdParamType.c_str(), "LDAP")==0) {
-        mUserIdParamType = USER_ID_PARAM_TYPE_LDAP;
-    } else {
-        const char *msg = "Invalid value for property "
-                                    AM_POLICY_USER_ID_PARAM_TYPE_PROPERTY;
-	throw std::invalid_argument(msg);
-    }
-    if (mUserIdParamType == USER_ID_PARAM_TYPE_SESSION) {
-        mUserIdParam = 
-            properties.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
-                                      DEFAULT_SESSION_USER_ID_PARAM);
-    } else { // LDAP
-        mUserIdParam = 
-            properties.get(AM_POLICY_USER_ID_PARAM_PROPERTY,
-                                      DEFAULT_LDAP_USER_ID_PARAM);
-    }
-
-    mFetchFromRootResource = 
-        properties.getBool(
-              AM_POLICY_FETCH_FROM_ROOT_RSRC_PROPERTY, true);
-    
-    // if user id parameter comes from an ldap attribute, add it also
-    // to the list of ldap attributes to fetch and parse.
-    if (mUserIdParamType == USER_ID_PARAM_TYPE_LDAP) {
-	// Set parameter in the attributes to parse in the response.
-	// if fetch headers was set to true and the parameter is already
-	// there then no need to add it again; if not, add it.
-	if (!profileAttributesMap.isSet(mUserIdParam)) {
-	    profileAttributesMap.set(mUserIdParam, mUserIdParam);
-	}
-	// Now set the parameter in attributes to get in the request.
-	attrList.push_back(mUserIdParam);
-    }
-    
     // Log:INFO Calling update_policy to get policy info.
     uPolicyEntry = policyTable.find(ssoToken.getString());
     update_policy(ssoToken, resName, actionName, env, uSessionInfo,
-	          mFetchFromRootResource==true?SCOPE_SUBTREE:SCOPE_SELF,
-                  false, uPolicyEntry, attrList, properties);
+                  mFetchFromRootResource==true?SCOPE_SUBTREE:SCOPE_SELF,
+                  false, uPolicyEntry);
 
     policy_res->remote_user = NULL;
     policy_res->remote_user_passwd = NULL;
     policy_res->remote_IP = NULL;
 
     vector<PDRefCntPtr> results;
-	vector<std::string> resources;
+    vector<std::string> resources;
     do {
-	justUpdated = false;
-	resources.resize(0);
-	results.resize(0);
-        // Increment the policy request count to indicate the number of
-        // trips done to the policy service
-        policyRequestCount++;
+        justUpdated = false;
+        resources.resize(0);
+        results.resize(0);
 
-   	// Assign the user's passwd to the remote user passwd field
-        if (policy_res->remote_user_passwd == NULL) {
+        // Assign the user's passwd to the remote user passwd field
+        if(policy_res->remote_user_passwd == NULL) {
             try {
                 const std::string &remoteUserPasswd =
                     uSessionInfo.getProperties().get("sunIdentityUserPassword");
-
-                if (remoteUserPasswd.size() > 0) {
-                    policy_res->remote_user_passwd = 
-                        strdup(remoteUserPasswd.c_str());
+                if(remoteUserPasswd.size() > 0) {
+                    policy_res->remote_user_passwd = strdup(remoteUserPasswd.c_str());
                 }
- 	    } catch(std::invalid_argument &ex) {
+            } catch(std::invalid_argument &ex) {
+                Log::log(logID, Log::LOG_WARNING,
+                       "%s:No passwd value in session response.", func);
             }
- 	}
+        }
 
-	// Assign the user's IP as known to dsame to to the remote IP variable.
-	if (policy_res->remote_IP == NULL) {
-	    try {
-		const std::string &remoteIP  =
-		    uSessionInfo.getProperties().get(SessionInfo::HOST_IP);
-		if(remoteIP.size() > 0) {
-		    policy_res->remote_IP = strdup(remoteIP.c_str());
-		}
-	    } catch (std::invalid_argument &ex) {
-		Log::log(logID, Log::LOG_WARNING,
-		"%s:Remote IP (%s) parameter does not have a "
-			 "value in session response.", func,
-			 SessionInfo::HOST_IP.c_str());
-	    }
-	}
+        // Assign the user's IP as known to dsame to to the remote IP variable.
+        if (policy_res->remote_IP == NULL) {
+            try {
+                const std::string &remoteIP  =
+                       uSessionInfo.getProperties().get(SessionInfo::HOST_IP);
+                if(remoteIP.size() > 0) {
+                    policy_res->remote_IP = strdup(remoteIP.c_str());
+                }
+            } catch (std::invalid_argument &ex) {
+                Log::log(logID, Log::LOG_WARNING,
+                     "%s:Remote IP (%s) parameter does not have a "
+                     "value in session response.", func,
+                     SessionInfo::HOST_IP.c_str());
+            }
+        }
 
-	// Get the action decision for the resource and action name.
-	uPolicyEntry->getAllPolicyDecisions(resName, results);
-	// If results not found,get the resource root
-        if ((results.size() == 0)) {
-	    ResourceName resObj(resName);
+        // Get the action decision for the resource and action name.
+        uPolicyEntry->getAllPolicyDecisions(resName, results);
+        //If results not found, get the resource root
+        if((results.size() == 0)) {
+            ResourceName resObj(resName);
             std::string rootRes;
-            if (resObj.getResourceRoot(rsrcTraits, rootRes)) {
-	        if (uPolicyEntry->getTree(rootRes,false) == NULL) {
-	            update_policy(ssoToken, resName, actionName, env, 
-                        uSessionInfo,
-                        mFetchFromRootResource==true?SCOPE_SUBTREE:SCOPE_SELF,
-                        true, uPolicyEntry, attrList, properties);
-                    Log::log(logID, Log::LOG_WARNING,
-	              "%s:Result size is %d,tree not present for %s", func,
-	              results.size(),resName.c_str());
+            if(resObj.getResourceRoot(rsrcTraits, rootRes)) {
+                Log::log(logID, Log::LOG_WARNING,
+                         "%s: No policy decisions found for resource %s. "
+                         " Updating policy entry for root resource.", 
+                         func, results.size(),resName.c_str());
+                if (uPolicyEntry->getTree(rootRes,false) == NULL) {
+                    update_policy(ssoToken, resName, actionName,
+                           env, uSessionInfo,
+                           mFetchFromRootResource==true?SCOPE_SUBTREE:SCOPE_SELF,
+                           true, uPolicyEntry);
                     uPolicyEntry->getAllPolicyDecisions(resName, results);
-	        }
-	    }
+                }
+            }
         }
 
         // For each policy decision, if it is stale,
         // get the new one.
         std::vector<PDRefCntPtr>::iterator iter;
-        if (results.size() > 0) {
+        if(results.size() > 0) {
             bool needsUpdate = false;
             // Iterate through the policies and find if
             // there is any policy that needs update.
-	    for (iter = results.begin(); iter != results.end(); iter++) {
+            for(iter = results.begin(); iter != results.end(); iter++) {
                 PDRefCntPtr policy = *iter;
-                if (policy->isStale(actionName)) {
+                if(policy->isStale(actionName)) {
                     needsUpdate = true;
                     // create a list of resource names for which
                     // polices need to be updated.
                     resources.push_back(policy->getName().getString());
                 }
             }
-            if (needsUpdate) {
+            if(needsUpdate) {
                 std::vector<std::string>::const_iterator iter;
-                /**
-                * Remove nodes to be updated so, if the nodes were to actually
-                * deleted on the server, it also gets removed from the local
-                * cache.
-                */
-                for (iter=resources.begin(); iter != resources.end(); ++iter) {
+                // Remove nodes to be updated so, if the nodes were to actually
+                // deleted on the server, it also gets removed from the local
+                // cache.
+                for(iter=resources.begin(); iter != resources.end(); ++iter) {
                     uPolicyEntry->removePolicy(*iter);
                 }
-                update_policy_list(ssoToken, resources, actionName, env, 
-                                 uPolicyEntry, attrList, properties);
+                update_policy_list(ssoToken, resources, actionName, env, uPolicyEntry);
                 justUpdated = true;
                 continue;
-            } else break;
-	}
-    } while ((justUpdated) && (policyRequestCount < 3));
-
-    if (policyRequestCount == 3) {
-	string msg("Time on the Agent machine and the Server machine are "
-                   "not synchronized");
-	throw InternalException(func, msg, AM_AGENT_TIME_NOT_SYNC);
+            } else {
+                break;
+            }
+        }
+    } while(justUpdated);
+    
+    if (!do_sso_only && (policy_number_of_tries > 0)) {
+        int counter = 0;
+        while ((results.size() == 0) && 
+              (++counter <= policy_number_of_tries)) {
+            // Server is in the process of updating the policy cache. 
+            // Wait till the cache is populated
+            Log::log(logID, Log::LOG_WARNING,
+                        "%s: Result size is 0. "
+                        "Trying again to get policy decisions (%i/%i)",
+                        func, counter, policy_number_of_tries);
+            PR_Sleep(PR_TicksPerSecond());
+            uPolicyEntry->getAllPolicyDecisions(resName, results);
+        }
     }
 
-    // now set remote user and ldap attributes if any.
+    // Set remote user and ldap attributes if any.
     setRemUserAndAttrs(policy_res, uPolicyEntry, uSessionInfo,
-                       resName, results, properties,
-                       profileAttributesMap, sessionAttributesMap, 
-                       responseAttributesMap);
+                       resName, results);
+    if(results.size() > 0) {
+        std::vector<PDRefCntPtr>::iterator iter;
+        KeyValueMap &result_map =
+                 *(reinterpret_cast<KeyValueMap *>(responsePtr));
+        vector<string> vals;
+        KeyValueMap *advices = new KeyValueMap();
+        // set action decisions and advices if any.
+        for(iter = results.begin(); iter != results.end(); iter++) {
+            PDRefCntPtr policy = *iter;
+            ad = policy->getActionDecision(actionName);
+            if(ad != NULL) {
+                const std::list<string> actVals = ad->getActionValues();
+                std::list<string>::const_iterator act_iter = actVals.begin();
+                for(; act_iter != actVals.end(); act_iter++) {
+                    vals.push_back(*act_iter);
+                }
+                advices->merge(ad->getAdvices());
+            }
+        }
+        result_map[actionName] = vals;
+        policy_res->advice_map = reinterpret_cast<am_map_t>(advices);
 
-    if (results.size() > 0) {
-	std::vector<PDRefCntPtr>::iterator iter;
-	KeyValueMap &result_map =
-		*(reinterpret_cast<KeyValueMap *>(responsePtr));
-	vector<string> vals;
-	KeyValueMap *advices = new KeyValueMap();
-
-	// set action decisions and advices if any.
-	for (iter = results.begin(); iter != results.end(); iter++) {
-	    PDRefCntPtr policy = *iter;
-
-	    ad = policy->getActionDecision(actionName);
-
-	    if(ad != NULL) {
-		const std::list<string> actVals = ad->getActionValues();
-		std::list<string>::const_iterator act_iter = actVals.begin();
-		for(; act_iter != actVals.end(); act_iter++) {
-		    vals.push_back(*act_iter);
-		}
-		advices->merge(ad->getAdvices());
-	    }
-	}
-
-	result_map[actionName] = vals;
-	policy_res->advice_map =
-	    reinterpret_cast<am_map_t>(advices);
-
-	// if advices returned by server contains any advice
-	// that requires redirect to server, then construct
-	// the advice XML string and set it in
-	// am_policy_result_t->advice_string
-	std::string adviceStr;
-	construct_advice_string(*advices, adviceStr);
-	if (adviceStr.size() > 0) {
-	    policy_res->advice_string = strdup(adviceStr.c_str());
-	    Log::log(logID, Log::LOG_MAX_DEBUG,
-		     "Service::getPolicyResult(): "
-		     "Advice string constructed: [%s]", adviceStr.c_str());
-	    // No need to cache the policy decision when it has an advice
-	    // Remove the entry from the policy cache
-	    Log::log(logID, Log::LOG_MAX_DEBUG,
-		     "Service::getPolicyResult(): "
-		     "Removing the policy decision which has advice "
-		     "from the policy cache");
-	    policyTable.remove(ssoToken.getString());
-	} else {
-	    Log::log(logID, Log::LOG_DEBUG,
-		     "Service::getPolicyResult(): "
-		     "No advice string created.");
-	}
-    } else {
-        if ((do_sso_only && !fetchProfileAttrs && !fetchResponseAttrs)||
-               (isAgentLogoutUrl == true)) {
-	    return;
-	} else {
-	if (!ignorePolicyResult) {
-	    string msg("No Policy or Action decisions "
-		       "found for resource: ");
-	    msg.append(resName);
-	    throw InternalException(func, msg, AM_NO_POLICY);
+        // if advices returned by server contains any advice
+        // that requires redirect to server, then construct
+        // the advice XML string and set it in
+        // am_policy_result_t->advice_string
+        std::string adviceStr;
+        construct_advice_string(*advices, adviceStr);
+        if(adviceStr.size() > 0) {
+            policy_res->advice_string = strdup(adviceStr.c_str());
+            Log::log(logID, Log::LOG_MAX_DEBUG,
+                     "Service::getPolicyResult(): "
+                     "Advice string constructed: [%s]", adviceStr.c_str());
+            // No need to cache the policy decision when it has an advice
+            // Remove the entry from the policy cache
+            Log::log(logID, Log::LOG_MAX_DEBUG,
+                     "Service::getPolicyResult(): "
+                     "Removing the policy decision which has advice "
+                     "from the policy cache");
+            policyTable.remove(ssoToken.getString());
         } else {
-	    return;
-	}
-      }
+            Log::log(logID, Log::LOG_DEBUG,
+                     "Service::getPolicyResult(): "
+                     "No advice string created.");
+        }
+    } else {
+        if (do_sso_only && !fetchProfileAttrs && !fetchResponseAttrs) {
+            return;
+        } else {
+            if (!ignorePolicyResult) {
+                string msg("No Policy or Action decisions found "
+                           "found for resource: ");
+                msg.append(resName);
+                throw InternalException(func, msg, AM_NO_POLICY);
+            } else {
+                return;
+            }
+        }
+    }
+
+    // Policy decision 'revision' tag will have a value of 30 if
+    // agent is interacting with AM 7.0 else will have no value assigned
+    if (am_revision_number != NULL) {
+        if(policySvc->getRevisionNumber() >= 30) {
+            strcpy(*am_revision_number,am_70_revision_number);
+        } else {
+            strcpy(*am_revision_number,am_63_revision_number);
+        }
     }
     return;
 }
@@ -1466,99 +1166,71 @@ Service::update_policy(const SSOToken &ssoTok, const string &resName,
                        SessionInfo &sessionInfo,
 		       policy_fetch_scope_t scope,
 		       bool refetchPolicy,
-               PolicyEntryRefCntPtr &policyEntry,
-               const std::list<std::string> &attrList,
-               Properties& properties)
+                       PolicyEntryRefCntPtr &policyEntry)
 {
     am_status_t status;
     bool policyUpdated = false;
     string func("Service::update_policy");
     bool isNewEntry = false;
-    Properties profileAttributesMap;
     Log::log(logID, Log::LOG_MAX_DEBUG,
 	     "Executing update_policy(%s, %s, %s, %d)",
 	     ssoTok.getString().c_str(), resName.c_str(),
 	     actionName.c_str(), scope);
-  
+
+  //      policyEntry = policyTable.find(ssoTok.getString());
+   
     if (policyEntry == NULL) {
-	profileAttributesMap.parsePropertyKeyValue(
-		properties.get(AM_POLICY_PROFILE_ATTRS_MAP, ""),
-		',', '|');
-        policyEntry = new PolicyEntry(ssoTok, env, profileAttributesMap, 
-                                      rsrcTraits);
+        policyEntry = new PolicyEntry(ssoTok, env, profileAttributesMap, rsrcTraits);
         isNewEntry = true;
     }
+
 	    
     // Do naming query, if notification is not enabled or
     // valid naming information is not present in the policyEntry.
-    if (!policyEntry->namingInfo.isValid()) {
-        if (AM_SUCCESS != (status = namingSvc.getProfile(namingSvcInfo,
-                          ssoTok.getString(),
-                          policyEntry->cookies,
-                          policyEntry->namingInfo))) {
+    if(!policyEntry->namingInfo.isValid()) {
+        if(AM_SUCCESS != (status = namingSvc.getProfile(namingSvcInfo,
+				   ssoTok.getString(),
+				   policyEntry->cookies,
+				   policyEntry->namingInfo))) {
            throw InternalException(func, "Naming query failed.",
-                                   status);
+				    status);
 	}
-    }            
-    status =  mSSOTokenSvc.getSessionInfo(
-                           policyEntry->namingInfo.getSessionSvcInfo(), 
-                           ssoTok.getString(), 
-                           policyEntry->cookies, true, sessionInfo, 
-                           false, false);
-    
-    // If app ssotoken got invalidated,
-    // then agent need to reinitialize. 
-    if (status == AM_INVALID_APP_SSOTOKEN) {
-        Log::log(logID, Log::LOG_WARNING, 
-            "Agent SSOToken reset during getSessionInfo().");
-        reinitialize();
-        if (initialized == true) {
-            Log::log(logID, Log::LOG_WARNING,
-                    "Thread wokeup after successful initialization.");
-            // agent reinitialized, so try getSessionInfo again.
-            // this will be required in case app ssotoken invalidated
-            // not because of server restart, but for some other reason.
-            status =  mSSOTokenSvc.getSessionInfo(
-                           policyEntry->namingInfo.getSessionSvcInfo(), 
-                           ssoTok.getString(), 
-                           policyEntry->cookies, true, sessionInfo, 
-                           false, false);
-        } else {
-            throw InternalException(func, "Agent reinitialization failed",
-                    status);
-        }
     } 
-    // endof reinitialize service
-
+            
+    status =  mSSOTokenSvc.getSessionInfo(policyEntry->namingInfo.getSessionSvcInfo(), 
+				  ssoTok.getString(), 
+                                  policyEntry->cookies, true, sessionInfo, 
+                                  false, false);
+    
     if (status != AM_SUCCESS) {
-        
-        // Log:ERROR
+        // if agent could not contact session service to validate
+        // user, and get any NSPR error, it is considered equivalent
+	// to the session being invalid.
         if (AM_NSPR_ERROR == status) {
-            status = AM_INVALID_SESSION;
+                 status = AM_INVALID_SESSION;
         }
-        throw InternalException(func, "Session query failed.", status);
+	throw InternalException(func, "Session query failed.", status);
     }
 
-
-    if (refetchPolicy) {
+    if (refetchPolicy) {       
+        
         policyUpdated = do_update_policy(ssoTok, resName, actionName, env,
-                                         sessionInfo, scope, policyEntry,
-                                         attrList, properties);
+                                             sessionInfo, scope, policyEntry);
 
         /* if server is in the process of initializing the
          * appssotoken the do_update_policy will return false
          * retry do_update_policy 
          */
+
         if(!policyUpdated) {
             policyUpdated = do_update_policy(ssoTok, resName, actionName, env,
-                                             sessionInfo, scope, policyEntry,
-                                             attrList, properties);
+                                                  sessionInfo, scope, policyEntry);
 	    if(!policyUpdated) {
 	      /*throw error message policy not updated even after refresh */
             }
         }
     }
-    
+
     if (isNewEntry) {
         policyTable.insert(policyEntry->getSSOToken().getString(), policyEntry);
     }
@@ -1567,26 +1239,15 @@ Service::update_policy(const SSOToken &ssoTok, const string &resName,
 
 bool
 Service::do_update_policy(const SSOToken &ssoTok, const string &resName,
-            const string &actionName,
-            const KeyValueMap &env,
-            SessionInfo &sessionInfo,
-            policy_fetch_scope_t scope,
-            PolicyEntryRefCntPtr& policyEntry,
-            const std::list<std::string> &attrList,
-            Properties& properties)
+                          const string &actionName,
+                          const KeyValueMap &env,
+                          SessionInfo &sessionInfo,
+                          policy_fetch_scope_t scope,
+                          PolicyEntryRefCntPtr& policyEntry)
 {
     am_status_t status;
     string func("Service::do_update_policy");
 
-     bool do_sso_only = 
-         properties.getBool(AM_WEB_DO_SSO_ONLY, false);
-
-     bool fetchProfileAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_PROFILE_ATTRS_MODE));
-
-     bool fetchResponseAttrs = 
-        isValidAttrsFetchMode(properties.get(AM_POLICY_RESPONSE_ATTRS_MODE));
-          
     if (do_sso_only && !fetchProfileAttrs && !fetchResponseAttrs) {
         Log::log(logID, Log::LOG_INFO,"do_sso_only is set to true, profile and "
                 "response attributes fetch mode is set to NONE");
@@ -1595,66 +1256,90 @@ Service::do_update_policy(const SSOToken &ssoTok, const string &resName,
 
     // get the resource root.
     std::string rootRes;
-    if (scope == SCOPE_SUBTREE) {
+    if(scope == SCOPE_SUBTREE) {
         ResourceName resObj(resName);
-        if (!resObj.getResourceRoot(rsrcTraits, rootRes)) {
-	        throw InternalException(func,
-                    "ResourceName::getResourceRoot() failed.",
-				    AM_POLICY_FAILURE);
-	    }
-    } else rootRes = resName;
+        if(!resObj.getResourceRoot(rsrcTraits, rootRes)) {
+            throw InternalException(func,
+                "ResourceName::getResourceRoot() failed.",
+            AM_POLICY_FAILURE);
+        }
+    } else {
+        rootRes = resName;
+    }
 
-	policy_fetch_scope_t policy_scope = scope;
-	if (do_sso_only && fetchProfileAttrs && !fetchResponseAttrs) {
-		policy_scope = SCOPE_RESPONSE_ATTRIBUTE_ONLY;
-	}
+    policy_fetch_scope_t policy_scope = scope;
+    if (do_sso_only && fetchProfileAttrs && !fetchResponseAttrs) {
+        policy_scope = SCOPE_RESPONSE_ATTRIBUTE_ONLY;
+    }
     // Need to retrieve the lbcookie for app sso token and add it to
     // policyEntry->cookies
      
     // do policy
     string xmlData;
     if((status = policySvc->getPolicyDecisions(policyEntry->namingInfo.getPolicySvcInfo(),
-					       policyEntry->getSSOToken(),
-					       policyEntry->cookies,
-					       sessionInfo,
-					       serviceName,
-					       rootRes.c_str(),
-					       policy_scope,
-					       env,
-					       attrList,
-					       xmlData)) != AM_SUCCESS) {
-	if (status == AM_INIT_FAILURE) {
-	    Log::log(logID, Log::LOG_WARNING, 
-                "Agent SSOToken reset during getPolicyDecisions().");
-            // If app ssotoken got invalidated,
-            // then agent need to reinitialize. 
-            reinitialize();
-
-            if (initialized == true) {
-                Log::log(logID, Log::LOG_WARNING,
-			    "Thread wokeup after successful initialization.");
+                            policyEntry->getSSOToken(),
+                            policyEntry->cookies,
+                            sessionInfo,
+                            serviceName,
+                            rootRes.c_str(),
+                            policy_scope,
+                            env,
+                            attrList,
+                            xmlData)) != AM_SUCCESS)
+    {
+        if(status == AM_INIT_FAILURE) {
+            Log::log(logID, Log::LOG_WARNING, "Agent SSOToken reset.");
+            bool gotPermToCleanup = false;
+            {
+                ScopeLock myLock(lock);
+                if(initialized == true) {
+                    Log::log(logID, Log::LOG_WARNING,
+                         "This thread got permission to reset");
+                    initialized = false;
+                    gotPermToCleanup = true;
+                }
+            }
+            // only one thread get's permission to cleanup.
+            // others wait till cleanup happens.
+            if(gotPermToCleanup) {
                 // If we need to update the agent SSOToken
                 // we cleanup the entire cache.
                 policyTable.cleanup();
-                /* This method is returning false because we have re-initialized   
-                 * the Agent but we haven't updated the orignal policy
-                 */
+                Log::log(logID, Log::LOG_WARNING, "Invoking initialize().");
+                initialize();
+            } else {
+                int counter = 0;
+                // Just a sleep factor.  The init must happen
+                // in approxiamtely in 6 seconds.
+                Log::log(logID, Log::LOG_WARNING,
+                            "This thread waiting for initialization "
+                            "to complete.");
+                while(initialized == false && ++counter < 6) {
+                    PR_Sleep(PR_TicksPerSecond());
+                }
+            }
+            if(initialized == true) {
+                Log::log(logID, Log::LOG_WARNING,
+                        "Thread wokeup after successful initialization.");
+                // This method is returning false because we have re-initialized   
+                // the Agent but we haven't updated the orignal policy
                 return false;
             } else {
                 throw InternalException(func, "Agent reinitialization failed",
-                                    status);
-	    }
-	} else {
+                                status);
+            }
+        } else {
             // Log:ERROR
             if (AM_NSPR_ERROR == status) {
                 status = AM_INVALID_SESSION;
             }
-	    throw InternalException(func, "Policy query failed.", status);
-	}
+            throw InternalException(func, "Policy query failed.", status);
+        }
     } else {
-	process_policy_response(policyEntry, env, xmlData);
+        // Log:INFO
+        process_policy_response(policyEntry, env, xmlData);
     }
-  
+
     Log::log(logID, Log::LOG_INFO, "Successful return from do_update_policy().");
     return true;
 }
@@ -1667,29 +1352,22 @@ Service::do_update_policy(const SSOToken &ssoTok, const string &resName,
  */
 void
 Service::update_policy_list(const SSOToken &ssoTok,
-                const vector<string> &resList,
-                const string &actionName,
-                const KeyValueMap &env,
-                PolicyEntryRefCntPtr &policyEntry,
-                const std::list<std::string> &attrList,
-                Properties& properties)
+			    const vector<string> &resList,
+			    const string &actionName,
+			    const KeyValueMap &env,
+                            PolicyEntryRefCntPtr &policyEntry)
 {
     std::vector<string>::const_iterator iter;
     policy_fetch_scope_t scope = SCOPE_SELF;
 
-    bool mFetchFromRootResource = 
-        properties.getBool(
-              AM_POLICY_FETCH_FROM_ROOT_RSRC_PROPERTY, true);
-    unsigned long mOrdNum = 
-        properties.getUnsigned(AM_COMMON_ORDINAL_NUMBER, 0);
-    if (mFetchFromRootResource == true) {
+    if(mFetchFromRootResource == true) {
     	scope = (mOrdNum > 0)?SCOPE_STRICT_SUBTREE:SCOPE_SUBTREE;
     }
     
     SessionInfo sessionInfo;
     for(iter = resList.begin(); iter != resList.end(); iter++) {
 	update_policy(ssoTok, *iter, actionName, env, sessionInfo, scope,
-                      true, policyEntry, attrList, properties);
+                      true, policyEntry);
     }
     return;
 }
@@ -1725,60 +1403,27 @@ Service::do_agent_auth_logout()
     return status;
 }
 
+
 am_status_t
 Service::invalidate_session(const char *ssoTokenId) {
     am_status_t status = AM_FAILURE;
     ServiceInfo svcInfo;
     bool cookieEncoded=strchr(ssoTokenId,'%')!=NULL;
     const SSOToken ssoToken(cookieEncoded?Http::decode(ssoTokenId):ssoTokenId,
-                            cookieEncoded?ssoTokenId:Http::encode(ssoTokenId));
+			    cookieEncoded?ssoTokenId:Http::encode(ssoTokenId));
 
-    //the call to destroySession in SSOTokenService is removed as 
-    //we are redirecting to OpenSSO logout page (Issue3724).
-    //Instead we remove the SSOToken table entry.
-    mSSOTokenSvc.removeSSOTokenTableEntry(ssoToken.getString());
-    status = AM_SUCCESS;
+	am_web_log_debug("Service::invalidate_session(): Calling LogoutSession");
+    status = mSSOTokenSvc.logoutSession(svcInfo, ssoToken.getString());
 
     PolicyEntryRefCntPtr uPolicyEntry = policyTable.find(ssoToken.getString());
     if (uPolicyEntry) {
-        // remove sso token entry from table whether or not destroySession
+        // remove sso token entry from table whether or not logout Session
         // was successful.
         policyTable.remove(ssoToken.getString());
-        Log::log(logID, Log::LOG_DEBUG,
-             "Service::invalidate_session(): "
-             "sso token %s removed from policy table.",
-             ssoTokenId);
-    }
-    return status;
-}
-
-/*
- * This function gets used by agent to invalidate user
- * ssotoken when logout feature used.
- */
-am_status_t
-Service::user_logout(const char *ssoTokenId,
-                            Properties& properties) 
-{
-    am_status_t status = AM_FAILURE;
-    string func("Service::user_logout");
-
-    status = invalidate_session(ssoTokenId);
-
-    // If app ssotoken got invalidated,
-    // then agent need to reinitialize. 
-    if (status == AM_INVALID_APP_SSOTOKEN) {
-        Log::log(logID, Log::LOG_WARNING, 
-            "Agent SSOToken reset during destroySession().");
-        reinitialize();
-        if (initialized == true) {
-            Log::log(logID, Log::LOG_WARNING,
-                    "Thread wokeup after successful reinitialization.");
-            // agent reinitialized, so try invalidate_session again.
-            // this will be required in case app ssotoken invalidated
-            // not because of server restart, but for some other reason.
-            status = invalidate_session(ssoTokenId);
-        } 
+	Log::log(logID, Log::LOG_DEBUG,
+	         "Service::invalidate_session(): "
+                 "sso token %s removed from policy table.",
+		 ssoTokenId);
     }
     return status;
 }
@@ -1787,23 +1432,23 @@ void
 Service::construct_advice_string(const KeyValueMap &advices,
 				 std::string &adviceStr) const {
 	
-    if (advices.size() > 0) {
-        adviceStr.append("<Advices>\n");
-        KeyValueMap::const_iterator iter = advices.begin();
-        for(; iter != advices.end(); ++iter) {
-            const std::string &key = (*iter).first;
-            std::vector<std::string>::const_iterator k_iter =
-                serverHandledAdvicesList.begin();
+	if (advices.size() > 0) {
+		adviceStr.append("<Advices>\n");
+		KeyValueMap::const_iterator iter = advices.begin();
+		for(; iter != advices.end(); ++iter) {
+		const std::string &key = (*iter).first;
+		std::vector<std::string>::const_iterator k_iter =
+					serverHandledAdvicesList.begin();
 
-            for (; k_iter != serverHandledAdvicesList.end(); ++k_iter) {
-                const char *advStr = (*k_iter).c_str();
-                if (strcmp(key.c_str(), advStr) == 0) {
-                    add_attribute_value_pair_xml(iter, adviceStr);
-                }
-            }
-        }
-        adviceStr.append("</Advices>\n");
-    }
+		for(; k_iter != serverHandledAdvicesList.end(); ++k_iter) {
+			const char *advStr = (*k_iter).c_str();
+			if(strcmp(key.c_str(), advStr) == 0) {
+			add_attribute_value_pair_xml(iter, adviceStr);
+			}
+		}
+		}
+		adviceStr.append("</Advices>\n");
+	}
 }
 
 void
@@ -1816,56 +1461,11 @@ Service::add_attribute_value_pair_xml(const KeyValueMap::const_iterator &entry,
     const std::vector<std::string> values = (*entry).second;
     std::vector<std::string>::const_iterator iter = values.begin();
     for(;iter != values.end(); ++iter) {
-        adviceStr.append("<Value>");
-        adviceStr.append(*iter);
-        adviceStr.append("</Value>\n");
+	adviceStr.append("<Value>");
+	adviceStr.append(*iter);
+	adviceStr.append("</Value>\n");
     }
     adviceStr.append("</AttributeValuePair>\n");
     return;
 }
 
-/*
-* Service reinitialization needs to happen when
-* AM responds with invalid app ssotoken during
-* session requests and policy request.
-*/
-void
-Service::reinitialize() {
-    am_status_t sts = AM_SUCCESS;
-    bool gotPermToCleanup = false; 
-    {
-        ScopeLock myLock(lock);
-        if (initialized == true) {
-            Log::log(logID, Log::LOG_WARNING,
-                    "This thread got permission to reset");
-            initialized = false;
-            gotPermToCleanup = true;
-        }
-    }
-        
-    // only one thread get's permission to cleanup.
-    // others wait till cleanup happens.
-    if (gotPermToCleanup) {
-    // If we need to update the agent SSOToken
-        // we cleanup the entire cache.
-        Log::log(logID, Log::LOG_WARNING, "Invoking initialize()."
-                 "First validate agent(app) ssotoken.");
-        sts = agentProfileService->validateAgentSSOToken();
-        if( sts == AM_INVALID_SESSION) {
-            Log::log(logID, Log::LOG_WARNING,
-                "validation of  agent(app) ssotoken failed. "
-                "Redo agent authentication.");
-            agentProfileService->agentLogin();
-        }
-        initialize();
-    } else {
-        int counter = 0;
-        // Just a sleep factor.  The init must happen
-        // in approxiamtely in 6 seconds.
-        Log::log(logID, Log::LOG_WARNING,
-                "This thread waiting for initialization to complete.");
-        while (initialized == false && ++counter < 6) {
-            PR_Sleep(PR_TicksPerSecond());
-        }
-    }
-}

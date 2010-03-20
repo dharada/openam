@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,13 +17,13 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: HomeDirLocator.java,v 1.5 2009/05/15 23:26:08 krishna_indigo Exp $
+ * $Id: HomeDirLocator.java,v 1.1 2007/04/30 17:29:27 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.apache22;
 
-import com.sun.identity.install.tools.configurator.InstallConstants;
 import com.sun.identity.install.tools.configurator.IStateAccess;
 import com.sun.identity.install.tools.configurator.InstallException;
 import com.sun.identity.install.tools.configurator.IServerHomeDirLocator;
@@ -43,7 +38,7 @@ import java.io.File;
  * Apache server instance's config directory at the time of agent setup. 
  */
 public class HomeDirLocator implements IServerHomeDirLocator,
-        IConfigKeys, IConstants, InstallConstants {
+        IConfigKeys, IConstants {
     
     private static String LOC_APC22_ERR_IN_VALID_HOME_DIR =
             "APC22_ERR_IN_VALID_HOME_DIR";
@@ -57,18 +52,10 @@ public class HomeDirLocator implements IServerHomeDirLocator,
     public String getServerDirectory(IStateAccess state)
         throws InstallException {
         String serverHomeDir = null;
-
-        String apacheConfigDir = (String)state.get(STR_KEY_APC22_INST_CONF_DIR);
-        if ((apacheConfigDir != null) && (apacheConfigDir.length() > 0)) {
-            String apcHttpdFile = apacheConfigDir + FILE_SEP +
-                                            STR_APC22_HTTPD_FILE;
-            //String apcHomeDir = (new File(apcHttpdFile)).
-            //                               getParentFile().getParent();
-            // Apache home dir
-            String apcHomeDir = (String)state.get(STR_KEY_APC22_HOME_DIR);
-            if ((apcHomeDir != null) && (apcHomeDir.length() > 0)) {
-                serverHomeDir = apcHomeDir;
-            }
+        // Apache home dir
+        String apcHomeDir = (String)state.get(STR_KEY_APC22_HOME_DIR);
+        if ((apcHomeDir != null) && (apcHomeDir.length() > 0)) {
+            serverHomeDir = apcHomeDir;
         }
         
         if(!FileUtils.isDirValid(serverHomeDir)) {

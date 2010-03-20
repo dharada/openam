@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -26,8 +22,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: components.mk,v 1.16 2009/12/01 21:52:55 subbae Exp $
+# $Id: components.mk,v 1.9.2.2 2009/12/18 23:57:14 dknab Exp $
 # 
+# Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 #
 
 #
@@ -57,7 +54,6 @@ include $(USERX_ROOT)/arch/defines.mk
 APACHE_DIR = $(EXTERNAL_DIR)/apache
 APACHE_INC_DIR = $(APACHE_DIR)/include
 APACHE_LIB_DIR = $(APACHE_DIR)/lib
-APACHE_MOD_DIR = $(APACHE_DIR)/modules
 
 ##########################################
 # SJSWS  defines
@@ -65,13 +61,6 @@ APACHE_MOD_DIR = $(APACHE_DIR)/modules
 SJSWS_DIR = $(EXTERNAL_DIR)/sjsws
 SJSWS_INC_DIR = $(SJSWS_DIR)/include
 SJSWS_LIB_DIR = $(SJSWS_DIR)/lib
-
-##########################################
-# PROXY40  defines
-##########################################
-PROXY40_DIR = $(EXTERNAL_DIR)/proxy40
-PROXY40_INC_DIR = $(PROXY40_DIR)/include
-PROXY40_LIB_DIR = $(PROXY40_DIR)/lib
 
 ##########################################
 # Apache 2.2 defines
@@ -92,18 +81,6 @@ BUILD_TYPE := 64
 endif
 endif
 
-######################################################
-# IIS 7.0 Header files
-######################################################
-IIS7_DIR := $(EXTERNAL_DIR)/iis7
-IIS7_INC_DIR := $(IIS7_DIR)/include
-
-##########################################
-# IBM Lotus DOMINO 8.5  defines
-##########################################
-DOMINO_DIR = $(EXTERNAL_DIR)/domino
-DOMINO_INC_DIR = $(DOMINO_DIR)/include
-DOMINO_LIB_DIR = $(DOMINO_DIR)/lib
 
 ##########################################
 # LIBXML defines
@@ -180,9 +157,9 @@ NSS_LIB_DIR := $(NSS_DIR)/lib
 
 ifeq ($(OS_ARCH), WINNT)
 ifdef OS_IS_CYGWIN
-NSS_DYNAMIC_LIBS := ssl3.lib nss3.lib 
+NSS_DYNAMIC_LIBS := ssl3.lib nss3.lib nssutil3.lib
 else
-NSS_DYNAMIC_LIBS := -lssl3 -lnss3 
+NSS_DYNAMIC_LIBS := -lssl3 -lnss3 -lnssutil3
 endif
 else
 NSS_DYNAMIC_LIBS := -lssl3 -lnss3 -lnssutil3

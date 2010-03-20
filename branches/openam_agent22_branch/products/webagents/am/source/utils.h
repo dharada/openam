@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: utils.h,v 1.7 2008/08/26 00:18:37 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __UTILS_H__
@@ -35,7 +30,6 @@
 #include <am_policy.h>
 #include "internal_macros.h"
 #include "xml_element.h"
-#include <set>
 
 namespace Utils {
 
@@ -51,9 +45,7 @@ compare(const char *pat, const char *resName,
 
 am_resource_match_t match_patterns(const char * /*pattern*/,
 				   const char * /*target*/,
-				   bool /*ignorecase*/,
-				   bool /*onelevelwildcard*/,
-                                   char /*separator*/);
+				   bool /*ignorecase*/);
 
 PRTime getTTL(const PRIVATE_NAMESPACE_NAME::XMLElement &, unsigned long);
 
@@ -94,95 +86,6 @@ public:
 private:
     bool icase;
 };
-
-typedef struct url_info {
-    char *url;
-    size_t url_len;
-    char *protocol;
-    char *host;
-    unsigned short port;
-    am_bool_t has_parameters;
-    am_bool_t has_patterns;
-} url_info_t;
-
-typedef struct url_info_list {
-    unsigned int size;
-    url_info_t *list;
-} url_info_list_t;
-
-typedef struct {
-    char *name;     // name of cookie.
-    char *value;    // value of cookie.
-    char *domain;   // cookie domain, or NULL if no domain.
-    char *path;    // cookie path, or NULL if no path.
-    char *max_age;  // max age, or NULL if no max age.
-    PRBool isSecure;  //if cookie is secure or not
-} cookie_info_t;
-
-typedef struct cookie_info_list {
-    unsigned int size;
-    cookie_info_t *list;
-} cookie_info_list_t;
-
-
-/**
- * POST data structure to hold name value pair
- */
-typedef struct name_value_pair {
-    char *name;
-    char *value;
-} name_value_pair_t;
-
-
-/**
- * POST data structure to hold an array of name value pairs
- */
-typedef struct post_struct {
-    char *buffer;
-    name_value_pair_t *namevalue;
-    int count;
-} post_struct_t;
-
-typedef struct boot_info_t {
-    const char *agent_props_location;
-    const char *agent_passwd;
-    const char *agent_name;
-    const char *agent_config_file;
-    am_policy_t policy_handle;
-    am_properties_t properties;
-    url_info_list_t naming_url_list;
-    am_log_module_id_t log_module;
-    const char *shared_agent_profile_name;
-    const char *realm_name;
-} boot_info_t;
-
-void parseIPAddresses(const std::string &property,
-        std::set<std::string> &ipAddrSet );
-void parseCookieDomains(const std::string &property,
-        std::set<std::string> &CDListSet);
-void cleanup_cookie_info(cookie_info_t *cookie_data);
-void cleanup_url_info_list(url_info_list_t *url_list);
-am_status_t parseCookie(std::string cookie,
-        cookie_info_t *cookie_data);
-am_status_t parse_url(const char *url_str,
-        size_t len,
-        url_info_t *entry_ptr,
-        am_bool_t validateURLs);
-am_status_t parse_url_list(const char *url_list_str,
-        char sep,
-        url_info_list_t *list_ptr,
-        am_bool_t validateURLs);
-void cleanup_cookie_info_list(
-        cookie_info_list_t *cookie_list) ;
-am_status_t parseCookieList(const char *property,
-        char sep,
-        cookie_info_list_t *cookie_list);
-am_status_t initCookieResetList(
-        cookie_info_list_t *cookie_list,
-        int domain_len,
-        const char* cookieResetDefaultDomain);
-am_status_t initCookieResetList(
-        cookie_info_list_t *cookie_list, const char* cookieResetDefaultDomain);
 
 }
 

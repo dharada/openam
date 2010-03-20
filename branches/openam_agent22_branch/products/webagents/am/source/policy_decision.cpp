@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: policy_decision.cpp,v 1.5 2008/06/25 08:14:34 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -56,7 +51,8 @@ PolicyDecision::~PolicyDecision() {
 PDRefCntPtr
 PolicyDecision::construct_policy_decision(const ResourceName &resName,
 					  XMLElement &rr,
-					  const KVMRefCntPtr env_param)
+					  const KVMRefCntPtr env_param,
+					  const Properties &attrMap)
 {
     XMLElement actnD;
     // Construct the policy decision object using the
@@ -112,8 +108,8 @@ PolicyDecision::construct_policy_decision(const ResourceName &resName,
 		    if(attrNode.getAttributeValue(ATTRIBUTE_NAME, actName)) {
 			// Create the ActionDecision with
 			// the action name and TTL.
-			ad = new ActionDecision(actName, 
-                                       Utils::getTTL(iter,policy_clock_skew));
+			ad = new ActionDecision(actName,
+                     Utils::getTTL(iter,policy_clock_skew));
 
 			// Add the action values.
 			XMLElement values;
@@ -182,22 +178,22 @@ PolicyDecision::construct_policy_decision(const ResourceName &resName,
 			std::string ldapAttrName;
 			if((attr.getAttributeValue(ATTRIBUTE_NAME,
 						   ldapAttrName))) {
-                            if (ldapAttrName.size() > 0) {
-			        KeyValueMap::mapped_type attrVals;
+			    std::string attrName = attrMap.get(ldapAttrName,
+							       "");
+			    KeyValueMap::mapped_type attrVals;
 
-			        XMLElement values;
-			        for(attrValuePair.getSubElement(VALUE, values);
-				    values.isValid();
-				    values.nextSibling(VALUE)) {
-				        std::string value;
-				        if(values.getValue(value)) {
-					    attrVals.push_back(value);
-				        }
-			         }
-			         if(attrVals.size() > 0) {
+			    XMLElement values;
+			    for(attrValuePair.getSubElement(VALUE, values);
+				values.isValid();
+				values.nextSibling(VALUE)) {
+				    std::string value;
+				    if(values.getValue(value)) {
+					attrVals.push_back(value);
+				    }
+			     }
+			     if(attrVals.size() > 0) {
 				    retVal->responses[ldapAttrName] = attrVals;
-			         }
-                            }
+			     }
 			}
 		    }
 		}

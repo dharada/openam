@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -26,8 +22,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: defines_SunOS_i86pc.mk,v 1.4 2008/06/25 05:54:25 qcheng Exp $
+# $Id: defines_SunOS_i86pc.mk,v 1.2 2006/10/06 18:27:28 subbae Exp $
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 
 # 
@@ -41,4 +38,4 @@ DEST_LIB_DIR := $(DEST_DIR)/$(OSMC_ARCH)/lib
 DEST_PACKAGE_DIR := $(DEST_DIR)/$(OSMC_ARCH)/packages
 DEST_PACKAGE_SCRATCH_DIR := $(DEST_DIR)/$(OSMC_ARCH)/packages.scratch
 
-DSAME_DROP_FILE := common_3_0_$(OSMC_ARCH)
+DSAME_DROP_FILE := common_2_2_$(OSMC_ARCH)

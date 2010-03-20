@@ -25,8 +25,6 @@ EXPORTS
 	am_log_record_set_log_message;
 	am_log_log_record;
 	am_log_flush_remote_log;
-	am_log_set_debug_file_rotate;
-	am_log_set_debug_file_size;
 
 	am_map_clear;
 	am_map_size;
@@ -87,11 +85,6 @@ EXPORTS
 	encode_base64;
 	decode_base64;
 
-        am_agent_init;
-        am_web_get_agent_configuration;
-	am_web_delete_agent_configuration;
-
-
 
 	DllMain;
 	am_web_cleanup;
@@ -127,20 +120,16 @@ EXPORTS
 	am_web_create_post_page;
 	am_web_postcache_data_cleanup;
 	am_web_do_cookies_reset;
-	am_web_get_agent_server_host;
-	am_web_get_agent_server_port;
 	am_web_do_cookie_domain_set;
 	am_web_get_token_from_assertion;
 	am_web_remove_parameter_from_query;
 	am_web_get_parameter_value;
-	am_web_is_cdsso_enabled;
-	am_web_check_cookie_in_query;
+	am_web_is_cdsso_enabled;	
 	am_web_check_cookie_in_post;
 	am_web_clear_attributes_map;
 	am_web_get_client_ip_header_name;
-	am_web_get_client_ip;
 	am_web_get_client_hostname_header_name;
-	am_web_get_client_hostname;
+	am_web_get_client_ip_host;
 	am_web_set_host_ip_in_env_map;
 
 
@@ -157,7 +146,6 @@ EXPORTS
 	am_auth_get_sso_token_id;
 	am_auth_get_callback;
 	am_auth_submit_requirements;
-    am_auth_submit_requirements_and_update_authctx;
 	am_auth_get_status;
 
 
@@ -186,17 +174,17 @@ EXPORTS
 	am_sso_add_listener;
 	am_sso_remove_listener;
 
-        am_notify;
-        am_string_set_allocate;
-        am_string_set_destroy;
+    am_notify;
+    am_string_set_allocate;
+    am_string_set_destroy;
 
 	am_web_is_valid_fqdn_url;
 	am_web_is_cookie_present;
 	am_web_result_attr_map_set;
 	am_web_get_url_to_redirect;
-        am_web_is_logout_url;
-        am_web_logout_cookies_reset;
-        am_web_remove_authnrequest;
+    am_web_is_logout_url;
+    am_web_logout_cookies_reset;
+    am_web_remove_authnrequest;
 
 	am_web_process_request;
 	am_web_method_num_to_str;
@@ -206,10 +194,22 @@ EXPORTS
 	am_web_set_cookie;
 
 	am_web_build_advice_response;
+	am_web_get_am_revision_number;
 	am_web_get_request_url;
 	am_web_get_all_request_urls;
 
+	am_web_get_authType;
+	am_web_is_owa_enabled;
+	am_web_is_owa_enabled_change_protocol;
+	am_web_is_owa_enabled_session_timeout_url;
+	am_web_get_iis_filter_priority;
+	am_web_get_iis6_replaypasswd_key;
+
+    am_web_build_advice_redirect_url;
+    am_web_use_redirect_for_advice;
+    am_web_use_sunwmethod;
     am_web_is_url_enforced;
-	am_web_get_logout_url;
-    am_web_get_authType;
+    am_web_is_dummypost_url;
     am_web_get_postdata_preserve_lbcookie;
+    am_web_get_postdata_preserve_URL_parameter;
+    am_web_get_accessdenied_url;

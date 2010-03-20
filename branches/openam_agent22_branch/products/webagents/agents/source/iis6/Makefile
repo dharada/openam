@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,8 +18,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: Makefile,v 1.4 2009/06/26 21:32:05 robertis Exp $
+# $Id: Makefile,v 1.2.2.2 2008/03/21 23:34:38 robertis Exp $
 #
+# Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 #
 
 USERX_ROOT = ../../..
@@ -36,12 +33,34 @@ IIS6 := iis6
 IIS6_LIB_NAME := am$(IIS6)
 IIS6_LIB := $(IIS6_LIB_NAME)$(SO_EXT)
 
-#IIS6AUTH := iis6auth
-#IIS6AUTH_LIB_NAME := am$(IIS6AUTH)
-#IIS6AUTH_LIB := $(IIS6AUTH_LIB_NAME)$(SO_EXT)
+IIS6AUTH := iis6auth
+IIS6AUTH_LIB_NAME := am$(IIS6AUTH)
+IIS6AUTH_LIB := $(IIS6AUTH_LIB_NAME)$(SO_EXT)
 
-EXPORTED_LIBS += $(IIS6_LIB) $(IIS6AUTH_LIB)
-EXPORTED_OBJS := IisAgent6.o  Iis6auth.o
+OWAFILTER := owafilter
+OWAFILTER_LIB_NAME := am$(OWAFILTER)
+ifeq ($(CYGWIN_ARCH), WOW64)
+OWAFILTER_LIB_NAME := $(OWAFILTER_LIB_NAME)64
+else
+OWAFILTER_LIB_NAME := $(OWAFILTER_LIB_NAME)32
+endif
+OWAFILTER_LIB := $(OWAFILTER_LIB_NAME)$(SO_EXT)
+
+SHAREPOINTFILTER := sharepointfilter
+SHAREPOINTFILTER_LIB_NAME := am$(SHAREPOINTFILTER)
+ifeq ($(CYGWIN_ARCH), WOW64)
+SHAREPOINTFILTER_LIB_NAME := $(SHAREPOINTFILTER_LIB_NAME)64
+else
+SHAREPOINTFILTER_LIB_NAME := $(SHAREPOINTFILTER_LIB_NAME)32
+endif
+SHAREPOINTFILTER_LIB := $(SHAREPOINTFILTER_LIB_NAME)$(SO_EXT)
+
+ifneq ($(CYGWIN_ARCH), WOW64)
+EXPORTED_LIBS += $(IIS6_LIB) $(IIS6AUTH_LIB) $(OWAFILTER_LIB)  $(SHAREPOINTFILTER_LIB)
+else
+EXPORTED_LIBS += $(IIS6_LIB) $(OWAFILTER_LIB) $(SHAREPOINTFILTER_LIB)
+endif
+EXPORTED_OBJS := IisAgent6.o  Iis6auth.o Iis6filter.o
 
 INCLUDE_FLAGS += -I$(DEST_INC_DIR) -I$(NSS_INC_DIR) -I$(NSPR_INC_DIR) -I$(IIS6_INC_DIR)/include
 CFLAGS += -DXP_WIN32 -DAM_STATIC_LIB
@@ -58,9 +77,23 @@ all: export_libs
 $(IIS6_LIB): IisAgent6.o IisAgent6.def
 	$(MAKE_SHARED_LIB)
 
-#$(IIS6AUTH_LIB): Iis6auth.o Iis6auth.def
-#	$(MAKE_SHARED_LIB)
+ifneq ($(CYGWIN_ARCH), WOW64)
+$(IIS6AUTH_LIB): Iis6auth.o Iis6auth.def
+	$(MAKE_SHARED_LIB)
 
+$(OWAFILTER_LIB): Iis6filter.o OwaFilter.def
+	$(MAKE_SHARED_LIB)
+
+$(SHAREPOINTFILTER_LIB): Iis6filter.o SharePointFilter.def
+	$(MAKE_SHARED_LIB)
+
+else
+$(OWAFILTER_LIB): Iis6filter.o OwaFilter.def
+	$(MAKE_SHARED_LIB)
+
+$(SHAREPOINTFILTER_LIB): Iis6filter.o SharePointFilter.def
+	$(MAKE_SHARED_LIB)
+endif
 
 all: $(DEST_PACKAGE_SCRATCH_DIR) $(IIS6_LIB)
 
@@ -74,3 +107,4 @@ all clean:
 endif
 
 include $(USERX_ROOT)/arch/rules.mk
+

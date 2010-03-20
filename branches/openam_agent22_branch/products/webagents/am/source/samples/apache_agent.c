@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <limits.h>
@@ -64,7 +60,7 @@ static const command_rec dsame_auth_cmds[]=
 
 /*
  * The next group of routines are used to capture the path to the
- * OpenSSOAgentBootstrap.properties file and the directory where the shared libraries
+ * AMAgent.properties file and the directory where the shared libraries
  * needed by the DSAME agent are stored during module configuration.
  */
 static const char *set_properties_file(cmd_parms *cmd,

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: base_service.cpp,v 1.7 2008/09/13 01:11:53 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdio.h>
@@ -32,7 +27,6 @@
 #endif
 
 #include <cassert>
-#include <ssl.h>
 
 #include "base_service.h"
 #include "connection.h"
@@ -146,21 +140,13 @@ BaseService::BaseService(const std::string& name,
                          const Properties& props, 
 			 const std::string &cert_passwd,
 			 const std::string &cert_nick_name,
-			 bool trustServerCert)                        
+			 bool trustServerCert)
     : logModule(Log::addModule(name)), objLock(), serviceRequestId(0),
-      certDBPasswd((cert_passwd.size()>0)?
-          cert_passwd:props.get(AM_COMMON_CERT_DB_PASSWORD_PROPERTY,"")),
-      certNickName((cert_nick_name.size()>0)?
-          cert_nick_name:props.get(AM_AUTH_CERT_ALIAS_PROPERTY,"")),
+      certDBPasswd((cert_passwd.size()>0)?cert_passwd:props.get(AM_COMMON_CERT_DB_PASSWORD_PROPERTY,"")),
+      certNickName((cert_nick_name.size()>0)?cert_nick_name:props.get(AM_AUTH_CERT_ALIAS_PROPERTY,"")),
       poll_primary_server(props.get(AM_COMMON_POLL_PRIMARY_SERVER,"5")),
-      alwaysTrustServerCert(trustServerCert),
-      proxyHost(props.get(AM_COMMON_FORWARD_PROXY_HOST,"")),
-      proxyPort(atoi(props.get(AM_COMMON_FORWARD_PROXY_PORT,"0").c_str())),
-      proxyUser(props.get(AM_COMMON_FORWARD_PROXY_USER,"")),
-      proxyPassword(props.get(AM_COMMON_FORWARD_PROXY_PASSWORD,""))
+      alwaysTrustServerCert(trustServerCert)
 {
-      useProxy = proxyHost.size()>0 ? true : false;
-      useProxyAuth = proxyUser.size()>0 ? true : false;
 }
 
 BaseService::~BaseService()
@@ -232,6 +218,7 @@ BaseService::sendRequest(Connection& conn,
 		}
 	    }
 	}
+
         Log::log(logModule, Log::LOG_DEBUG,
             "BaseService::sendRequest "
             "Cookie and Headers =%s ", cookieLine.c_str());
@@ -312,7 +299,7 @@ BaseService::doRequest(const ServiceInfo& service,
 	ServiceInfo::const_iterator iter;
 
 	for (iter = service.begin(); iter != service.end(); ++iter) {
-            ServerInfo svrInfo = ServerInfo((const ServerInfo&)(*iter));
+            const ServerInfo &svrInfo = (*iter);
 	    if (!svrInfo.isHealthy(poll_primary_server)) {
 		Log::log(logModule, Log::LOG_WARNING,
 			"BaseService::doRequest(): "
@@ -325,39 +312,6 @@ BaseService::doRequest(const ServiceInfo& service,
 			iter->getURL().c_str());
             }
 
-            Http::HeaderList headerList, proxyHeaderList;
-            Http::Cookie hostHeader("Host", svrInfo.getHost());
-            headerList.push_back(hostHeader);
-
-            if (useProxy) {
-                proxyHeaderList.push_back(hostHeader);
-                // Override (temporarily) server credentials if using proxy
-                svrInfo.setHost(proxyHost);
-                svrInfo.setPort(proxyPort);
-                // We don't use SSL for initial proxy connection
-		svrInfo.setUseSSL(false);
-                Log::log(logModule, Log::LOG_DEBUG,
-                         "BaseService::doRequest(): Using proxy: %s:%d",
-                         proxyHost.c_str(),proxyPort);
-                // Add Proxy-Authorization header if user defined
-                if (useProxyAuth) {
-                    // allocate enough for a base64-encoded digest
-                    int authSize = proxyUser.size() + 
-                                   proxyPassword.size() + 1;
-                    // 11 extra bytes for prefix and terminator
-                    char * digest = (char *)malloc(authSize * 4/3 + 11);
-                    strcpy(digest, "Basic ");
-                    encode_base64((proxyUser + ":" + proxyPassword).c_str(),
-                                   authSize,(digest + 6));
-                    Log::log(logModule, Log::LOG_MAX_DEBUG,
-                         "BaseService::doRequest(): Using proxy auth as: %s",
-                         proxyUser.c_str());
-                    hostHeader = Http::Cookie("Proxy-Authorization", digest);
-                    proxyHeaderList.push_back(hostHeader);
-                    free(digest);
-                }
-            }
-
             // retry to connect to server before marking it as down.
             // making the number of attempts configurable may have a negative
             // side effect on performance, if the the value is a high number.
@@ -365,62 +319,19 @@ BaseService::doRequest(const ServiceInfo& service,
             int retryCount = 0;
             while(retryCount < retryAttempts) {
                 retryCount++;
+
 	        try {
-                    Connection conn(svrInfo, certDBPasswd,
-                      (cert_nick_name.size()>0)?cert_nick_name:certNickName,
-                         alwaysTrustServerCert);
+                    Connection conn(*iter, certDBPasswd,
+				(cert_nick_name.size()>0)?cert_nick_name:certNickName,
+				alwaysTrustServerCert);
 		    const char *operation = "sending to";
-                    // in case proxy is defined and target URL is HTTPS, 
-                    // establish an SSL tunnel first send 
-                    // CONNECT host:port string
-                    if (useProxy && iter->useSSL()) {
-                        SECStatus   secStatus = SECFailure;
-                        // All the other parameters would be empty for a 
-                        // proxy CONNECT
-                        Http::CookieList emptyCookieList;
-                        BodyChunk emptyChunk;
-                        BodyChunkList emptyChunkList;
 
-                        // Add a Keep-alive header since we're using HTTP/1.0
-                        hostHeader = Http::Cookie("Connection", 
-                                                  "Keep-Alive\r\n");
-                        proxyHeaderList.push_back(hostHeader);
-                        status = sendRequest(conn, 
-                                        BodyChunk(std::string("CONNECT ")), 
-                                        iter->getHost() + ":" +
-					Utils::toString(iter->getPort()), 
-                                        std::string(""), proxyHeaderList, 
-                                        emptyCookieList, emptyChunk, 
-                                        emptyChunk, emptyChunkList);
-                        if (status == AM_SUCCESS) {
-                            // Retrieve proxie's response if tunnel 
-                            // established
-                            (void) response.readAndIgnore(logModule, conn);
-                            // Secure the tunnel now by upgrading the socket
-                            PRFileDesc *sock = conn.secureSocket(
-                                                  certDBPasswd, 
-                                                  (cert_nick_name.size()>0)?
-                                            cert_nick_name:certNickName, 
-				            alwaysTrustServerCert, NULL);
-                            if (sock != static_cast<PRFileDesc *>(NULL)) {
-                                secStatus = SSL_SetURL(sock, 
-                                                  iter->getHost().c_str());
-                            }
-                        }
-
-                        if (status != AM_SUCCESS || SECSuccess != secStatus){
-                            Log::log(logModule, Log::LOG_ERROR,
-                                "BaseService::doRequest(): could not "
-				"establish a secure proxy tunnel");
-                            // Can't continue and mark server as down as 
-                            // it was a  proxy failure
-                            return AM_FAILURE;
-                        }
-                    }
-
+		    Http::HeaderList headerList;
+		    Http::Cookie hostHeader("Host", (*iter).getHost());
+		    headerList.push_back(hostHeader);
 		    if(Log::isLevelEnabled(logModule, Log::LOG_MAX_DEBUG)) {
 		        std::string commString;
-		        for(std::size_t i = 0; i<bodyChunkList.size(); ++i) {
+		        for(std::size_t i = 0; i < bodyChunkList.size(); ++i) {
 			    if(!bodyChunkList[i].secure) {
 			        commString.append(bodyChunkList[i].data);
 			    } else {
@@ -437,21 +348,7 @@ BaseService::doRequest(const ServiceInfo& service,
 		        Log::log(logModule, Log::LOG_MAX_DEBUG,
 			     commString.c_str());
 		    }
-
-                    std::string requestString = iter->getURI();
-                    /*
-                     * In case the following request would go to a proxy
-                     * we need to use full URL and special headers.
-                     * If the resource is HTTPS, we're not posting our
-                     * request to the proxy, but to the server 
-                     * through proxy tunnel
-                     */
-
-                    if (useProxy && !(iter->useSSL())) {
-                        requestString = iter->getURL();
-                        headerList = proxyHeaderList;
-                    }
-		    status = sendRequest(conn, headerPrefix, requestString,
+		    status = sendRequest(conn, headerPrefix, iter->getURI(),
 				     uriParameters, headerList, cookieList,
 				     contentLineChunk, headerSuffix,
 				     bodyChunkList);

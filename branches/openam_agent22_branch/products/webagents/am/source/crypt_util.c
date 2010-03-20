@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: crypt_util.c,v 1.7 2008/06/25 08:14:31 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 #include <stdio.h>
@@ -51,8 +46,8 @@ int rc5_encrypt(rc5_ctx *, u_char *, int);
 int rc5_decrypt(rc5_ctx *, u_char *, int);
 extern void encode_base64(const char*, size_t, char*);
 extern int decode_base64(const char *, char *);
-int encrypt_base64(const char *, char *, const char*);
-int decrypt_base64(const char *, char *, const char*);
+int encrypt_base64(const char *, char *);
+int decrypt_base64(const char *,char *);
 
 char vec[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -292,17 +287,18 @@ encode_base64(const char *p, size_t in_size, char *c) {
 }
 
 
-unsigned char
+int
 getindex(char x) {
     unsigned char i = 0xff;
-    while(vec[++i] != '\0') {
-        if (vec[i] == x)
-            return i;
-    }
+    while(vec[++i] != '\0')
+       {
+           if(vec[i]==x)
+                  return i;
+       }
     return -1;
 }
 
-extern int 
+extern int
 decode_base64(const char *c, char *p) {
     int len = 0;
     int i =0;
@@ -316,17 +312,17 @@ decode_base64(const char *c, char *p) {
     i = len;
     px = -1;
     loop = len;
-    
+
     while(i >= 0 && c[--i] == '=') ++numeq;
     if(numeq != 0) loop = len - 4;
-    
+
     for(i = 0; i < loop; ++i) {
-	cmpr = getindex(c[i]);
-        if (cmpr == -1) {
-            p[++px] = '\0';
-	    return px;
+    cmpr = getindex(c[i]);
+    if (cmpr == -1)
+        {   p[++px] = '\0';
+                return px;
         }
-	in_arr[i%4] = (unsigned char)cmpr;
+        in_arr[i%4] = (unsigned char)cmpr;
         if(i % 4 == 3) {
             p[++px] = ((in_arr[0] & 0x3f) << 2) | ((in_arr[1] & 0x30) >> 4);
             p[++px] = ((in_arr[1]  & 0xf) << 4) | ((in_arr[2] & 0x3c) >> 2);
@@ -335,38 +331,39 @@ decode_base64(const char *c, char *p) {
     }
 
     if(loop != len) {
-        cmpr = getindex(c[i]);
-        if (cmpr == -1) {
-            p[0] = '\0';
-	    return 0;
+    cmpr = getindex(c[i]);
+    if (cmpr == -1)
+        {   p[0] = '\0';
+                return 0;
         }
         in_arr[0] = (unsigned char)cmpr;
 
-        cmpr = getindex(c[++i]);
-        if (cmpr == -1) {
-            p[0] = '\0';
-	    return 0;
+    cmpr = getindex(c[++i]);
+    if (cmpr == -1)
+        {   p[0] = '\0';
+                return 0;
         }
         in_arr[1] = (unsigned char)cmpr;
-        
+
         if(numeq == 2) {
             p[++px] = ((in_arr[0] & 0x3f) << 2) | ((in_arr[1] & 0x30) >> 4);
         }
-        
+
         if(numeq == 1) {
-	    cmpr = getindex(c[++i]);
-            if (cmpr == -1) {
-                p[0] = '\0';
-	        return 0;
-            }
-	    in_arr[2] = (unsigned char)cmpr;
+         cmpr = getindex(c[++i]);
+        if (cmpr == -1)
+        {   p[0] = '\0';
+                return 0;
+        }
+            in_arr[2] = (unsigned char)cmpr;
             p[++px] = ((in_arr[0] & 0x3f) << 2) | ((in_arr[1] & 0x30) >> 4);
             p[++px] = ((in_arr[1]  & 0xf) << 4) | ((in_arr[2] & 0x3c) >> 2);
         }
     }
     p[++px] = '\0';
-    return px;
+  return px;
 }
+
 
 /**
   * Decrypt with rc5 and turn into base64
@@ -375,38 +372,36 @@ decode_base64(const char *c, char *p) {
   * @return decrypted cleartext password
   *
 */
-int decrypt_base64(const char *encrptbase, char *base64_dec_buffer, 
-        const char* key)
-{
+int decrypt_base64(const char *encrptbase, char *base64_dec_buffer){
 
     char buffer[7] = "";
     rc5_ctx c;
     int outlen = 0;
     int decode_len = 0;
 
-    buffer[0] = key[0];
-    buffer[1] = key[1];
+    buffer[0] = '3';
+    buffer[1] = '1';
 
     decode_len = decode_base64(encrptbase, base64_dec_buffer);
 
-    buffer[2] = key[2];
-    buffer[3] = key[3];
+    buffer[2] = '3';
+    buffer[3] = '7';
 
     if(decode_len > 0){
 
-        buffer[4] = key[4];
-        buffer[5] = key[5];
-        buffer[6] = key[6];
+	buffer[4] = '5';
+	buffer[5] = '1';
+	buffer[6] = '7';
 
-        rc5_init(&c, 12);
-        rc5_key(&c, (u_char *)buffer, 7);
+	rc5_init(&c, 12);
+	rc5_key(&c, (u_char *)buffer, 7);
 
-        // Decrpypt password will be atleast smaller than the base64 encrypt
+	// Decrpypt password will be atleast smaller than the base64 encrypt
         outlen = rc5_decrypt(&c, (u_char *)base64_dec_buffer, decode_len);
 
-        rc5_destroy(&c);
+	rc5_destroy(&c);
 
-        return 0;
+	return 0;
     }
 
     return 1;
@@ -418,38 +413,36 @@ int decrypt_base64(const char *encrptbase, char *base64_dec_buffer,
   * @return encrypted base 64 password
   *
 */
-int encrypt_base64(const char *password, char *enc_passwd, 
-        const char* key)
-{
+int encrypt_base64(const char *password, char *enc_passwd){
 
     char buffer[7] = "";
     rc5_ctx c;
     int passwordlen = 0;
     int outlen = 0;
     
-    buffer[0] = key[0];
-    buffer[1] = key[1];
+    buffer[0] = '3';
+    buffer[1] = '1';
 
     passwordlen = strlen(password);
 
-    buffer[2] = key[2];
-    buffer[3] = key[3];
+    buffer[2] = '3';
+    buffer[3] = '7';
 
     if(passwordlen > 0){
 
-        buffer[4] = key[4];
-        buffer[5] = key[5];
-        buffer[6] = key[6];
+	buffer[4] = '5';
+	buffer[5] = '1';
+	buffer[6] = '7';
 
-        rc5_init(&c, 12);
-        rc5_key(&c, (u_char *)buffer, 7);
+	rc5_init(&c, 12);
+	rc5_key(&c, (u_char *)buffer, 7);
 
-        outlen = rc5_encrypt(&c, (u_char *)password, passwordlen + 1);
-        encode_base64(password, outlen, enc_passwd);
+	outlen = rc5_encrypt(&c, (u_char *)password, passwordlen + 1);
+	encode_base64(password, outlen, enc_passwd);
 
-        rc5_destroy(&c);
+	rc5_destroy(&c);
 
-        return 0;
+	return 0;
     }
 
     return 1;
@@ -468,29 +461,26 @@ main(int argc, char *argv[]) {
     int retVal = 0;
     char encryptpasswd[1024] = "";
 	char origpasswd[1024] = "";
-    char keystr[8] = "";
 
-    if(argc != 3){
+    if(argc != 2){
 #ifndef WINNT
-		printf("Usage : crypt_util <password> <key>\n");
+		printf("Usage : crypt_util <password>\n");
 #else
-		printf("Usage : cryptit <password> <key>\n");        
+		printf("Usage : cryptit <password>\n");        
 #endif
         exit(1);
-    } else if (argc == 3) {
-        if((argv[1] != NULL) && (argv[2] != NULL)) {
+    } else if (argc == 2) {
+        if(argv[1] != NULL) {
             strcpy(origpasswd, argv[1]);
-            strncpy(keystr,argv[2],7);
-            keystr[7]='\0';
-            retVal = encrypt_base64(origpasswd, encryptpasswd, keystr);
+            retVal = encrypt_base64(origpasswd, encryptpasswd);
             printf("%s\n", encryptpasswd);
         } else {
 
-            printf("Invalid password/key Input\n");
+            printf("Invalid password Input\n");
 #ifndef WINNT
-            printf("Usage : crypt_util <password> <key>\n");
+            printf("Usage : crypt_util <password>\n");
 #else
-            printf("Usage : cryptit <password> <key>\n");
+            printf("Usage : cryptit <password>\n");
 #endif
             exit(1);
         }

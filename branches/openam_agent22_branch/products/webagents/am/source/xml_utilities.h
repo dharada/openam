@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: xml_utilities.h,v 1.5 2009/08/27 21:41:30 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -46,7 +41,7 @@ BEGIN_PRIVATE_NAMESPACE
 
 inline bool matchesXMLString(const std::string& str1, const xmlChar *str2)
 {
-#if	defined(SOLARIS) || defined(LINUX) || defined(HPUX) || defined(AIX)
+#if	defined(SOLARIS) || defined(LINUX) || defined(HPUX)
     return (0 == strcasecmp(str1.c_str(),
 			    reinterpret_cast<const char *>(str2)));
 #elif	(defined(WINNT) || defined(_AMD64_))

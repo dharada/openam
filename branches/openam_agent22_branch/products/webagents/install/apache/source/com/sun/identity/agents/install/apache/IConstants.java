@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: IConstants.java,v 1.5 2009/07/22 22:59:07 subbae Exp $
+ * $Id: IConstants.java,v 1.1 2006/10/06 18:27:33 subbae Exp $
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.apache;
@@ -106,11 +102,7 @@ public interface IConstants {
      */   
     public static final String STR_APC_UNIX_LIB_EXTN = "so";
 
-    /**
-     * Apache agent libray extension for HPUX platform    
-     */   
-    public static final String STR_APC_HPUX_LIB_EXTN = "sl";
-
     public static final String STR_TRUE = "true";
     public static final String STR_FALSE = "false";
+
 }

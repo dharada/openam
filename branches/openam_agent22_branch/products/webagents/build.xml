@@ -1,8 +1,4 @@
 <!--
-   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-   Copyright (c) 2009 Sun Microsystems Inc. All Rights Reserved
-  
    The contents of this file are subject to the terms
    of the Common Development and Distribution License
    (the License). You may not use this file except in
@@ -22,18 +18,14 @@
    your own identifying information:
    "Portions Copyrighted [year] [name of copyright owner]"
 
-   $Id: build.xml,v 1.24 2010/02/05 00:56:01 leiming Exp $
+   $Id: build.xml,v 1.5.2.3 2009/04/23 19:11:03 dknab Exp $
 
+   Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 -->
 
 <project name="open-source-web-agents" default="usage">
                 
     <description>Open Web Single Sign-On Web Agents</description>
-
-    <!-- overridable properties -->
-    <!-- build.debug is used for c code. valid values are: optimize, full -->
-    <property name="build.debug" value="optimize"/>
-
 
     <import file="../products.xml" />
     <import file="../installtools/installtools.xml" />
@@ -48,7 +40,7 @@
         <os name="linux"/>
     </condition>
 
-    <condition property="build.os" value="SunOS_sparc">
+    <condition property="build.os" value="SunOS">
         <and>
             <os name="sunos"/>
             <and>
@@ -70,14 +62,6 @@
         <os family="windows"/>
     </condition>
 
-    <condition property="build.os" value="HP-UX">
-        <os name="hp-ux"/>
-    </condition>
-
-    <condition property="build.os" value="AIX">
-        <os name="aix"/>
-    </condition>
-
     <condition property="iis.build.ok" value="true">
         <os family="windows"/>
     </condition>
@@ -94,15 +78,9 @@
         <equals arg1="${build.type}" arg2="64"/>
     </condition>
 
-    <condition property="target.jdk.set" value="${target.jdk}">
-        <isset property="target.jdk"/>
-    </condition>
-    <condition property="target.jdk.set" value="1.5">
-        <not><isset property="target.jdk"/></not>
-    </condition>
-
-    <!-- agent version number appended to end of agent zip file name -->
-    <property name="agentversion" value="3"/>
+    <!-- overridable properties -->
+    <!-- build.debug is used for c code. valid values are: optimize, full -->
+    <property name="build.debug" value="optimize"/>
 
     <target name="preparebuild">
         <mkdir dir="${webagents.built.dir}"/>
@@ -119,12 +97,10 @@
     </target>
 
     <target name="all">
-        <antcall target="apache22" />
-        <antcall target="sjsws" />
         <antcall target="apache" />
-        <antcall target="proxy40" />
-        <antcall target="iis6" />
-        <antcall target="domino" />
+        <antcall target="sjsws" />
+        <antcall target="apache22" />
+        <antcall target="iis6"/>
     </target>
 
     <target name="apache" depends="preparebuild">
@@ -143,37 +119,6 @@
             target="all" inheritRefs="true"/>
     </target>
 
-    <target name="proxy40" depends="preparebuild">
-        <echo message="Dispatch to proxy40"/>
-        <property name="containername" value="proxy40"/>
-        <antcall target="gmake" inheritRefs="true"/>
-        <ant antfile="${webagents.basedir}/build_agent.xml"
-            target="all" inheritRefs="true"/>
-    </target>
-
-    <target name="domino" depends="preparebuild,check.build.domino" 
-            if="build.domino">
-        <echo message="Dispatch to domino"/>
-        <property name="containername" value="domino"/>
-        <antcall target="gmake" inheritRefs="true"/>
-        <ant antfile="${webagents.basedir}/build_agent.xml"
-            target="all" inheritRefs="true"/>
-    </target>
-
-    <target name="check.build.domino">
-        <condition property="build.domino">
-            <and>
-                <not><equals arg1="${build.type}" arg2="64"/></not>
-                <or>
-                    <os name="linux" />
-                    <os name="sunos" arch="sparc" />
-                    <os name="aix"/>
-                    <os family="windows"/>
-                </or>
-            </and>
-        </condition>
-    </target>
-
     <target name="apache22" depends="preparebuild">
         <echo message="Dispatch to Apache 22"/>
         <property name="containername" value="apache22"/>
@@ -185,14 +130,6 @@
     <target name="iis6" depends="preparebuild" if="iis.build.ok">
          <echo message="Dispatch to iis6"/>
          <property name="containername" value="iis6"/>
-         <antcall target="gmake" inheritRefs="true"/>
-         <ant antfile="${webagents.basedir}/build_agent.xml"
-             target="all" inheritRefs="true"/>
-     </target>
-
-    <target name="iis7" depends="preparebuild" if="iis.build.ok">
-         <echo message="Dispatch to iis7"/>
-         <property name="containername" value="iis7"/>
          <antcall target="gmake" inheritRefs="true"/>
          <ant antfile="${webagents.basedir}/build_agent.xml"
              target="all" inheritRefs="true"/>
@@ -210,7 +147,6 @@
     <target name="nightly">
         <filter token="DATE" value="${nightly.date}" />
         <filter token="OS" value="${build.os}" />
-        <filter token="BIT" value="${build.type.suffix}" />
         <antcall target="prenightly" inheritRefs="true"/>
         <antcall target="all" inheritRefs="true"/>
         <copy file="${webagents.docs.dir}/nightly.html" 
@@ -242,11 +178,8 @@
         <echo message=" clean           : deletes all the generated files"/>
         <echo message=" apache          : builds the Apache Web Server 2.0.x agent"/>
         <echo message=" sjsws           : builds the Sun Java System Web Server 6.1/7.0 agent"/>
-        <echo message=" proxy40         : builds the Sun Java System Proxy Server 4.0 agent"/>
-        <echo message=" domino          : builds the Sun Java System IBM Lotus Domino Server 8.5 agent"/>
         <echo message=" apache22        : builds the Apache Web Server 2.2.x agent"/>
-        <echo message=" iis6            : builds the Microsoft Internet Information Services 6 agent"/>
-        <echo message=" iis7            : builds the Microsoft Internet Information Services 7 agent"/>
+        <echo message=" iis6          : builds the Microsoft Internet Information Services 6 agent"/>
         <echo message=" usage           : displays this usage message"/>
         <echo message=" "/>
         <echo message=" To run a target, issue the following command:"/>

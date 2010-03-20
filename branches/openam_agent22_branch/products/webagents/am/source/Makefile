@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,7 +18,7 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 # Makefile for building the C Policy API library.
 #
@@ -40,9 +36,6 @@ endif
 
 SUBDIRS := samples test
 
-ifeq ($(BUILD_AGENT), iis7)
-	DEBUG_FLAGS := -Zi -O2 -DNDEBUG
-endif
 
 vpath %.c $(REAL_SRC_DIR)
 vpath %.cpp $(REAL_SRC_DIR)
@@ -53,9 +46,6 @@ vpath libamsdk.mapfile $(REAL_SRC_DIR)
 OBJS := action_decision.o \
 	am_auth.o \
 	auth_context.o \
-	agent_configuration.o \
-        agent_profile_service.o \
-	agent_config_cache.o \
 	am_log.o \
 	am_main.o \
 	am_map.o \
@@ -205,15 +195,16 @@ LDLIBS += $(LIBXML_LIBS) $($(STD_LIB)_LDLIBS) $(SYSTEM_LIBS)
 CXXFLAGS += $(PIC_FLAG) -DAM_BUILDING_LIB -D_CHAR_IS_UNSIGNED
 LD_STATIC_FLAGS += $(PIC_FLAG) -DAM_BUILDING_LIB
 
+ifeq ($(MC_ARCH), x86_64)
+     CFLAGS += -fPIC 
+     CXXFLAGS += -DX86_64
+endif
+
 CFLAGS += -DAM_BUILDING_LIB
 
 include $(USERX_ROOT)/arch/rules.mk
 
-ifneq ($(OS_ARCH), AIX)
 all: version.h $(USERX_ROOT)/.version depends export_headers export_static_libs export_libs $(TEST_LIB) softlink_so $(DEST_BIN_DIR)/$(CRYPT_EXE) all_subdirs
-else
-all: version.h $(USERX_ROOT)/.version export_headers export_static_libs export_libs $(TEST_LIB) softlink_so $(DEST_BIN_DIR)/$(CRYPT_EXE) all_subdirs
-endif
 
 $(EXPORTED_LIBS): $(OBJS) $(STD_LIB_MAP_FILE)
 	$(MAKE_SHARED_LIB)
@@ -238,7 +229,7 @@ $(USERX_ROOT)/.version: $(USERX_ROOT)/version.template
 	    -e 's%AGENT_ER_TEXT%$(AGENT_ER_TEXT)%g' \
 	    -e 's%AGENT_FVB_TEXT%$(AGENT_FVB_TEXT)%g' $< > $@
 ifeq ($(ADD_README), YES)
-	echo "copy release notes" > $(USERX_ROOT)/.copyReleaseNotes
+	echo "copy readme" > $(USERX_ROOT)/.copyReadme
 endif
 
 softlink_so:

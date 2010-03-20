@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,11 +17,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_string_set.h,v 1.6 2008/08/19 19:15:04 veiming Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
- * Common types and macros provided by the OpenSSO 
+ * Common types and macros provided by the Sun Java System Access Manager 
  * Access Management SDK.
  *
  */

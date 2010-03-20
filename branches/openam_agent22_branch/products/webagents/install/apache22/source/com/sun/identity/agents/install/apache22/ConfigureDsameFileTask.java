@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: ConfigureDsameFileTask.java,v 1.4 2009/12/09 23:01:00 krishna_indigo Exp $
+ * $Id: ConfigureDsameFileTask.java,v 1.1 2007/04/30 17:29:27 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.apache22;
@@ -137,16 +133,12 @@ public class ConfigureDsameFileTask
             // file.
             Map tokens = new HashMap();
             tokens.put("MODULE", ConfigUtil.getLibPath());
-            tokens.put("AGENTBOOTSTRAP",
-	   	stateAccess.get(STR_CONFIG_FILE_PATH_TAG));
             tokens.put("AGENTCONFIG", 
-                stateAccess.get(STR_CONFIG_AGENT_CONFIG_FILE_PATH_TAG));
+                stateAccess.get(STR_CONFIG_FILE_PATH_TAG));
 
             tokens.put("EAPI", STR_APC22_TWO_LIB_SUFFIX);
             if (OSChecker.isWindows()) {
                 tokens.put("EXTN", STR_APC22_WIN_LIB_EXTN);
-	     } else if (OSChecker.isHPUX()) {
-		  tokens.put("EXTN", STR_APC22_HPUX_LIB_EXTN);
             } else {
                 tokens.put("EXTN", STR_APC22_UNIX_LIB_EXTN);
             }

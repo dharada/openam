@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -41,7 +37,7 @@ BIN_DIR=${PKGDIR}/bin
 BIN_FILES="crypt_util"
 
 CONFIG_DIR=${PKGDIR}/config
-CONFIG_FILE=OpenSSOAgentBootstrap.properties
+CONFIG_FILE=AMAgent.properties
 CONFIG_FILE_ORIG=${CONFIG_FILE}.orig
 
 LIB_DIR=${PKGDIR}/lib

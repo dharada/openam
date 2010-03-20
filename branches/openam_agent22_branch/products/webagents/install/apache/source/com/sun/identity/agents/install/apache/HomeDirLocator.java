@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,13 +17,13 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: HomeDirLocator.java,v 1.5 2008/11/21 08:29:02 soumendra Exp $
+ * $Id: HomeDirLocator.java,v 1.1 2006/10/06 18:27:33 subbae Exp $
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.apache;
 
-import com.sun.identity.install.tools.configurator.InstallConstants;
 import com.sun.identity.install.tools.configurator.IStateAccess;
 import com.sun.identity.install.tools.configurator.InstallException;
 import com.sun.identity.install.tools.configurator.IServerHomeDirLocator;
@@ -43,7 +38,7 @@ import java.io.File;
  * Apache server instance's config directory at the time of agent setup. 
  */
 public class HomeDirLocator implements IServerHomeDirLocator,
-        IConfigKeys, IConstants, InstallConstants {
+        IConfigKeys, IConstants {
     
     private static String LOC_APC_ERR_IN_VALID_HOME_DIR =
             "APC_ERR_IN_VALID_HOME_DIR";
@@ -57,17 +52,12 @@ public class HomeDirLocator implements IServerHomeDirLocator,
     public String getServerDirectory(IStateAccess state)
         throws InstallException {
         String serverHomeDir = null;
-
-        String apacheConfigDir = (String)state.get(STR_KEY_APC_INST_CONF_DIR);
-        if ((apacheConfigDir != null) && (apacheConfigDir.length() > 0)) {
-            String apcHttpdFile = apacheConfigDir + FILE_SEP +
-                                            STR_APC_HTTPD_FILE;
-            // Apache home dir
-            String apcHomeDir = (String)state.get(STR_KEY_APC_HOME_DIR);
-            if ((apcHomeDir != null) && (apcHomeDir.length() > 0)) {
-                serverHomeDir = apcHomeDir;
-            }
+        // Apache home dir
+        String apcHomeDir = (String)state.get(STR_KEY_APC_HOME_DIR);
+        if ((apcHomeDir != null) && (apcHomeDir.length() > 0)) {
+            serverHomeDir = apcHomeDir;
         }
+        
         if(!FileUtils.isDirValid(serverHomeDir)) {
             Debug.log("HomeDirLocator: The Apache Home " +
                     serverHomeDir + ", directory is invalid:");

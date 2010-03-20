@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: ConfigDirValidator.java,v 1.3 2008/06/25 05:54:35 qcheng Exp $
+ * $Id: ConfigDirValidator.java,v 1.1 2007/04/30 17:29:26 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.apache22;
@@ -97,11 +93,11 @@ public class ConfigDirValidator extends ValidatorBase
                            apcHomeDir + FILE_SEP + STR_APC22_BIN_DIR);
 
                 // store Apache agent specific value for notification
-                // enable property in agent's configuration properties 
+                // enable property in AMAgent.properties 
                 state.put(STR_KEY_NOTIFICATION_ENABLE, STR_FALSE);
 
                 // store Apache agent specific value for log
-                // rotation property in agent's configuration properties 
+                // rotation property in AMAgent.properties 
                 state.put(STR_KEY_LOG_ROTATION, STR_FALSE);
 
                 returnMessage =

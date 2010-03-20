@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,6 +18,7 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 # Top level makefile for the Agent Pack.
 #
@@ -54,7 +51,7 @@ all: all_subdirs $(DEST_DROP_DIR)/$(DSAME_DROP_FILE)
 
 clean: clean_subdirs
 	$(RM) .version
-	$(RM) .copyReleaseNotes
+	$(RM) .copyReadme
 	$(RM) -r $(DEST_DIR)
 
 drop: $(DEST_DROP_DIR)/$(DSAME_DROP_FILE)
@@ -80,15 +77,9 @@ ifeq ($(OS_ARCH), HP-UX)
 	$(TAR) cvf ../../../../$@.tar *; \
 	gzip -f ../../../../$@.tar
 else
-ifeq ($(OS_ARCH), AIX)
-	cd $(DEST_PACKAGE_SCRATCH_DIR)/SUNWamcom; \
-	zip -r ../../../../$@.zip *
-else
-
 	cd $(DEST_PACKAGE_SCRATCH_DIR); \
 	$(TAR) cvf ../../../$@.tar is_csdk; \
 	gzip -f ../../../$@.tar
-endif
 endif
 endif
 endif

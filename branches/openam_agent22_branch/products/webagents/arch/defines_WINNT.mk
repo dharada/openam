@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -26,8 +22,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: defines_WINNT.mk,v 1.5 2008/09/13 01:11:04 robertis Exp $
+# $Id: defines_WINNT.mk,v 1.3.2.1 2008/02/10 00:17:41 robertis Exp $
 # 
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 
 #

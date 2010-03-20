@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: tree.h,v 1.4 2008/06/25 08:14:40 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __TREE_H__
@@ -40,6 +35,7 @@
 #include "scope_lock.h"
 
 BEGIN_PRIVATE_NAMESPACE
+class Properties;
 
 class Node;
 typedef RefCntPtr<Node> NodeRefPtr;
@@ -173,6 +169,7 @@ private:
     am_resource_traits_t rsrcTraits;
     Mutex treeLock;
     NodeRefPtr rootNode;
+    const Properties &attrMap;
     SearchResult find(NodeRefPtr,  const ResourceName &, bool);
 
     /**
@@ -197,10 +194,12 @@ public:
 			  const ResourceName &, bool) const;
 
     /* The constructors throw std::invalid_argument if any argument is invalid*/
-    Tree(PDRefCntPtr &, am_resource_traits_t rTraits);
+    Tree(PDRefCntPtr &, am_resource_traits_t rTraits,
+	 const Properties &);
     Tree(XMLElement &,
 	 am_resource_traits_t,
-	 KVMRefCntPtr);
+	 KVMRefCntPtr,
+	 const Properties &);
     bool insert(PDRefCntPtr &);
     PDRefCntPtr dfsearch(const ResourceName &, bool usePatterns=true);
 

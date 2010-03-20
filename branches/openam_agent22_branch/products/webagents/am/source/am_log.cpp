@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_log.cpp,v 1.5 2008/07/15 20:12:38 subbae Exp $
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -410,38 +405,3 @@ am_status_t am_log_set_logger(const am_log_logger_func_t logger_func,
     return status;
 }
 
-/*
- * Set agent's debug file size.
- * debugFileSize must be > DEBUG_FILE_MIN_SIZE else
- * default value gets used.
- */
-extern "C" am_status_t
-am_log_set_debug_file_size(const long debugFileSize)
-{
-    am_status_t status = AM_SUCCESS;
-
-    if (!Log::isInitialized()) {
-        status = AM_SERVICE_NOT_INITIALIZED;
-    } else if(debugFileSize > DEBUG_FILE_MIN_SIZE) {
-        Log::setDebugFileSize(debugFileSize);
-        status = AM_SUCCESS;
-    }
-    return status;
-}
-
-/*
- * Set agent's debug file rotate or not.
- */
-extern "C" am_status_t
-am_log_set_debug_file_rotate(boolean_t debugFileRotate)
-{
-    am_status_t status = AM_SUCCESS;
-
-    if (!Log::isInitialized()) {
-        status = AM_SERVICE_NOT_INITIALIZED;
-    } else {
-        Log::setDebugFileRotate(debugFileRotate == B_TRUE);
-        status = AM_SUCCESS;
-    }
-    return status;
-}

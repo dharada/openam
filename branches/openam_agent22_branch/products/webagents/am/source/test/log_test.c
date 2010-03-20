@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdlib.h>
@@ -70,7 +66,7 @@ void Usage(char **argv) {
 int
 main(int argc, char *argv[])
 {
-    const char* prop_file = "../../config/OpenSSOAgentBootstrap.properties";
+    const char* prop_file = "../../config/AMAgent.properties";
     am_status_t status = AM_FAILURE;
     am_properties_t prop = AM_PROPERTIES_NULL;
     am_log_module_id_t module_id;

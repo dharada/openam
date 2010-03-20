@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: http.h,v 1.6 2009/12/19 00:05:46 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  *
  * Abstract:
@@ -92,12 +87,7 @@ namespace Http {
 	INTERNAL_SERVER_ERROR = 500,
 	NOT_IMPLEMENTED,
 	BAD_GATEWAY,
-#if defined(AIX)
-	SERVICE_UNAVAILABLE_AIX,
-#else
 	SERVICE_UNAVAILABLE,
-#endif
-
 	GATEWAY_TIMEOUT,
 	HTTP_VERSION_NOT_SUPPORTED
     };
@@ -165,7 +155,6 @@ namespace Http {
 
 	am_status_t readAndParse(Log::ModuleId logModule, Connection& conn,
 				    std::size_t initialBufferLen);
-        void readAndIgnore(Log::ModuleId logModule, Connection& conn);
 
 	Status getStatus() const { return httpStatus; }
 	const CookieList& getCookieList() const { return cookieList; }
@@ -203,7 +192,6 @@ namespace Http {
     std::string decode(const std::string& encodedString);
     std::string encode(const std::string& rawString);
     std::string cookie_encode(const std::string& rawString);
-
 }
 
 END_PRIVATE_NAMESPACE

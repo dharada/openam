@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdlib.h>
@@ -61,7 +57,7 @@ void fail_on_error(am_status_t status, const char *method_name)
 void Usage(char **argv) {
     printf("Usage: %s"
            " -u url"
-           " [-f properties_file (default: ./OpenSSOAgentBootstrap.properties)]"
+           " [-f properties_file (default: ./AMAgent.properties)]"
 	   " [-m method (default: GET)]"
 	   " [-p path info]"
 	   " [-q query]"
@@ -290,7 +286,7 @@ free_post_data(void **args, char *data)
 int
 main(int argc, char *argv[])
 {
-    const char* prop_file = "../../config/OpenSSOAgentBootstrap.properties";
+    const char* prop_file = "../../config/AMAgent.properties";
     am_status_t status = AM_FAILURE;
     char *ssoTokenID = NULL;
     char *url = NULL;
@@ -355,7 +351,7 @@ main(int argc, char *argv[])
 
     // load properties
     // initialize web agent
-    // status = am_web_init(prop_file);
+    status = am_web_init(prop_file);
     fail_on_error(status, "am_web_init");
 
     // do access check 
@@ -382,10 +378,10 @@ main(int argc, char *argv[])
 
 	// insert sso token into cookie header val if provided.
 	if (ssoTokenID != NULL) {
-	    //sprintf(buf, "%s=%s;%s",
-	//	    am_web_get_cookie_name(), ssoTokenID, 
-	//	    cookie_header == NULL ? "" : cookie_header);
-	 //   req_params.cookie_header_val = buf;
+	    sprintf(buf, "%s=%s;%s",
+		    am_web_get_cookie_name(), ssoTokenID, 
+		    cookie_header == NULL ? "" : cookie_header);
+	    req_params.cookie_header_val = buf;
 	}
 	else {
 	    req_params.cookie_header_val = cookie_header;
@@ -406,7 +402,7 @@ main(int argc, char *argv[])
 	req_func.render_result.func = render_result;
 	req_func.render_result.args = args;
 
-	//result = am_web_process_request(&req_params, &req_func, &sts);
+	result = am_web_process_request(&req_params, &req_func, &sts);
 
 	printf("am_web_process_request() returned status %s, result %s.\n",
 		    am_status_to_name(sts), get_http_code_str(result));

@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -616,7 +612,7 @@ DWORD init_filter(PHTTP_FILTER_CONTEXT pfc)
            status = FAILED;
 	}
 
-	// Get the location of the OpenSSOAgentBootstrap.properties file from the registry
+	// Get the location of the AMAgent.properties file from the registry
 	if (status == SUCCESS) {
            if (iisaPropertiesFilePathGet(&propertiesFileFullPath, instanceId) 
                                                    == FALSE) {
@@ -658,7 +654,7 @@ BOOL iisaPropertiesFilePathGet(CHAR** propertiesFileFullPath,char *instanceId)
 {
     // Max WINAPI path
     const DWORD dwPropertiesFileFullPathSize = MAX_PATH + 1;
-    const CHAR  szPropertiesFileName[]       = "OpenSSOAgentBootstrap.properties";
+    const CHAR  szPropertiesFileName[]       = "AMAgent.properties";
     CHAR agentApplicationSubKey[1000] = "";
     const CHAR agentDirectoryKeyName[]       = "Path";
     DWORD dwPropertiesFileFullPathLen        = dwPropertiesFileFullPathSize;

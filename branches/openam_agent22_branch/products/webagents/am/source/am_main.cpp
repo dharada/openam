@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_main.cpp,v 1.12 2010/01/26 00:54:46 dknab Exp $
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
 
@@ -224,19 +219,19 @@ void get_status_info(am_status_t status, const char ** name, const char ** msg)
 	    break;
         case AM_AUTH_FAILURE:
             if (name) *name = "AM_AUTH_FAILURE";
-	    if (msg) *msg = "OpenSSO authentication service failure";
+	    if (msg) *msg = "Access Manager authentication service failure";
 	    break;
         case AM_NAMING_FAILURE:
             if (name) *name = "AM_NAMING_FAILURE";
-	    if (msg) *msg = "OpenSSO naming service failure";
+	    if (msg) *msg = "Access Manager naming service failure";
 	    break;
         case AM_SESSION_FAILURE:
             if (name) *name = "AM_SESSION_FAILURE";
-	    if (msg) *msg = "OpenSSO session service failure";
+	    if (msg) *msg = "Access Manager session service failure";
 	    break;
         case AM_POLICY_FAILURE:
             if (name) *name = "AM_POLICY_FAILURE";
-	    if (msg) *msg = "OpenSSO policy service failure";
+	    if (msg) *msg = "Access Manager policy service failure";
 	    break;
         case AM_NO_POLICY:
             if (name) *name = "AM_NO_POLICY";
@@ -338,26 +333,6 @@ void get_status_info(am_status_t status, const char ** name, const char ** msg)
         case AM_REMOTE_LOG_NOT_INITIALIZED:
             if (name) *name = "AM_REMOTE_LOG_NOT_INITIALIZED";
 	    if (msg) *msg = "Remote Log Service is not initialized";
-	    break;
-        case AM_REST_SERVICE_NOT_AVAILABLE:
-            if (name) *name = "AM_REST_SERVICE_NOT_AVAILABLE";
-	    if (msg) *msg = "REST service url not available";
-	    break;
-        case AM_REPOSITORY_TYPE_INVALID:
-            if (name) *name = "AM_REPOSITORY_TYPE_INVALID";
-	    if (msg) *msg = "Repository location value is invalid";
-	    break;
-        case AM_REST_ATTRS_SERVICE_FAILURE:
-            if (name) *name = "AM_REST_ATTRS_SERVICE_FAILURE";
-	    if (msg) *msg = "REST attributes service encountered an error";
-	    break;
-        case AM_REDIRECT_LOGOUT:
-            if (name) *name = "AM_REDIRECT_LOGOUT";
-	    if (msg) *msg = "redirect to logout";
-	    break;
-        case AM_AGENT_TIME_NOT_SYNC:
-            if (name) *name = "AM_AGENT_TIME_NOT_SYNC";
-	    if (msg) *msg = "time synchronization issue between agent and server.";
 	    break;
 	default:
 	    if (name) *name = "unrecognized status code";

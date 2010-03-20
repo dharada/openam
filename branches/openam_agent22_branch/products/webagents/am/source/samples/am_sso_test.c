@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdlib.h>
@@ -33,7 +29,6 @@
 #include <am_notify.h>
 #include <am_utils.h>
 #include <am_log.h>
-#include <am_web.h>
 
 static const char *test_notif_msg = 
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -170,9 +165,7 @@ void Usage(char **argv) {
            " [-p password]"
            " [-s sso token id]"
            " [-o org_name]"
-           " [-m auth_module]"
-           " [-f bootstrap_properties_file]"
-           " [-c config_properties_file]"
+           " [-f properties_file]"
 	   " [-d]"
            "\n",
            argv[0]);
@@ -187,8 +180,7 @@ auth_login(am_properties_t prop,
            const char *pw,
            const char *org_name,
            am_auth_context_t *auth_ctx_ptr, 
-           const char **ssoTokenID_ptr,
-           const char *auth_module)
+           const char **ssoTokenID_ptr)
 {
     am_status_t status;
     am_auth_context_t auth_ctx = NULL;
@@ -204,7 +196,7 @@ auth_login(am_properties_t prop,
                                          NULL);
     fail_on_error(status, "am_auth_create_auth_context");
 
-   status = am_auth_login(auth_ctx, AM_AUTH_INDEX_MODULE_INSTANCE, auth_module);
+    status = am_auth_login(auth_ctx, AM_AUTH_INDEX_MODULE_INSTANCE, "LDAP");
     fail_on_error(status, "am_auth_login");
 
     for (i = 0; i < am_auth_num_callbacks(auth_ctx); i++) {
@@ -404,8 +396,7 @@ test_listeners(am_sso_token_handle_t sso_handle,
 int
 main(int argc, char *argv[])
 {
-    const char* prop_file = "../../config/OpenSSOAgentBootstrap.properties";
-    const char* config_file = "../../config/OpenSSOAgentConfiguration.properties";
+    const char* prop_file = "../../config/AMAgent.properties";
     am_status_t status = AM_FAILURE;
     am_properties_t prop = AM_PROPERTIES_NULL;
     am_auth_context_t auth_ctx = NULL;
@@ -413,14 +404,11 @@ main(int argc, char *argv[])
     const char *ssoTokenID = NULL;
     char *user = NULL;
     char* org_name = NULL;
-    char* auth_module = "LDAP";
     char *pw = NULL;
     int j;
     char c;
     int usage = 0;
-    boolean_t agentInitialized = B_FALSE; 
-    boolean_t dispatch_listener = B_FALSE; /* dispatch listener in a */
-					   /* seperate thread */
+    boolean_t dispatch_listener = B_FALSE; /* dispatch listener in a seperate thread */
 
     for (j=1; j < argc; j++) {
         if (*argv[j]=='-') {
@@ -438,15 +426,9 @@ main(int argc, char *argv[])
 	    case 'f':
                 prop_file = (j <= argc-1) ? argv[++j] : NULL;
 		break;
-	    case 'c':
-                config_file = (j <= argc-1) ? argv[++j] : NULL;
-		break;
 	    case 's':
                 ssoTokenID = (j <= argc-1) ? argv[++j] : NULL;
 		break;
-            case 'm':
-                auth_module = (j < argc-1) ? argv[++j] : NULL;
-                break;
 	    case 'd': 
 		dispatch_listener = B_TRUE;
 		break;
@@ -468,10 +450,6 @@ main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    am_web_init(prop_file, config_file);
-
-    am_agent_init(&agentInitialized);
-
     // initialize sso
     status = am_properties_create(&prop);
     fail_on_error(status, "am_properties_create");
@@ -487,7 +465,7 @@ main(int argc, char *argv[])
 
     // login to get a sso token ID
     if (NULL == ssoTokenID) {
-        auth_login(prop, user, pw, org_name, &auth_ctx, &ssoTokenID, auth_module);
+        auth_login(prop, user, pw, org_name, &auth_ctx, &ssoTokenID);
     }
     else {
         am_log_log(AM_LOG_ALL_MODULES, AM_LOG_INFO, 

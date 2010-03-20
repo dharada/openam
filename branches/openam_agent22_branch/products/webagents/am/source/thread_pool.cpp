@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: thread_pool.cpp,v 1.4 2008/06/25 08:14:39 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include "thread_pool.h"
@@ -31,6 +26,9 @@ USING_PRIVATE_NAMESPACE
 
 Log::ModuleId ThreadPool::logID;
 #define MAX_THREAD_WAKEUP_TIME 15
+#define MAX_THREAD_ACTIVATION_TIME 15000
+
+extern PRBool no_child_thread_activation_delay;
 
 // Throws std::bad_alloc, NSPRException.
 ThreadPool::ThreadPool(std::size_t startThreads,
@@ -117,9 +115,10 @@ ThreadPool::createNewThread()
     // ~ThreadPool will take a lock and prevent from all the
     // worker threads from entering the wait-for-work state.
     while(activeThreads == x) {
-	PR_Sleep(PR_TicksPerSecond());
-	++cnt;
-	if(cnt == MAX_THREAD_WAKEUP_TIME) {
+      if (no_child_thread_activation_delay == AM_FALSE ) {
+	 PR_Sleep(PR_TicksPerSecond());
+	 ++cnt;
+	 if(cnt == MAX_THREAD_WAKEUP_TIME) {
 	    Log::log(logID, Log::LOG_ERROR,
 		     "ThreadPool::createNewThread(): Attempt to create "
 		     "thread failed.");
@@ -127,7 +126,21 @@ ThreadPool::createNewThread()
 				    "Thread not started.  The host process "
 				    "may not be multi-threaded.",
 				    AM_FAILURE);
-	}
+	 }
+      }
+      else {
+	 PR_Sleep(1/PR_TicksPerSecond());
+	 ++cnt;
+	 if(cnt == MAX_THREAD_ACTIVATION_TIME) {
+	    Log::log(logID, Log::LOG_ERROR,
+		     "ThreadPool::createNewThread(): Attempt to create "
+		     "thread failed.");
+	    throw InternalException("ThreadPool::createNewThread()",
+				    "Thread not started.  The host process "
+				    "may not be multi-threaded.",
+				    AM_FAILURE);
+	 }
+      }
     }
 
     return;

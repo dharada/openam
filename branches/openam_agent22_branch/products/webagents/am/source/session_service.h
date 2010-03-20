@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: session_service.h,v 1.4 2008/06/25 08:14:37 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -72,6 +67,10 @@ public:
 			       const std::string& ssoToken,
 			       const Http::CookieList& cookieList);
 
+    am_status_t logoutSession(const ServiceInfo& service,
+			       const std::string& ssoToken,
+			       const Http::CookieList& cookieList);
+
     am_status_t setProperty(const ServiceInfo& service,
 			    SessionInfo& sessionInfo,
                             const std::string& name, 
@@ -97,13 +96,15 @@ private:
     am_status_t parseDestroySessionResponse(XMLElement element,
 					   const std::string& sessionId) const;
 
+    am_status_t parseLogoutSessionResponse(XMLElement element,
+					   const std::string& sessionId) const;
+
     am_status_t parseSetPropertyResponse(XMLElement element,
 					 const std::string& sessionId) const;
 
     static const BodyChunk prefixChunk;
     static const BodyChunk firstSessionRequestPrefixChunk;
     static const BodyChunk additionalSessionRequestPrefixChunk;
-    static const BodyChunk encodedAppSSOTokenPrefixChunk;
     static const BodyChunk getSessionRequestPrefixChunk;
     static const BodyChunk getSessionRequestMiddleChunk;
     static const BodyChunk getSessionRequestSuffixChunk;
@@ -114,6 +115,9 @@ private:
     static const BodyChunk destroySessionRequestMiddleDestroySessionIDChunk;
     static const BodyChunk destroySessionRequestMiddleSessionIDChunk;
     static const BodyChunk destroySessionRequestSuffixChunk;
+    static const BodyChunk logoutSessionRequestPrefixChunk;
+    static const BodyChunk logoutSessionRequestMiddleSessionIDChunk;
+    static const BodyChunk logoutSessionRequestSuffixChunk;
     static const BodyChunk setPropertyRequestPrefixChunk;
     static const BodyChunk setPropertyRequestMiddlePropNameChunk;
     static const BodyChunk setPropertyRequestMiddlePropValueChunk;
@@ -121,7 +125,6 @@ private:
     static const BodyChunk suffixChunk;
     static const BodyChunk falseChunk;
     static const BodyChunk trueChunk;
-
 };
 
 END_PRIVATE_NAMESPACE

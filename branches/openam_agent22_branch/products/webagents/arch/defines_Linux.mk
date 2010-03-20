@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -26,8 +22,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: defines_Linux.mk,v 1.5 2008/06/25 05:54:25 qcheng Exp $
+# $Id: defines_Linux.mk,v 1.2.4.1 2008/12/04 19:27:28 madan_ranganath Exp $
 # 
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
 
 #
@@ -99,6 +96,6 @@ endif
 #
 # the following is the name of the tar ball for dsame drop,.
 #
-DSAME_DROP_FILE_NAME := common_3_0_$(OS_ARCH)_$(MC_ARCH)
+DSAME_DROP_FILE_NAME := common_2_2_$(OS_ARCH)_$(MC_ARCH)
 
 MAKE_STATIC_LIB = $(AR) $(ARFLAGS) $@ $(filter %.o, $^)

@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,16 +17,15 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: AgentToolsResolver.java,v 1.3 2008/06/25 05:54:38 qcheng Exp $
+ * $Id: AgentToolsResolver.java,v 1.1 2006/10/06 18:27:34 subbae Exp $
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.admin;
 
 import java.util.ArrayList;
 
-import com.sun.identity.agents.install.handler.EncryptionHandler;
-import com.sun.identity.agents.install.handler.GetEncryptionKeyHandler;
 import com.sun.identity.install.tools.admin.BaseToolsResolver;
 import com.sun.identity.install.tools.admin.ToolsOptionsInfo;
 import com.sun.identity.install.tools.handler.ListProductsHandler;
@@ -45,17 +39,11 @@ public class AgentToolsResolver extends BaseToolsResolver {
 
     public static final String STR_LISTAGENTS_OPTION = "--listAgents";
     public static final String STR_AGENTINFO_OPTION = "--agentInfo";
-    public static final String STR_ENCRYPT_OPTION = "--encrypt";
-    public static final String STR_GEN_ENCRYPT_OPTION = "--getEncryptKey";
     
     public static final String LOC_HR_MSG_LISTPRODUCTS_SHORT_HELP = 
         "HR_MSG_LISTPRODUCTS_SHORT_HELP";
     public static final String LOC_HR_MSG_PRODUCTINFO_SHORT_HELP = 
         "HR_MSG_PRODUCTINFO_SHORT_HELP";    
-    public static final String LOC_HR_MSG_ENCRYPT_SHORT_HELP =
-        "HR_MSG_ENCRYPT_SHORT_HELP";
-    public static final String LOC_HR_MSG_GET_ENCRYPT_KEY_SHORT_HELP =
-        "HR_MSG_GET_ENCRYPT_KEY_SHORT_HELP";
 
      /**
      * Returns list of agent installer supported options.
@@ -71,14 +59,6 @@ public class AgentToolsResolver extends BaseToolsResolver {
         result.add(new ToolsOptionsInfo(ProductInfoHandler.class.getName(), 
                 STR_AGENTINFO_OPTION,
                 LocalizedMessage.get(LOC_HR_MSG_PRODUCTINFO_SHORT_HELP)));           
-        
-        result.add(new ToolsOptionsInfo(EncryptionHandler.class.getName(),
-                STR_ENCRYPT_OPTION,
-                LocalizedMessage.get(LOC_HR_MSG_ENCRYPT_SHORT_HELP)));
-        
-        result.add(new ToolsOptionsInfo(GetEncryptionKeyHandler.class.getName(),
-       	        STR_GEN_ENCRYPT_OPTION,
-                LocalizedMessage.get(LOC_HR_MSG_GET_ENCRYPT_KEY_SHORT_HELP)));
         
         return result;
     }    

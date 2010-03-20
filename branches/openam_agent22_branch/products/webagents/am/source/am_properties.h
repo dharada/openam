@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,11 +17,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_properties.h,v 1.9 2008/09/26 00:02:09 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
- * Properties map for use by clients of the OpenSSO 
+ * Properties map for use by clients of the Sun Java System Access Manager
  * Remote Client SDK.
  *
  */
@@ -197,7 +192,7 @@ AM_EXPORT boolean_t am_properties_is_set(am_properties_t properties,
  *
  *   value_ptr
  *		a pointer to where to store the value associated with
- *		the specified key.
+ *		the default value.
  *
  *   default_value
  *		default value to use if there is no value associated
@@ -401,19 +396,6 @@ am_properties_iter_get_key(am_properties_iter_t properties_iter);
  */
 AM_EXPORT const char *
 am_properties_iter_get_value(am_properties_iter_t properties_iter);
-
-AM_EXPORT am_status_t
-am_properties_set_null(am_properties_t properties, const char *key,
-		     const char *value);
-AM_EXPORT am_status_t
-am_properties_set_list(am_properties_t properties, 
-                       const char *key,
-                       const char *valueSep);
-AM_EXPORT am_status_t
-am_properties_set_map(am_properties_t properties,
-                      const char *key,
-                      const char *mapSep,
-                      const char *valueSep);
 
 AM_END_EXTERN_C
 

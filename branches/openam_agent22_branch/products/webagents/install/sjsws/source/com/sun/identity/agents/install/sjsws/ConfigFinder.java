@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: ConfigFinder.java,v 1.4 2008/06/25 05:54:40 qcheng Exp $
+ * $Id: ConfigFinder.java,v 1.2 2007/03/29 20:38:13 subbae Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.sjsws;
@@ -78,7 +74,7 @@ public class ConfigFinder implements IDefaultValueFinder,
         }
 
         if (OSChecker.isWindows()) {
-                result = "C:\\Program Files\\Sun\\WebServer7\\"
+                result = "C:\\Program Files\\Sun\\JavaES5\\WebServer7\\"
                 + "https-" + localHost + "\\config";
         } else {
             result = "/var/opt/SUNWwbsvr7/"

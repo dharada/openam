@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: naming_info.h,v 1.5 2008/06/25 08:14:33 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  *
  * Abstract:
@@ -46,7 +41,7 @@ class NamingInfo {
 public:
     NamingInfo(bool valid = false)
 	: infoValid(valid), loggingSvcInfo(), policySvcInfo(),
-	  profileSvcInfo(), sessionSvcInfo(), restSvcInfo(), extraProperties()
+	  profileSvcInfo(), sessionSvcInfo(), extraProperties()
     {
     }
 
@@ -54,7 +49,6 @@ public:
     const ServiceInfo& getPolicySvcInfo() const { return policySvcInfo; }
     const ServiceInfo& getProfileSvcInfo() const { return profileSvcInfo; }
     const ServiceInfo& getSessionSvcInfo() const { return sessionSvcInfo; }
-    const ServiceInfo& getRESTSvcInfo() const { return restSvcInfo; }
 
     const Properties& getExtraProperties() const { return extraProperties; }
     const std::string getlbCookieStr() const { return lbCookieStr; }
@@ -70,19 +64,16 @@ public:
 	policySvcInfo.setHostPort(serverInfo);
 	profileSvcInfo.setHostPort(serverInfo);
 	sessionSvcInfo.setHostPort(serverInfo);
-	restSvcInfo.setHostPort(serverInfo);
     }
     
 private:
     bool infoValid;
     friend class NamingService;
-    friend class AgentProfileService;
 
     ServiceInfo loggingSvcInfo;
     ServiceInfo policySvcInfo;
     ServiceInfo profileSvcInfo;
     ServiceInfo sessionSvcInfo;
-    ServiceInfo restSvcInfo;
     Properties extraProperties;
     std::string lbCookieStr; 
     std::string lbCookieName;

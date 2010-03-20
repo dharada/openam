@@ -17,37 +17,39 @@
 ' your own identifying information:
 ' "Portions Copyrighted [year] [name of copyright owner]"
 '
-' $Id: IIS7Admin.vbs,v 1.3 2009/07/28 18:42:33 robertis Exp $
+' $Id: IIS6admin.vbs,v 1.1 2007/06/05 19:36:44 subbae Exp $
 '
 ' Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 '
 '---------------------------------------------------------------------------
-' Configures/UnConfigures the IIS7 module for a Web Site
+' Configures/UnConfigures the WildCard Application Map for a Web Site
 '
 ' Requires:
 '    -config/-unconfig 
 '
-' Usage: IIS7Admin.vbs -config/-unconfig <config-filename>
+' Usage: IIS6admin.vbs -config/-unconfig <config-filename>
 '
 ' Example:
-'    IIS7Admin -config agentConfig
+'    IIS6admin -config agentConfig
 '
 '
+'Reference Section present at the end of the file lists the url's that was
+'used to develop this script
 '--------------------------------------------------------------------------
 
-Dim WshShell, installDir, iis7ConfigDir, iis7LogsDir, iis7AuditDir, iis7DebugDir, identifier, newIdentifier
-Dim origBootstrapFile, origConfigFile, newConfigDir, newLogsDir, newAuditDir, newDebugDir, moduleDir, modulePath
-Dim newBootstrapFile, newConfigFile, newConfigFileTmp, agentName
+Dim WshShell, installDir, iis6ConfigDir, iis6DebugDir, identifier, newIdentifier
+Dim origPropertyFile, newConfigDir, newDebugDir
+Dim newConfigFile, newConfigFileTmp
 Dim regKey, responseFile, sLine, aLine, wildCardMap
 Dim NewMaps(), count, objWebRoot, IIsWebServiceObj, FSO, dict, dict1
 Dim scriptFullName, currDir
-Dim iis7InstanceDir
+Dim iis6InstanceDir
 Const ForReading = 1, ForWriting = 2
 
 Set Args = WScript.Arguments
 if Args.Count < 2 Then
    WScript.Echo "Incorrect Number of arguments"
-   WScript.Echo "Syntax: IIS7Admin.vbs -config/-unconfig <config-filename>"
+   WScript.Echo "Syntax: IIS6admin.vbs -config/-unconfig <config-filename>"
    WScript.Quit(1)
 end if
 
@@ -56,7 +58,7 @@ Set WshShell = CreateObject("WScript.Shell")
 
 '// Set the correct path where the script is located
 scriptFullName = WScript.ScriptFullName
-currDir = split(scriptFullName, "\IIS7Admin.vbs")
+currDir = split(scriptFullName, "\IIS6admin.vbs")
 WshShell.currentDirectory = currDir(0)
 
 ' Entry point
@@ -76,13 +78,16 @@ end if
 ' Input : None
 ' Output : None
 ' Description : The Init() function performs the following tasks
-' 1. Opens and reads the configuration file generated from IIS7CreateConfig.vbs
+' 1. Opens and reads the configuration file generated from IIS6CreateConfig.vbs
 ' 2. Populates few of the tokens request for agent configuration
+' 3. Enables "All Unknown ISAPI Extensions"
+' 4. Reads all the application mapping for the site on which the agent
+'    will be configured
 '----------------------------------------------------------------------------
 Function Init()
   Dim correctConfigFile
 
-  WScript.Echo "Copyright c 2009 Sun Microsystems, Inc. All rights reserved"
+  WScript.Echo "Copyright c 2004 Sun Microsystems, Inc. All rights reserved"
   WScript.Echo "Use is subject to license terms"
 
   Set WshShell = WScript.CreateObject("WScript.Shell")
@@ -124,21 +129,22 @@ Function Init()
       newIdentifier = "Identifier_" + identifier
   end if
 
-  ' Generate the location of properties file
-  iis7InstanceDir = installDir + "\" + newIdentifier 
-  iis7ConfigDir = iis7InstanceDir + "\config"
-  iis7LogsDir = iis7InstanceDir + "\logs"
-  iis7AuditDir = iis7LogsDir + "\audit"
-  iis7DebugDir = iis7LogsDir + "\debug"
+  ' Generate the location of AMAgent.properties file
+  iis6InstanceDir = installDir + "\" + newIdentifier 
+  iis6ConfigDir = iis6InstanceDir + "\config"
+  iis6DebugDir = iis6InstanceDir + "\debug"
 
-  newConfigDir = iis7ConfigDir  
-  newLogsDir = iis7LogsDir
-  newAuditDir = iis7AuditDir
-  newDebugDir = iis7DebugDir 
+  newConfigDir = iis6ConfigDir  
+  newDebugDir = iis6DebugDir 
 
-  moduleDir = installDir + "\bin"
-  modulePath = moduleDir + "\amiis7module.dll"
-  agentName = "iis7agent"
+  'Enable "All Unknown ISAPI Extensions"
+  Set IIsWebServiceObj = GetObject("IIS://localhost/W3SVC") 
+  IIsWebServiceObj.EnableExtensionFile "*.dll"
+  IIsWebServiceObj.SetInfo
+
+  'Get all the application mappings
+  count = 0
+  Set objWebRoot = GetObject("IIS://localhost/W3SVC/" & identifier & "/ROOT")
 
 End Function
 
@@ -162,10 +168,10 @@ Function LoadResourceFile(FSO, dict1)
   correctResourceFile = false
   do 
     WScript.Echo ""
-    WScript.Echo "Enter the Agent Resource File Name [IIS7Resource.en] :"
+    WScript.Echo "Enter the Agent Resource File Name [IIS6Resource.en] :"
     resourceFile = WScript.StdIn.ReadLine
     if (resourceFile = "") then
-       resourceFile = "IIS7Resource.en"
+       resourceFile = "IIS6Resource.en"
        correctResourceFile = true
     elseif (FSO.FileExists(resourceFile) = false) then
           WScript.Echo "Resource File specified does not exist"
@@ -195,43 +201,37 @@ End Function
 ' Input : WshShell, FSO, responseFile, objWebRoot, dict1
 ' Output : None
 ' Description : The AgentConfigure() function performs the following tasks:
-' 1. Opens the properties file 
-' 2. Perfoms token replacement in properties file using the agent
-'    configuration file created from IIS7CreateConfig.vbs
-' 3. Under "iis_v7_WINNT_agent_3\web_agents\iis7_agent directory", creates a 
-'    sub-directory "Identifier_<id number>"
-' 4. Updates the windows registry with the location of properties file
-' 5. Adds the IIS7 agent http module to the web site for which the agent
+' 1. Opens the AMAgent.properties file 
+' 2. Perfoms token replacement in AMAgent.properties file using the agent
+'    configuration file created from IIS6CreateConfig.vbs
+' 3. Under "Sun\Access_Manager\Agents\2.2\iis6\config directory, creates a 
+'    sub-directory "InstanceId_<id number>"
+' 4. Under "Sun\Access_Manager\Agents\2.2\debug" directory, creates a 
+'    sub-directory "InstanceId_<id number>"
+' 5. Updates the windows registry with the location of AMAgent.properties file
+' 6. Adds the wild card application map to the web site for which the agent
 '    is configured.
 '----------------------------------------------------------------------------
 Function AgentConfigure(WshShell, FSO, responseFile, objWebRoot, dict1)
    WScript.Echo dict1("129")
 
-   if (FSO.FolderExists(iis7InstanceDir) = false) then
-      FSO.CreateFolder(iis7InstanceDir)
+   if (FSO.FolderExists(iis6InstanceDir) = false) then
+      FSO.CreateFolder(iis6InstanceDir)
    end if
    if (FSO.FolderExists(newConfigDir) = false) then
       FSO.CreateFolder(newConfigDir)
    end if
-   if (FSO.FolderExists(newLogsDir) = false) then
-      FSO.CreateFolder(newLogsDir)
-   end if
-   if (FSO.FolderExists(newAuditDir) = false) then
-      FSO.CreateFolder(newAuditDir)
-   end if
+
    if (FSO.FolderExists(newDebugDir) = false) then
       FSO.CreateFolder(newDebugDir)
    end if
 
    WScript.Echo dict1("130")
-   origBootstrapFile = installDir + "\config\OpenSSOAgentBootstrap.template"
-   origConfigFile = installDir + "\config\OpenSSOAgentConfiguration.template"
-   newBootstrapFile = newConfigDir + "\OpenSSOAgentBootstrap.properties"
-   newConfigFile = newConfigDir + "\OpenSSOAgentConfiguration.properties"
-   FSO.CopyFile origBootstrapFile, newBootstrapFile
-   FSO.CopyFile origConfigFile, newConfigFile
+   origPropertyFile = installDir + "\config\AMAgent.template"
+   newConfigFile = newConfigDir + "\AMAgent.properties"
+   FSO.CopyFile origPropertyFile, newConfigFile
 
-   'Perform token replacement in properties
+   'Perform token replacement in AMAgent.properties
    With New RegExp
      .Pattern = "^(.*?) = (.*?)$"
      .Multiline = True
@@ -239,46 +239,41 @@ Function AgentConfigure(WshShell, FSO, responseFile, objWebRoot, dict1)
      Set Tokens = .Execute(FSO.OpenTextFile(responseFile, ForReading, False).ReadAll)
    End With
 
-   B = FSO.OpenTextFile(newBootstrapFile, ForReading, True).ReadAll
-
-   For Each Token In Tokens
-     B = Replace(B, Token.Submatches(0), Token.Submatches(1))
-   Next
-
-   FSO.OpenTextFile(newBootstrapFile, ForWriting, False).Write B
-
-
    B = FSO.OpenTextFile(newConfigFile, ForReading, True).ReadAll
 
    For Each Token In Tokens
      B = Replace(B, Token.Submatches(0), Token.Submatches(1))
    Next
 
-   FSO.OpenTextFile(newConfigFile, ForWriting, False).Write B
+   B = Replace(B, "com.sun.am.policy.agents.notenforcedList", "# com.sun.am.policy.agents.notenforcedList")
 
+   FSO.OpenTextFile(newConfigFile, ForWriting, False).Write B
    WScript.Sleep(100)
+
 
    WScript.Echo dict1("131")
    'Add the config file into the product registry
-   regKey = "HKLM\Software\Sun Microsystems\OpenSSO IIS7 Agent\"
+   regKey = "HKLM\Software\Sun Microsystems\Access Manager IIS6 Agent\"
    WshShell.RegWrite regKey + newIdentifier + "\" ,1,"REG_SZ"
    WshShell.RegWrite regKey + newIdentifier + "\Path", newConfigDir,"REG_SZ"
-   WshShell.RegWrite regKey + newIdentifier + "\Version","3.0","REG_SZ"
+   WshShell.RegWrite regKey + newIdentifier + "\Version","2.2","REG_SZ"
 
-   Call ConfigureDll()
+   'Install the wild card application into this web site
+   WScript.Echo dict1("132")
+   For Each Item in objWebRoot.ScriptMaps
+       ReDim Preserve NewMaps(count)
+       NewMaps(count) = Item
+       count = count + 1
+   Next
+
+   ReDim Preserve NewMaps(count)
+   wildcardMap = "*," + installDir + "\bin\amiis6.dll" + ",0,All"
+   NewMaps(count) = wildcardMap
+
+   'Put all the mappings
+   objWebRoot.PutEx 2, "ScriptMaps", NewMaps
+   objWebRoot.SetInfo
    WSCript.Echo dict1("133")
-End Function
-
-Function ConfigureDll()
-    Dim oExec, strCmd
-    strCmd = "%systemroot%\system32\inetsrv\appcmd install module /name:" + agentName + " /image:" + modulePath
-    Set oExec = WshShell.Exec(strCmd)
-End Function
-
-Function UnconfigureDll()
-    Dim  oExec, strCmd
-    strCmd = "%systemroot%\system32\inetsrv\appcmd uninstall module " + agentName
-    Set oExec = WshShell.Exec(strCmd)
 End Function
 
 '----------------------------------------------------------------------------
@@ -286,24 +281,16 @@ End Function
 ' Input : WshShell, FSO, dict1
 ' Output : None
 ' Description : The AgentUnConfigure() function performs the following tasks:
-' 1.Removes both the OpenSSOAgentBootstrap.properties and OpenSSOAgentConfiguration.properties 
-'   file under the "Identifier_<id number>" and the "Identifier_<id number>" directory itself
+' 1.Removes both the AMAgent.properties file under the "InstanceId_<id number>"
+'   and the "InstanceId_<id number>" directory itself
 ' 2.Removes the windows registry entry which had information about the 
-'   location of properties file
-' 3.Removes the IIS7 agent http module from  the web site for which the agent
+'   location of AMAgent.properties file
+' 3.Removes the wild card application map to the web site for which the agent
 '   was configured.
 '----------------------------------------------------------------------------
 Function AgentUnConfigure(WshShell, FSO, dict1)
    'Remove the Agent Config Directory
-   delBootstrapFile = newConfigDir + "\OpenSSOAgentBootstrap.properties"
-   delConfigFile = newConfigDir + "\OpenSSOAgentConfiguration.properties"
-
-   if (FSO.FileExists(delBootstrapFile)) then
-      WScript.Echo dict1("143")
-      FSO.DeleteFile(delBootstrapFile)
-   else
-      WScript.Echo dict1("144")
-   end if
+   delConfigFile = newConfigDir + "\AMAgent.properties"
 
    if (FSO.FileExists(delConfigFile)) then
       WScript.Echo dict1("134")
@@ -319,12 +306,24 @@ Function AgentUnConfigure(WshShell, FSO, dict1)
 
       'Remove the entry from the Windows Product Registry
       WSCript.Echo dict1("136")
-      regKey = "HKLM\Software\Sun Microsystems\OpenSSO IIS7 Agent\"
+      regKey = "HKLM\Software\Sun Microsystems\Access Manager IIS6 Agent\"
       WshShell.RegDelete regKey + newIdentifier + "\Version"
       WshShell.RegDelete regKey + newIdentifier + "\Path"
       WshShell.RegDelete regKey + newIdentifier + "\"
 
-      Call UnconfigureDll()
+      'Remove the wild card application from this Site
+      WScript.Echo dict1("137")
+      For Each Item in objWebRoot.ScriptMaps
+        if (instr(Item, "amiis6.dll") = 0) then
+          ReDim Preserve NewMaps(count)
+          NewMaps(count) = Item
+          count = count + 1
+        end if
+      Next
+
+      'Put the rest of the mappings
+      objWebRoot.PutEx 2, "ScriptMaps", NewMaps
+      objWebRoot.SetInfo
 
       WScript.Echo dict1("138")
    else
@@ -340,4 +339,12 @@ set resFile = nothing
 Set FSO = nothing
 
 WScript.Quit(0)
+'--------------------------------------------------------------------------
+'Reference
+'
+'The following is the list of url's that was referenced:
+' 1. http://msdn.microsoft.com/library/default.asp?url=/library/en-us/script56/html/vsgrpFeatures.asp
+' 2. http://msdn.microsoft.com/library/en-us/iissdk/iis/iis_reference.asp 
+' 3. http://msdn.microsoft.com/library/default.asp?url=/library/en-us/iissdk/iis/ref_mb_scriptmaps.asp
+'--------------------------------------------------------------------------
 

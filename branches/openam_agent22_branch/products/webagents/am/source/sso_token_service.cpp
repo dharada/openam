@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: sso_token_service.cpp,v 1.8 2008/09/13 01:11:53 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 #include <climits>
@@ -87,18 +82,20 @@ SSOTokenService::SSOTokenService(const char *serviceName,
 		   initParams.get(AM_COMMON_CERT_DB_PASSWORD_PROPERTY,""),
 		   initParams.get(AM_AUTH_CERT_ALIAS_PROPERTY,""),
                    mAlwaysTrustServerCert),
-    mDefSessionURL(""),
+    mDefSessionURL(initParams.get(AM_SSO_DEFAULT_SESSION_URL, "")),
     mSessionServiceInfo(mDefSessionURL),
     mNotifEnabled(initParams.getBool(
                       AM_COMMON_NOTIFICATION_ENABLE_PROPERTY, false)),
     mNotifURL(initParams.get(AM_COMMON_NOTIFICATION_URL_PROPERTY, "")),
-    mSSOTokenListenerTable(DEFAULT_HASH_SIZE,
+    mSSOTokenListenerTable(mServiceParams.getUnsigned( // reuse sso hash size
+                           AM_SSO_HASH_BUCKET_SIZE_PROPERTY, DEFAULT_HASH_SIZE),
                            LL_MAXINT), // entry never times out
     mSSOTokenListenerTableLock(),
     mCookieName(initParams.get(AM_COMMON_COOKIE_NAME_PROPERTY, DEF_COOKIENAME)),
     mLoadBalancerEnabled(initParams.getBool(
                              AM_COMMON_LOADBALANCE_PROPERTY, true)),
-    mSSOTokenTable(DEFAULT_HASH_SIZE,
+    mSSOTokenTable(mServiceParams.getUnsigned(
+                      AM_SSO_HASH_BUCKET_SIZE_PROPERTY, DEFAULT_HASH_SIZE),
 		   mServiceParams.getPositiveNumber(
                       AM_SSO_CHECK_CACHE_INTERVAL_PROPERTY, DEFAULT_TIMEOUT)),
     mHTCleaner(NULL),
@@ -192,7 +189,8 @@ SSOTokenService::initialize()
     // each notification is passed to a thread to be processed.
     int numThreads = START_THREADS;
     if (mNotifEnabled) {
-	numThreads += DEFAULT_MAX_THREADS;
+	numThreads += mServiceParams.getUnsigned(
+			  AM_SSO_MAX_THREADS_PROPERTY, DEFAULT_MAX_THREADS);
     }
 
     try {
@@ -623,6 +621,84 @@ SSOTokenService::destroySession(const ServiceInfo& serviceInfo,
     catch (...) {
 	Log::log(mLogID, Log::LOG_ERROR,
                  "SSOTokenService::destroySession(): "
+		 "Unknown exception %d for SSO Token ID %s.",
+		 ssoTokenID.c_str());
+	sts = AM_FAILURE;
+    }
+
+    return sts;
+}
+
+am_status_t
+SSOTokenService::logoutSession(const ServiceInfo& serviceInfo,
+                                const std::string &ssoTokenID) {
+    am_status_t sts = AM_FAILURE;
+
+    // find token in the cache 
+    SSOTokenEntryRefCntPtr entry;
+    entry = mSSOTokenTable.find(ssoTokenID);
+    if (!entry) {
+	Log::log(mLogID, Log::LOG_DEBUG,
+                 "SSOTokenService::logoutSession(): "
+	         "SSO Token %s to be invalidated found in cache.",
+                 ssoTokenID.c_str());
+    }
+   
+    // add dpro cookie 
+    Http::CookieList httpCookieList;
+    if (mLoadBalancerEnabled && entry)
+        buildCookieList(ssoTokenID, httpCookieList, entry);
+
+    // logout session.
+
+    try {
+	NamingInfo namingInfo;
+	const ServiceInfo& svcInfo =
+                getServiceInfo(ssoTokenID, serviceInfo, entry, namingInfo);
+	Log::log(mLogID, Log::LOG_DEBUG,
+                 "SSOTokenService::logoutSession(): "
+                 "going to server %s.", 
+                 (*svcInfo.begin()).getURL().c_str());
+        sts = SessionService::logoutSession(
+                          svcInfo,
+			  ssoTokenID,
+			  httpCookieList);
+	if (AM_SUCCESS == sts) {
+            if(entry) {
+		entry->mSessionInfo.setState(SessionInfo::DESTROYED);
+	    }
+	    Log::log(mLogID, Log::LOG_DEBUG, 
+                     "SSOTokenService::logoutSession(): "
+		     "invalidated SSO Token ID %s.",
+		     ssoTokenID.c_str());
+	    if (entry) {
+		// if successful, remove entry from cache, since property names 
+		// in the cache will already be out of date.
+                // XXX should we remove from cache right away ? 
+                // could mark it invalid and let cleaner remove it later.
+		mSSOTokenTable.remove(ssoTokenID);
+		Log::log(mLogID, Log::LOG_DEBUG, 
+                         "SSOTokenService::logoutSession(): "
+			 "Removed invalidated SSO Token ID %s from cache.",
+			 ssoTokenID.c_str());
+	     }
+	} else {
+	    Log::log(mLogID, Log::LOG_ERROR, 
+                     "SSOTokenService::logoutSession(): "
+		     "Error %d invalidating SSO Token %s.",
+		     sts, ssoTokenID.c_str());
+	}
+    }
+    catch (InternalException& exc) {
+	sts = exc.getStatusCode();
+	Log::log(mLogID, Log::LOG_ERROR,
+                 "SSOTokenService::logoutSession(): "
+                 "Error %d logout session SSO Token ID %s.",
+                 sts, ssoTokenID.c_str());
+    }
+    catch (...) {
+	Log::log(mLogID, Log::LOG_ERROR,
+                 "SSOTokenService::logoutSession(): "
 		 "Unknown exception %d for SSO Token ID %s.",
 		 ssoTokenID.c_str());
 	sts = AM_FAILURE;

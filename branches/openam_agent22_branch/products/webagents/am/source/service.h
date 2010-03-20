@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: service.h,v 1.16 2008/11/10 22:56:37 madan_ranganath Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -55,10 +50,6 @@
 #include "thread_function.h"
 #include "pnotify_handler.h"
 #include "ht_cleaner.h"
-#include "agent_config_fetch.h"
-#include "agent_config_cache_cleanup.h"
-#include "sso_token_service.h"
-#include "audit_log.h"
 
 BEGIN_PRIVATE_NAMESPACE
 
@@ -72,43 +63,47 @@ class Service {
  private:
     Log::ModuleId logID;
     Properties svcParams;    
-    bool initialized;   
+    bool initialized;
+    bool threadPoolCreated;
     std::string serviceName;
     std::string instanceName;
     bool notificationEnabled;
     std::string notificationURL;
     HashTable<PolicyEntry> policyTable;
+    Properties profileAttributesMap;
+    Properties sessionAttributesMap;
+    Properties responseAttributesMap;
+    bool fetchProfileAttrs;
+    bool fetchSessionAttrs;
+    bool fetchResponseAttrs;
+    std::list<std::string> attrList;
+
     PolicyEntryRefCntPtr mPolicyEntry;
     SessionInfo mAppSessionInfo;
+
     am_resource_traits_t rsrcTraits;
     std::list<std::string> notenforcedList;
-    
-    bool threadPoolCreated;
     ThreadPool *tPool;
     HTCleaner<PolicyEntry> *htCleaner;
-    
-    bool threadPoolAgentFetchCreated;
-    ThreadPool *tPoolAgentFetch;
-    AgentConfigFetch *agentConfigFetch;
-
-    bool threadPoolAgentConfigCleanupCreated;
-    ThreadPool *tPoolAgentConfigCleanup;
-    AgentConfigCacheCleanup *agentConfigCleanup;
-
-    bool threadPoolAuditLogCreated;
-    ThreadPool *tPoolAuditLog;
-    AuditLog *auditLog;
-
     Mutex lock;
+
     ServiceInfo namingSvcInfo;
+
     bool alwaysTrustServerCert;
     AuthService authSvc;
     AuthContext authCtx;               // Agent's auth context
     NamingService namingSvc;
     PolicyService *policySvc;
 
-    SSOTokenService &mSSOTokenSvc;  
-    bool isLocalRepo;
+    bool mFetchFromRootResource;     // whether to fetch policy from root rsrc.
+    unsigned long mOrdNum;
+    int mUserIdParamType;
+    std::string mUserIdParam;
+    bool mLoadBalancerEnable;
+    SSOTokenService &mSSOTokenSvc;
+    bool mCookieEncoded;
+    bool do_sso_only;
+    unsigned long policy_number_of_tries;
 
     /* 
      * All functions throw:
@@ -128,33 +123,28 @@ class Service {
 
     void initialize();
 
+
     void update_policy(const SSOToken &, const std::string &,
 		       const std::string &,
 		       const KeyValueMap &,
                        SessionInfo &,
 		       policy_fetch_scope_t scope,
 		       bool refetchPolicy,
-                       PolicyEntryRefCntPtr &,
-                       const std::list<std::string> &,
-                       Properties &);
-
-    bool do_update_policy(const SSOToken &ssoTok, const string &resName,
+                       PolicyEntryRefCntPtr &);
+bool
+Service::do_update_policy(const SSOToken &ssoTok, const string &resName,
 		       const string &actionName,
 		       const KeyValueMap &env,
                        SessionInfo &sessionInfo,
 		       policy_fetch_scope_t scope,
-                       PolicyEntryRefCntPtr &,
-                       const std::list<std::string> &,
-                       Properties &);
+                       PolicyEntryRefCntPtr &);
 
     void update_policy_list(const SSOToken &,
 			    const std::vector<std::string> &,
 			    const std::string&, const KeyValueMap &,
-                            PolicyEntryRefCntPtr &,
-                            const std::list<std::string> &,
-                            Properties &);
+                            PolicyEntryRefCntPtr &);
 
-    void process_policy_response(PolicyEntryRefCntPtr &,
+    void process_policy_response(PolicyEntryRefCntPtr,
 				 const KeyValueMap &,
 				 const std::string &);
 
@@ -217,25 +207,16 @@ class Service {
 
     void policy_notify(const std::string &,
 		       NotificationType);
-    
-    void agent_config_change_notify();
 
     am_status_t invalidate_session(const char *ssoTokenId);
-
-    am_status_t user_logout(const char *ssoTokenId,
-                                   Properties& properties);
 
     void flushPolicyEntry(const SSOToken&);
 
     void setRemUserAndAttrs(am_policy_result_t *policy_res,
-                            PolicyEntryRefCntPtr &uPolicyEntry,
-                            const SessionInfo sessionInfo,
-                            std::string& resName,
-                            const std::vector<PDRefCntPtr>& results,
-                            Properties& properties,
-                            Properties& profileAttributesMap,
-                            Properties& sessionAttributesMap,
-                            Properties& responseAttributesMap) const;
+				    PolicyEntryRefCntPtr uPolicyEntry,
+				    const SessionInfo sessionInfo,
+				    std::string& resName,
+				    const std::vector<PDRefCntPtr>& results) const;
 
     void getPolicyResult(const char * /*ssoToken*/,
 			 const char * /*resName */,
@@ -244,19 +225,15 @@ class Service {
 			 am_map_t /*response*/,
 			 am_policy_result_t * /*policy_result*/,
 			 am_bool_t /*ignorePolicyResult*/,
-			 Properties&  /*Agent Configuration properties*/);
-
+			 char ** /*am revision number*/);
 private:
     std::vector<std::string> serverHandledAdvicesList;
     void construct_advice_string(const KeyValueMap &, std::string &) const;
     void add_attribute_value_pair_xml(const KeyValueMap::const_iterator &entry,
 				      std::string &adviceStr) const;
-    void reinitialize(); 
-
 
 };
 
 END_PRIVATE_NAMESPACE
 
 #endif	// not __SERVICE_H__
-

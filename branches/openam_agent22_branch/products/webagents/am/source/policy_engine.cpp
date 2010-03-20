@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: policy_engine.cpp,v 1.10 2009/08/27 21:41:30 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -39,9 +34,6 @@
 #include "am_types.h"
 #include "log.h"
 #include "policy_engine.h"
-#if defined(AIX)
-#include "sso_token_service.h"
-#endif
 #include "service.h"
 
 #if (defined(WINNT) || defined(_AMD64_))
@@ -96,6 +88,12 @@ PolicyEngine::create_service(const char *serviceName,
 			     am_resource_traits_t rsrcTraits,
 			     const Properties& service_params)
 {
+    Log::log(logID, Log::LOG_MAX_DEBUG, "%s:%d %s", __FILE__, __LINE__,
+	    "In createService");
+    Log::log(logID, Log::LOG_INFO, "%s%s", serviceName,
+	    " creation attempted.");
+
+
     am_policy_t hdl = UINT_MAX;
     Service *svc = NULL;
 
@@ -200,10 +198,8 @@ PolicyEngine::getService(am_policy_t hdl)
  *	InternalException upon other errors
  */
 void
-PolicyEngine::policy_notify(am_policy_t policy_handle, 
-                            const char *data,
-                            size_t len,
-                            bool configChangeNotificationEnabled) 
+PolicyEngine::policy_notify(am_policy_t policy_handle, const char *data,
+			    size_t len) 
 {
 
     Service *serviceEntry = getService(policy_handle);
@@ -226,8 +222,7 @@ PolicyEngine::policy_notify(am_policy_t policy_handle,
 			"PolicyEngine::policy_notify :"
 			"Handling notification.");
 		    policy_notification_handler(serviceEntry,
-						notificationData,
-                                                configChangeNotificationEnabled);
+						notificationData);
 
 		} else {
 		    log(Log::LOG_WARNING,
@@ -262,22 +257,14 @@ PolicyEngine::handleNotif(am_policy_t hdl, const std::string& notifData)
  */
 void
 PolicyEngine::policy_notification_handler(Service *serviceEntry,
-					  const std::string &data,
-                                          bool configChangeNotificationEnabled)
+					  const std::string &data)
 {
     try {
 	XMLTree tree(false, data.c_str(), data.size());
 	XMLElement rootElement = tree.getRootElement();
 	string nodeName;
 
-        // Agent Config Change notification.
-	if (rootElement.isNamed(AGENT_CONFIG_CHANGE_NOTIFICATION)) {
-            if(configChangeNotificationEnabled == true) {
-                serviceEntry->agent_config_change_notify();
-            }
-            return;
-        }
-        
+
 	// Session service notification.
 	if(rootElement.isNamed(SESSION_NOTIFICATION)) {
 	    XMLElement sessionElem;
@@ -437,7 +424,7 @@ PolicyEngine::policy_evaluate(am_policy_t hdl, const char *ssoToken,
 			      const am_map_t env,
 			      am_map_t response, am_policy_result_t *policy_res,
 	                      am_bool_t ignorePolicyResult,
-	                      Properties& properties)
+	                      char **am_revision_number)
 {
 
     Service *serviceEntry = getService(hdl);
@@ -459,7 +446,7 @@ PolicyEngine::policy_evaluate(am_policy_t hdl, const char *ssoToken,
     const KeyValueMap &kvmap = reinterpret_cast<const KeyValueMap &>(*env);
     try {
 	serviceEntry->getPolicyResult(ssoToken, resName, actionName,
-				      kvmap, response, policy_res, ignorePolicyResult, properties);
+				      kvmap, response, policy_res, ignorePolicyResult, am_revision_number);
     } catch(XMLTree::ParseException &ex) {
 	throw InternalException("PolicyEngine::policy_evaluate",
 				ex.getMessage(),
@@ -493,32 +480,4 @@ PolicyEngine::invalidate_session(am_policy_t hdl, const char *ssoTokenId)
         return AM_INVALID_ARGUMENT;
     }
     return serviceEntry->invalidate_session(ssoTokenId);
-}
-
-/**
- * Throws:
- *	NSPRException upon NSPR error 
- *	InternalException upon other errors
- */
-am_status_t
-PolicyEngine::user_logout(am_policy_t hdl, 
-                                 const char *ssoTokenId,
-                                 Properties& properties)
-{
-    if (ssoTokenId == NULL || '\0' == *ssoTokenId) {
-	log(Log::LOG_DEBUG,
-	    "PolicyEngine::user_logout(): "
-	    "null or empty ssoToken");
-        return AM_INVALID_ARGUMENT;
-    }
-
-    Service *serviceEntry = getService(hdl);
-    if (serviceEntry == NULL) {
-	log(Log::LOG_DEBUG,
-	    "PolicyEngine::user_logout(): "
-            "Invalid policy handle - no service found.");
-        return AM_INVALID_ARGUMENT;
-    }
-    return serviceEntry->user_logout(ssoTokenId,
-                                            properties);
 }

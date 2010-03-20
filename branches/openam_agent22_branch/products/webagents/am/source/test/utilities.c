@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -34,7 +30,6 @@
 #include <string.h>
 
 #include <am.h>
-#include <am_web.h>
 #include <am_log.h>
 
 #include "utilities.h"
@@ -212,7 +207,7 @@ args_t *init(int argc, char **argv)
 	    fatal_with_status(status, "unable to load properties");
 	}
     } else {
-	set_property(parsed_args.properties, AM_WEB_LOGIN_URL_PROPERTY,
+	set_property(parsed_args.properties, AM_POLICY_LOGIN_URL_PROPERTY,
 		     "http://piras.red.iplanet.com:8080/amserver/UI/Login");
 	set_property(parsed_args.properties, AM_COMMON_COOKIE_NAME_PROPERTY,
 		     "iPlanetDirectoryPro");

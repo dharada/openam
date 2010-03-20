@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,6 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdio.h>
@@ -42,7 +38,7 @@ usage(char **argv)
 	"usage: %s\n"
 	"       [-u user]\n"
 	"       [-p password]\n"
-	"       [-f bootstrap_properties_file]\n"
+	"       [-f properties_file]\n"
 	"       [-r url]             (overrides property)\n"
 	"       [-n cert_nick_name]  (overrides property)\n"
 	"       [-o org_name]        (overrides property)\n"
@@ -61,7 +57,7 @@ usage(char **argv)
 	argv[0]);
 }
 
-void process_login_callback_requirements(am_auth_context_t *p_auth_ctx,
+void process_login_callback_requirements(am_auth_context_t auth_ctx,
 	char *user, char *password);
 
 void abort_login(am_auth_context_t *auth_ctx,
@@ -82,7 +78,7 @@ boolean_t Verbose_On = B_FALSE; /* verbose is off by default */
 int
 main (int argc, char *argv[])
 {
-    const char* prop_file = "../../config/OpenSSOAgentBootstrap.properties";
+    const char* prop_file = "../../config/AMAgent.properties";
     am_status_t status = AM_FAILURE;
     am_auth_status_t auth_status = AM_AUTH_STATUS_FAILED;
     am_properties_t prop = AM_PROPERTIES_NULL;
@@ -161,7 +157,7 @@ main (int argc, char *argv[])
 	}
     }
 
-    if (usage_error || (NULL==ssoTokenID && (NULL==org_name) && (NULL==user || NULL==password))) {
+    if (usage_error == B_TRUE) {
 	usage(argv);
 	exit(EXIT_FAILURE);
     }
@@ -184,18 +180,18 @@ main (int argc, char *argv[])
 	if (i)
 	    printf("\n");
 
-	//get auth context 
+	/* get auth context */
 	verbose_message("am_auth_create_auth_context()");
 	status = am_auth_create_auth_context(
 	    &auth_ctx, org_name, cert_nick_name, url);
 	fail_on_error(status, "am_auth_create_auth_context()");
 
-	// initiate login 
+	/* initiate login */
 	verbose_message("am_auth_login()");
 	status = am_auth_login(auth_ctx, auth_module_type, auth_module);
 	fail_on_error(status, "am_auth_login()");
 
-	process_login_callback_requirements(&auth_ctx, user, password);
+	process_login_callback_requirements(auth_ctx, user, password);
 
 	verbose_message("am_auth_get_status()");
 	auth_status = am_auth_get_status(auth_ctx);
@@ -217,7 +213,6 @@ main (int argc, char *argv[])
 	if(organization != NULL) {
 	    printf("        Organization = %s\n", organization);
 	}
-
 
 	verbose_message("am_auth_get_module_instance_names()");
 	status = am_auth_get_module_instance_names(auth_ctx, &string_set);
@@ -243,7 +238,7 @@ main (int argc, char *argv[])
 	fail_on_error(status, "am_auth_destroy_auth_context()");
 	auth_ctx = NULL;
 
-    } 
+    } /* end of loop to login and logout multiple times */
 
     verbose_message("am_cleanup()");
     status = am_cleanup();
@@ -251,7 +246,7 @@ main (int argc, char *argv[])
 
     exit(EXIT_SUCCESS);
 
-}  
+}  /* end of main procedure */
 
 
 /*
@@ -259,7 +254,7 @@ main (int argc, char *argv[])
  *         Fulfill login callback requirements.
  */
 void
-process_login_callback_requirements(am_auth_context_t *p_auth_ctx,
+process_login_callback_requirements(am_auth_context_t auth_ctx,
 	char *user, char *password)
 {
     am_status_t status = AM_FAILURE;
@@ -278,7 +273,6 @@ process_login_callback_requirements(am_auth_context_t *p_auth_ctx,
     char variant[80];
     am_auth_locale_t locale; 
     size_t i, j, k;
-    am_auth_context_t auth_ctx= *p_auth_ctx;
 
     /* satisfy login requirements */
     while (am_auth_has_more_requirements(auth_ctx) == B_TRUE) {
@@ -439,7 +433,7 @@ process_login_callback_requirements(am_auth_context_t *p_auth_ctx,
 	} /* for callbacks */
 
 	verbose_message("am_auth_submit_requirements()");
-	status = am_auth_submit_requirements_and_update_authctx(&auth_ctx);
+	status = am_auth_submit_requirements(auth_ctx);
 	fail_on_error(status, "am_auth_submit_requirements()");
 
     } /* while login requirements */
@@ -588,4 +582,3 @@ fail_on_error(am_status_t status, const char *method_name)
 	exit(EXIT_FAILURE);
     }
 }
-

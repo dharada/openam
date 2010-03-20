@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,10 +17,10 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #include <stdio.h>
-#include <am_web.h>
 #include <am_policy.h>
 
 void fail_on_error(am_status_t status, const char *name);
@@ -40,10 +35,9 @@ int main(int argc, char **argv)
     am_properties_t properties = AM_PROPERTIES_NULL;
     const char *action = NULL;
     const char *resName = NULL;
-    boolean_t agentInitialized = B_FALSE;
     am_map_value_iter_t iter;
 
-   /*
+    /*
      * resource abstraction structure.  Pass actual implementations of
      * the required abstract routines for the kind of resource name you
      * have implemented.  The am library internally implements URL
@@ -51,37 +45,33 @@ int main(int argc, char **argv)
      * inside am library.
      */
     am_resource_traits_t rsrc = {am_policy_compare_urls,
-                                    am_policy_resource_has_patterns,
-                                    am_policy_get_url_resource_root,
-                                    B_FALSE,
-                                    '/',
-                                    am_policy_resource_canonicalize,
-                                    free};
+				    am_policy_resource_has_patterns,
+				    am_policy_get_url_resource_root,
+				    B_FALSE,
+				    '/',
+				    am_policy_resource_canonicalize,
+				    free};
 
-    if(argc < 6) {
+    if(argc < 5) {
 	printf("Usage: %s "
-               "<bootstrap_properties_file> <config_properties_file> <sso_token> <resource_name> <action>\n",
+               "<properties_file> <sso_token> <resource_name> <action>\n",
                argv[0]);
 	return 0;
     }
 
-    ssoToken = argv[3];
-    resName = argv[4];
-    action = argv[5];
+    ssoToken = argv[2];
+    resName = argv[3];
+    action = argv[4];
 
-    am_web_init(argv[1], argv[2]);
-
-    am_agent_init(&agentInitialized);
-    
     status = am_properties_create(&properties);
     fail_on_error(status, "am_properties_create");
 
-   /*
+    /*
      * load the properties file.  This file is the properties file that is
      * used during agent initialization.  If you have installed Identity
      * server or one of its agents, you can pass the path to
-     * OpenSSOAgentBootstrap.properties of that installation. Make sure that 
-     * your test program has permissions to write to the log directory specified
+     * AMAgent.properties of that installation.  Make sure that the your
+     * test program has permissions to write to the log directory specified
      * in the properties file.
      */
     status = am_properties_load(properties, argv[1]);
@@ -91,16 +81,19 @@ int main(int argc, char **argv)
     fail_on_error(status, "am_init");
 
     status = am_policy_service_init("iPlanetAMWebAgentService",
-                                    "UNUSED PARAMETER",
-                                    rsrc,
-                                    properties, &hdl);
+				    "UNUSED PARAMETER",
+				    rsrc,
+				    properties, &hdl);
     fail_on_error(status, "am_policy_init");
+    
 
-
+    /*
+     * If the evaluation requires certain environment parameters like
+     * IP address of the requester, it may be passed using this structure.
+     * Please refer to the documentation for actual key names
+     */
     am_map_create(&env);
     am_map_create(&response);
-
-
 
     /*
      * Acutal evaluation routine invoked.

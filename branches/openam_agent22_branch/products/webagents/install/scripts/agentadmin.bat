@@ -1,9 +1,6 @@
 @echo off
 
-REM DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-REM Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-  
+REM
 REM The contents of this file are subject to the terms
 REM of the Common Development and Distribution License
 REM (the License). You may not use this file except in
@@ -23,8 +20,9 @@ REM with the fields enclosed by brackets [] replaced by
 REM your own identifying information:
 REM "Portions Copyrighted [year] [name of copyright owner]"
 REM
-REM $Id: agentadmin.bat,v 1.4 2009/04/07 17:20:17 leiming Exp $
+REM $Id: agentadmin.bat,v 1.1 2006/10/06 18:27:36 subbae Exp $
 REM
+REM Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 REM
 
 setlocal
@@ -35,7 +33,7 @@ if "%JAVA_VM%"=="" set JAVA_VM=java.exe
 
 set AGENT_CLASSPATH=%AGENT_HOME%\lib\opensso-installtools-launcher.jar
 
-"%JAVA_VM%" -classpath "%AGENT_CLASSPATH%" com.sun.identity.install.tools.launch.AdminToolLauncher %*
+"%JAVA_VM%" -classpath %AGENT_CLASSPATH% com.sun.identity.install.tools.launch.AdminToolLauncher %*
 
 set JAVA_VM=
 set AGENT_CLASSPATH=

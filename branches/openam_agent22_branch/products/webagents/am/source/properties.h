@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: properties.h,v 1.7 2008/06/25 08:14:35 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */
 #ifndef PROPERTIES_H
@@ -274,12 +269,6 @@ public:
     //		if unable to allocate memory to store the new key/value.
     //
     void set(const std::string& key, const std::string& value);
-    void set_list(const std::string& key,
-                  const std::string& valueSep);
-    void set_map(const std::string& key,
-                         const std::string& mapSep,
-                         const std::string& valueSep);
-
 
     const_iterator vfind(const Properties::mapped_type &value) const;
 private:

@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2007 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: ObjConfBase.java,v 1.2 2008/06/25 05:54:40 qcheng Exp $
+ * $Id: ObjConfBase.java,v 1.1.4.1 2008/06/05 20:13:36 dknab Exp $
  *
+ * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.sjsws;
@@ -43,12 +39,12 @@ import java.util.Map;
  * Configures SWS server instance's obj.conf
  */
 
-public class ObjConfBase implements 
+public class ObjConfBase implements
     InstallConstants, IConstants, IConfigKeys {
-    
+
     protected boolean configureObjConf(IStateAccess stateAccess) {
         boolean status = false;
-        String objFile = 
+        String objFile =
             (String)stateAccess.get(STR_KEY_SWS_OBJ_FILE);
         try {
 
@@ -70,7 +66,7 @@ public class ObjConfBase implements
             FileUtils.appendDataToFile(objFile,
                 "<Object ppath=\"*/dummypost/sunpostpreserve*\">");
             FileUtils.appendDataToFile(objFile,
-                "Service type=text/* method=(GET) fn=append_post_data");
+                "Service type=text/* method=(GET|POST) fn=append_post_data");
             FileUtils.appendDataToFile(objFile,"</Object>");
 
             FileUtils.appendDataToFile(objFile,
@@ -92,7 +88,7 @@ public class ObjConfBase implements
 
     protected boolean unconfigureObjConf(IStateAccess stateAccess) {
         boolean status = false;
-        String objFile = 
+        String objFile =
             (String)stateAccess.get(STR_KEY_SWS_OBJ_FILE);
 
         try {

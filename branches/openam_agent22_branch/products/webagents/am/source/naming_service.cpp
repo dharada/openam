@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: naming_service.cpp,v 1.12 2008/08/25 21:00:23 madan_ranganath Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -45,7 +40,7 @@ namespace {
     const char namingRequestPrefix[] = {
 	"\">\n"
 	  "<Request><![CDATA[\n"
-	    "<NamingRequest vers=\"3.0\" reqid=\""
+	    "<NamingRequest vers=\"1.0\" reqid=\""
     };
 
     const char sessidPrefix[] = {
@@ -90,7 +85,6 @@ const std::string NamingService::profileAttribute("iplanet-am-naming-profile-"
 						  "url");
 const std::string NamingService::sessionAttribute("iplanet-am-naming-session-"
 						  "url");
-const std::string NamingService::restAttribute("sun-naming-idsvcs-rest-url");
 const std::string NamingService::loadbalancerCookieAttribute("am_load_balancer_cookie");
 const std::string NamingService::invalidSessionMsgPrefix("SessionID ---");
 const std::string NamingService::invalidSessionMsgSuffix("---is Invalid");
@@ -100,7 +94,8 @@ NamingService::NamingService(const Properties& props,
                 const std::string &cert_nick_name,
                 bool trustServerCert)
     : BaseService("NamingService", props, cert_passwd, cert_nick_name, 
-		trustServerCert),
+		  trustServerCert),
+      ignoreNamingService(props.getBool(AM_COMMON_IGNORE_NAMING_SERVICE_PROPERTY, false)),
       namingURL(props.get(AM_COMMON_NAMING_URL_PROPERTY)),
       ignorePreferredNamingURL(props.getBool(AM_COMMON_IGNORE_PREFERRED_NAMING_URL_PROPERTY, true))
 {
@@ -112,33 +107,18 @@ NamingService::~NamingService()
 
 void NamingService::processAttribute(const std::string& name,
 				     const std::string& value,
-				     NamingInfo& namingInfo,
-                     bool isAppSSOTokenPresent) const
+				     NamingInfo& namingInfo) const
 {
-    // If app ssotoken is not present in naming request,
-    // then set all the services urls to namingInfo.properties.
-    // This is required as naming response contains %tags rather
-    // actual values, which needs to be parsed and tag swapped.
-    // One such client is agent profile service, which does 
-    // naming request without any app ssotoken.
-    if(isAppSSOTokenPresent) {
-
-        if (name == loggingAttribute) {
-            namingInfo.loggingSvcInfo.setFromString(value);
-        } else if (name == policyAttribute) {
-            namingInfo.policySvcInfo.setFromString(value);
-        } else if (name == profileAttribute) {
-            namingInfo.profileSvcInfo.setFromString(value);
-        } else if (name == sessionAttribute) {
-            namingInfo.sessionSvcInfo.setFromString(value);
-        } else if (name == loadbalancerCookieAttribute) {
-            namingInfo.lbCookieStr = value;
-        } else if (name == restAttribute) {
-            namingInfo.restSvcInfo.setFromString(value);
-        } else {
-            namingInfo.extraProperties.set(name, value);
-        }
-
+    if (name == loggingAttribute) {
+	namingInfo.loggingSvcInfo.setFromString(value);
+    } else if (name == policyAttribute) {
+	namingInfo.policySvcInfo.setFromString(value);
+    } else if (name == profileAttribute) {
+	namingInfo.profileSvcInfo.setFromString(value);
+    } else if (name == sessionAttribute) {
+	namingInfo.sessionSvcInfo.setFromString(value);
+    } else if (name == loadbalancerCookieAttribute) {
+        namingInfo.lbCookieStr = value;
     } else {
 	namingInfo.extraProperties.set(name, value);
     }
@@ -149,8 +129,7 @@ void NamingService::processAttribute(const std::string& name,
  */
 am_status_t NamingService::parseNamingResponse(const std::string& data,
 					       const std::string& sessionId,
-					       NamingInfo& namingInfo,
-                           bool isAppSSOTokenPresent) const 
+					       NamingInfo& namingInfo) const 
 {
     am_status_t status = AM_SUCCESS;
 
@@ -172,7 +151,7 @@ am_status_t NamingService::parseNamingResponse(const std::string& data,
 			std::string value;
 			if (element.getAttributeValue("name", name) &&
 			    element.getAttributeValue("value", value)) {
-			    processAttribute(name, value, namingInfo, isAppSSOTokenPresent);
+			    processAttribute(name, value, namingInfo);
 			} else {
 			    throw XMLTree::ParseException("Attribute missing "
 							  "name or value "
@@ -260,38 +239,37 @@ am_status_t NamingService::getProfile(const ServiceInfo& service,
 	bodyChunkList.push_back(sessidPrefixChunk);
 	bodyChunkList.push_back(BodyChunk(ssoToken));
 
-        if (!ignorePreferredNamingURL) {
-	    bodyChunkList.push_back(preferredNamingPrefixChunk);
+        if(!ignorePreferredNamingURL) {
+	bodyChunkList.push_back(preferredNamingPrefixChunk);
 
-	    url_length = strlen(namingURL.c_str());
-	    preferredNamingURL = (char *)malloc(url_length);
-	    if (preferredNamingURL != NULL) {
-	        ServiceInfo::const_iterator iter;
-	        for (iter = service.begin(); (iter != service.end() && 
-                     status == AM_FAILURE); ++iter) {
-		    std::string protocol = (*iter).getProtocol();
-		    std::string hostname = (*iter).getHost();
-		    unsigned short portnumber = (*iter).getPort();
-		    status = check_server_alive(hostname, portnumber);
-		    if (status == AM_SUCCESS) {
-		        strcpy(preferredNamingURL,protocol.c_str());
-		        strcat(preferredNamingURL,"://");
-		        strcat(preferredNamingURL,hostname.c_str());
-		        strcat(preferredNamingURL,":");
-		        snprintf(portBuf, sizeof(portBuf), "%u", portnumber);
-		        strcat(preferredNamingURL,portBuf);
-		    }
-	        }
-	    } else {
-	        Log::log(logModule, Log::LOG_ERROR,
-	        "NamingService::getProfile() unable to allocate memory %d for "
-	        "preferredNamingURL", url_length);
+	url_length = strlen(namingURL.c_str());
+	preferredNamingURL = (char *)malloc(url_length);
+	if (preferredNamingURL != NULL) {
+	    ServiceInfo::const_iterator iter;
+	    for (iter = service.begin(); (iter != service.end() && status == AM_FAILURE); ++iter) {
+		std::string protocol = (*iter).getProtocol();
+		std::string hostname = (*iter).getHost();
+		unsigned short portnumber = (*iter).getPort();
+		status = check_server_alive(hostname, portnumber);
+		if (status == AM_SUCCESS) {
+		    strcpy(preferredNamingURL,protocol.c_str());
+		    strcat(preferredNamingURL,"://");
+		    strcat(preferredNamingURL,hostname.c_str());
+		    strcat(preferredNamingURL,":");
+		    snprintf(portBuf, sizeof(portBuf), "%u", portnumber);
+		    strcat(preferredNamingURL,portBuf);
+		}
 	    }
+	} else {
+	    Log::log(logModule, Log::LOG_ERROR,
+	    "NamingService::getProfile() unable to allocate memory %d for "
+	    "preferredNamingURL", url_length);
+	}
 
-	    if (preferredNamingURL != NULL) {
-	        bodyChunkList.push_back(BodyChunk(preferredNamingURL));
-	        free(preferredNamingURL);
-            }
+	if (preferredNamingURL != NULL) {
+	    bodyChunkList.push_back(BodyChunk(preferredNamingURL));
+	    free(preferredNamingURL);
+        }
         }
 	bodyChunkList.push_back(suffixChunk);
 
@@ -306,13 +284,34 @@ am_status_t NamingService::getProfile(const ServiceInfo& service,
 						       request.getGlobalId());
 		if (1 == namingResponses.size()) {
 		    status = parseNamingResponse(namingResponses[0], ssoToken,
-						 namingInfo, true);
+						 namingInfo);
                     if (status == AM_SUCCESS) {
                        const std::string lbCookieStr = namingInfo.getlbCookieStr();
                        if (!lbCookieStr.empty()) {
                            addLoadBalancerCookie(namingInfo, cookieList);
                         }
                     }
+                    if (status == AM_SUCCESS && ignoreNamingService) {
+			// if load balancer is enabled replace the results with 
+			// the host/port of the naming server because 
+			// naming returns the host/port behind the loadbalancer 
+			// instead of the load balancer itself, which is not 
+			// right and may not be reacheable from outside a 
+			// firewall.
+			// Note that this only works if there's only one 
+			// server returned in each naming profile.
+			if (Log::isLevelEnabled(logModule, Log::LOG_MAX_DEBUG)){
+			    std::string scheme = serverInfo->getProtocol();
+			    std::string host = serverInfo->getHost();
+			    unsigned short port = serverInfo->getPort();
+			    Log::log(logModule, Log::LOG_MAX_DEBUG, 
+				     "Load balancer enabled: Replacing "
+				     "naming profiles with "
+				     "scheme:%s host:%s, port:%u", 
+				      scheme.c_str(), host.c_str(), port);
+			}
+                        namingInfo.setHostPort(*serverInfo);
+		    }
 		} else {
 		    Log::log(logModule, Log::LOG_ERROR,
 			     "NamingService::getProfile() unexpected number "
@@ -335,67 +334,47 @@ am_status_t NamingService::getProfile(const ServiceInfo& service,
     } 
 
     Log::log(logModule, Log::LOG_DEBUG, "NamingService()::getProfile() "
-	     "returning with error code %s.", am_status_to_string(status));
+	     "returning with status code %s.", am_status_to_string(status));
 
     return status;
 }
 
 void NamingService::addLoadBalancerCookie(NamingInfo& namingInfo, 
-					  Http::CookieList& cookieList)
-{    
-    int i = 0; 
-    int j = 0; 
-    int cookieLen = 0;
-    char *pch = NULL; 
-    char *cookieName = NULL;
-    char *cookieValue = NULL;
-    char *tmplbCookie = NULL;
-    char *tmpPtr = NULL; 
-    
+                          Http::CookieList& cookieList)
+{
+    std::string tmpCookieName;
+    std::string tmpCookieValue;
+    size_t equalPos = 0; 
     const std::string lbCookieStr = namingInfo.getlbCookieStr();
-    if (!lbCookieStr.empty()) {
-        cookieLen = lbCookieStr.size()+1;
-        tmplbCookie = (char *)malloc(cookieLen);
-        cookieName = (char *)malloc(cookieLen);
-        cookieValue = (char *)malloc(cookieLen); 
-	if (tmplbCookie != NULL && cookieName != NULL && cookieValue != NULL) {
-            memset(tmplbCookie,'\0',cookieLen);
-            memset(cookieName,'\0',cookieLen);
-            memset(cookieValue,'\0',cookieLen);
-            
-            strcpy(tmplbCookie, lbCookieStr.c_str()); 
-            
-            tmpPtr = strchr(tmplbCookie,'=');
-            if (tmpPtr != NULL) {
-                // Retrieve the cookie name
-               strncpy(cookieName, tmplbCookie, tmpPtr-tmplbCookie);
-           
-               // Retrieve the cookie value
-               // Skip the '=' character
-               tmpPtr++;
-               strcpy(cookieValue,tmpPtr);           
-            
-               std::string tmpCookieName(cookieName);
-               std::string tmpCookieValue(cookieValue);
     
-               if (!tmpCookieName.empty() && !tmpCookieValue.empty()) {
-                   namingInfo.lbCookieName = tmpCookieName;
-                   namingInfo.lbCookieValue = tmpCookieValue;
-                   Http::Cookie lbCookie(namingInfo.lbCookieName, 
-                                         namingInfo.lbCookieValue);
-                   cookieList.push_back(lbCookie);
-              }
-            }    
-            free(tmplbCookie);
-            free(cookieName);
-            free(cookieValue);
+    if (!lbCookieStr.empty()) {
+        equalPos = lbCookieStr.find("=");
+        if (equalPos == std::string::npos) {
+            Log::log(logModule, Log::LOG_WARNING,
+                    "NamingService::addLoadBalancerCookie(): "
+                    "Character \"=\" was not found in %s."
+                    "The amlbcookie will not be set.",
+                    lbCookieStr.c_str());
         } else {
-            Log::log(logModule, Log::LOG_ERROR,
-                     "NamingService::addLoadBalancerCookie() - Unable "
-		     "to allocate memory");
-	}
+            tmpCookieName= lbCookieStr.substr(0,equalPos);
+            tmpCookieValue = lbCookieStr.substr(equalPos+1);
+            if (!tmpCookieName.empty() && !tmpCookieValue.empty()) {
+                namingInfo.lbCookieName = tmpCookieName;
+                namingInfo.lbCookieValue = tmpCookieValue;
+                Http::Cookie lbCookie(namingInfo.lbCookieName, 
+                                  namingInfo.lbCookieValue);
+                cookieList.push_back(lbCookie);
+                Log::log(logModule, Log::LOG_DEBUG,
+                    "NamingService::addLoadBalancerCookie(): "
+                    "Add LB cookie %s with value %s.",
+                    namingInfo.lbCookieName.c_str(),
+                    namingInfo.lbCookieValue.c_str());
+            } else {
+                Log::log(logModule, Log::LOG_DEBUG,
+                    "No LB cookie added.");
+            }
+        }
     }
-
     return;
 }
 
@@ -409,8 +388,6 @@ am_status_t NamingService::check_server_alive(std::string hostname, unsigned sho
     PRStatus	prStatus;
     PRFileDesc *tcpSocket;
     unsigned timeout = 2;
-
-    if (getUseProxy()) return AM_SUCCESS;
 
     prStatus = PR_GetHostByName(hostname.c_str(), buffer, sizeof(buffer), &hostEntry);
     if (PR_SUCCESS == prStatus) {
@@ -434,73 +411,3 @@ am_status_t NamingService::check_server_alive(std::string hostname, unsigned sho
 
     return status;
 }
-
-/**
- * Performs naming request. The request doesn't contain any
- * sso token. The response contains %host, %protocol and %port
- * elements. 
- *
- * throws XMLTree::ParseException 
-*/
-am_status_t NamingService::doNamingRequest(const ServiceInfo& service,
-                                         Http::CookieList& cookieList,
-                                         NamingInfo& namingInfo)
-{
-    am_status_t status = AM_FAILURE;
-    const ServerInfo *serverInfo = NULL;
-    char portBuf[MAX_PORT_LENGTH + 1];
-
-    const std::size_t NUM_EXTRA_CHUNKS = 3;
-    std::size_t url_length = 0;
-    char *preferredNamingURL = NULL;
-    Request request(*this, prefixChunk, namingPrefixChunk,
-                        NUM_EXTRA_CHUNKS);
-    Http::Response response;
-    BodyChunkList& bodyChunkList = request.getBodyChunkList();
-
-    bodyChunkList.push_back(suffixChunk);
-
-    status = doHttpPost(service, std::string(), cookieList,
-                            bodyChunkList, response, 
-                            0, "", false, true, &serverInfo);
-    if (AM_SUCCESS == status) {
-        try {
-            std::vector<std::string> namingResponses;
-
-            namingResponses = parseGenericResponse(response,
-                                               request.getGlobalId());
-            if (1 == namingResponses.size()) {
-                status = parseNamingResponse(namingResponses[0], "",
-                                             namingInfo, false);
-                if (status == AM_SUCCESS) {
-                   const std::string lbCookieStr = namingInfo.getlbCookieStr();
-                   if (!lbCookieStr.empty()) {
-                       addLoadBalancerCookie(namingInfo, cookieList);
-                    }
-                }
-            } else {
-                Log::log(logModule, Log::LOG_ERROR,
-                     "NamingService::doNamingRequest() unexpected number "
-                     "of responses (%u) received, unsupported "
-                     "behavior", namingResponses.size());
-                for (unsigned int i = 0; i < namingResponses.size(); ++i) {
-                    Log::log(logModule, Log::LOG_ERROR,
-                         "NamingService::doNamingRequest() response %u: %s",
-                         i, namingResponses[i].c_str());
-                }
-                status = AM_NAMING_FAILURE;
-            }
-        } catch (const XMLTree::ParseException& exc) {
-            Log::log(logModule, Log::LOG_ERROR,
-                 "NamingService::doNamingRequest() caught exception: %s",
-                 exc.getMessage().c_str());
-            status = AM_NAMING_FAILURE;
-        }
-    }
-
-    Log::log(logModule, Log::LOG_DEBUG, "NamingService()::doNamingRequest() "
-             "returning with error code %s.", am_status_to_string(status));
-
-    return status;
-}
-

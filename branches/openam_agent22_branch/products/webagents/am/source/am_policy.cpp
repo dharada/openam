@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: am_policy.cpp,v 1.11 2009/10/28 21:56:20 subbae Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 
@@ -41,13 +36,12 @@
 #include "utils.h"
 #include "url.h"
 
-#include "service.h"
-
 BEGIN_PRIVATE_NAMESPACE
 static PolicyEngine *enginePtr;
 DEFINE_BASE_INIT;
 void policy_cleanup();
 END_PRIVATE_NAMESPACE
+
 
 USING_PRIVATE_NAMESPACE
 
@@ -251,12 +245,7 @@ am_policy_evaluate(am_policy_t policy_handle,
 		      am_map_t policy_response_map_ptr,
 		      am_policy_result_t *policy_res) {
 
-    
-    void* agent_config = am_web_get_agent_configuration();
-    AgentConfigurationRefCntPtr* agentConfigPtr =
-		(AgentConfigurationRefCntPtr*) agent_config;
-
-    return am_policy_evaluate_ignore_url_notenforced(policy_handle,
+	return am_policy_evaluate_ignore_url_notenforced(policy_handle,
 		      sso_token,
 		      resource_name,
 		      action_name,
@@ -264,7 +253,7 @@ am_policy_evaluate(am_policy_t policy_handle,
 		      policy_response_map_ptr,
 		      policy_res,
 		      AM_FALSE,
-		      (*agentConfigPtr)->properties);
+			  NULL);
 }
 
 /*
@@ -279,7 +268,7 @@ am_policy_evaluate_ignore_url_notenforced(am_policy_t policy_handle,
 		      am_map_t policy_response_map_ptr,
 		      am_policy_result_t *policy_res,
 		      am_bool_t ignorePolicyResult,
-		      am_properties_t properties) {
+		      char **am_revision_number) {
     try {
 	enginePtr->policy_evaluate(policy_handle,
 				   sso_token,
@@ -289,14 +278,12 @@ am_policy_evaluate_ignore_url_notenforced(am_policy_t policy_handle,
 				   policy_response_map_ptr,
 				   policy_res,
 				   ignorePolicyResult,
-				   *reinterpret_cast<Properties *>(properties));
+				   am_revision_number);
     } catch(InternalException &ie) {
 	Log::Level lvl = Log::LOG_ERROR;
 	if(ie.getStatusCode() == AM_INVALID_SESSION) {
 	    lvl = Log::LOG_INFO;
-	} else  if(ie.getStatusCode() == AM_NO_POLICY) {
-            lvl = Log::LOG_WARNING;
-        }
+	}
 
 	Log::log(enginePtr->getModuleID(), lvl,
 		 "am_policy_evaluate: InternalException in %s with error message:%s and code:%d",
@@ -374,13 +361,11 @@ am_policy_is_notification_enabled(am_policy_t policy_handle) {
 extern "C" am_status_t
 am_policy_notify(am_policy_t policy_handle,
 		    const char *notification_data,
-		    size_t notification_data_len,
-                    boolean_t configChangeNotificationEnabled)
+		    size_t notification_data_len)
 {
     try {
 	enginePtr->policy_notify(policy_handle, notification_data,
-				 notification_data_len,
-                                 configChangeNotificationEnabled);
+				 notification_data_len);
     } catch(InternalException &ie) {
 	Log::log(enginePtr->getModuleID(), Log::LOG_ERROR,
 		 "am_policy_notify: InternalException in %s with error message:%s and code:%d",
@@ -435,33 +420,31 @@ const char *am_resource_match_to_string(int rm)
 
 extern "C" am_resource_match_t
 am_policy_compare_urls(const am_resource_traits_t *rsrcTraits,
-		       const char *policyResourceName,
-		       const char *resourceName,
-		       boolean_t usePatterns)
+                       const char *policyResourceName,
+                       const char *resourceName,
+                       boolean_t usePatterns)
 {
     const char *thisfunc = "am_policy_compare_urls";
     Log::ModuleId logID = Log::addModule(AM_POLICY_SERVICE);
     am_resource_match_t ret = AM_NO_MATCH;
     try {
         ret = Utils::compare(policyResourceName, resourceName,
-			     rsrcTraits,
-			     true, usePatterns==B_TRUE);
-	Log::log(logID, Log::LOG_MAX_DEBUG,
+                             rsrcTraits,
+                             true, usePatterns==B_TRUE);
+        Log::log(logID, Log::LOG_MAX_DEBUG,
              "%s: Comparison of \"%s\" and \"%s\" returned %s "
-             "(usePatterns=%s)", thisfunc, resourceName,
-             policyResourceName, am_resource_match_to_string(ret),
+             "(usePatterns=%s)", thisfunc, resourceName, 
+             policyResourceName, am_resource_match_to_string(ret), 
              usePatterns==B_TRUE?"true":"false");
-    } 
-    catch (std::exception& ex) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_compare_urls(): unexpected exception "
-		 "[%s] encountered. Returning no match.", ex.what());
-    }
-    catch (...) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_compare_urls(): unexpected exception "
-		 "encountered. Returning no match.");
-	ret = AM_NO_MATCH;
+    } catch (std::exception& ex) {
+        Log::log(logID, Log::LOG_ERROR,
+             "am_policy_compare_urls(): unexpected exception "
+             "[%s] encountered. Returning no match.", ex.what());
+    } catch (...) {
+        Log::log(logID, Log::LOG_ERROR,
+             "am_policy_compare_urls(): unexpected exception "
+             "encountered. Returning no match.");
+        ret = AM_NO_MATCH;
     }
     return ret;
 }
@@ -505,17 +488,18 @@ am_policy_resource_has_patterns(const char *resourceName) {
 }
 
 extern "C" void
-am_policy_resource_canonicalize(const char *resource, char **c_resource) {
+am_policy_resource_canonicalize(const char *resource, char **c_resource)
+{
     try {
-	std::string urlStr;
-	URL url(resource);
-    url.getCanonicalizedURLString(urlStr); 
-	*c_resource = strdup(urlStr.c_str());
+        std::string urlStr;
+        URL url(resource);
+        url.getCanonicalizedURLString(urlStr);
+        *c_resource = strdup(urlStr.c_str());
     } catch(InternalException &ex) {
-	Log::log(Log::ALL_MODULES, Log::LOG_ERROR, ex);
+        Log::log(Log::ALL_MODULES, Log::LOG_ERROR, ex);
     } catch (...) {
-	Log::log(Log::ALL_MODULES, Log::LOG_ERROR,
-		 "am_policy_resource_canonicalize(): Unexpected exception.");
+        Log::log(Log::ALL_MODULES, Log::LOG_ERROR,
+        "am_policy_resource_canonicalize(): Unexpected exception.");
     }
     return;
 }
@@ -576,6 +560,7 @@ am_policy_handle_notification(am_policy_t policy_handle,
     return sts;
 }
 
+
 extern "C" am_status_t
 am_policy_invalidate_session(am_policy_t policy_handle,
                              const char *ssoTokenId)
@@ -610,48 +595,6 @@ am_policy_invalidate_session(am_policy_t policy_handle,
     catch (...) {
 	Log::log(logID, Log::LOG_ERROR,
 		 "am_policy_invalidate_session(): "
-		 "Unknown Exception encountered.");
-        status = AM_FAILURE;
-    }
-    return status;
-}
-
-extern "C" am_status_t
-am_policy_user_logout(am_policy_t policy_handle,
-                             const char *ssoTokenId,
-                             am_properties_t properties) 
-{
-    Log::ModuleId logID = Log::addModule(AM_POLICY_SERVICE);
-    am_status_t status = AM_FAILURE;
-    try {
-        status = enginePtr->user_logout(policy_handle, 
-                     ssoTokenId,
-                     *reinterpret_cast<Properties *>(properties));
-    } catch (InternalException& ex) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_user_logout(): "
-		 "Internal Exception encountered: '%s'",
-		 ex.getMessage());
-	status = ex.getStatusCode();
-    }
-    catch (NSPRException& ex) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_user_logout(): "
-		 "NSPR Exception encountered: Error code %s",
-                  PR_ErrorToString(ex.getErrorCode(), PR_LANGUAGE_I_DEFAULT));
-	Log::log(logID, Log::LOG_ERROR, ex);
-	status = AM_NSPR_ERROR;
-    }
-    catch (std::exception& ex) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_user_logout(): "
-		 "Unknown Exception encountered: %s", ex.what());
-	Log::log(logID, Log::LOG_ERROR, ex);
-        status = AM_FAILURE;
-    }
-    catch (...) {
-	Log::log(logID, Log::LOG_ERROR,
-		 "am_policy_user_logout(): "
 		 "Unknown Exception encountered.");
         status = AM_FAILURE;
     }

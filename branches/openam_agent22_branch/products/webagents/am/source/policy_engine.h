@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: policy_engine.h,v 1.8 2008/09/13 01:11:53 robertis Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __POLICY_ENGINE_H__
@@ -102,16 +97,13 @@ class PolicyEngine {
 			 am_map_t,
 			 am_policy_result_t *,
 			 am_bool_t,
-                 	 Properties& );
+			 char **);
 
     /* Throws:
      *	NSPRException upon NSPR error 
      *	InternalException upon other errors
      */
-    void policy_notify(am_policy_t, 
-                       const char *, 
-                       size_t,
-                       bool configChangeNotificationEnabled = true);
+    void policy_notify(am_policy_t, const char *, size_t);
 
     /* Throws:
      *	NSPRException upon NSPR error 
@@ -123,18 +115,13 @@ class PolicyEngine {
      *	NSPRException upon NSPR error 
      *	InternalException upon other errors
      */
-    void policy_notification_handler(Service *, 
-                                     const std::string&,
-                                     bool configChangeNotificationEnabled = true);
+    void policy_notification_handler(Service *, const std::string&);
 
     /* Throws:
      *	NSPRException upon NSPR error 
      *	InternalException upon other errors
      */
     am_status_t invalidate_session(am_policy_t hdl, const char *ssoTokenId);
-    am_status_t user_logout(am_policy_t hdl, 
-                                   const char *ssoTokenId,
-                                   Properties& );
 
     /* Throws InternalException upon error */
     bool isNotificationEnabled(am_policy_t); 
@@ -160,10 +147,6 @@ class PolicyEngine {
 
     ~PolicyEngine();
     bool isAccessAllowed();
-
-    inline Service *getServicePublic(am_policy_t hdl){
-	return getService(hdl);
-    }	
 };
 
 END_PRIVATE_NAMESPACE

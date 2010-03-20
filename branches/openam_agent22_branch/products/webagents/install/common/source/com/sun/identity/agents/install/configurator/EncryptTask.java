@@ -1,9 +1,4 @@
-/**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,8 +17,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: EncryptTask.java,v 1.5 2008/06/25 05:54:38 qcheng Exp $
+ * $Id: EncryptTask.java,v 1.1 2006/10/06 18:27:34 subbae Exp $
  *
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  */
 
 package com.sun.identity.agents.install.configurator;
@@ -37,8 +33,6 @@ import com.sun.identity.install.tools.util.LocalizedMessage;
 import com.sun.identity.install.tools.util.ExecuteCommand;
 import com.sun.identity.install.tools.util.OSChecker;
 import com.sun.identity.install.tools.util.ConfigUtil;
-import com.sun.identity.install.tools.util.EncryptionKeyGenerator;
-
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -62,9 +56,6 @@ public class EncryptTask implements ITask, InstallConstants {
     private static final String STR_ENCRYPTED_DATA_LOOKUP_KEY = 
         "ENCRYPTED_VALUE_KEY_LOOKUP_KEY";
     
-    public static final String STR_ENCRYPTION_KEY_LOOKUP_KEY =    
-        "ENCRYPTION_KEY_LOOKUP_KEY";
-
     // Localiziation keys
     private static final String LOC_TK_ERR_PASSWD_FILE_READ = 
         "TSK_ERR_PASSWD_FILE_READ";
@@ -74,18 +65,11 @@ public class EncryptTask implements ITask, InstallConstants {
         "TSK_MSG_ENCRYPT_DATA_ROLLBACK";
     private static final String LOC_TSK_ERR_INVALID_APP_SSO_PASSWORD = 
         "TSK_ERR_INVALID_APP_SSO_PASSWORD";
-    private static final String LOC_TSK_ERR_CRYPT_UTIL = 
-        "TSK_ERR_CRYPT_UTIL";
 
     // crypt_util binary for unix platforms
     private static final String STR_UNIX_CRYPT_UTIL = "crypt_util";
     // cryptit binary for windows platform
     private static final String STR_WIN_CRYPT_UTIL = "cryptit.exe";
-
-    private String encryptionKey=null;
-
-    public static final String STR_ENCRYPTION_KEY_PROP_KEY = 
-        "com.sun.identity.agents.config.key";
 
     /**
      * Calls crypt utility, which is in the bin directory, 
@@ -99,16 +83,6 @@ public class EncryptTask implements ITask, InstallConstants {
     public boolean execute(String name, IStateAccess stateAccess, 
         Map properties) throws InstallException 
     {
-
-        String encryptionKeyLookUpKey = (String) properties.get(
-            STR_ENCRYPTION_KEY_LOOKUP_KEY);
-        Debug.log("EncryptTask.execute() - Obtained encryption lookup key = " + 
-            encryptionKeyLookUpKey);        
-        encryptionKey = (String) stateAccess.get(encryptionKeyLookUpKey);
-        if (encryptionKey == null) {
-            encryptionKey = EncryptionKeyGenerator.generateRandomString();
-            stateAccess.put("AGENT_ENCRYPT_KEY", encryptionKey);
-        }
         // Set the encrypted value key
         String encryptedDataKey = (String) properties.get(
             STR_ENCRYPTED_DATA_LOOKUP_KEY);
@@ -140,7 +114,6 @@ public class EncryptTask implements ITask, InstallConstants {
     	
     	String applicationPassword = null;
         String cryptUtil = null;
-    	String cryptUtilError = null;
     	
     	try {
             if (OSChecker.isWindows()) {
@@ -153,7 +126,7 @@ public class EncryptTask implements ITask, InstallConstants {
                                 FILE_SEP + STR_UNIX_CRYPT_UTIL;
             }
             // execute crypt utility to encrypt the password
-            String[] commandArray = { cryptUtil, data, encryptionKey };
+            String[] commandArray = { cryptUtil, data };
             StringBuffer output = new StringBuffer();
             int sts = ExecuteCommand.executeCommand(
                 commandArray,
@@ -170,13 +143,9 @@ public class EncryptTask implements ITask, InstallConstants {
     	} catch (Exception ex) {
             Debug.log("EncryptionHandler.getEncryptedAppPassword() - " +
                 "failed to invoke method with exception :", ex);
-            cryptUtilError = ex.toString();
     	}
 
-        if (cryptUtilError != null) {  
-       	    throw new InstallException(
-                LocalizedMessage.get(LOC_TSK_ERR_CRYPT_UTIL));
-        } else if (applicationPassword == null || 
+        if (applicationPassword == null || 
         		applicationPassword.trim().length() == 0) {
        	    throw new InstallException(
                 LocalizedMessage.get(LOC_TSK_ERR_INVALID_APP_SSO_PASSWORD));

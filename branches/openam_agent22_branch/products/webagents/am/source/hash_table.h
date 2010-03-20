@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: hash_table.h,v 1.6 2008/06/25 08:14:32 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  * Abstract:
  *
@@ -73,7 +68,6 @@ public:
     ~HashTable();
 
     ElementType find(const std::string& key);
-    ElementType find_cac(const std::string& key);
     bool hasElement(const std::string& key) const;
     ElementType insert(const std::string& key,
 		       const ElementType value);
@@ -99,7 +93,6 @@ public:
     }
 
     void cleanup();
-    void cleanup_cac(const std::string& key);
 private:
     class Entry;
     typedef RefCntPtr<Entry> EntryType;
@@ -236,25 +229,6 @@ private:
 	    return retVal;
 	}
 
-        void remove_cac(const std::string& latestKey)
-	{
-	    typename std::list<EntryType>::iterator iter;
-	    ScopeLock myLock(lock);
-            // Except for the latestKey, remove all other old
-            // keys and their corresponding agent config objects
-            for (iter = elements.begin(); iter != elements.end(); ++iter) {
-                const std::string key = (*iter)->getKey();
-                // Remove all the keys and its corresponding value which
-                // is not the latestKey
-                if (!key.empty() && !latestKey.empty()) {
-                    if (strcmp(key.c_str(), latestKey.c_str()) != 0 ) {
-                        elements.erase(iter);
-                        break;
-                    }    
-                }
-            }
-        }
-        
     private:
 
 	// The following two methods are not implemented.
@@ -288,7 +262,6 @@ private:
 
     HashValueType computeHash(const std::string& key);
     EntryType findEntry(const std::string& key);
-    EntryType findEntry_cac(const std::string& key);
 
     const PRUint32 numBuckets;
     PRTime entryLifeTime;
@@ -344,10 +317,10 @@ HashTable<Element>::findEntry(const std::string& key)
     const EntryType &entry = buckets[bucketNumber].find(key);
 
     if (entry && entry->getExpirationTime() < PR_Now()) {
-        #if defined(LINUX) 
-	return (typename HashTable<Element>::EntryType)NULL;
+        #if defined(LINUX)
+        return (typename HashTable<Element>::EntryType)NULL;
         #else
-	return (HashTable<Element>::EntryType)NULL;
+        return (HashTable<Element>::EntryType)NULL;
         #endif
     }
 
@@ -359,30 +332,6 @@ typename HashTable<Element>::ElementType
 HashTable<Element>::find(const std::string& key)
 {
     EntryType entry = findEntry(key);
-    ElementType value;
-
-    if (entry != NULL) {
-	value = entry->getValue();
-    }
-
-    return value;
-}
-
-template<class Element>
-typename HashTable<Element>::EntryType
-HashTable<Element>::findEntry_cac(const std::string& key)
-{
-    HashValueType bucketNumber = computeHash(key);
-    const EntryType &entry = buckets[bucketNumber].find(key);
-
-    return entry;
-}
-
-template<class Element>
-typename HashTable<Element>::ElementType
-HashTable<Element>::find_cac(const std::string& key)
-{
-    EntryType entry = findEntry_cac(key);
     ElementType value;
 
     if (entry != NULL) {
@@ -450,15 +399,6 @@ HashTable<Element>::cleanup() {
 	if(buckets[i].size() != 0) {
 	    buckets[i].cleanup();
 	}
-    }
-}
-
-template<typename Element> void
-HashTable<Element>::cleanup_cac(const std::string& latestConfigKey) {
-    for (size_t i = 0; i < numBuckets; ++i) {
-       if (buckets[i].size() != 0) { 
-           buckets[i].remove_cac(latestConfigKey);
-       }
     }
 }
 

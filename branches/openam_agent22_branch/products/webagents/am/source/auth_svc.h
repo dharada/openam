@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: auth_svc.h,v 1.4 2008/06/25 08:14:31 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __AUTH_SVC_H__
@@ -51,7 +46,6 @@ class AuthService: public BaseService {
     void getModuleInstanceNames(AuthContext &, am_string_set_t**); 
 
     void create_auth_context(AuthContext &); 
-    void create_auth_context_cac(AuthContext &); 
 
     void login(AuthContext &,
 	       am_auth_index_t index_type,

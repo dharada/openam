@@ -1,9 +1,4 @@
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
+/* The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
@@ -22,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: sso_entry.h,v 1.4 2008/06/25 08:14:37 qcheng Exp $
+ * Copyright 2006 Sun Microsystems Inc. All Rights Reserved
  *
  */ 
 #ifndef __SSOENTRY_H__
@@ -58,6 +53,7 @@ class SSOEntry:public RefCntObj {
     Http::CookieList cookies;
     bool dirty;
     KeyValueMap map;
+    const Properties &attrMap;
 
     Tree *getTree(const ResourceName &, bool usePatterns) const;
 
@@ -69,7 +65,8 @@ class SSOEntry:public RefCntObj {
     SSOEntry(am_resource_traits_t rTraits,
 	     const Properties &attr_map): RefCntObj(),
 				  rsrcTraits(rTraits), lock(),
-				  cookies(), dirty(true), map() {
+				  cookies(), dirty(true), map(),
+				  attrMap(attr_map) {
     }
 
  public:

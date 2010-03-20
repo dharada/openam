@@ -1,8 +1,4 @@
 <!--
-   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-   Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-  
    The contents of this file are subject to the terms
    of the Common Development and Distribution License
    (the License). You may not use this file except in
@@ -22,19 +18,14 @@
    your own identifying information:
    "Portions Copyrighted [year] [name of copyright owner]"
 
-   $Id: build.xml,v 1.13 2009/08/27 21:41:31 subbae Exp $
+   $Id: build.xml,v 1.2.4.3 2008/05/06 17:19:47 dknab Exp $
 
+   Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 -->
 
 <project name="open-source-web-agents-install-apache" default="build">
+                
     <description>Open Web Single Sign-On Apache agent install</description>
-
-    <fail message="*** jdk target is not set ***">
-        <condition>
-            <not><isset property="target.jdk.set"/></not>
-        </condition>
-    </fail>
-
     <!-- enforce invocation via top level build only -->
     <fail message="*** Apache Agent may be built from top level only ***">
         <condition>
@@ -49,7 +40,7 @@
 
     <target name="build">
         <javac destdir="${webagents.container.classes.dir}" 
-               source="${target.jdk.set}" target="${target.jdk.set}"
+               source="1.4" target="1.4"
                debug="${build.debug}" debuglevel="${build.debuglevel}">
             <src path="${webagents.install.apache.src.dir}"/>
             <classpath refid="build.class.path"/>
@@ -105,12 +96,9 @@
         <antcall target="copy-${build.os}-library"/>
 
         <!-- Generate Apache agent install archive -->
-        <zip destfile="${webagents.dist.dir}/${containername}_v20_${build.os}${build.type.suffix}_agent_${agentversion}.zip">
-             <fileset dir="${webagents.container.scratch.dir}" excludes="**/bin/**"/>
-             <zipfileset dir="${container.web_agent.bin.dir}" filemode="755"
-                         prefix="web_agents/apache_agent/bin"/>
-        </zip>
-        <checksum file="${webagents.dist.dir}/${containername}_v20_${build.os}${build.type.suffix}_agent_${agentversion}.zip"
+        <zip destfile="${webagents.dist.dir}/${containername}_v20_${build.os}_agent.zip"
+             basedir="${webagents.container.scratch.dir}"/>
+        <checksum file="${webagents.dist.dir}/${containername}_v20_${build.os}_agent.zip"
             algorithm="SHA" fileext=".sha" />
 
     </target>
@@ -123,10 +111,10 @@
         </copy>
     </target>
 
-    <target name="copy-SunOS_sparc-library">
+    <target name="copy-SunOS-library">
         <copy todir="${container.web_agent.lib.dir}">
             <fileset dir="${webagents.apache.src.dir}">
-                    <include name="libamapc2*.so"/>
+                    <include name="libamapc2.so"/>
             </fileset>
         </copy>
     </target>
@@ -134,7 +122,7 @@
     <target name="copy-SunOS_x86-library">
         <copy todir="${container.web_agent.lib.dir}">
             <fileset dir="${webagents.apache.src.dir}">
-                    <include name="libamapc2*.so"/>
+                    <include name="libamapc2.so"/>
             </fileset>
         </copy>
     </target>
@@ -146,24 +134,6 @@
                     <include name="libamapc2.pdb"/>
             </fileset>
         </copy>
-    </target>
-
-    <target name="copy-HP-UX-library">
-        <copy todir="${container.web_agent.lib.dir}">
-            <fileset dir="${webagents.apache.src.dir}">
-                    <include name="libamapc2.sl"/>
-            </fileset>
-        </copy>
-    </target>
-
-    <target name="copy-AIX-library">
-        <copy todir="${container.web_agent.lib.dir}">
-            <fileset dir="${webagents.apache.src.dir}">
-                    <include name="libamapc2.so"/>
-            </fileset>
-        </copy>
-        <copy file="${webagents.am.src.dir}/libamsdk.so.3"
-            tofile="${container.web_agent.lib.dir}/libamsdk.so"/>
     </target>
 
 </project>
