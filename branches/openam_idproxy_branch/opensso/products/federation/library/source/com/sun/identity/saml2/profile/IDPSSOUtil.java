@@ -22,6 +22,8 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
+ * Portions Copyrighted 2010 ForgeRock AS
+ *
  * $Id: IDPSSOUtil.java,v 1.56 2009/11/24 21:53:28 madan_ranganath Exp $
  *
  */
@@ -75,6 +77,9 @@ import com.sun.identity.saml2.jaxb.metadata.ArtifactResolutionServiceElement;
 import com.sun.identity.saml2.jaxb.metadata.AssertionConsumerServiceElement;
 import com.sun.identity.saml2.jaxb.metadata.IDPSSODescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.SPSSODescriptorElement;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesType;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesElement;
+import com.sun.identity.saml2.jaxb.metadataattr.ObjectFactory;
 import com.sun.identity.saml2.logging.LogUtil;
 import com.sun.identity.saml2.key.EncInfo;
 import com.sun.identity.saml2.key.KeyUtil;
@@ -2251,7 +2256,7 @@ public class IDPSSOUtil {
         return authUrl;
     }
 
-    private static String getAttributeValueFromIDPSSOConfig(
+    public static String getAttributeValueFromIDPSSOConfig(
                              String realm,
                              String hostEntityId,
                              String attrName)
@@ -2305,7 +2310,7 @@ public class IDPSSOUtil {
         // Pass spEntityID to IdP Auth Module
         if (spEntityID != null) {
             if (newURL.indexOf("?") == -1) {
-                newURL.append("&");
+                newURL.append("?");
             } else {
                 newURL.append("&");
             }

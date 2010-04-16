@@ -150,6 +150,13 @@ public class IDPCache {
      */
     public static Hashtable idpECPSessionMapperCache = new Hashtable(); 
 
+     /**
+     * Cache saves the IDP Proxy Finder.
+     * Key : IDP Proxy Finder class name
+     * Value : IDP Proxy Finder mapper object
+     */
+    public static Hashtable idpProxyFinderCache = new Hashtable();
+
     /**
      * Cache saves information needed after coming back from COT cookie setting.
      * key --- cachedResID (String)

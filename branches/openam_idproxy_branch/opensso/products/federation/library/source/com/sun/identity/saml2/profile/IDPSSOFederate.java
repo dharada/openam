@@ -46,6 +46,9 @@ import com.sun.identity.saml2.common.SAML2Exception;
 import com.sun.identity.saml2.common.SAML2Utils;
 import com.sun.identity.saml2.jaxb.metadata.IDPSSODescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.SPSSODescriptorElement;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesType;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesElement;
+import com.sun.identity.saml2.jaxb.metadataattr.ObjectFactory;
 import com.sun.identity.saml2.logging.LogUtil;
 import com.sun.identity.saml2.key.KeyUtil;
 import com.sun.identity.saml2.meta.SAML2MetaException;
@@ -1020,7 +1023,7 @@ public class IDPSSOFederate {
         StringBuffer gotoURL ;
         if(forward){
             gotoURL = new StringBuffer(getRelativePath(request.getRequestURI(),
-                   request.getContextPath())); 
+                   request.getContextPath()));
         }else{
             gotoURL = request.getRequestURL();
         }
