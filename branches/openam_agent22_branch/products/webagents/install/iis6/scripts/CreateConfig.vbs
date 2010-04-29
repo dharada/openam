@@ -17,9 +17,9 @@
 ' your own identifying information:
 ' "Portions Copyrighted [year] [name of copyright owner]"
 '
-' $Id: IIS6CreateConfig.vbs,v 1.1.2.2 2010/04/19 22:52:48 subbae Exp $
+' $Id: CreateConfig.vbs,v 1.1.2.2 2010/04/19 22:52:48 subbae Exp $
 '
-' Copyright 2007 Sun Microsystems Inc. All Rights Reserved
+' Copyright 2010 Sun Microsystems Inc. All Rights Reserved
 '
 '
 '--------------------------------------------------------------------
@@ -45,12 +45,12 @@ Dim scriptFullName, currDir, WshShell
 Set Args = WScript.Arguments
 if Args.Count < 1 Then
    WScript.Echo "Incorrect Number of arguments"
-   WScript.Echo "Syntax: IIS6CreateConfig.vbs <config-filename>"
+   WScript.Echo "Syntax: CreateConfig.vbs <config-filename>"
    WScript.Quit(1)
 end if
 
 WScript.Echo ""
-WScript.Echo "Copyright @ 2007, 2010, Oracle and/or its affiliates. All rights reserved."
+WScript.Echo "Copyright @ 2010, Oracle and/or its affiliates. All rights reserved."
 WScript.Echo "Use is subject to license terms"
 
 Set oFSO = CreateObject("Scripting.FileSystemObject")
@@ -63,7 +63,7 @@ WScript.Echo "---------------------------------------------------------"
 
 '// Set the correct path where the script is located
 scriptFullName = WScript.ScriptFullName
-currDir = split(scriptFullName, "\IIS6CreateConfig.vbs")
+currDir = split(scriptFullName, "\CreateConfig.vbs")
 WshShell.currentDirectory = currDir(0)
 
 '// Load the locale specific resource file
@@ -298,46 +298,6 @@ Function GetAccessManagerDetails(oFSO, dict, WshShell)
   setUserName = "UrlAccessAgent"
 
   WScript.Echo ""
-  correctPassword = false
-  do 
-    do 
-      WScript.Echo dict("118")
-      Set objPassword = CreateObject("ScriptPW.Password")
-      setUserPassword = objPassword.GetPassword()
-      if (setUserPassword = "") then
-         WScript.Echo ""
-         WScript.Echo dict("126")
-      end if
-    loop until (setUserPassword <> "")
-    WScript.Echo
-    do 
-      WScript.Echo dict("119")
-      Set objPassword1 = CreateObject("ScriptPW.Password")
-      setUserPassword1 = objPassword1.GetPassword()
-      if (setUserPassword1 = "") then
-         WScript.Echo ""
-         WScript.Echo dict("126")
-      end if
-    loop until (setUserPassword <> "")
-    if (setUserPassword = SetUserPassword1) then
-       correctPassword = true
-    else 
-       WScript.Echo ""
-       WScript.Echo dict("127")
-       WScript.Echo ""
-    end if
-  loop until (correctPassword = true)
-
-  '// Encrypt the password
-  encryptFile = configInstallDir + "\encryptPasswd"
-  WshShell.Run "cmd /c cd " + configInstallDir + "\bin" + "& cryptit.exe " + setUserPassword + " > " + encryptFile, 0, true
-
-  Set encrypt = oFSO.OpenTextFile(encryptFile,ForReading,True)
-  encryptedPasswd = encrypt.ReadLine
-  encrypt.Close
-  WScript.Sleep(100)
-
-  oFSO.DeleteFile(encryptFile)
 
   Set WshShell = nothing
 

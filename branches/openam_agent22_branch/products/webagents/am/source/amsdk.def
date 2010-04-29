@@ -196,7 +196,6 @@ EXPORTS
 	am_web_build_advice_response;
 	am_web_get_am_revision_number;
 	am_web_get_request_url;
-	am_web_get_all_request_urls;
 
 	am_web_get_authType;
 	am_web_is_owa_enabled;
@@ -213,3 +212,4 @@ EXPORTS
     am_web_get_postdata_preserve_lbcookie;
     am_web_get_postdata_preserve_URL_parameter;
     am_web_get_accessdenied_url;
+    am_web_remove_attributes_from_headers;

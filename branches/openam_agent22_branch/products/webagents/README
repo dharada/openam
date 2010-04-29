@@ -15,6 +15,18 @@ be accessed at the following URL:
   http://docs.sun.com/app/docs/coll/1322.1
 
 
+Sun Java System Web Agents 2.2-04 ER 2
+=============================================
+
+Bug(s) fixed in 2.2-04 ER 2
+
+(1)
+
+Bug#: 6937941
+Agent type: IIS6 Agent
+Description: 2.2 IIS6 64-bit agent installer script failing in Windows 2008/7/Vista versions.
+
+
 Sun Java System Web Agents 2.2-02 Hotpatch 2
 =============================================
 

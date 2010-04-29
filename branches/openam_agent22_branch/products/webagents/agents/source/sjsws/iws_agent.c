@@ -17,7 +17,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: iws_agent.c,v 1.5.2.16 2010/02/22 19:45:53 dknab Exp $
+ * $Id: iws_agent.c,v 1.5.2.17 2010/03/16 16:32:30 dknab Exp $
  *
  * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
@@ -118,15 +118,13 @@ int send_data(const char *msg, Session *sn, Request *rq) {
         param_free(pblock_remove("content-type", rq->srvhdrs));
         pblock_nvinsert("content-type", "text/html", rq->srvhdrs);
         pblock_nvinsert("content-length", buf, rq->srvhdrs);
-
         // Send the headers to the client
         protocol_start_response(sn, rq);
-
         // Write the output using net_write
         if (IO_ERROR == net_write(sn->csd, (char *)msg, len)) {
             retVal = REQ_EXIT;
         } else {
-            net_flush(sn->csd);
+            retVal = net_flush(sn->csd);
         }
     }
     return retVal;
@@ -295,6 +293,7 @@ static int create_buffer_withpost(const char *key,
         protocol_start_response(sn, rq);
         // Repost the form
         if (net_write(sn->csd, buffer_page , strlen(buffer_page)) == IO_ERROR){
+            am_web_log_error("%s: Fail to send the form.", thisfunc);
             nsapi_status = REQ_EXIT;
         } else {
             nsapi_status = REQ_PROCEED;
@@ -367,7 +366,8 @@ NSAPI_PUBLIC int append_post_data(pblock *param, Session *sn, Request *rq)
         am_web_log_debug("%s: POST Magic Query Value: %s", 
                          thisfunc, post_data_query);
         if (am_web_postcache_lookup(post_data_query,
-                    &get_data) == B_TRUE) {
+                    &get_data) == B_TRUE)
+        {
             // Now that the data is found, find the data and the URL to redirect
             postdata_cache = get_data.value;
             actionurl = get_data.url;
@@ -378,8 +378,8 @@ NSAPI_PUBLIC int append_post_data(pblock *param, Session *sn, Request *rq)
         } else {
             am_web_log_debug("%s: Found magic URI but entry not in POST"
                              " Hash table :%s", thisfunc, post_data_query);
+            requestResult = REQ_ABORTED;
         }
-        requestResult = REQ_ABORTED;
     } else {
         am_web_log_error("%s: Magic URL value not found in POST cache", thisfunc);
         requestResult = REQ_ABORTED;
@@ -922,7 +922,7 @@ validate_session_policy(pblock *param, Session *sn, Request *rq) {
         system_free(header_str);
     }
     // Get header values.
-    // Note: the variables ending by "_hdr" cannot be modified 
+    // Note: the variables ending by "_hdr" should not be modified or free
     status  = get_header_value(rq->reqpb, REQUEST_PROTOCOL,
                                B_TRUE, &protocol_hdr, B_FALSE, NULL);
     if (status == AM_SUCCESS) {
@@ -973,17 +973,26 @@ validate_session_policy(pblock *param, Session *sn, Request *rq) {
                              thisfunc, am_status_to_string(status));
         }
     }
+    // Check for magic notification URL 
     if( status == AM_SUCCESS) {
-        // Check for magic notification URL 
         if (B_TRUE==am_web_is_notification(request_url)) {
+            if(query != NULL) {
+                free(query);
+                query = NULL;
+            }
+            if(method != NULL) {
+                free(method);
+                method = NULL;
+            }
             am_web_free_memory(request_url);
             return REQ_PROCEED;
         }
-        // Check if the SSO token is in the cookie header
+    }
+    // Check if the SSO token is in the cookie header
+    if( status == AM_SUCCESS) {
         requestResult = getISCookie(pblock_findval(COOKIE_HDR, rq->headers),
                                     &dpro_cookie);
         if (requestResult == REQ_ABORTED) {
-            am_web_free_memory(request_url);
             status = AM_FAILURE;
         } else if(dpro_cookie != NULL) {
             am_web_log_debug("%s: SSO token found in cookie header.", thisfunc);
@@ -1082,44 +1091,44 @@ validate_session_policy(pblock *param, Session *sn, Request *rq) {
                                     &request_url,
                                     &orig_req, method, response,
                                     B_FALSE, set_cookie, set_method);
-                }
-                if( status == AM_SUCCESS) {
-                    int clf_reqSize = 0;
-                    am_web_log_debug("%s: SSO token found in "
-                                             "assertion.",thisfunc);
-                    // Set back the original clf-request attribute
-                    if ((query != NULL) && (strlen(query) > 0)) {
-                        clf_reqSize = strlen(orig_req) + strlen(uri_hdr) +
-                                  strlen (query) + strlen(protocol_hdr) + 4;
-                    } else {
-                        clf_reqSize = strlen(orig_req) + strlen(uri_hdr) +
-                                  strlen(protocol_hdr) + 3;
-                    }
-                    clf_req = malloc(clf_reqSize);
-                    if (clf_req == NULL) {
-                        am_web_log_error("%s Unable to allocate %i bytes "
-                            "for clf_req", thisfunc, clf_reqSize);
-                        status = AM_NO_MEMORY;
-                    } else {
-                        memset (clf_req,'\0',clf_reqSize);
-                        strcpy(clf_req, orig_req);
-                        strcat(clf_req, " ");
-                        strcat(clf_req, uri_hdr);
+                    if( status == AM_SUCCESS) {
+                        int clf_reqSize = 0;
+                        am_web_log_debug("%s: SSO token found in "
+                                                 "assertion.",thisfunc);
+                        // Set back the original clf-request attribute
                         if ((query != NULL) && (strlen(query) > 0)) {
-                            strcat(clf_req, "?");
-                            strcat(clf_req, query);
+                            clf_reqSize = strlen(orig_req) + strlen(uri_hdr) +
+                                      strlen (query) + strlen(protocol_hdr) + 4;
+                            } else {
+                            clf_reqSize = strlen(orig_req) + strlen(uri_hdr) +
+                                      strlen(protocol_hdr) + 3;
                         }
-                        strcat(clf_req, " ");
-                        strcat(clf_req, protocol_hdr);
-                        am_web_log_debug("%s: clf-request set to %s",
-                                      thisfunc, clf_req);
+                        clf_req = malloc(clf_reqSize);
+                        if (clf_req == NULL) {
+                                am_web_log_error("%s Unable to allocate %i bytes "
+                                    "for clf_req", thisfunc, clf_reqSize);
+                            status = AM_NO_MEMORY;
+                        } else {
+                            memset (clf_req,'\0',clf_reqSize);
+                            strcpy(clf_req, orig_req);
+                            strcat(clf_req, " ");
+                            strcat(clf_req, uri_hdr);
+                            if ((query != NULL) && (strlen(query) > 0)) {
+                                strcat(clf_req, "?");
+                                strcat(clf_req, query);
+                            }
+                            strcat(clf_req, " ");
+                            strcat(clf_req, protocol_hdr);
+                            am_web_log_debug("%s: clf-request set to %s",
+                                          thisfunc, clf_req);
+                        }
+                        pblock_nvinsert(REQUEST_CLF, clf_req, rq->reqpb);
+                    } else if (useSunwMethod == B_FALSE) {
+                        am_web_log_debug("%s: SSO token not found in "
+                                       "assertion. Redirecting to login page.",
+                                       thisfunc);
+                        status = AM_INVALID_SESSION;
                     }
-                    pblock_nvinsert(REQUEST_CLF, clf_req, rq->reqpb);
-                } else if (useSunwMethod == B_FALSE) {
-                    am_web_log_debug("%s: SSO token not found in "
-                                   "assertion. Redirecting to login page.",
-                                   thisfunc);
-                    status = AM_INVALID_SESSION;
                 }
             }
         }
@@ -1260,11 +1269,9 @@ validate_session_policy(pblock *param, Session *sn, Request *rq) {
     }
     if(clientHostname != NULL) {
         am_web_free_memory(clientHostname);
-    }        
+    }
 
     am_web_log_max_debug("%s: Completed handling request with status: %s.",
                          thisfunc, am_status_to_string(status));
-
-
     return requestResult;
 }

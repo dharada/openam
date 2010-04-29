@@ -18,7 +18,7 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
-# $Id: defines.mk,v 1.3.4.9 2010/02/23 12:11:07 rajasundarik Exp $
+# $Id: defines.mk,v 1.3.4.10 2010/03/29 16:45:40 subbae Exp $
 #
 # Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
@@ -53,7 +53,7 @@ RELEASE_TYPE = ER
 
 # For ER set AGENT_ER_VER (ex: AGENT_ER_VER := ER 1)
 ifeq ($(RELEASE_TYPE), ER)
-AGENT_ER_VER := ER 1
+AGENT_ER_VER := ER 2
 AGENT_ER_TEXT := Exception Release: $(AGENT_ER_VER)
 ADD_README := YES
 else

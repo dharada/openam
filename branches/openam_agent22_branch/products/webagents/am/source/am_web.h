@@ -1156,22 +1156,6 @@ am_web_get_request_url(const char *host_hdr, const char *protocol,
 		       const char *uri, const char *query,
 		       char **req_url);
 
-/**
- * Sets original request url and request url.
- * request url gets overrideden if override properties are set.
- * Original request url gets used during notification request processing.
- * request url is used for rest of request processing.
- */
-AM_WEB_EXPORT am_status_t
-am_web_get_all_request_urls(const char *host_hdr,
-                       const char *protocol,
-                       const char *hostname,
-                       size_t port,
-                       const char *uri,
-                       const char *query,
-                       char **request_url,
-                       char **orig_request_url);
-
 /*
  * Method to determine if the composite advice should be
  * redirect rather than POST
@@ -1242,6 +1226,14 @@ AM_WEB_EXPORT am_status_t
 am_web_set_host_ip_in_env_map(const char *client_ip,
                               const char *client_hostname,
                               const am_map_t env_parameter_map);
+
+/**
+ * Remove all the attributes listed in attributes_list_char
+ * from header_list. 
+ */
+AM_WEB_EXPORT void
+am_web_remove_attributes_from_headers(char* attributes_list, char** header_list);
+
 #if (defined(WINNT) || defined(_AMD64_))
 //AM_WEB_EXPORT DWORD am_web_get_iis_filter_priority(); 
 #endif

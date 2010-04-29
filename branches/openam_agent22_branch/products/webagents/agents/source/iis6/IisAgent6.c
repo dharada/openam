@@ -77,6 +77,12 @@ CHAR httpBadRequest[]           = "400 Bad Request";
 CHAR httpForbidden[]            = "403 Forbidden";
 CHAR httpServerError[]          = "500 Internal Server Error";
 
+DWORD http200                   = 200;
+DWORD http302                   = 302;
+DWORD http500                   = 500;
+DWORD http403                   = 403;
+DWORD http404                   = 404;
+
 const CHAR httpProtocol[]       = "http";
 const CHAR httpVersion1_1[]     = "HTTP/1.1";
 const CHAR httpsProtocol[]      = "https";
@@ -265,7 +271,7 @@ static am_status_t check_for_post_data(EXTENSION_CONTROL_BLOCK *pECB,
         post_data_query = strstr(requestURL, POST_PRESERVE_URI);
         if (post_data_query != NULL) {
             post_data_query += strlen(POST_PRESERVE_URI);
-            // Check if a query paramter for the  sticky session has been
+            // Check if a query parameter for the  sticky session has been
             // added to the dummy URL. Remove it if it is the case.
             status_tmp = am_web_get_postdata_preserve_URL_parameter
                        (&stickySessionValue);
@@ -352,6 +358,7 @@ DWORD send_ok(EXTENSION_CONTROL_BLOCK *pECB)
     size_t data_len = sizeof(httpResponseOk) - 1;
 
     am_web_log_debug("%s: Sending OK with len :%d \n%s", thisfunc, data_len, data);
+    pECB->dwHttpStatusCode = http200;
     if (pECB->WriteClient(pECB->ConnID, (LPVOID)data,
                      (LPDWORD)&data_len, (DWORD) 0)==FALSE)
     {
@@ -366,6 +373,7 @@ DWORD send_error(EXTENSION_CONTROL_BLOCK *pECB)
     const char *thisfunc = "send_error()";
     const char *data = INTERNAL_SERVER_ERROR_MSG;
     size_t data_len = sizeof(INTERNAL_SERVER_ERROR_MSG) - 1;
+    pECB->dwHttpStatusCode = http500;
     if (pECB->WriteClient(pECB->ConnID, (LPVOID)data,
                      (LPDWORD)&data_len, (DWORD) 0)==FALSE)
     {
@@ -424,10 +432,11 @@ DWORD send_post_data(EXTENSION_CONTROL_BLOCK *pECB, char *page,
         am_web_log_debug("%s: Post form:\n%s", thisfunc, page);
         sendHdr.pszStatus = httpOk;
         sendHdr.pszHeader = headers;
-        sendHdr.cchStatus = strlen(httpOk);
-        sendHdr.cchHeader = strlen(headers);
+        sendHdr.cchStatus = (DWORD) strlen(httpOk);
+        sendHdr.cchHeader = (DWORD) strlen(headers);
         sendHdr.fKeepConn = TRUE;
         //Send the headers
+        pECB->dwHttpStatusCode = http200;
         pECB->ServerSupportFunction(pECB->ConnID,
                            HSE_REQ_SEND_RESPONSE_HEADER_EX,
                            &sendHdr,
@@ -454,8 +463,8 @@ DWORD send_post_data(EXTENSION_CONTROL_BLOCK *pECB, char *page,
  * This value must be freed by the caller.
  */
 am_status_t get_header_value(EXTENSION_CONTROL_BLOCK *pECB,
-                             CHAR *original_header_name,
-                             CHAR **header_value,
+                             const char *original_header_name,
+                             char **header_value,
                              BOOL isRequired,
                              BOOL addHTTPPrefix)
 {
@@ -483,7 +492,7 @@ am_status_t get_header_value(EXTENSION_CONTROL_BLOCK *pECB,
             status = AM_NO_MEMORY;
         }
     } else {
-        header_name = original_header_name;
+        header_name = (char*) original_header_name;
     }
     // Get the header value
     if (status == AM_SUCCESS) {
@@ -811,15 +820,15 @@ DWORD process_original_url(EXTENSION_CONTROL_BLOCK *pECB,
                CHAR* request_hdrs,
                tOphResources* pOphResources)
 {
-    CHAR* authtype = NULL;
-
+    const char *thisfunc = "process_original_url()";
+    const char *authtype = NULL;
     HSE_EXEC_URL_INFO  *execUrlInfo  = NULL;
     execUrlInfo = (HSE_EXEC_URL_INFO *) malloc(sizeof(HSE_EXEC_URL_INFO));
 
     if (execUrlInfo == NULL) {
-        am_web_log_error("process_original_url(): Error %d occurred during "
+        am_web_log_error("%s: Error %d occurred during "
                          "creating HSE_EXEC_URL_INFO context. \r\n",
-                         GetLastError());
+                         thisfunc, GetLastError());
         return HSE_STATUS_ERROR;
     } else {
         memset(execUrlInfo, 0, sizeof(execUrlInfo));
@@ -828,17 +837,18 @@ DWORD process_original_url(EXTENSION_CONTROL_BLOCK *pECB,
             //CDSSO mode(restore orig method)
             execUrlInfo->pszMethod = orig_req_method;
             //Remove the entity-body sent by the CDC servlet
-            execUrlInfo->pEntity = "\0";
-            am_web_log_debug("process_original_url(): CDSSO Mode - "
+            execUrlInfo->pEntity->cbAvailable = 0;
+            execUrlInfo->pEntity->lpbData = NULL;
+            am_web_log_debug("%s: CDSSO Mode - "
                              "method set back to original method (%s), "
-                             "CDC servlet content deleted",orig_req_method);
+                             "CDC servlet content deleted",
+                             thisfunc, orig_req_method);
         } else {
             execUrlInfo->pszMethod = NULL;       // Use original request method
             execUrlInfo->pEntity = NULL;         // Use original request entity
         }
         if (request_hdrs != NULL) {
-           am_web_log_debug("process_original_url(): request_hdrs = %s",
-                                                     request_hdrs);
+           am_web_log_debug("%s: request_hdrs = %s", thisfunc, request_hdrs);
            execUrlInfo->pszChildHeaders = request_hdrs; // Original and custom
                                                    // headers
         } else {
@@ -855,62 +865,53 @@ DWORD process_original_url(EXTENSION_CONTROL_BLOCK *pECB,
                                  (LPSTR)pOphResources->result.remote_user;
                authtype = am_web_get_authType();
                if (authtype != NULL)
-                   execUrlInfo->pUserInfo->pszCustomAuthType = authtype;
+                   execUrlInfo->pUserInfo->pszCustomAuthType = (LPSTR) authtype;
                else
                    execUrlInfo->pUserInfo->pszCustomAuthType = "dsame";
-               am_web_log_debug("process_original_url(): Auth-Type set to %s",
+               am_web_log_debug("%s: Auth-Type set to %s", thisfunc,
                         execUrlInfo->pUserInfo->pszCustomAuthType);
            }
         }
     }
-
     //
     // Need to set the below flag to avoid recursion
     //
-
     execUrlInfo->dwExecUrlFlags = HSE_EXEC_URL_IGNORE_CURRENT_INTERCEPTOR;
-
     //
     // Associate the completion routine and the current URL with
     // this request.
     //
-
     if ( pECB->ServerSupportFunction( pECB->ConnID,
                                       HSE_REQ_IO_COMPLETION,
                                       execute_orig_request,
                                       0,
                                       (LPDWORD)execUrlInfo) == FALSE )
     {
-        am_web_log_error("process_original_url(): Error %d occurred setting "
-             "I/O completion.\r\n", GetLastError());
-
+        am_web_log_error("%s: Error %d occurred setting "
+             "I/O completion.\r\n", thisfunc, GetLastError());
         if (execUrlInfo->pUserInfo != NULL) {
             free(execUrlInfo->pUserInfo);
             execUrlInfo->pUserInfo = NULL;
         }
         return HSE_STATUS_ERROR;
     }
-
     //
     // Execute child request
     //
-
     if ( pECB->ServerSupportFunction( pECB->ConnID,
                                       HSE_REQ_EXEC_URL,
                                       execUrlInfo,
                                       NULL,
                                       NULL ) == FALSE )
     {
-        am_web_log_error("process_original_url(): Error %d occurred calling "
-                     "HSE_REQ_EXEC_URL.\r\n", GetLastError() );
-
+        am_web_log_error("%s: Error %d occurred calling "
+                     "HSE_REQ_EXEC_URL.\r\n", thisfunc, GetLastError() );
         if (execUrlInfo->pUserInfo != NULL) {
             free(execUrlInfo->pUserInfo);
             execUrlInfo->pUserInfo = NULL;
         }
         return HSE_STATUS_ERROR;
     }
-
     //
     // Return pending and let the completion clean up.
     //
@@ -981,9 +982,10 @@ static DWORD do_redirect(EXTENSION_CONTROL_BLOCK *pECB,
                             sprintf(advice_headers, advice_headers_template, data_length);
                             sendHdr.pszStatus = httpOk;
                             sendHdr.pszHeader = advice_headers;
-                            sendHdr.cchStatus = strlen(httpOk);
-                            sendHdr.cchHeader = strlen(advice_headers);
+                            sendHdr.cchStatus = (DWORD) strlen(httpOk);
+                            sendHdr.cchHeader = (DWORD) strlen(advice_headers);
                             sendHdr.fKeepConn = FALSE;
+                            pECB->dwHttpStatusCode = http200;
                             pECB->ServerSupportFunction(pECB->ConnID,
                                 HSE_REQ_SEND_RESPONSE_HEADER_EX,
                                 &sendHdr,
@@ -1067,6 +1069,7 @@ static DWORD do_redirect(EXTENSION_CONTROL_BLOCK *pECB,
                     if(status == AM_ACCESS_DENIED) {
                         // Only reason why we should be sending 403 forbidden.
                         // All other cases are non-deterministic.
+                        pECB->dwHttpStatusCode = http403;
                         redirect_status = httpForbidden;
                     }
                     am_web_log_error("%s: Error while calling "
@@ -1077,10 +1080,10 @@ static DWORD do_redirect(EXTENSION_CONTROL_BLOCK *pECB,
                 if (redirect_status == httpRedirect) {
                     sendHdr.pszStatus = httpRedirect;
                     sendHdr.pszHeader = redirect_header;
-                    sendHdr.cchStatus = strlen(httpRedirect);
-                    sendHdr.cchHeader = strlen(redirect_header);
+                    sendHdr.cchStatus = (DWORD) strlen(httpRedirect);
+                    sendHdr.cchHeader = (DWORD) strlen(redirect_header);
                     sendHdr.fKeepConn = FALSE;
-
+                    pECB->dwHttpStatusCode = http302;
                     pECB->ServerSupportFunction(pECB->ConnID,
                                         HSE_REQ_SEND_RESPONSE_HEADER_EX,
                                         &sendHdr,
@@ -1092,6 +1095,7 @@ static DWORD do_redirect(EXTENSION_CONTROL_BLOCK *pECB,
                     if (redirect_status == httpServerError) {
                         data = INTERNAL_SERVER_ERROR_MSG;
                         data_len = sizeof(INTERNAL_SERVER_ERROR_MSG) - 1;
+                        pECB->dwHttpStatusCode = http500;
                     }
                     if (pECB->WriteClient(pECB->ConnID, (LPVOID)data,
                                 (LPDWORD)&data_len, (DWORD) 0)==FALSE) {
@@ -1119,10 +1123,10 @@ static DWORD do_redirect(EXTENSION_CONTROL_BLOCK *pECB,
 
 
 am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
-                            CHAR** requestURL, CHAR** pathInfo,
-                            CHAR** origRequestURL)
+                      CHAR** requestURL, CHAR** pathInfo)
 {
     const char *thisfunc = "get_request_url()";
+
     CHAR *requestHostHeader = NULL;
     const CHAR* requestProtocol = NULL;
     CHAR *requestProtocolType  = NULL;
@@ -1138,6 +1142,7 @@ am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
     CHAR *newPathInfo = NULL;
     CHAR *tmpPath = NULL;
     CHAR *scriptName = NULL;
+    
     am_status_t status = AM_SUCCESS;
 
     // Check whether the request is http or https
@@ -1150,7 +1155,14 @@ am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
         } else if(strncmp(requestProtocolType,"off", 3) == 0) {
             requestProtocol = httpProtocol;
             strcpy(defaultPort, httpPortDefault);
+        } else {
+            am_web_log_error("%s: Unable to get the protocol type.", thisfunc);
+            status = AM_FAILURE;
         }
+    }
+    if (status == AM_SUCCESS) {
+        am_web_log_debug("%s: requestProtocolType = %s",
+                        thisfunc, requestProtocolType);
         // Get the host name
         status = get_header_value(pECB, "HEADER_Host",
                                   &requestHostHeader, TRUE, FALSE);
@@ -1177,7 +1189,7 @@ am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
     //Get the base url
     if (status == AM_SUCCESS) {
         status = get_header_value(pECB, "URL", &baseUrl, TRUE, FALSE);
-        baseUrlLength = strlen(baseUrl);
+        baseUrlLength = (DWORD) strlen(baseUrl);
     }
     // Get the path info .
     if (status == AM_SUCCESS) {
@@ -1219,26 +1231,18 @@ am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
                memset(fullBaseUrl, 0, sizeof(char) * (fullBaseUrlLength + 1));
                strcpy(fullBaseUrl, baseUrl);
                strcat(fullBaseUrl, newPathInfo); 
-               status = am_web_get_all_request_urls(requestHostHeader,
+               status = am_web_get_request_url(requestHostHeader,
                                requestProtocol,NULL, portNumber,
-                               fullBaseUrl, queryString, requestURL,
-                               origRequestURL);
+                               fullBaseUrl, queryString, requestURL);
             } else {
                am_web_log_error("%s: Unable to allocate memory for "
                                 "fullBaseUrl.", thisfunc);
                status = AM_NO_MEMORY;
             }
         } else {
-            status = am_web_get_all_request_urls(requestHostHeader,
+            status = am_web_get_request_url(requestHostHeader,
                                 requestProtocol, NULL, portNumber, baseUrl,
-                                queryString, requestURL,origRequestURL);
-        }
-        if(status == AM_SUCCESS) {
-            am_web_log_debug("%s: Constructed request url: %s",
-                             thisfunc, *requestURL);
-        } else {
-            am_web_log_error("%s: Failed with error: %s.",
-                        thisfunc, am_status_to_string(status)); 
+                                queryString, requestURL);
         }
     }
     if (requestProtocolType != NULL) {
@@ -1277,66 +1281,16 @@ am_status_t get_request_url(EXTENSION_CONTROL_BLOCK *pECB,
     return status;
 }
 
-/* 
- * This function checks if the profile attribute key is in the original 
- * request headers. If it is remove it in order to avoid tampering.
- */
-am_status_t remove_key_in_headers(char* key, char** httpHeaders)
-{
-    const char *thisfunc = "remove_custom_attribute_in_header()";
-    am_status_t status = AM_SUCCESS;
-    CHAR* pStartHdr =NULL;
-    CHAR* pEndHdr =NULL;    
-    CHAR* tmpHdr=NULL;  
-    size_t len;
-    
-    pStartHdr = string_case_insensitive_search(*httpHeaders,key);
-    if (pStartHdr != NULL) {
-        tmpHdr = malloc(strlen(*httpHeaders) + 1);
-        if (tmpHdr != NULL) {
-            memset(tmpHdr,0,strlen(*httpHeaders) + 1);
-            len = strlen(*httpHeaders) - strlen(pStartHdr);
-            strncpy(tmpHdr,*httpHeaders,len);
-            pEndHdr = strstr(pStartHdr,pszCrlf);
-            if (pEndHdr != NULL) {
-                pEndHdr = pEndHdr + 2;
-                strcat(tmpHdr,pEndHdr);
-            }
-            am_web_log_info("%s: Attribute %s was found and removed from "
-                                "the original request headers.",thisfunc, key);
-        } else {
-            am_web_log_error("%s: Not enough memory to allocate tmpHdr.",
-                             thisfunc);
-            status = AM_NO_MEMORY;
-        }
-    }
-    if (tmpHdr != NULL) {
-        memset(*httpHeaders,0,strlen(*httpHeaders) + 1);
-        strcpy(*httpHeaders,tmpHdr);
-        free(tmpHdr);
-        tmpHdr = NULL;
-    }
-    
-    return status;
-}
-
 am_status_t set_request_headers(EXTENSION_CONTROL_BLOCK *pECB,
                                 void** args, BOOL addOriginalHeaders)
 {
     const char *thisfunc = "set_request_headers()";
     am_status_t status = AM_SUCCESS;
-    am_status_t status1 = AM_SUCCESS;
-    am_status_t status2 = AM_SUCCESS;
     CHAR* httpHeaders = NULL;
-    BOOL gotHttpHeaders = FALSE;
-    DWORD httpHeadersSize = 0;
     size_t http_headers_length = 0;
-    CHAR* key = NULL;
-    CHAR* pkeyStart = NULL;
     CHAR* tmpAttributeList = NULL;
     CHAR* pTemp = NULL;
     int i, j;
-    int iKeyStart, keyLength;
     int iValueStart, iValueEnd, iHdrStart;
     BOOL isEmptyValue = FALSE;
     char *temp = NULL;
@@ -1351,59 +1305,11 @@ am_status_t set_request_headers(EXTENSION_CONTROL_BLOCK *pECB,
             //Get the original headers from the request
             status = get_header_value(pECB, "ALL_RAW", &httpHeaders,
                                       TRUE, FALSE);
-            //Remove profile attributes from original request headers, if any,
-            //to avoid tampering
+            // Remove profile attributes from original request headers, 
+            // if any, to avoid tampering
             if ((status == AM_SUCCESS) && (set_headers_list != NULL)) {
-                pkeyStart = set_headers_list;
-                iKeyStart=0;
-                for (i = 0; i < strlen(set_headers_list); ++i) {
-                    if (set_headers_list[i] == ':') {
-                        keyLength = i + 1 - iKeyStart;
-                        key = malloc(keyLength + 1);
-                        if (key != NULL) {
-                            memset(key,0,keyLength + 1);
-                            strncpy (key,pkeyStart,keyLength);
-                            if (strlen(key) > 0) {
-                                status = remove_key_in_headers(key, &httpHeaders);
-                            }
-                            if((strchr(key, '-'))&&(strlen(key) > 0)) {
-                                while(temp = strchr(key, '-')) {
-                                    if(temp == NULL) {
-                                        break;
-                                    }
-                                    key[temp-key]='_';
-                                }
-                                status1 = remove_key_in_headers(key, &httpHeaders);
-                            }
-                            if((strchr(key, '_'))&&(strlen(key) > 0)) {
-                                while(temp = strchr(key, '_')) {
-                                    if(temp==NULL) {
-                                        break;
-                                    }
-                                    key[temp-key]='-';
-                                }
-                                status2 = remove_key_in_headers(key, &httpHeaders);
-                            }
-                            if(status == AM_NO_MEMORY || status1 == AM_NO_MEMORY ||
-                                status2 == AM_NO_MEMORY) {
-                                status = AM_NO_MEMORY;
-                            }
-                            free(key);
-                            key = NULL;
-                        } else {
-                            am_web_log_error("%s:Not enough memory "
-                                    "to allocate key variable", thisfunc);
-                            status = AM_NO_MEMORY;
-                            break;
-                        }
-                        pkeyStart = set_headers_list;
-                    }
-                    if ((set_headers_list[i] == '\r') &&
-                        (set_headers_list[i+1] == '\n')) {
-                        iKeyStart = i+2;
-                        pkeyStart = pkeyStart + i + 2;
-                    }
-                }
+                am_web_remove_attributes_from_headers(set_headers_list,
+                                                      &httpHeaders);
             }
             //Remove empty values from set_headers_list 
             if ((status == AM_SUCCESS) && (set_headers_list != NULL)) {
@@ -1648,26 +1554,17 @@ static DWORD redirect_to_request_url(EXTENSION_CONTROL_BLOCK *pECB,
 	                             thisfunc, redirect_header);
         sendHdr.pszStatus = httpRedirect;
         sendHdr.pszHeader = redirect_header;
-        sendHdr.cchStatus = strlen(httpRedirect);
-        sendHdr.cchHeader = strlen(redirect_header);
+        sendHdr.cchStatus = (DWORD) strlen(httpRedirect);
+        sendHdr.cchHeader = (DWORD) strlen(redirect_header);
         sendHdr.fKeepConn = FALSE;
-	
+        pECB->dwHttpStatusCode = http302;
         pECB->ServerSupportFunction(pECB->ConnID,
                         HSE_REQ_SEND_RESPONSE_HEADER_EX,
                         &sendHdr,
                         NULL,
                         NULL);
     } else {
-        size_t data_len = sizeof(FORBIDDEN_MSG) - 1;
-        const char *data = FORBIDDEN_MSG;
-        data = INTERNAL_SERVER_ERROR_MSG;
-        data_len = sizeof(INTERNAL_SERVER_ERROR_MSG) - 1;
-        if (pECB->WriteClient(pECB->ConnID, (LPVOID)data,
-                       (LPDWORD)&data_len, (DWORD) 0)==FALSE) {
-            am_web_log_error("%s: WriteClient did not "
-                        "succeed. Attempted message = %s ", thisfunc, data);
-            returnValue = HSE_STATUS_ERROR;
-        }
+        returnValue = send_error(pECB);
     }
 
     if (redirect_header != NULL) {
@@ -1679,14 +1576,14 @@ static DWORD redirect_to_request_url(EXTENSION_CONTROL_BLOCK *pECB,
 }
 
 DWORD getHttpStatusCode(EXTENSION_CONTROL_BLOCK *pECB) {
-    DWORD status = 200;
+    DWORD status = http200;
     struct stat stat_buf;
     int err_id = stat(pECB->lpszPathTranslated, &stat_buf);
     if (err_id) {
         am_web_log_debug("getHttpStatusCode(): File %s doesn't exist, "
                          "setting HTTP status code to 404.",
                          pECB->lpszPathTranslated);
-        status = 404;
+        status = http404;
     }
     return status;
 }
@@ -1695,9 +1592,7 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
 {
     const char *thisfunc = "HttpExtensionProc()";
     CHAR* requestURL = NULL;
-    CHAR* origRequestURL = NULL;
     CHAR* pathInfo = NULL;
-    
     CHAR* dpro_cookie = NULL;
     am_status_t status = AM_SUCCESS;
     am_status_t status_tmp = AM_SUCCESS;
@@ -1740,18 +1635,21 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
         LeaveCriticalSection(&initLock);
     }
     // Get the request url and the path info
-    status = get_request_url(pECB, &requestURL, &pathInfo,&origRequestURL);
+    status = get_request_url(pECB, &requestURL, &pathInfo);
 
     // Check whether the url is a notification url
     if ((status == AM_SUCCESS) &&
-         (B_TRUE == am_web_is_notification(origRequestURL))) {
+         (B_TRUE == am_web_is_notification(requestURL))) {
           const char* data = NULL;
           if (pECB->cbTotalBytes > 0) {
              data =  pECB->lpbData;
              am_web_handle_notification(data, pECB->cbTotalBytes);
              OphResourcesFree(pOphResources);
              am_web_free_memory(requestURL);
-             am_web_free_memory(origRequestURL);
+             if (pathInfo != NULL) {
+                 free(pathInfo);
+                 pathInfo = NULL;
+             }
              send_ok(pECB);
              return HSE_STATUS_SUCCESS_AND_KEEP_CONN;
           }
@@ -1761,7 +1659,7 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
     // and dummy urls as those cases are handled by the agent.
     if (status == AM_SUCCESS) {
         char *dummyPtr = strstr(requestURL, POST_PRESERVE_URI);
-        if ((am_web_is_notification(origRequestURL) != B_TRUE) &&
+        if ((am_web_is_notification(requestURL) != B_TRUE) &&
             ( dummyPtr == NULL))
         {
             pECB->dwHttpStatusCode = getHttpStatusCode(pECB);
@@ -2030,8 +1928,6 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
                     //The request can then be redirected to the original
                     //url instead of being handled by process_original_url().
                     //This avoids problems with ASP and perl.
-                    am_web_log_debug("%s: Request redirected to orignal url after return "
-                                     " from CDC servlet",thisfunc);
                     returnValue = redirect_to_request_url(pECB, 
                                   requestURL, request_hdrs);
                 } else {
@@ -2042,7 +1938,7 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
                         cookieResponseHdr.pszStatus = NULL;
                         cookieResponseHdr.pszHeader = set_cookies_list;
                         cookieResponseHdr.cchStatus = 0;
-                        cookieResponseHdr.cchHeader = strlen(set_cookies_list);
+                        cookieResponseHdr.cchHeader = (DWORD) strlen(set_cookies_list);
                         cookieResponseHdr.fKeepConn = TRUE;
                         pECB->ServerSupportFunction(pECB->ConnID,
                                           HSE_REQ_SEND_RESPONSE_HEADER_EX,
@@ -2159,11 +2055,6 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
     }
     if (requestURL != NULL) {
         am_web_free_memory(requestURL);
-        requestURL = NULL;
-    }
-    if (origRequestURL != NULL) {
-        am_web_free_memory(origRequestURL);
-        origRequestURL = NULL;
     }
     if(clientIP_hdr !=NULL){
         free(clientIP_hdr);
@@ -2171,7 +2062,6 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
     }
     if (clientIP != NULL) {
         am_web_free_memory(clientIP);
-        clientIP = NULL;
     }
     if(clientHostname_hdr != NULL){
         free(clientHostname_hdr);
@@ -2179,7 +2069,6 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
     }
     if (clientHostname != NULL) {
         am_web_free_memory(clientHostname);
-        clientIP = clientHostname;
     }
     OphResourcesFree(pOphResources);
 
@@ -2294,23 +2183,3 @@ BOOL WINAPI TerminateExtension(DWORD dwFlags)
     return TRUE;
 }
 
-char *string_case_insensitive_search(char *HTTPHeaders, char *KeY)
-{
-    char *h, *n;
-    if(!*KeY) {
-        return HTTPHeaders;
-    }
-    for(; *HTTPHeaders; ++HTTPHeaders) {
-        if(toupper(*HTTPHeaders) == toupper(*KeY)) {
-            for(h=HTTPHeaders, n=KeY; *h && *n; ++h,++n) {
-                if(toupper(*h)!=toupper(*n)) {
-		    break;
-		}
-	    }
-            if(!*n) {
-	        return HTTPHeaders;
-	    }
-        }
-    }
-    return NULL;
-}

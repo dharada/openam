@@ -17,7 +17,7 @@
 ' your own identifying information:
 ' "Portions Copyrighted [year] [name of copyright owner]"
 '
-' $Id: IIS6AuthAdmin.vbs,v 1.1.2.1 2008/02/10 00:17:42 robertis Exp $
+' $Id: IIS6AuthAdmin.vbs,v 1.1.2.2 2010/04/19 22:52:48 subbae Exp $
 '
 ' Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 '
@@ -102,7 +102,7 @@ end if
 Function Init()
   Dim correctConfigFile
 
-  WScript.Echo "Copyright c 2004 Sun Microsystems, Inc. All rights reserved"
+  WScript.Echo "Copyright @ 2007, 2010, Oracle and/or its affiliates. All rights reserved."
   WScript.Echo "Use is subject to license terms"
 
   Set WshShell = WScript.CreateObject("WScript.Shell")

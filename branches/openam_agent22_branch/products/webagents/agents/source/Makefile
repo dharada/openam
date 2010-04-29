@@ -1,8 +1,4 @@
 #
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-#
-# Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
-#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the License). You may not use this file except in
@@ -22,8 +18,9 @@
 # your own identifying information:
 # "Portions Copyrighted [year] [name of copyright owner]"
 #
+# Copyright 2006 Sun Microsystems Inc. All Rights Reserved
 #
-# $Id: Makefile,v 1.17 2009/12/09 23:00:59 krishna_indigo Exp $
+# $Id: Makefile,v 1.7.2.1 2008/02/10 00:17:37 robertis Exp $
 #
 # Makefile file for building the Agents tree.
 #
@@ -42,17 +39,9 @@ AGENT_COMPONENTS := \
 SUBDIRS := common
 
 ifeq ($(BUILD_AGENT),)
-ifeq ($(OS_ARCH), HP-UX)
-SUBDIRS += apache apache22
-else 
-ifeq ($(OS_ARCH), AIX)
-SUBDIRS += apache apache22
-else 
-BUILD_AGENT := apache sjsws apache22 proxy40
-endif
-endif
+BUILD_AGENT := apache sjsws apache22
 ifeq ($(OS_ARCH), WINNT)
-BUILD_AGENT += iis7
+BUILD_AGENT += iis6
 endif
 endif
 
@@ -70,19 +59,11 @@ endif
 
 ifeq ($(OS_ARCH), WINNT)
 ifeq ($(CYGWIN_ARCH), WOW64)
-SUBDIRS += iis7 iis6
+SUBDIRS += iis6
 else
 SUBDIRS += $(BUILD_AGENT)
 endif
 endif
-
-ifeq ($(OS_ARCH), HP-UX)
-SUBDIRS += apache apache22
-endif 
-
-ifeq ($(OS_ARCH), AIX)
-SUBDIRS += apache apache22 domino
-endif 
 
 all: all_subdirs
 

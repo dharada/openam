@@ -4064,133 +4064,58 @@ am_web_remove_authnrequest(char *inpString, char **outString) {
 
 extern "C" AM_WEB_EXPORT am_status_t
 am_web_get_request_url(const char *host_hdr, const char *protocol,
-		       const char *hostname, size_t port, const char *uri,
-		       const char *query, char **request_url) {
+                       const char *hostname, size_t port, const char *uri,
+                       const char *query, char **request_url)
+{
+    const char *thisfunc = "am_web_get_request_url()";
     am_status_t retVal = AM_SUCCESS;
     URL url;
 
-    if(uri != NULL) url.setURI(uri);
-    if(query != NULL) url.setQuery(query);
-    if(protocol != NULL) url.setProtocol(protocol);
-
-    if(host_hdr == NULL || strlen(host_hdr) == 0) {
-	if(hostname != NULL) {
-	    url.setHost(hostname);
-	}
-
-	if(port > PORT_MIN_VAL && port < PORT_MAX_VAL ) {
-	    url.setPort(port);
-	}
-    } else {
-	std::string hostHdr(host_hdr);
-	std::size_t pos = hostHdr.find(':');
-	if(pos == std::string::npos) {
-	    url.setHost(hostHdr);
-	} else {
-	    std::string host = hostHdr.substr(0, pos);
-	    if(host.size() != 0) {
-		url.setHost(host);
-	    } else {
-		url.setHost(hostname);
-	    }
-
-	    port = Utils::getNumber(hostHdr.substr(pos + 1));
-	    if(port > PORT_MIN_VAL  && port < PORT_MAX_VAL ) url.setPort(port);
-	}
+    if(uri != NULL) {
+        url.setURI(uri);
     }
-    overrideProtoHostPort(url);
+    if(query != NULL) {
+        url.setQuery(query);
+    }
+    if(protocol != NULL) {
+        url.setProtocol(protocol);
+    }
+    if(host_hdr == NULL || strlen(host_hdr) == 0) {
+       if(hostname != NULL) {
+           url.setHost(hostname);
+       }
+       if(port > PORT_MIN_VAL && port < PORT_MAX_VAL) {
+           url.setPort(port);
+       }
+    } else {
+       std::string hostHdr(host_hdr);
+       std::size_t pos = hostHdr.find(':');
+       if(pos == std::string::npos) {
+           url.setHost(hostHdr);
+       } else {
+           std::string host = hostHdr.substr(0, pos);
+           if(host.size() != 0) {
+               url.setHost(host);
+           } else {
+               url.setHost(hostname);
+           }
+           port = Utils::getNumber(hostHdr.substr(pos + 1));
+           if(port > PORT_MIN_VAL && port < PORT_MAX_VAL) {
+               url.setPort(port);
+           }
+       }
+    }
+    // Save the url in request_url
     std::string urlStr;
     url.getURLString(urlStr);
-
     *request_url = (char *)malloc(urlStr.size() + 1);
     if(*request_url == NULL) {
-	am_web_log_error("am_web_get_request_url(): "
-			 "Unable to allocate memory.");
-	retVal = AM_NO_MEMORY;
+        am_web_log_error("%s: Unable to allocate memory for request_url.",
+                         thisfunc);
+        retVal = AM_NO_MEMORY;
     } else {
-	strcpy(*request_url, urlStr.c_str());
-    }
-    return retVal;
-}
-
-/**
- * Sets original request url and request url.
- * request url gets overrideden if override properties are set.
- * Original request url gets used during notification request processing.
- * request url is used for rest of request processing.
- */
-extern "C" AM_WEB_EXPORT am_status_t
-am_web_get_all_request_urls(const char *host_hdr, 
-                       const char *protocol,
-		       const char *hostname, 
-                       size_t port, 
-                       const char *uri,
-		       const char *query, 
-                       char **request_url,
-                       char **orig_request_url) {
-    am_status_t retVal = AM_SUCCESS;
-    URL url;
-
-    if(uri != NULL) url.setURI(uri);
-    if(query != NULL) url.setQuery(query);
-    if(protocol != NULL) url.setProtocol(protocol);
-
-    if(host_hdr == NULL || strlen(host_hdr) == 0) {
-	if(hostname != NULL) {
-	    url.setHost(hostname);
-	}
-
-	if(port > PORT_MIN_VAL && port < PORT_MAX_VAL) {
-	    url.setPort(port);
-	}
-    } else {
-	std::string hostHdr(host_hdr);
-	std::size_t pos = hostHdr.find(':');
-	if(pos == std::string::npos) {
-	    url.setHost(hostHdr);
-	} else {
-	    std::string host = hostHdr.substr(0, pos);
-	    if(host.size() != 0) {
-		url.setHost(host);
-	    } else {
-		url.setHost(hostname);
-	    }
-
-	    port = Utils::getNumber(hostHdr.substr(pos + 1));
-	    if(port > PORT_MIN_VAL && port < PORT_MAX_VAL ) 
-		url.setPort(port);
-	}
-    }
-
-    // set original request url
-    std::string origUrlStr;
-    url.getURLString(origUrlStr);
-
-    *orig_request_url = (char *)malloc(origUrlStr.size() + 1);
-    if(*orig_request_url == NULL) {
-	am_web_log_error("am_web_get_all_request_urls(): "
-			 "Unable to allocate memory to orig_request_url.");
-	retVal = AM_NO_MEMORY;
-    } else {
-	am_web_log_debug("am_web_get_all_request_urls(): "
-			 "orig_request_url is %s",  origUrlStr.c_str());
-	strcpy(*orig_request_url, origUrlStr.c_str());
-    }
-
-    // sets override request url, if override is set
-    overrideProtoHostPort(url);
-    std::string urlStr;
-    url.getURLString(urlStr);
-
-    *request_url = (char *)malloc(urlStr.size() + 1);
-    if(*request_url == NULL) {
-	am_web_log_error("am_web_get_all_request_urls(): "
-			 "Unable to allocate memory to request_url.");
-	retVal = AM_NO_MEMORY;
-    } else {
-	am_web_log_debug("am_web_get_all_request_urls(): "
-			 "request_url is %s",  urlStr.c_str());
-	strcpy(*request_url, urlStr.c_str());
+        strcpy(*request_url, urlStr.c_str());
+        am_web_log_debug("%s: Request url: %s", thisfunc, *request_url);
     }
     return retVal;
 }
@@ -4202,37 +4127,39 @@ am_web_check_cookie_in_post(void **args, char **dpro_cookie,
                  char *response,
                  boolean_t responseIsCookie,
                  am_status_t (*set_cookie)(const char*, void**),
-                 void (*set_method)(void **, char *)) {
+                 void (*set_method)(void **, char *))
+{
+    const char *thisfunc = "am_web_check_cookie_in_post";
     char *recv_token = NULL;
     am_status_t status = AM_SUCCESS;
 
     // Check arguments
     if(response == NULL || strlen(response) == 0) {
-        am_web_log_error("am_web_check_cookie_in_post(): "
-                    "Response object is NULL or empty.");
+        am_web_log_error("%s: Response object is NULL or empty.", thisfunc);
         status = AM_INVALID_ARGUMENT;
     }
     if (status == AM_SUCCESS) {
-        am_web_log_debug("am_web_check_cookie_in_post(): "
-            "AuthnResponse received = %s", response);
+        am_web_log_debug("%s: Post data received = %s", thisfunc, response);
         // Check for Liberty response
         if(responseIsCookie) {
             recv_token = strdup(response);
+            if (recv_token == NULL) {
+                am_web_log_error("%s: Unable to allocate memory.", thisfunc);
+                status = AM_NO_MEMORY;
+            }
         } else {
             status = am_web_get_token_from_assertion(response, &recv_token);
         }
     }
     if (status == AM_SUCCESS) {
-        am_web_log_debug("am_web_check_cookie_in_post(): "
-                    "recv_token : \"%s\"", recv_token);
+        am_web_log_debug("%s: recv_token : %s", thisfunc, recv_token);
         // Set cookie in browser for the foreign domain.
         status = am_web_do_cookie_domain_set(set_cookie, args, recv_token);
     }
     if (status == AM_SUCCESS) {
         *dpro_cookie = strdup(recv_token);
         if(*dpro_cookie == NULL) {
-            am_web_log_error("am_web_check_cookie_in_post(): "
-                           "Unable to allocate memory.");
+            am_web_log_error("%s: Unable to allocate memory.", thisfunc);
             status = AM_NO_MEMORY;
         } else {
             free(recv_token);
@@ -4244,13 +4171,6 @@ am_web_check_cookie_in_post(void **args, char **dpro_cookie,
             set_method(args, *orig_req);
         }
     }
-    if (status != AM_SUCCESS) {
-        am_web_log_error("am_web_check_cookie_in_post(): "
-                  "Call to am_web_get_token_from_assertion() "
-                  "failed with error code: %s",
-                   am_status_to_string(status));
-    }
-
     return status;
 }
 
@@ -5548,11 +5468,19 @@ am_web_create_post_preserve_urls(const char *request_url,
     am_status_t status = AM_SUCCESS;
     char *time_str = NULL;
     std::string key;
+    std::string request_url_str;
+    URL urlObject;
     post_urls_t *url_data_tmp = (post_urls_t *)malloc (sizeof(post_urls_t));
 
     if (request_url == NULL) {
         am_web_log_error("%s: request_url is NULL", thisfunc);
         status = AM_INVALID_ARGUMENT;
+    }
+    // Override the url if required
+    if (status == AM_SUCCESS) {
+        urlObject = URL(request_url);
+        overrideProtoHostPort(urlObject);
+        urlObject.getURLString(request_url_str);
     }
     // Get the time stamp
     if (status == AM_SUCCESS) {
@@ -5608,7 +5536,6 @@ am_web_create_post_preserve_urls(const char *request_url,
     if (status == AM_SUCCESS) {
         std::string dummyURL;
         char *stickySessionValue = NULL;
-        URL urlObject(request_url);
         urlObject.getRootURL(dummyURL);
         dummyURL.append(DUMMY_REDIRECT).append(MAGIC_STR).append(key);
         // Add the sticky session parameter if a LB is used with sticky
@@ -5631,7 +5558,7 @@ am_web_create_post_preserve_urls(const char *request_url,
     }
     // Set the action URL
     if (status == AM_SUCCESS) {
-        url_data_tmp->action_url = (char *)strdup(request_url);
+        url_data_tmp->action_url = (char *)strdup(request_url_str.c_str());
         if (url_data_tmp->action_url == NULL) {
             am_web_log_error("%s: Failed to allocate "
                              "url_data_tmp->action_url.", thisfunc);
@@ -8309,6 +8236,134 @@ am_web_set_host_ip_in_env_map(const char *client_ip,
         }
     }
     return status;
+}
+
+bool areHeadersEqual(string s1, string s2) {
+   bool isEqual = true;
+   if (s1.size() == s2.size()) {
+       for (int i=0 ; i<s1.size() ; i++) {
+           // In headers any "-" will become "_", therefore 
+           // replace all "-" by "_".
+           if (s1[i] == '-') {
+               s1[i] = '_';
+           }
+           if (s2[i] == '-') {
+               s2[i] = '_';
+           }
+           // Header comparison should be case insensitve
+           if (toupper(s1[i]) != toupper(s2[i])) {
+               isEqual = false;
+               break;
+           }
+       }
+   } else {
+       isEqual = false;
+   }
+   return isEqual;
+}
+
+void remove_attribute_from_headers(string attribute_name,
+                                   char** header_list_char)
+{
+    const char *thisfunc = "remove_attribute_from_headers()";
+    am_status_t status = AM_SUCCESS;
+    size_t startPos = 0;
+    size_t endPos = 0;
+    size_t colonPos = 0;
+    string header_list, header, header_name;
+    
+    if ((header_list_char == NULL) || (strlen(*header_list_char) == 0)) {
+        status = AM_INVALID_ARGUMENT;
+    }
+    if (status == AM_SUCCESS) {
+        header_list.assign(*header_list_char);
+        while (startPos < header_list.size()) {
+            // Get the header name/value pair
+            endPos = header_list.find("\r\n", startPos);
+            if (endPos != string::npos) {
+                header = header_list.substr(startPos, endPos-startPos);
+                // Get the header name
+                colonPos = header.find(":");
+                if (colonPos != string::npos) {
+                    header_name = header.substr(0, colonPos);
+                    if (!header_name.empty()) {
+                        if (areHeadersEqual(attribute_name, header_name)) {
+                            header_list.erase(startPos, endPos-startPos + 2);
+                            am_web_log_debug("%s: Header \"%s\" has been removed.",
+                                              thisfunc, header.c_str());
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+            startPos = endPos;
+            while ((startPos <= header_list.size()) &&
+                   ((header_list[startPos] == '\r') ||
+                    (header_list[startPos] == '\n')))
+            {
+                startPos++;
+            }
+        }
+        // Save the new header list
+        memset(*header_list_char, 0, strlen(*header_list_char));
+        strncpy(*header_list_char, header_list.c_str(), header_list.length());
+    }
+}
+
+/**
+ * Remove all the attributes listed in attributes_list_char
+ * from header_list. 
+ */
+extern "C" AM_WEB_EXPORT void
+am_web_remove_attributes_from_headers(char* attributes_list_char, char** header_list)
+{
+    const char *thisfunc = "am_web_remove_attributes_from_headers()";
+    am_status_t status = AM_SUCCESS;
+    string attribute_list, attribute, attribute_name;
+    size_t startPos = 0;
+    size_t endPos = 0;
+    size_t colonPos = 0;
+    
+    if ((attributes_list_char == NULL) || 
+        (strlen(attributes_list_char) == 0)) 
+    {
+        am_web_log_warning("%s: attributes_list_char is NULL.", thisfunc);
+        status = AM_INVALID_ARGUMENT;
+    }
+    if ((*header_list == NULL) || (strlen(*header_list) == 0)) {
+        am_web_log_warning("%s: header_list is NULL.", thisfunc);
+        status = AM_INVALID_ARGUMENT;
+    }
+    if (status == AM_SUCCESS) {
+        attribute_list.assign(attributes_list_char);
+        while (startPos < attribute_list.size()) {
+            // Get the attribute name/value pair
+            endPos = attribute_list.find("\r\n", startPos);
+            if (endPos != string::npos) {
+                attribute = attribute_list.substr(startPos, endPos-startPos);
+                // Get the attribute name
+                colonPos = attribute.find(":");
+                if (colonPos != string::npos) {
+                    attribute_name = attribute.substr(0, colonPos);
+                    // Remove the attribute from the header list
+                    if (!attribute_name.empty()) {
+                        remove_attribute_from_headers(attribute_name,
+                                                      &(*header_list));
+                    }
+                }
+            } else {
+                break;
+            }
+            startPos = endPos;
+            while ((startPos < attribute_list.size()) &&
+                   ((attribute_list[startPos] == '\r') ||
+                    (attribute_list[startPos] == '\n')))
+            {
+                startPos++;
+            }
+        }
+    }
 }
 
 #if (defined(WINNT) || defined(_AMD64_))
