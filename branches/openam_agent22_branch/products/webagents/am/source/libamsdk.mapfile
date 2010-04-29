@@ -208,7 +208,6 @@ SUNW_2.2 {
 		am_web_build_advice_response;
 		am_web_get_am_revision_number;
 		am_web_get_request_url;
-		am_web_get_all_request_urls;
 		am_web_build_advice_redirect_url;
 		am_web_use_redirect_for_advice;
 		am_web_use_sunwmethod;
@@ -217,6 +216,7 @@ SUNW_2.2 {
 		am_web_get_postdata_preserve_lbcookie;
 		am_web_get_postdata_preserve_URL_parameter;
 		am_web_get_accessdenied_url;
+		am_web_remove_attributes_from_headers;
 
 	local:
 		*;
