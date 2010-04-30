@@ -161,12 +161,10 @@ endif
 
 ifeq ($(OS_ARCH), Linux)
 SYSTEM_LIBS := -lpthread -ldl
+	ifeq ($(BUILD_TYPE), 32)
+	SYSTEM_LIBS += -m32
+	endif
 endif
-
-ifeq ($(BUILD_TYPE), 32)
-SYSTEM_LIBS += -m32
-endif
-
 
 INCLUDE_FLAGS := -I$(REAL_SRC_DIR) -I$(NSPR_INC_DIR) -I$(NSS_INC_DIR) -I$(LIBXML_INC_DIR)
 

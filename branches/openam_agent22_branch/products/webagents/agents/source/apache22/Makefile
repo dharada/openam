@@ -100,8 +100,10 @@ $(STD_LIB)_LDLIBS := $(NSS_LIBS) $(NSPR_LIBS)
 LDLIBS += -L ../../../am/source
 LDLIBS += $(LDFLAGS) $(LIBXML_LIBS) $($(STD_LIB)_LDLIBS) $(SYSTEM_LIBS)
 
-ifeq ($(BUILD_TYPE), 32)
-SYSTEM_LIBS += -m32
+ifeq ($(OS_ARCH), Linux)
+	ifeq ($(BUILD_TYPE), 32)
+	SYSTEM_LIBS += -m32
+	endif
 endif
 
 ifeq ($(OS_ARCH), SunOS)

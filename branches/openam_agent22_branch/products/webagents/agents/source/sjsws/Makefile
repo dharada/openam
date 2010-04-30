@@ -77,8 +77,10 @@ LDLIBS += $(LD_STATIC_FLAG) -lamsdk $(LD_SHARED_FLAG) -L/usr/lib/i386-redhat-lin
 LDLIBS += -Bdynamic -L$(NSPR_LIB_DIR) -L$(LIBXML_LIB_DIR) -L$(NSS_LIB_DIR) -lnspr4 -lplds4 -lplc4 -lnss3 -lssl3 -lxml2
 endif
 
-ifeq ($(BUILD_TYPE), 32)
-LDLIBS += -m32
+ifeq ($(OS_ARCH), Linux)
+	ifeq ($(BUILD_TYPE), 32)
+	LDLIBS += -m32
+	endif
 endif
 
 ES6_CFLAGS += -DWS_VERSION=60000
