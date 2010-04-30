@@ -25,6 +25,8 @@
 # Makefile for building the Apache Policy Agent.
 #
 
+# "Portions Copyrighted [2010] [ForgeRock AS]"
+
 USERX_ROOT = ../../..
 
 include $(USERX_ROOT)/arch/components.mk
@@ -77,12 +79,11 @@ ifeq ($(OS_ARCH), Linux)
    endif
 endif
 
-
-ifeq ($(OS_ARCH), Linux)
-     ifeq ($(MC_ARCH), x86_64)
-          APACHE22_CFLAGS += -DX86_64
-      endif
-endif
+#ifeq ($(OS_ARCH), Linux)
+#     ifeq ($(MC_ARCH), x86_64)
+#          APACHE22_CFLAGS += -DX86_64
+#      endif
+#endif
 
 APACHE22_CFLAGS += -DAPACHE2 -DEAPI -DMOD_PERL -DUSE_EXPAT -DXP_UNIX $(PIC_FLAG) -DCORE_PRIVATE $(APACHE22_INCLUDE_FLAGS) -I$(APACHE22_INC_DIR)
 
@@ -98,6 +99,10 @@ LDFLAGS += -L$(NSS_LIB_DIR) -L$(NSPR_LIB_DIR) -L$(LIBXML_LIB_DIR)
 $(STD_LIB)_LDLIBS := $(NSS_LIBS) $(NSPR_LIBS)
 LDLIBS += -L ../../../am/source
 LDLIBS += $(LDFLAGS) $(LIBXML_LIBS) $($(STD_LIB)_LDLIBS) $(SYSTEM_LIBS)
+
+ifeq ($(BUILD_TYPE), 32)
+SYSTEM_LIBS += -m32
+endif
 
 ifeq ($(OS_ARCH), SunOS)
 LDFLAGS += -L$(DEST_LIB_DIR)

@@ -25,6 +25,10 @@
  * particular service.
  *
  */
+
+/*
+ * "Portions Copyrighted [2010] [ForgeRock AS]"
+ */
 #ifndef __SERVICE_H__
 #define __SERVICE_H__
 
@@ -44,6 +48,7 @@
 #include "naming_service.h"
 #include "properties.h"
 #include "policy_entry.h"
+#include "sso_token_service.h"
 #include "session_info.h"
 #include "xml_tree.h"
 #include "thread_pool.h"
@@ -132,7 +137,7 @@ class Service {
 		       bool refetchPolicy,
                        PolicyEntryRefCntPtr &);
 bool
-Service::do_update_policy(const SSOToken &ssoTok, const string &resName,
+do_update_policy(const SSOToken &ssoTok, const string &resName,
 		       const string &actionName,
 		       const KeyValueMap &env,
                        SessionInfo &sessionInfo,

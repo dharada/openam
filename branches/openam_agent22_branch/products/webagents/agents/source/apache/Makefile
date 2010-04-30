@@ -25,6 +25,8 @@
 # Makefile for building the Apache Policy Agent.
 #
 
+# "Portions Copyrighted [2010] [ForgeRock AS]"
+
 USERX_ROOT = ../../..
 
 include $(USERX_ROOT)/arch/components.mk
@@ -93,6 +95,10 @@ LDFLAGS += -L$(NSS_LIB_DIR) -L$(NSPR_LIB_DIR) -L$(LIBXML_LIB_DIR)
 $(STD_LIB)_LDLIBS := $(NSS_LIBS) $(NSPR_LIBS)
 LDLIBS += -L ../../../am/source
 LDLIBS += $(LDFLAGS) $(LIBXML_LIBS) $($(STD_LIB)_LDLIBS) $(SYSTEM_LIBS)
+
+ifeq ($(BUILD_TYPE), 32)
+SYSTEM_LIBS += -m32
+endif
 
 ifeq ($(OS_ARCH), SunOS)
 LDFLAGS += -L$(DEST_LIB_DIR)

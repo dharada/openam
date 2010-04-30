@@ -20,6 +20,11 @@
  * Copyright 2007 Sun Microsystems Inc. All Rights Reserved
  *
  */
+
+/*
+ * "Portions Copyrighted [2010] [ForgeRock AS]"
+ */
+
 #include <limits.h>
 #include <signal.h>
 #include <errno.h>
@@ -622,6 +627,8 @@ set_user(void **args, const char *user)
     }
     return sts;
 }
+
+static int get_apache_method_num(am_web_req_method_t am_num);
 
 static am_web_req_method_t
 get_method_num(request_rec *r)

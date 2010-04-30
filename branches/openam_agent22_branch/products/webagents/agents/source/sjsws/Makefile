@@ -23,6 +23,8 @@
 # Copyright 2007 Sun Microsystems Inc. All Rights Reserved
 #
 
+# "Portions Copyrighted [2010] [ForgeRock AS]"
+
 USERX_ROOT = ../../..
 
 include $(USERX_ROOT)/arch/components.mk
@@ -73,6 +75,10 @@ ES6_CFLAGS += -I$(SJSWS_INC_DIR)
 #LDLIBS += $(LD_STATIC_FLAG) $(CXX_STD_LIBS) -lamsdk $(LD_SHARED_FLAG) -lc -lm
 LDLIBS += $(LD_STATIC_FLAG) -lamsdk $(LD_SHARED_FLAG) -L/usr/lib/i386-redhat-linux3E/lib/ -lc -lm
 LDLIBS += -Bdynamic -L$(NSPR_LIB_DIR) -L$(LIBXML_LIB_DIR) -L$(NSS_LIB_DIR) -lnspr4 -lplds4 -lplc4 -lnss3 -lssl3 -lxml2
+endif
+
+ifeq ($(BUILD_TYPE), 32)
+LDLIBS += -m32
 endif
 
 ES6_CFLAGS += -DWS_VERSION=60000

@@ -24,6 +24,8 @@
 #
 #
 
+# "Portions Copyrighted [year] [name of copyright owner]"
+
 override BUILD_MODULE=USERX
 
 USERX_ROOT = ../..
@@ -161,6 +163,11 @@ ifeq ($(OS_ARCH), Linux)
 SYSTEM_LIBS := -lpthread -ldl
 endif
 
+ifeq ($(BUILD_TYPE), 32)
+SYSTEM_LIBS += -m32
+endif
+
+
 INCLUDE_FLAGS := -I$(REAL_SRC_DIR) -I$(NSPR_INC_DIR) -I$(NSS_INC_DIR) -I$(LIBXML_INC_DIR)
 
 LDFLAGS += -L$(NSS_LIB_DIR) -L$(NSPR_LIB_DIR) \
@@ -195,9 +202,13 @@ LDLIBS += $(LIBXML_LIBS) $($(STD_LIB)_LDLIBS) $(SYSTEM_LIBS)
 CXXFLAGS += $(PIC_FLAG) -DAM_BUILDING_LIB -D_CHAR_IS_UNSIGNED
 LD_STATIC_FLAGS += $(PIC_FLAG) -DAM_BUILDING_LIB
 
+#ifeq ($(MC_ARCH), x86_64)
+#     CFLAGS += -fPIC 
+#     CXXFLAGS += -DX86_64 
+#endif
+
 ifeq ($(MC_ARCH), x86_64)
-     CFLAGS += -fPIC 
-     CXXFLAGS += -DX86_64
+	CFLAGS += -fPIC
 endif
 
 CFLAGS += -DAM_BUILDING_LIB
