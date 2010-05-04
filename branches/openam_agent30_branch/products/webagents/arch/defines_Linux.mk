@@ -30,8 +30,6 @@
 # 
 #
 
-# "Portions Copyrighted [2010] [ForgeRock AS]"
-
 #
 # This makefile defines a number of standard OS-dependent symbols
 # used in by the makefiles that build the Agent Pack.
@@ -97,12 +95,6 @@ ifeq ($(BUILD_TYPE), 64)
 CFLAGS += -fPIC
 CXXFLAGS += -DLINUX_64
 endif
-
-ifeq ($(BUILD_TYPE), 32)
-CFLAGS += -fPIC -m32
-CXXFLAGS += -DLINUX -m32
-endif
-
 
 #
 # the following is the name of the tar ball for dsame drop,.
