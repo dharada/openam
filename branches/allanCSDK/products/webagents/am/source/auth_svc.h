@@ -185,6 +185,12 @@ class AuthService: public BaseService {
     void processConfirmationCallback(am_auth_confirmation_callback_t &,
 				const XMLElement &); 
 
+    void processHTTPCallback(am_auth_http_callback_t &,
+				const XMLElement &);
+    
+    void processRedirectCallback(am_auth_redirect_callback_t &,
+				const XMLElement &);
+
     void processLanguageCallback(am_auth_language_callback_t &,
 				const XMLElement &); 
 

@@ -76,6 +76,8 @@ const char *TEMPLATE_NAME = "templateName";
 const char *CALLBACKS = "Callbacks";
 const char *LENGTH = "length";
 const char *CHOICE_CALLBACK = "ChoiceCallback";
+const char *HTTP_CALLBACK = "HttpCallback";
+const char *REDIRECT_CALLBACK = "RedirectCallback";
 const char *CONFIRMATION_CALLBACK = "ConfirmationCallback";
 const char *LANGUAGE_CALLBACK = "LanguageCallback";
 const char *NAME_CALLBACK = "NameCallback";
@@ -102,6 +104,14 @@ const char *OPTION_VALUE = "OptionValue";
 const char *OPTION_VALUES = "OptionValues";
 const char *DEFAULT_OPTION_VALUE = "DefaultOptionValue";
 const char *DEFAULT_VALUE = "DefaultValue";
+
+const char *HTTP_HEADER = "HttpHeader";
+const char *HTTP_NEGO = "Negotiation";
+const char *HTTP_CODE = "HttpErrorCode";
+const char *HTTP_TOKEN = "HttpToken";
+
+
+
 // VALUE is defined in utils.cpp
 // const char *VALUE = "Value";
 const char *QUOTE = "\"";
@@ -185,6 +195,22 @@ namespace {
 #define TEXT_OUTPUT_CALLBACK_PREFIX_DATA "<TextOutputCallback>"
 
 #define TEXT_OUTPUT_CALLBACK_SUFFIX_DATA "</TextOutputCallback>"
+
+
+#define HTTP_HEADER_CALLBACK_PREFIX_DATA = "<HttpHeader>";
+#define HTTP_HEADER_CALLBACK_SUFFIX_DATA  = "</HttpHeader>";
+
+#define HTTP_NEGO_CALLBACK_PREFIX_DATA = "<Negotiation>";
+#define HTTP_NEGO_CALLBACK_SUFFIX_DATA = "</Negotiation>";
+
+#define HTTP_CODE_CALLBACK_PREFIX_DATA = "<HttpErrorCode>";
+#define HTTP_CODE_CALLBACK_SUFFIX_DATA = "</HttpErrorCode>";
+
+#define HTTP_TOKEN_CALLBACK_PREFIX_DATA = "<HttpToken>";
+#define HTTP_TOKEN_CALLBACK_SUFFIX_DATA = "</HttpToken>";
+
+
+
 
 #define LOCALE_PREFIX_DATA "<Locale>"
 
@@ -366,7 +392,37 @@ const char textInputCallbackPrefix[] = {
 
 const char textInputCallbackSuffix[] = { 
     TEXT_INPUT_CALLBACK_SUFFIX_DATA 
-}; 
+};
+
+
+const char httpCallbackPrefix[] = {
+    HTTP_HEADER_CALLBACK_PREFIX_DATA
+};
+const char httpCallbackSuffix[] = {
+    HTTP_HEADER_CALLBACK_SUFFIX_DATA
+};
+
+const char httpNegoCallbackPrefix[] = {
+    HTTP_NEGO_CALLBACK_PREFIX_DATA
+};
+const char httpNegoCallbackSuffix[] = {
+    HTTP_NEGO_CALLBACK_SUFFIX_DATA\};
+
+const char httpCodeCallbackPrefix[] = {
+    HTTP_CODE_CALLBACK_PREFIX_DATA
+};
+const char httpCodeCallbackSuffix[] = {
+    HTTP_CODE_CALLBACK_SUFFIX_DATA
+};
+
+const char httpTokenCallbackPrefix[] = {
+    HTTP_TOKEN_CALLBACK_PREFIX_DATA
+};
+const char httpTokenCallbackSuffix[] = {
+    HTTP_TOKEN_CALLBACK_SUFFIX_DATA
+};
+
+
 
 const char localePrefix[] = {
     LOCALE_PREFIX_DATA
@@ -616,6 +672,15 @@ AuthService::textInputCallbackPrefixChunk(textInputCallbackPrefix,
 const AuthService::BodyChunk
 AuthService::textInputCallbackSuffixChunk(textInputCallbackSuffix,
 				    sizeof(textInputCallbackSuffix) - 1);
+
+
+const AuthService::BodyChunk
+AuthService::httpCallbackPrefixChunk(httpCallbackPrefix,
+				    sizeof(httpCallbackPrefix) - 1);
+
+const AuthService::BodyChunk
+AuthService::httpCallbackSuffixChunk(httpCallbackSuffix,
+				    sizeof(httpCallbackSuffix) - 1);
 
 const AuthService::BodyChunk
 AuthService::localePrefixChunk(localePrefix,
@@ -1373,6 +1438,30 @@ AuthService::processIndividualCallbacks(AuthContext &auth_ctx,
 	// add to the list of callbacks
 	auth_ctx.callbacks.push_back(callback);
 
+    } else if(callbackNode.isNamed(HTTP_CALLBACK)) {
+
+	// process HTTPCallback  OPENAM-45
+
+	am_auth_http_callback_t &http_cb =
+	    callback.callback_info.http_callback;
+	callback.callback_type = HTTPCallback;
+	processHTTPCallback(http_cb, callbackNode);
+
+	// add to the list of callbacks
+	auth_ctx.callbacks.push_back(callback);
+
+    } else if(callbackNode.isNamed(REDIRECT_CALLBACK)) {
+
+	// process RedirectCallback OPENAM-45
+
+	am_auth_redirect_callback_t &redirect_cb =
+	    callback.callback_info.redirect_callback;
+	callback.callback_type = redirectCallback;
+	processRedirectCallback(redirect_cb, callbackNode);
+
+	// add to the list of callbacks
+	auth_ctx.callbacks.push_back(callback);
+
     } else if(callbackNode.isNamed(LANGUAGE_CALLBACK)) {
 
 	// process LanguageCallback
@@ -1692,6 +1781,81 @@ AuthService::processNameCallback(am_auth_name_callback_t &name_cb,
 
     return;
 } // processNameCallback
+
+/*
+ * processHTTPCallback
+ *             Process HTTP callback from server.
+ * Throws: InternalException upon error
+ */
+
+
+void
+AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
+			const XMLElement &callbackNode)
+{
+
+    XMLElement headerNode;
+    if(callbackNode.getSubElement(HTTP_HEADER, headerNode)) {
+	std::string auth_header;
+	if(headerNode.getValue(auth_header) && header.length() > 0) {
+	    http_cb.tokenHeader = (const char *) strdup(auth_header.c_str());
+	}
+    }
+
+    XMLElement negoNode;
+    if(callbackNode.getSubElement(HTTP_NEGO, negoNode)) {
+	std::string negotiation;
+	if(negoNode.getValue(negotiation) && negotiation.length() > 0)
+	{
+            size_t colon = negotiation.find ( ':' );
+            if(colon != string::npos) {
+                http_cb.negoHeader = (const char *) strdup(negotiation.substr(0,colon-1));
+                http_cb.negoValue  = (const char *) strdup(negotiation.substr(colon));
+
+            } else {
+                http_cb.negoHeader = (const char *) strdup(negotiation.c_str());
+                http_cb.negoValue  = (const char *) null;
+	}
+    }
+
+    XMLElement errorCodeNode;
+    if(callbackNode.getSubElement(HTTP_CODE, errorCodeNode)) {
+	std::string errorCode;
+	if(negoNode.getValue(errorCode) && errorCode.length() > 0)
+	{
+	    http_cb.response = (const char *) strdup(errorCode.c_str());
+	}
+    }
+
+    XMLElement authTokenNode;
+    if(callbackNode.getSubElement(HTTP_CODE, authTokenNode)) {
+	std::string authToken;
+	if(authTokenNode.getValue(authToken) && authToken.length() > 0)
+	{
+	    http_cb.response = (const char *) strdup(authToken.c_str());
+	}
+    }
+
+    return;
+} // processHTTPCallback
+
+
+/*
+ * processRedirectCallback
+ *             Process redirect callback from server.
+ * Throws: InternalException upon error
+ */
+
+
+
+void
+AuthService::processRedirectCallback(am_auth_redirect_callback_t &redirect_cb,
+			const XMLElement &callbackNode)
+{
+
+
+    return;
+} // processRedirectCallback
 
 
 /*
@@ -2265,6 +2429,22 @@ AuthService::addCallbackRequirements(AuthContext &auth_ctx,
 		// nothing to do
 	    }
 	    break;
+	case HttpCallback:
+	    // if HTTP callback
+	    {
+	    am_auth_http_callback_t &http_cb =
+		callback.callback_info.http_callback;
+	    addHttpCallbackRequirements(http_cb, bodyChunkList);
+	    }
+	    break;
+	case RedirectCallback:
+	    // if Redirect callback
+	    {
+	    am_auth_confirmation_callback_t &confirmation_cb =
+		callback.callback_info.confirmation_callback;
+	    addConfirmationCallbackRequirements(confirmation_cb, bodyChunkList);
+	    }
+	    break;
 	default:
 	    break;
 	}
@@ -2573,6 +2753,74 @@ AuthService::addTextInputCallbackRequirements(
 
     return;
 } // addTextInputCallbackRequirements
+
+
+/*
+ * addHTTPCallbackRequirements
+ *             Add name callback requirements received from client
+ *             to XML server response being generated.
+ */
+
+
+        
+void
+AuthService::addHttpCallbackRequirements(am_auth_http_callback_t &http_cb,
+		BodyChunkList &bodyChunkList) {
+
+    std::string name(http_cb.response);
+
+    bodyChunkList.push_back(httpCallbackPrefixChunk);
+
+    // add prompt value
+    bodyChunkList.push_back(httpHeaderPrefixChunk);
+    bodyChunkList.push_back(BodyChunk(name_cb.prompt, strlen(name_cb.prompt)));
+    bodyChunkList.push_back(promptSuffixChunk);
+
+    // Do entity Reference conversions
+    Utils::expandEntityRefs(name);
+
+    // add name value
+    bodyChunkList.push_back(valuePrefixChunk);
+    bodyChunkList.push_back(BodyChunk(name));
+    bodyChunkList.push_back(valueSuffixChunk);
+
+    bodyChunkList.push_back(httpCallbackSuffixChunk);
+
+    return;
+} // addNameCallbackRequirements
+
+
+/*
+ * addRedirectCallbackRequirements
+ *             Add Redirect callback requirements received from client
+ *             to XML server response being generated.
+ */
+void
+AuthService::addRedirectCallbackRequirements(am_auth_redirect_callback_t &redirect_cb,
+		BodyChunkList &bodyChunkList) {
+
+    std::string name(name_cb.response);
+
+    bodyChunkList.push_back(nameCallbackPrefixChunk);
+
+    // add prompt value
+    bodyChunkList.push_back(promptPrefixChunk);
+    bodyChunkList.push_back(BodyChunk(name_cb.prompt, strlen(name_cb.prompt)));
+    bodyChunkList.push_back(promptSuffixChunk);
+
+    // Do entity Reference conversions
+    Utils::expandEntityRefs(name);
+
+    // add name value
+    bodyChunkList.push_back(valuePrefixChunk);
+    bodyChunkList.push_back(BodyChunk(name));
+    bodyChunkList.push_back(valueSuffixChunk);
+
+    bodyChunkList.push_back(nameCallbackSuffixChunk);
+
+    return;
+} // addRedirectCallbackRequirements
+
 
 /*
  * create_auth_context_cac
