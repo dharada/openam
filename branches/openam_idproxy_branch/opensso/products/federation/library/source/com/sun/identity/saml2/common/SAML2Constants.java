@@ -1375,8 +1375,18 @@ public interface SAML2Constants {
     /**
      * Default IDP Proxy Finder JSP
      */
-    public static final String DEFAULT_PROXY_IDP_FINDER = "proxyidpfinder.jsp"; 
-    
+    public static final String DEFAULT_PROXY_IDP_FINDER = "proxyidpfinder.jsp";
+
+    /**
+     * IDP Adapter class attribute name
+     */
+    public static final String IDP_ADAPTER_CLASS = "idpAdapter";
+
+    /**
+     * Default IDP Adapter class
+     */
+    public static final String DEFAULT_IDP_ADAPTER = "com.sun.identity.saml2.plugins.DefaultIDPAdapter";
+
     /**
      * Key used to save IDP Session in a map
      */    
