@@ -1,0 +1,7 @@
+.README.txt.swp
+.DS_Store
+build
+.Makefile.swp
+lib
+Makefile
+dist

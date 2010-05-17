@@ -1,0 +1,139 @@
+<!--
+   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+   Copyright (c) 2006 Sun Microsystems Inc. All Rights Reserved
+  
+   The contents of this file are subject to the terms
+   of the Common Development and Distribution License
+   (the License). You may not use this file except in
+   compliance with the License.
+
+   You can obtain a copy of the License at
+   https://opensso.dev.java.net/public/CDDLv1.0.html or
+   opensso/legal/CDDLv1.0.txt
+   See the License for the specific language governing
+   permission and limitations under the License.
+
+   When distributing Covered Code, include this CDDL
+   Header Notice in each file and include the License file
+   at opensso/legal/CDDLv1.0.txt.
+   If applicable, add the following below the CDDL Header,
+   with the fields enclosed by brackets [] replaced by
+   your own identifying information:
+   "Portions Copyrighted [year] [name of copyright owner]"
+
+   $Id: build-checkjars.xml,v 1.5 2009/01/28 05:34:43 ww203982 Exp $
+
+-->
+
+<project name="opensso" default="all">
+
+    <description>Check the existence of external libraries</description>
+
+    <available file="${extlib.dir}/activation.jar" type="file" 
+        property="activation.jar.present"/>
+    <available file="${extlib.dir}/db.jar" type="file" 
+        property="db.jar.present"/>
+    <available file="${extlib.dir}/j2ee.jar" type="file" 
+        property="j2ee.jar.present"/>
+    <available file="${extlib.dir}/jaxb-api.jar" type="file"
+        property="jaxb.api.jar.present"/>
+    <available file="${extlib.dir}/jaxrpc-api.jar" type="file" 
+        property="jaxrpc.api.jar.present" />
+    <available file="${extlib.dir}/jaxrpc-impl.jar" type="file" 
+        property="jaxrpc.impl.jar.present"/>
+    <available file="${extlib.dir}/jaxrpc-spi.jar" type="file" 
+        property="jaxrpc.spi.jar.present"/>
+    <available file="${extlib.dir}/mail.jar" type="file" 
+        property="mail.jar.present"/>
+    <available file="${extlib.dir}/saaj-api.jar" type="file" 
+        property="saaj.api.jar.present"/>
+    <available file="${extlib.dir}/saaj-impl.jar" type="file" 
+        property="saaj.impl.jar.present"/>
+    <available file="${extlib.dir}/click.jar" type="file" 
+        property="click.jar.present"/>
+    <available file="${extlib.dir}/click-extras.jar" type="file"
+        property="click-extras.jar.present"/>
+
+    <target name="all">
+
+	<condition property="extlib.jar.exists">
+	    <and>
+            <isset property="activation.jar.present" />
+            <isset property="db.jar.present" />
+            <isset property="j2ee.jar.present" />
+            <isset property="jaxb.api.jar.present" />
+            <isset property="jaxrpc.api.jar.present" />
+            <isset property="jaxrpc.impl.jar.present" />
+            <isset property="jaxrpc.spi.jar.present" />
+            <isset property="mail.jar.present" />
+            <isset property="saaj.api.jar.present" />
+            <isset property="saaj.impl.jar.present" />
+            <isset property="click.jar.present" />
+            <isset property="click-extras.jar.present" />
+        </and>
+	</condition>
+    
+
+    <fail message="*** missing ${extlib.dir}/activation.jar ***">
+        <condition>
+            <not><isset property="activation.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/db.jar ***">
+        <condition>
+            <not><isset property="db.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/j2ee.jar ***">
+        <condition>
+            <not><isset property="j2ee.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/jaxb-api.jar ***">
+        <condition>
+            <not><isset property="jaxb.api.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/jaxrpc-api.jar ***">
+        <condition>
+            <not><isset property="jaxrpc.api.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/jaxrpc-impl.jar ***">
+        <condition>
+            <not><isset property="jaxrpc.impl.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/jaxrpc-spi.jar ***">
+        <condition>
+            <not><isset property="jaxrpc.spi.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/mail.jar ***">
+        <condition>
+            <not><isset property="mail.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/saaj-api.jar ***">
+        <condition>
+            <not><isset property="saaj.api.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/saaj-impl.jar ***">
+        <condition>
+            <not><isset property="saaj.impl.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/click.jar.  Download Click 1.4 beta from http://click.sourceforge.net.  The .jar file should be renamed to click.jar (without the version number in the filename) ***">
+        <condition>
+            <not><isset property="saaj.impl.jar.present" /></not>
+        </condition>
+    </fail>
+    <fail message="*** missing  ${extlib.dir}/click-extras.jar.  Download Click 1.4 beta from http://click.sourceforge.net and include the 'extras' .jar file.  It should be renamed to click-extras.jar (without the version number in the filename)***">
+        <condition>
+            <not><isset property="saaj.impl.jar.present" /></not>
+        </condition>
+    </fail>
+    </target>
+</project>
