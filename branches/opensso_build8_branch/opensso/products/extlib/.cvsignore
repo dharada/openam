@@ -1,0 +1,5 @@
+*.jar
+*.dll
+*.zip
+agent-csdk
+OpenDS.jar.*

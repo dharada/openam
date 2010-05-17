@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FxCopProject Version="1.36" Name="Fedlet FxCop Project">
+ <ProjectOptions>
+  <SharedProject>True</SharedProject>
+  <Stylesheet Apply="False">c:\program files\microsoft fxcop 1.36\Xml\FxCopReport.xsl</Stylesheet>
+  <SaveMessages>
+   <Project Status="Active, Excluded" NewOnly="False" />
+   <Report Status="Active" NewOnly="False" />
+  </SaveMessages>
+  <ProjectFile Compress="True" DefaultTargetCheck="True" DefaultRuleCheck="True" SaveByRuleGroup="" Deterministic="True" />
+  <EnableMultithreadedLoad>True</EnableMultithreadedLoad>
+  <EnableMultithreadedAnalysis>True</EnableMultithreadedAnalysis>
+  <SourceLookup>True</SourceLookup>
+  <AnalysisExceptionsThreshold>10</AnalysisExceptionsThreshold>
+  <RuleExceptionsThreshold>1</RuleExceptionsThreshold>
+  <Spelling Locale="en-US" />
+  <OverrideRuleVisibilities>False</OverrideRuleVisibilities>
+  <CustomDictionaries SearchFxCopDir="True" SearchUserProfile="True" SearchProjectDir="True" />
+  <SearchGlobalAssemblyCache>False</SearchGlobalAssemblyCache>
+  <DeadlockDetectionTimeout>120</DeadlockDetectionTimeout>
+  <IgnoreGeneratedCode>False</IgnoreGeneratedCode>
+ </ProjectOptions>
+ <Targets>
+  <AssemblyReferenceDirectories>
+   <Directory>$(ProjectDir)/Fedlet/bin/Release/</Directory>
+  </AssemblyReferenceDirectories>
+  <Target Name="$(ProjectDir)/Fedlet/bin/Debug/Fedlet.dll" Analyze="True" AnalyzeAllChildren="True" />
+ </Targets>
+ <Rules>
+  <RuleFiles>
+   <RuleFile Name="$(FxCopDir)\Rules\DesignRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\GlobalizationRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\InteroperabilityRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\MobilityRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\NamingRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\PerformanceRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\PortabilityRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\SecurityRules.dll" Enabled="True" AllRulesEnabled="True" />
+   <RuleFile Name="$(FxCopDir)\Rules\UsageRules.dll" Enabled="True" AllRulesEnabled="True" />
+  </RuleFiles>
+  <Groups />
+  <Settings />
+ </Rules>
+ <FxCopReport Version="1.36">
+  <Namespaces>
+   <Namespace Name="Sun.Identity.Common">
+    <Messages>
+     <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Excluded" Created="2009-06-05 21:02:13Z">
+      <Issue>
+       <Item>Sun.Identity.Common</Item>
+      </Issue>
+      <Notes>
+       <User Name="ggennaro">
+        <Note Id="4" />
+       </User>
+      </Notes>
+     </Message>
+    </Messages>
+   </Namespace>
+  </Namespaces>
+  <Targets>
+   <Target Name="$(ProjectDir)/Fedlet/bin/Debug/Fedlet.dll">
+    <Modules>
+     <Module Name="fedlet.dll">
+      <Namespaces>
+       <Namespace Name="Sun.Identity.Saml2">
+        <Types>
+         <Type Name="IdentityProvider">
+          <Members>
+           <Member Name="#GetSingleSignOnServiceLocation(System.String)">
+            <Messages>
+             <Message Id="SignOn" TypeName="UsePreferredTerms" Category="Microsoft.Naming" CheckId="CA1726" Status="Excluded" Created="2009-05-22 23:07:47Z">
+              <Issue Name="Member">
+               <Item>SignOn</Item>
+               <Item>'IdentityProvider.GetSingleSignOnServiceLocation(string)'</Item>
+               <Item>SignIn</Item>
+              </Issue>
+              <Notes>
+               <User Name="ggennaro">
+                <Note Id="0" />
+               </User>
+              </Notes>
+             </Message>
+            </Messages>
+           </Member>
+           <Member Name="#SingleSignOnServiceLocations">
+            <Messages>
+             <Message Id="SignOn" TypeName="UsePreferredTerms" Category="Microsoft.Naming" CheckId="CA1726" Status="Excluded" Created="2009-03-26 17:15:30Z">
+              <Issue Name="Member">
+               <Item>SignOn</Item>
+               <Item>'IdentityProvider.SingleSignOnServiceLocations'</Item>
+               <Item>SignIn</Item>
+              </Issue>
+              <Notes>
+               <User Name="ggennaro">
+                <Note Id="1" />
+               </User>
+              </Notes>
+             </Message>
+            </Messages>
+           </Member>
+          </Members>
+         </Type>
+         <Type Name="Saml2Utils">
+          <Members>
+           <Member Name="#CompressConvertToBase64UrlEncode(System.Xml.XPath.IXPathNavigable)">
+            <Messages>
+             <Message TypeName="UriReturnValuesShouldNotBeStrings" Category="Microsoft.Design" CheckId="CA1055" Status="Excluded" Created="2009-05-06 23:16:19Z">
+              <Issue>
+               <Item>'Saml2Utils.CompressConvertToBase64UrlEncode(IXPathNavigable)'</Item>
+              </Issue>
+              <Notes>
+               <User Name="ggennaro">
+                <Note Id="3" />
+               </User>
+              </Notes>
+             </Message>
+            </Messages>
+           </Member>
+           <Member Name="#UrlDecodeConvertFromBase64Decompress(System.String)">
+            <Messages>
+             <Message TypeName="UriReturnValuesShouldNotBeStrings" Category="Microsoft.Design" CheckId="CA1055" Status="Excluded" Created="2009-05-06 23:16:19Z">
+              <Issue>
+               <Item>'Saml2Utils.UrlDecodeConvertFromBase64Decompress(string)'</Item>
+              </Issue>
+              <Notes>
+               <User Name="ggennaro">
+                <Note Id="2" />
+               </User>
+              </Notes>
+             </Message>
+            </Messages>
+           </Member>
+          </Members>
+         </Type>
+        </Types>
+       </Namespace>
+      </Namespaces>
+     </Module>
+    </Modules>
+   </Target>
+  </Targets>
+  <Notes>
+   <User Name="ggennaro">
+    <Note Id="0" Modified="2009-05-22 23:14:31Z">SignOn is a preferred term in the OpenSSO community.</Note>
+    <Note Id="1" Modified="2009-03-26 17:16:05Z">Method maps to XSD definition SingleSignOnService for idp metadata.</Note>
+    <Note Id="2" Modified="2009-05-06 23:16:25Z">Exclusion needed since SAML Artifacts are the exception to this rule.</Note>
+    <Note Id="3" Modified="2009-05-06 23:16:28Z">Exclusion needed since SAML Artifacts are the exception to this rule.</Note>
+    <Note Id="4" Modified="2009-06-09 18:37:45Z">FedletLogger isn't really part of the SAML2 specification so will be excluded for now from the FxCop rules engine.</Note>
+   </User>
+  </Notes>
+  <Rules>
+   <Rule TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020">
+    <Resolution Name="Default">Consider merging the types defined in '{0}' with another namespace.</Resolution>
+   </Rule>
+   <Rule TypeName="UriReturnValuesShouldNotBeStrings" Category="Microsoft.Design" CheckId="CA1055">
+    <Resolution Name="Default">Change the return type of {0} from string to System.Uri.</Resolution>
+   </Rule>
+   <Rule TypeName="UsePreferredTerms" Category="Microsoft.Naming" CheckId="CA1726">
+    <Resolution Name="Member">Replace the term '{0}' in member name {1} with the preferred alternate '{2}'.</Resolution>
+   </Rule>
+  </Rules>
+ </FxCopReport>
+</FxCopProject>
