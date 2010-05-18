@@ -79,7 +79,7 @@ typedef enum am_auth_callback_type {
     PasswordCallback,
     TextInputCallback,
     TextOutputCallback,
-    HTTPCallBack,           /* OpenAM-46 */
+    HTTPCallback,           /* OpenAM-46 */
     RedirectCallback
 } am_auth_callback_type_t;
 
@@ -119,6 +119,7 @@ typedef struct am_auth_http_callback_info {
     const char *authToken;
     const char *negoHeader;
     const char *negoValue;
+    const char *negoErrorCode;
     const char *response; /* selected index */
 } am_auth_http_callback_t;
 

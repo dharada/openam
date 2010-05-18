@@ -126,6 +126,11 @@ class AuthService: public BaseService {
     static const BodyChunk passwordCallbackSuffixChunk;
     static const BodyChunk textInputCallbackPrefixChunk;
     static const BodyChunk textInputCallbackSuffixChunk;
+
+    static const BodyChunk httpCallbackPrefixChunk;
+    static const BodyChunk httpCallbackSuffixChunk;
+
+
     static const BodyChunk localePrefixChunk;
     static const BodyChunk localeSuffixChunk;
     static const BodyChunk promptPrefixChunk;
@@ -159,6 +164,16 @@ class AuthService: public BaseService {
     static const BodyChunk quoteChunk;
     static const BodyChunk endElementChunk;
     static const BodyChunk quoteEndElementChunk;
+
+    static const BodyChunk httpHeaderPrefixChunk;
+
+    static const BodyChunk httpHeaderSuffixChunk;
+    static const BodyChunk httpNegoPrefixChunk;
+    static const BodyChunk httpNegoSuffixChunk;
+    static const BodyChunk httpErrorCodePrefixChunk;
+    static const BodyChunk httpErrorCodeSuffixChunk;
+    static const BodyChunk httpTokenPrefixChunk;
+    static const BodyChunk httpTokenSuffixChunk;
 
     void setAuthSvcInfo(AuthContext &); 
 
@@ -227,6 +242,8 @@ class AuthService: public BaseService {
 				BodyChunkList &);
 
     void addTextInputCallbackRequirements(am_auth_text_input_callback_t &,
+				BodyChunkList &);
+    void addHTTPCallbackRequirements(am_auth_http_callback_t &,
 				BodyChunkList &);
 
 };
