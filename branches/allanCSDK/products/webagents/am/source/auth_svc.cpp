@@ -1855,8 +1855,8 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
 	{
             size_t colon = negotiation.find ( ':' );
             if(colon != std::string::npos) {
-                http_cb.negoHeader = (const char *) strdup(negotiation.substr(0,colon-1).c_str());
-                http_cb.negoValue  = (const char *) strdup(negotiation.substr(colon).c_str());
+                http_cb.negoHeader = (const char *) strdup(negotiation.substr(0,colon).c_str());
+                http_cb.negoValue  = (const char *) strdup(negotiation.substr(colon+1).c_str());
 
             } else {
                 http_cb.negoHeader = (const char *) strdup(negotiation.c_str());
