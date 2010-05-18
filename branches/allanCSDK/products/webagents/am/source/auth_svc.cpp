@@ -1843,7 +1843,7 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
     XMLElement headerNode;
     if(callbackNode.getSubElement(HTTP_HEADER, headerNode)) {
 	std::string auth_header;
-	if(headerNode.getValue(auth_header) && header.length() > 0) {
+	if(headerNode.getValue(auth_header) && auth_header.length() > 0) {
 	    http_cb.tokenHeader = (const char *) strdup(auth_header.c_str());
 	}
     }
@@ -1855,7 +1855,7 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
 	{
             size_t colon = negotiation.find ( ':' );
             if(colon != string::npos) {
-                http_cb.negoHeader = (const char *) strdup(negotiation.substr(0,colon-1).x_str());
+                http_cb.negoHeader = (const char *) strdup(negotiation.substr(0,colon-1).c_str());
                 http_cb.negoValue  = (const char *) strdup(negotiation.substr(colon).c_str());
 
             } else {
