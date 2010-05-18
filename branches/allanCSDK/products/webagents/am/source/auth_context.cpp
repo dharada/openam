@@ -124,8 +124,6 @@ AuthContext::cleanupCallbacks() {
 		cleanupCharArray (
 		    callback.callback_info.http_callback.tokenHeader);
 		cleanupCharArray (
-		    callback.callback_info.http_callback.authToken);
-		cleanupCharArray (
 		    callback.callback_info.http_callback.negoHeader);
 		cleanupCharArray (
 		    callback.callback_info.http_callback.negoValue);
