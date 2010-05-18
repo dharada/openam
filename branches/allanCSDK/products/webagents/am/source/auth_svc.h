@@ -245,6 +245,9 @@ class AuthService: public BaseService {
 				BodyChunkList &);
     void addHttpCallbackRequirements(am_auth_http_callback_t &,
 				BodyChunkList &);
+    void addRedirectCallbackRequirements(am_auth_redirect_callback_t &,
+				BodyChunkList &);
+
 
 };
 
