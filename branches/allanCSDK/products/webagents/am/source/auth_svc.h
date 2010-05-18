@@ -243,7 +243,7 @@ class AuthService: public BaseService {
 
     void addTextInputCallbackRequirements(am_auth_text_input_callback_t &,
 				BodyChunkList &);
-    void addHTTPCallbackRequirements(am_auth_http_callback_t &,
+    void addHttpCallbackRequirements(am_auth_http_callback_t &,
 				BodyChunkList &);
 
 };
