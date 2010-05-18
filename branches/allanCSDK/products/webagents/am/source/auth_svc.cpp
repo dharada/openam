@@ -1868,7 +1868,7 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
     XMLElement errorCodeNode;
     if(callbackNode.getSubElement(HTTP_CODE, errorCodeNode)) {
 	std::string errorCode;
-	if(negoNode.getValue(errorCode) && errorCode.length() > 0)
+	if(errorCodeNode.getValue(errorCode) && errorCode.length() > 0)
 	{
 	    http_cb.negoErrorCode = (const char *) strdup(errorCode.c_str());
 	}
