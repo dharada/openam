@@ -26,7 +26,9 @@
  *
  */
 
-  
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */  
 
 package com.sun.identity.saml.common;
 
@@ -1539,4 +1541,8 @@ public final class SAMLConstants
      */
     public static final String ERROR_CODE = "errorcode";
 
+	/**
+	 * Accept Language HTTP header
+	 */
+	public static final String ACCEPT_LANG_HEADER = "Accept-Language";
 }
