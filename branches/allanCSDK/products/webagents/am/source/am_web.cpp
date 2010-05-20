@@ -3201,8 +3201,8 @@ am_web_result_attr_map_set(
                    am_web_log_max_debug("%s: Iterating over %u values.",
                                         thisfunc, valueRef.size());
 
-                   for(std::size_t i = 0; i < valueRef.size(); ++i) {
-                      values.append(valueRef[i]);
+                   for(std::size_t i1 = 0; i1 < valueRef.size(); ++i1) {
+                      values.append(valueRef[i1]);
                       PUSH_BACK_CHAR(values, ',');
                    }
 
@@ -3318,8 +3318,8 @@ am_web_result_attr_map_set(
                                                    iter_cookie->second;
                     am_web_log_max_debug("%s: Iterating over %u values.",
                                                   thisfunc, valueRef.size());
-                    for(std::size_t i = 0; i < valueRef.size(); ++i) {
-                       values.append(valueRef[i]);
+                    for(std::size_t i2 = 0; i2 < valueRef.size(); ++i2) {
+                       values.append(valueRef[i2]);
                        PUSH_BACK_CHAR(values, ',');
                     }
 
@@ -3892,7 +3892,7 @@ static char* escapeQuotationMark(char*& ptr)
        int pos  = 0;
 #endif
 
-       while((pos = valueStr.find('"',pos)) != std::string::npos) {
+       while((pos = (int)valueStr.find('"',pos)) != std::string::npos) {
           valueStr.erase(pos,1);
           valueStr.insert(pos,"&quot;");
        }
@@ -4569,7 +4569,7 @@ remove_cookie(const char *cookie_name, char *cookie_header_val)
     char *last = NULL;
     char *tok = NULL;
     char *buf = NULL;
-    bool found = false;
+//    bool found = false;
     if (cookie_name == NULL) {
 	sts = AM_INVALID_ARGUMENT;
     }
@@ -5021,7 +5021,7 @@ set_cookie_in_request(Utils::cookie_info_t *cookie_info,
     // insert the cookie into the cookie string, replacing
     // any existing cookies of the same name.
     else {
-	char *buf = NULL;
+//	char *buf = NULL;
 	char *cookie_header_val = NULL;
 	char *new_cookie_header_val = NULL;
 
