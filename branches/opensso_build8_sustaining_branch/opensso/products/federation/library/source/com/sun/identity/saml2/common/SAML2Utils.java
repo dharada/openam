@@ -1628,7 +1628,7 @@ public class SAML2Utils extends SAML2SDKUtils {
             }
         }
         
-        return serverId;
+        return id;
     }
 
     /**
