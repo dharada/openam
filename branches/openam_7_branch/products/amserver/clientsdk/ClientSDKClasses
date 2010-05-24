@@ -459,3 +459,9 @@ com/sun/identity/protocol/AMURLStreamHandlerFactory.class
 com/sun/identity/monitoring/Agent.class
 com/sun/identity/monitoring/SsoServerIdRepoSvcImpl.class
 
+org/forgerock/openam/authentication/service/protocol/RemoteHttpServletResponse.class
+org/forgerock/openam/authentication/service/protocol/RemoteServletResponse.class
+org/forgerock/openam/authentication/service/protocol/RemoteSession.class
+org/forgerock/openam/authentication/service/protocol/RemoteCookie.class
+org/forgerock/openam/authentication/service/protocol/RemoteHttpServletRequest.class
+org/forgerock/openam/authentication/service/protocol/RemoteServletRequest.class
