@@ -72,6 +72,10 @@ public class RemoteServletRequest implements ServletRequest, Serializable {
     private Locale locale = null;
     private Set locales = new HashSet();
     private boolean isSecure = false;
+    private String localName = null;
+    private String localAddr = null;
+    private int localPort = -1;
+    private int remotePort = -1;
     
     protected transient Debug debug = null;
     private static final String CLASS = "RemoteServletRequest";
@@ -140,6 +144,10 @@ public class RemoteServletRequest implements ServletRequest, Serializable {
         remoteAddr = getRemoteAddr();
         remoteHost = getRemoteHost();
         locale = getLocale();
+        localAddr = getLocalAddr();
+        localName = getLocalName();
+        localPort = getLocalPort();
+        remotePort = getRemotePort();
         
         Enumeration lNames = getLocales();
         
@@ -262,6 +270,46 @@ public class RemoteServletRequest implements ServletRequest, Serializable {
      */
     public ServletInputStream getInputStream() throws IOException {
 	return (request != null) ? this.request.getInputStream() : null;
+    }
+
+    /**
+     * Returns the Internet Protocol (IP) address of the interface on which the request was received.
+     *
+     * @return a <code>String</code> containing the IP address on which the request was received.
+     * @since 2.4
+     */
+    public String getLocalAddr() {
+        return (request != null) ? this.request.getLocalAddr() : localAddr;
+    }
+
+    /**
+     * Returns the host name of the Internet Protocol (IP) interface on which the request was received.
+     *
+     * @return a <code>String</code> containing the host name of the IP on which the request was received.
+     * @since 2.4
+     */
+    public String getLocalName() {
+        return (request != null) ? this.request.getLocalName() : localName;
+    }
+
+    /**
+     * Returns the Internet Protocol (IP) source port of the client or last proxy that sent the request.
+     *
+     * @return an integer specifying the port number
+     * @since 2.4
+     */
+    public int getRemotePort() {
+        return (request != null) ? this.request.getRemotePort() : remotePort;
+    }
+
+    /**
+     * Returns the Internet Protocol (IP) port number of the interface on which the request was received.
+     *
+     * @return an integer specifying the port number
+     * @since 2.4
+     */
+    public int getLocalPort() {
+        return (request != null) ? this.request.getLocalPort() : localPort;
     }
 
     /**

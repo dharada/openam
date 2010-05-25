@@ -22,9 +22,13 @@
     with the fields enclosed by brackets [] replaced by
     your own identifying information:
     "Portions Copyrighted [year] [name of copyright owner]"
-
+    
     $Id: DataStore.xml,v 1.9 2009/07/16 04:12:01 cbasha Exp $
 
+-->
+
+<!--
+    Portions Copyrighted 2010 ForgeRock AS
 -->
 
 <!DOCTYPE ModuleProperties PUBLIC "=//iPlanet//Authentication Module Properties XML Interface 1.0 DTD//EN"
@@ -32,7 +36,7 @@
 
 
 <ModuleProperties moduleName="DataStore" version="1.0" >
-    <Callbacks length="2" order="1" timeout="120" header="Connexion à OpenSSO" >
+    <Callbacks length="2" order="1" timeout="120" header="Connexion à OpenAM" >
         <NameCallback>
             <Prompt> Nom d&apos;utilisateur : </Prompt>
         </NameCallback>

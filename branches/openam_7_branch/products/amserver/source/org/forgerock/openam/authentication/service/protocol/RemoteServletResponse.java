@@ -52,6 +52,8 @@ public class RemoteServletResponse implements ServletResponse, Serializable {
     /* The transferable state.
      */
     private String characterEncoding = null;
+    private String charSet = null;
+    private String contentType = null;
     private Locale locale = null;
 
     private transient Debug debug = null;
@@ -75,6 +77,7 @@ public class RemoteServletResponse implements ServletResponse, Serializable {
     
     protected void processResponse() {
         characterEncoding = getCharacterEncoding();
+        contentType = getContentType();
     }
 
     /**
@@ -115,6 +118,16 @@ public class RemoteServletResponse implements ServletResponse, Serializable {
      */
     public String getCharacterEncoding() {
         return (response != null) ? this.response.getCharacterEncoding() : characterEncoding;
+    }
+
+    /**
+     * Returns the MIME type for the content response
+     *
+     * @return
+     * @since 2.4
+     */
+    public String getContentType() {
+        return (response != null) ? this.response.getContentType() : contentType;
     }
 
     /**
@@ -228,6 +241,20 @@ public class RemoteServletResponse implements ServletResponse, Serializable {
             this.response.setLocale(loc);
         } else {
             locale = loc;
+        }
+    }
+
+    /**
+     * Sets the character encoding of the response
+     *
+     * @param charSet
+     * @since 2.4
+     */
+    public void setCharacterEncoding(String charSet) {
+        if (response != null) {
+            this.response.setCharacterEncoding(charSet);
+        } else {
+            this.charSet = charSet;
         }
     }
     

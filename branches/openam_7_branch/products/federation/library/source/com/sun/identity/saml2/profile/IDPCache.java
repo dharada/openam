@@ -26,6 +26,9 @@
  *
  */
 
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 
 package com.sun.identity.saml2.profile;
 
@@ -149,6 +152,20 @@ public class IDPCache {
      * Value : idp ecp session mapper object
      */
     public static Hashtable idpECPSessionMapperCache = new Hashtable(); 
+
+     /**
+     * Cache saves the IDP Proxy Finder.
+     * Key : IDP Proxy Finder class name
+     * Value : IDP Proxy Finder mapper object
+     */
+    public static Hashtable idpProxyFinderCache = new Hashtable();
+
+    /**
+     * Cache saves the IDP Adapter.
+     * Key : IDP Adapter class name
+     * Value : IDP Adapter mapper object
+     */
+    public static Hashtable idpAdapterCache = new Hashtable();
 
     /**
      * Cache saves information needed after coming back from COT cookie setting.

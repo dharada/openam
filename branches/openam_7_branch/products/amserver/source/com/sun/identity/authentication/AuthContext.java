@@ -119,6 +119,8 @@ public class AuthContext extends Object implements java.io.Serializable {
         SystemProperties.get(Constants.AM_SERVER_PORT);
     private String server_uri  =
         SystemProperties.get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
+    private boolean includeReqRes  =
+        SystemProperties.getAsBoolean(Constants.REMOTEAUTH_INCLUDE_REQRES);
 
     private static final String amAuthContext = "amAuthContext";
     
@@ -932,46 +934,53 @@ public class AuthContext extends Object implements java.io.Serializable {
                     .append(envString.toString())
                     .append(AuthXMLTags.ENV_END);
             }
-            request.append(AuthXMLTags.LOGIN_END)
-                   .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_START)
-            .append(AuthXMLTags.HTTP_SERVLET_REQUEST_START);
-            String encObj = "";
+            request.append(AuthXMLTags.LOGIN_END);
 
-            if (req != null) {
-                try {
-                    encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletRequest(req));
-                } catch (IOException ioe) {
-                    authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http request", ioe);
+            if (includeReqRes) {
+                request.append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_START)
+                .append(AuthXMLTags.HTTP_SERVLET_REQUEST_START);
+                String encObj = "";
+
+                if (req != null) {
+                    try {
+                        encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletRequest(req));
+                    } catch (IOException ioe) {
+                        authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http request", ioe);
+                    }
+
+                    if (authDebug.messageEnabled()) {
+                        authDebug.message("req=" + req);
+                        authDebug.message("req=" + encObj);
+                    }
+
+                    request.append(encObj);
                 }
 
-                authDebug.message("req=" + req);
-                authDebug.message("req=" + encObj);
+                request.append(AuthXMLTags.HTTP_SERVLET_REQUEST_END);
+                request.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_START);
 
-                request.append(encObj);
-            }
+                if (res != null) {
+                    encObj = "";
 
-            request.append(AuthXMLTags.HTTP_SERVLET_REQUEST_END);
-            request.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_START);
+                    try {
+                        encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletResponse(res));
+                    } catch (IOException ioe) {
+                        authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http response", ioe);
+                    }
 
-            if (res != null) {
-                encObj = "";
+                    if (authDebug.messageEnabled()) {
+                        authDebug.message("res=" + res);
+                        authDebug.message("res=" + encObj);
+                    }
 
-                try {
-                    encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletResponse(res));
-                } catch (IOException ioe) {
-                    authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http response", ioe);
+                    request.append(encObj);
                 }
 
-                authDebug.message("res=" + res);
-                authDebug.message("res=" + encObj);
-
-
-                request.append(encObj);
+                request.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_END)
+                .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_END);
             }
 
-            request.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_END)
-            .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_END)
-                .append(AuthXMLTags.XML_REQUEST_SUFFIX);
+            request.append(AuthXMLTags.XML_REQUEST_SUFFIX);
             xmlString = request.toString();
 
             // process the request, which will check for exceptions

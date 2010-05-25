@@ -26,6 +26,10 @@
  *
  */
 
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.saml2.meta;
 
 import java.io.InputStream;
@@ -68,6 +72,10 @@ import com.sun.identity.saml2.jaxb.metadata.SPSSODescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.XACMLPDPDescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.XACMLAuthzDecisionQueryDescriptorElement;
 import com.sun.identity.saml2.jaxb.metadataextquery.AttributeQueryDescriptorElement;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesType;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesElement;
+// import com.sun.identity.saml2.jaxb.metadataattr.ObjectFactory;
+
 /**
  * The <code>SAML2MetaUtils</code> provides metadata related util methods.
  */
@@ -81,6 +89,7 @@ public final class SAML2MetaUtils {
         "com.sun.identity.saml2.jaxb.xmlsig:" +
         "com.sun.identity.saml2.jaxb.assertion:" +
         "com.sun.identity.saml2.jaxb.metadata:" +
+	"com.sun.identity.saml2.jaxb.metadataattr:" +
         "com.sun.identity.saml2.jaxb.entityconfig:" +
         "com.sun.identity.saml2.jaxb.schema";
     private static final String JAXB_PACKAGE_LIST_PROP =
