@@ -377,7 +377,7 @@ public class AuthContext extends Object implements java.io.Serializable {
      * @supported.api
      */
     public void login() throws AuthLoginException {
-        login(null, null, null, false, null);
+        login(null, null, null, false, null, null, null);
     }
     
     /**
@@ -396,7 +396,7 @@ public class AuthContext extends Object implements java.io.Serializable {
      */
     public void login(IndexType type, String indexName)
             throws AuthLoginException {
-        login(type, indexName, null, false, null);
+        login(type, indexName, null, false, null, null, null);
     }
     
     /**
@@ -416,7 +416,7 @@ public class AuthContext extends Object implements java.io.Serializable {
      */
     public void login(IndexType type, String indexName, boolean pCookieMode)
             throws AuthLoginException {
-        login(type, indexName, null, pCookieMode, null);
+        login(type, indexName, null, pCookieMode, null, null, null);
     }
     
     /**
@@ -468,7 +468,7 @@ public class AuthContext extends Object implements java.io.Serializable {
      */
     public SSOToken login(IndexType type, String indexName, Callback[] userInfo)
             throws AuthLoginException {
-        login(type, indexName, null, false, null);
+        login(type, indexName, null, false, null, null, null);
         
         SSOToken ssoToken = null;
         Callback[] callbacks = null;
@@ -527,7 +527,16 @@ public class AuthContext extends Object implements java.io.Serializable {
      */
     public void login(IndexType indexType, String indexName, String[] params)
             throws AuthLoginException {
-        login(indexType, indexName, params, false, null);
+        login(indexType, indexName, params, false, null, null, null);
+    }
+
+    public void login(IndexType indexType,
+                      String indexName,
+                      String[] params,
+                      HttpServletRequest request,
+                      HttpServletResponse response)
+            throws AuthLoginException {
+        login(indexType, indexName, params, false, null, request, response);
     }
     
     /**
@@ -561,7 +570,17 @@ public class AuthContext extends Object implements java.io.Serializable {
     public void login(IndexType indexType, String indexName, 
         String[] params, Map envMap)
             throws AuthLoginException {
-        login(indexType, indexName, params, false, envMap);
+        login(indexType, indexName, params, false, envMap, null, null);
+    }
+
+    public void login(IndexType indexType,
+                      String indexName,
+                      String[] params,
+                      Map envMap,
+                      HttpServletRequest request,
+                      HttpServletResponse response)
+            throws AuthLoginException {
+        login(indexType, indexName, params, false, envMap, request, response);
     }
     
     private void login(
@@ -569,13 +588,15 @@ public class AuthContext extends Object implements java.io.Serializable {
         String indexName,
         String[] params,
         boolean pCookie,
-        Map envMap
+        Map envMap,
+        HttpServletRequest request,
+        HttpServletResponse response
     ) throws AuthLoginException {
         if (clientLocale == null) {
-            login(indexType, indexName, params, false, envMap, null);
+            login(indexType, indexName, params, pCookie, envMap, null, request, response);
         } else {
             String localeStr = clientLocale.toString();
-            login(indexType, indexName, params, false, envMap, localeStr);
+            login(indexType, indexName, params, pCookie, envMap, localeStr, request, response);
         }
     }
 
@@ -949,8 +970,7 @@ public class AuthContext extends Object implements java.io.Serializable {
                     }
 
                     if (authDebug.messageEnabled()) {
-                        authDebug.message("req=" + req);
-                        authDebug.message("req=" + encObj);
+                        authDebug.message("req=" + new RemoteHttpServletRequest(req).toString());
                     }
 
                     request.append(encObj);
@@ -970,7 +990,6 @@ public class AuthContext extends Object implements java.io.Serializable {
 
                     if (authDebug.messageEnabled()) {
                         authDebug.message("res=" + res);
-                        authDebug.message("res=" + encObj);
                     }
 
                     request.append(encObj);
@@ -978,6 +997,10 @@ public class AuthContext extends Object implements java.io.Serializable {
 
                 request.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_END)
                 .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_END);
+            } else {
+                if (authDebug.messageEnabled()) {
+                    authDebug.message("Not including req/res " + includeReqRes);
+                }
             }
 
             request.append(AuthXMLTags.XML_REQUEST_SUFFIX);
@@ -1252,39 +1275,49 @@ public class AuthContext extends Object implements java.io.Serializable {
 
                 xml.append(AuthXMLTags.SUBMIT_REQS_END);
 
-                // serialized request and response objects
-                xml.append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_START)
-                .append(AuthXMLTags.HTTP_SERVLET_REQUEST_START);
-                String encObj = "";
+                if (includeReqRes) {
+                    // serialized request and response objects
+                    xml.append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_START)
+                    .append(AuthXMLTags.HTTP_SERVLET_REQUEST_START);
+                    String encObj = "";
 
-                if (request != null) {
-                    try {
-                        encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletRequest(request));
-                    } catch (IOException ioe) {
-                        authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http request", ioe);
+                    if (request != null) {
+                        try {
+                            encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletRequest(request));
+                        } catch (IOException ioe) {
+                            authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http request", ioe);
+                        }
+
+                        if (authDebug.messageEnabled()) {
+                            authDebug.message("req=" + request);
+                        }
+
+                        xml.append(encObj);
                     }
 
-                    xml.append(encObj);
-                }
+                    xml.append(AuthXMLTags.HTTP_SERVLET_REQUEST_END);
+                    xml.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_START);
 
-                xml.append(AuthXMLTags.HTTP_SERVLET_REQUEST_END);
-                xml.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_START);
+                    if (response != null) {
+                        encObj = "";
 
-                if (response != null) {
-                    encObj = "";
+                        try {
+                            encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletResponse(response));
+                        } catch (IOException ioe) {
+                            authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http response", ioe);
+                        }
 
-                    try {
-                        encObj = AuthXMLUtils.serializeToString(new RemoteHttpServletResponse(response));
-                    } catch (IOException ioe) {
-                        authDebug.error("AuthXMLUtils::runRemoteLogin Unable to serailize http response", ioe);
+                        if (authDebug.messageEnabled()) {
+                            authDebug.message("res=" + response);
+                        }
+
+                        xml.append(encObj);
                     }
 
-                    xml.append(encObj);
+                    xml.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_END)
+                    .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_END);
                 }
-
-                xml.append(AuthXMLTags.HTTP_SERVLET_RESPONSE_END)
-                .append(AuthXMLTags.REMOTE_REQUEST_RESPONSE_END)
-                .append(AuthXMLTags.XML_REQUEST_SUFFIX);
+                xml.append(AuthXMLTags.XML_REQUEST_SUFFIX);
                 
                 // Send the request to be processes
                 receivedDocument = processRequest(xml.toString());
@@ -1806,6 +1839,13 @@ public class AuthContext extends Object implements java.io.Serializable {
         receivedDocument, AuthXMLTags.LOGIN_STATUS);
         if (loginStatusNode == null) {
             loginException = checkException();
+            
+            if (includeReqRes) {
+                remoteRequest = AuthXMLUtils.getRemoteRequest(
+                    XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
+                remoteResponse = AuthXMLUtils.getRemoteResponse(
+                    XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
+            }
         } else {
             // Get the status attribute
             String status = XMLUtils.getNodeAttributeValue(
@@ -1823,10 +1863,12 @@ public class AuthContext extends Object implements java.io.Serializable {
                 }
             }
 
-            remoteRequest = AuthXMLUtils.getRemoteRequest(
-                XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
-            remoteResponse = AuthXMLUtils.getRemoteResponse(
-                XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
+            if (includeReqRes) {
+                remoteRequest = AuthXMLUtils.getRemoteRequest(
+                    XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
+                remoteResponse = AuthXMLUtils.getRemoteResponse(
+                    XMLUtils.getRootNode(receivedDocument, AuthXMLTags.REMOTE_REQUEST_RESPONSE));
+            }
 
             if (authDebug.messageEnabled()) {
                 authDebug.message("LoginStatus : " + loginStatus);
@@ -1904,12 +1946,8 @@ public class AuthContext extends Object implements java.io.Serializable {
     
     protected Document processRequest(String xmlRequest)
             throws AuthLoginException {
-        // if (authDebug.messageEnabled()) {
-            // Commented so that passwords will not be printed in
-            // debug logs
-        //    authDebug.message("Sent XML data : " + xmlRequest);
-        // }
         Document doc = null;
+
         try {
             Request request = new Request(xmlRequest);
             RequestSet set = new RequestSet(AuthXMLTags.AUTH_SERVICE);

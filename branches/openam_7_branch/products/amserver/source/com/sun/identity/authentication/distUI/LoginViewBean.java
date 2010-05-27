@@ -821,14 +821,14 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
         try {
             if ( indexType != null ) {
                 if (indexType.equals(AuthContext.IndexType.RESOURCE)) {
-                     ac.login(indexType, indexName, userCredentials, envMap);   
+                     ac.login(indexType, indexName, userCredentials, envMap, request, response);
                 } else {
-                    ac.login(indexType, indexName, userCredentials);
+                    ac.login(indexType, indexName, userCredentials,request,response);
                 }
                 session.setAttribute("IndexType", indexType.toString());
                 session.setAttribute("IndexName", indexName);
             } else {
-                ac.login(null,null,userCredentials);
+                ac.login(null,null,userCredentials,request,response);
             }
         } catch (AuthLoginException le) {
             loginDebug.message("AuthContext()::login error ", le);
@@ -1351,6 +1351,9 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
 
         RemoteHttpServletRequest remoteRequest = (RemoteHttpServletRequest) req;
         RemoteHttpServletResponse remoteResponse = (RemoteHttpServletResponse) res;
+
+        loginDebug.message("req is " + remoteRequest);
+        loginDebug.message("res is " + remoteResponse);
                 
         if (remoteRequest != null) {
             // TODO should really worry the attributes

@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.iplanet.am.util;
 
 import com.iplanet.sso.SSOToken;
@@ -339,7 +343,7 @@ public class SystemProperties {
      * @param key the key whose value one is looking for.
      * @return the boolean value if the key exists; otherwise returns false
      */
-    public boolean getAsBoolean(String key) {
+    public static boolean getAsBoolean(String key) {
         String value = get(key);
 
         return (value.equalsIgnoreCase(TRUE) ? true : false);

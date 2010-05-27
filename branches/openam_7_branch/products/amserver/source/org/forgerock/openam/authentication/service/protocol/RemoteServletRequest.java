@@ -539,4 +539,29 @@ public class RemoteServletRequest implements ServletRequest, Serializable {
         
         return buffer.toString();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("Attributes       : " + internalAttributes)
+              .append("Charcter encoding: " + characterEncoding)
+              .append("Content length   : " + contentLength)
+              .append("Content type     : " + contentType)
+              .append("Parameters       : " + internalParamererMap)
+              .append("Protocol         : " + protocol)
+              .append("Scheme           : " + scheme)
+              .append("Server name      : " + serverName)
+              .append("Server port      : " + serverPort)
+              .append("Remote host      : " + remoteHost)
+              .append("Remote addr      : " + remoteAddr)
+              .append("Locale           : " + locale)
+              .append("Locales          : " + locales)
+              .append("IsSecure         : " + isSecure)
+              .append("Local name       : " + localName)
+              .append("Local addr       : " + localAddr)
+              .append("Local port       : " + localPort)
+              .append("Remote port      : " + remotePort);
+
+        return buffer.toString();
+    }
 }
