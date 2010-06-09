@@ -106,6 +106,11 @@ public class EmbeddedOpenDS {
      */
     public static void setup(Map map, ServletContext servletCtx)
         throws Exception {
+        // Victor
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        // Just for debugging, what did we get ?
+        debug.error("EmbeddOpenDS.setup: MAP received: /n" + map + "/n");
+        // Victor
         // Determine Cipher to be used
         SetupProgress.reportStart("emb.installingemb.null", null);
         String xform =  getSupportedTransformation();
@@ -137,8 +142,10 @@ public class EmbeddedOpenDS {
 
         // copy files
         String[] files = {
-            "config/upgrade/schema.ldif.5097",
-            "config/upgrade/config.ldif.5097",
+            // "config/upgrade/schema.ldif.5097",
+            // "config/upgrade/config.ldif.5097",
+            "config/upgrade/schema.ldif.6181",
+            "config/upgrade/config.ldif.6181",
             "config/config.ldif",
             "config/admin-backend.ldif",
             "config/famsuffix.ldif",
@@ -327,15 +334,22 @@ public class EmbeddedOpenDS {
 
     public static void setupReplication(Map map) throws Exception
     {
+        // Victor
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        // Victor
         // Setup replication
         SetupProgress.reportStart("emb.creatingreplica", null);
+        debug.error("EmbeddedOpenDS.setupReplication: before SetupReplicationEnable");
         int ret = setupReplicationEnable(map);
+        debug.error("EmbeddedOpenDS.setupReplication: after SetupReplicationEnable");
         if (ret == 0) {
+            debug.error("after if = 0 SetupReplicationEnable");
             ret = setupReplicationInitialize(map);
             SetupProgress.reportEnd("emb.success", null);
             Debug.getInstance(SetupConstants.DEBUG_NAME).message(
                 "EmbeddedOpenDS.setupReplication: replication setup succeeded.");
         } else {
+            debug.error("after if <> 0 SetupReplicationEnable");
             Object[] params = {Integer.toString(ret)};
             SetupProgress.reportEnd("emb.failed.param", params);
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
@@ -362,6 +376,8 @@ public class EmbeddedOpenDS {
       */
     public static int setupReplicationEnable(Map map)
     {
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        debug.error("setupReplicationEnable: Entering");
         String[] enableCmd= {
             "enable",                // 0
             "--no-prompt",           // 1
@@ -390,15 +406,18 @@ public class EmbeddedOpenDS {
             "--adminPassword",       // 24
             "xxxxxxxx",              // 25 
             "--baseDN",              // 26
-            "dc=example,dc=com"      // 27
+            "dc=example,dc=com",     // 27
+            "--trustAll"             // 28
         };
         enableCmd[3] = (String) map.get(SetupConstants.DS_EMB_REPL_HOST2);
         enableCmd[5] = (String) map.get(SetupConstants.DS_EMB_REPL_PORT2);
+        enableCmd[5] = "4444";
         enableCmd[11] = (String) map.get(SetupConstants.DS_EMB_REPL_REPLPORT2);
 
         //enableCmd[13] = "localhost";
         enableCmd[13] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_HOST);
         enableCmd[15] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+        enableCmd[15] = "4445";
         enableCmd[21] = (String) map.get(SetupConstants.DS_EMB_REPL_REPLPORT1);
         enableCmd[27] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
 
@@ -408,8 +427,8 @@ public class EmbeddedOpenDS {
         enableCmd[9] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
         enableCmd[19] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
         enableCmd[25] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
-
-        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        debug.error("setupReplicationEnable: " + concat(enableCmd));
+        // Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
         if (debug.messageEnabled()) {
             debug.message("EmbeddedOpenDS.setupReplicationEnable: "+
                 "Host 1 "+enableCmd[3]);
@@ -421,14 +440,17 @@ public class EmbeddedOpenDS {
                 "Port 2 "+enableCmd[15]);
         }
         int ret = ReplicationCliMain.mainCLI(
-            enableCmd, false, 
+            enableCmd, false,
             SetupProgress.getOutputStream(), 
             SetupProgress.getOutputStream(), 
             null);         
-
+        // SetupProgress.reportEnd("JUST GOT OUT OF THE REPLICATION ENABLE", null);
         if (ret == 0) {
             SetupProgress.reportEnd("emb.success", null);
+            debug.error("setupReplicationEnable: success");
+
         } else {
+            debug.error("setupReplicationEnable: failed ! ret=" + ret);
             SetupProgress.reportEnd("emb.failed", null);
         }
         return ret;
@@ -446,6 +468,8 @@ public class EmbeddedOpenDS {
       */
     public static int setupReplicationInitialize(Map map)
     {
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        debug.error("setupReplicationInitialize: Entering");
         String[] initializeCmd= {
             "initialize",                 // 0
             "--no-prompt",                // 1
@@ -465,6 +489,8 @@ public class EmbeddedOpenDS {
             "51389",                      // 15
             "--trustAll"                  // 16
         };
+
+        debug.error("setupReplicationInitialize: After defining the array");
         initializeCmd[3] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
         initializeCmd[9] = (String)map.get(SetupConstants.DS_EMB_REPL_HOST2);
         initializeCmd[11] = (String)map.get(SetupConstants.DS_EMB_REPL_PORT2);
@@ -473,6 +499,7 @@ public class EmbeddedOpenDS {
         initializeCmd[15] = (String)map.get(
             SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
 
+        debug.error("setupReplicationInitialize: After replacing some values in the array");
         Object[] params = {concat(initializeCmd)};
         SetupProgress.reportStart("emb.replcommand", params);
 
@@ -482,8 +509,10 @@ public class EmbeddedOpenDS {
             null); 
 
         if (ret == 0) {
+            debug.error("setupReplicationInitialize: Initialization replications success");
             SetupProgress.reportEnd("emb.success", null);
         } else {
+            debug.error("setupReplicationInitialize: Initialization replications failed");
             SetupProgress.reportEnd("emb.failed", null);
         }
         return ret;
@@ -538,11 +567,13 @@ public class EmbeddedOpenDS {
     
     private static String concat(String[] args) 
     {
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
         String ret = "";
         for (int i = 0; i < args.length; i++)
            ret += args[i]+" ";        
-        
+        debug.error("EmbeddedOpenDS.concat: Command to return: " + ret);
         return ret;
+
     }
 
     /**
@@ -647,7 +678,7 @@ public class EmbeddedOpenDS {
                           Set currServerSet, String port, String passwd)
     {
         Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        debug.message("EmbeddedOPenDS:syncReplication:start processing.");
+        debug.message("EmbeddedOPenDS:syncReplicatedServers:start processing.");
         String[] args = {
             "-p", port,      // 1 : ds port num
             "-h", "localhost", 
@@ -656,11 +687,11 @@ public class EmbeddedOpenDS {
             "list-replication-server",
             "--provider-name", "Multimaster Synchronization",
             "--property", "replication-server",
-            "--property", "replication-port","--no-prompt"
+            "--property", "replication-port","--no-prompt", "--trustAll"
         };
         if (debug.messageEnabled()) {
             String dbgcmd = concat(args).replaceAll(passwd, "****");
-            debug.message("EmbeddedOpenDS:syncReplication:exec dsconfig:"
+            debug.message("EmbeddedOpenDS:syncReplicatedServers:exec dsconfig:"
                              +dbgcmd);
         }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -669,7 +700,7 @@ public class EmbeddedOpenDS {
         String str = bos.toString();
         String stre = boe.toString();
         if (stre.length() > 0) {
-            debug.error("EmbeddedOpenDS:syncReplication: stderr is not empty:"
+            debug.error("EmbeddedOpenDS:syncReplicatedServers: stderr is not empty:"
                            +stre);
         }
         BufferedReader brd = new BufferedReader(new StringReader(str));
@@ -679,10 +710,10 @@ public class EmbeddedOpenDS {
             line = brd.readLine(); // 2nd line
             line = brd.readLine(); // 3rd line
         } catch (Exception ex) {
-            debug.error("EmbeddedOpenDS:syncReplication:Failed:",ex);
+            debug.error("EmbeddedOpenDS:syncReplicatedServers:Failed:",ex);
         } 
         if (line == null)  {
-            debug.error("EmbeddedOpenDS:syncReplication:cmd failed"+str);
+            debug.error("EmbeddedOpenDS:syncReplicatedServers:cmd failed"+str);
             return false;
         }
         try {
@@ -702,6 +733,7 @@ public class EmbeddedOpenDS {
             cmdlist.add("-w"); 
             cmdlist.add(passwd);
             cmdlist.add("--no-prompt");
+            cmdlist.add("--trustAll");
             cmdlist.add("set-replication-server-prop");
             cmdlist.add("--provider-name"); 
             cmdlist.add("Multimaster Synchronization");
@@ -720,7 +752,7 @@ public class EmbeddedOpenDS {
                     (String[]) cmdlist.toArray(new String[cmdlist.size()]);
                 if (debug.messageEnabled()) {
                     String dbgcmd1 = concat(args1).replaceAll(passwd, "****");
-                    debug.message("EmbeddedOpenDS:syncReplication:Execute:"+
+                    debug.message("EmbeddedOpenDS:syncReplicatedServers:Execute:"+
                              dbgcmd1);
                 }
                 bos = new ByteArrayOutputStream();
@@ -729,16 +761,16 @@ public class EmbeddedOpenDS {
                 str = bos.toString();
                 stre = boe.toString();
                 if (debug.messageEnabled()) {
-                    debug.message("EmbeddedOpenDS:syncReplication:Result:"+
+                    debug.message("EmbeddedOpenDS:syncReplicatedServers:Result:"+
                          str);
                 }
                 if (stre.length() != 0) {
-                    debug.error("EmbeddedOpenDS:syncReplication:cmd stderr:"
+                    debug.error("EmbeddedOpenDS:syncReplicatedServers:cmd stderr:"
                                  +stre);
                 }
             } 
         } catch (Exception ex) {
-            debug.error("EmbeddedOpenDS:syncReplication:Failed:",ex);
+            debug.error("EmbeddedOpenDS:syncReplicatedServers:Failed:",ex);
             return false;
         } 
         return true;
@@ -750,7 +782,7 @@ public class EmbeddedOpenDS {
                           Set currServerSet, String port, String passwd)
     {
         Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        debug.message("EmbeddedOpenDS:syncReplication:Domains:started");
+        debug.message("EmbeddedOpenDS:syncReplicatedDomains:Domains:started");
         String[] args = {
             "-p", port,      // 1 : ds port num
             "-h", "localhost", 
@@ -759,11 +791,11 @@ public class EmbeddedOpenDS {
             "list-replication-domains",
             "--provider-name", "Multimaster Synchronization",
             "--property", "replication-server",
-            "--no-prompt"
+            "--no-prompt", "--trustAll"
         };
         if (debug.messageEnabled()) {
             String dbgcmd = concat(args).replaceAll(passwd, "****");
-            debug.message("EmbeddedOpenDS:syncReplication:exec dsconfig:"
+            debug.message("EmbeddedOpenDS:syncReplicatedDomains:exec dsconfig:"
                              +dbgcmd);
         }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -772,7 +804,7 @@ public class EmbeddedOpenDS {
         String str = bos.toString();
         String stre = boe.toString();
         if (stre.length() != 0) {
-            debug.error("EmbeddedOpenDS:syncReplication:stderr:"+stre);
+            debug.error("EmbeddedOpenDS:syncReplicatedDomains:stderr:"+stre);
         }
         BufferedReader brd = new BufferedReader(new StringReader(str));
         String line = null;
@@ -786,7 +818,7 @@ public class EmbeddedOpenDS {
                     int stcolon = line.indexOf(':', dcolon+1);
                     String replservers = line.substring(stcolon+1);
                     if (debug.messageEnabled()) {
-                        debug.message("EmbeddedOpenDS:syncRepl:domain="+
+                        debug.message("EmbeddedOpenDS:syncReplicatedDomains:domain="+
                                       domainname+" replservers="+replservers);
                     }
     
@@ -802,6 +834,7 @@ public class EmbeddedOpenDS {
                     cmdlist.add("-w"); 
                     cmdlist.add(passwd);
                     cmdlist.add("--no-prompt");
+                    cmdlist.add("--trustAll");
                     cmdlist.add("set-replication-domain-prop");
                     cmdlist.add("--provider-name"); 
                     cmdlist.add("Multimaster Synchronization");
@@ -823,7 +856,7 @@ public class EmbeddedOpenDS {
                         if (debug.messageEnabled()) {
                             String dbgcmd1 = 
                                 concat(args1).replaceAll(passwd, "****");
-                            debug.message("EmbeddedOpenDS:syncReplication:Execute:"+
+                            debug.message("EmbeddedOpenDS:syncReplicatedDomains:Execute:"+
                                      dbgcmd1);
                         }
                         bos = new ByteArrayOutputStream();
@@ -832,20 +865,20 @@ public class EmbeddedOpenDS {
                         str = bos.toString();
                         stre = boe.toString();
                         if (stre.length() != 0) {
-                            debug.error("EmbeddedOpenDS:syncRepl:stderr="+stre);
+                            debug.error("EmbeddedOpenDS:syncReplicatedDomains:stderr2="+stre);
                         }
                         if (debug.messageEnabled()) {
-                          debug.message("EmbeddedOpenDS:syncReplication:Result:"+
+                          debug.message("EmbeddedOpenDS:syncReplicatedDomains:Result:"+
                                  str);
                         }
                     } 
                 } catch (Exception ex) {
-                    debug.error("EmbeddedOpenDS:syncReplication:Failed:",ex);
+                    debug.error("EmbeddedOpenDS:syncReplicatedDomains:Failed:",ex);
                     return false;
                 } 
             }
         } catch (Exception ex) {
-            debug.error("EmbeddedOpenDS:syncReplication:Failed:",ex);
+            debug.error("EmbeddedOpenDS:syncReplicatedDomains:Failed:",ex);
             return false;
         } 
         return true;
@@ -1023,6 +1056,7 @@ public class EmbeddedOpenDS {
 
     public static void rebuildIndex(Map map) throws Exception {
 
+        // shutdownServer("Rebuild index");
         String basedir = 
             (String)map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
         String odsRoot = basedir + "/" +
@@ -1062,5 +1096,7 @@ public class EmbeddedOpenDS {
             debug.message("EmbeddedOpenDS:rebuildIndex:Result:" + 
                 outStr);
         }
+        // shutdownServer("Rebuild index");
+        // startServer(odsRoot);
     }
 }
