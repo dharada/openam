@@ -494,10 +494,12 @@ public class EmbeddedOpenDS {
         initializeCmd[3] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
         initializeCmd[9] = (String)map.get(SetupConstants.DS_EMB_REPL_HOST2);
         initializeCmd[11] = (String)map.get(SetupConstants.DS_EMB_REPL_PORT2);
+        initializeCmd[11] = "4444";
         initializeCmd[13] = (String)map.get(
             SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_HOST);
         initializeCmd[15] = (String)map.get(
             SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+        initializeCmd[15] = "4445";
 
         debug.error("setupReplicationInitialize: After replacing some values in the array");
         Object[] params = {concat(initializeCmd)};
