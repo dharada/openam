@@ -284,6 +284,10 @@ public class EmbeddedOpenDS {
                     }
                 }
             }
+
+            if (file.getName().endsWith("sh")) {
+                f.setExecutable(true);
+            }
         }
 
         // create tag swapped files
