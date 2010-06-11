@@ -285,7 +285,7 @@ public class EmbeddedOpenDS {
                 }
             }
 
-            if (file.getName().endsWith("sh")) {
+            if (file.getName().endsWith("sh") || file.getName().startsWith("bin")) {
                 f.setExecutable(true);
             }
         }
