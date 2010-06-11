@@ -285,6 +285,51 @@ public class EmbeddedOpenDS {
             }
         }
 
+        // create tag swapped files
+        String[] tagSwapFiles = {
+            "ldif/openam_suffix.ldif.template"
+        };
+
+        for (int i = 0 ; i < tagSwapFiles.length; i++) {
+            String fileIn = "/WEB-INF/template/opends/" + tagSwapFiles[i];
+            InputStreamReader fin = new InputStreamReader(
+                AMSetupServlet.getResourceAsStream(servletCtx, fileIn));
+
+            StringBuffer sbuf = new StringBuffer();
+            char[] cbuf = new char[1024];
+            int len;
+            while ((len = fin.read(cbuf)) > 0) {
+                sbuf.append(cbuf, 0, len);
+            }
+            FileWriter fout = null;
+
+            try {
+                fout = new FileWriter(odsRoot + "/" +
+                        tagSwapFiles[i].substring(0, tagSwapFiles[i].indexOf(".template")));
+                String inpStr = sbuf.toString();
+                fout.write(ServicesDefaultValues.tagSwap(inpStr));
+            } catch (IOException e) {
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Error tag swapping files", e);
+                throw e;
+            } finally {
+                if (fin != null) {
+                    try {
+                        fin.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+                if (fout != null) {
+                    try {
+                        fout.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+            }
+        }
+
         // remove zip
         File toDelete = new File(odsRoot + "/opends.zip");
         if (!toDelete.delete()) {
@@ -307,7 +352,7 @@ public class EmbeddedOpenDS {
             // Default: single / first server.
             SetupProgress.reportStart("emb.creatingfamsuffix", null);
             EmbeddedOpenDS.shutdownServer("to load ldif");
-            EmbeddedOpenDS.loadLDIF(odsRoot, odsRoot+ "/config/famsuffix.ldif");
+            EmbeddedOpenDS.loadLDIF(odsRoot, odsRoot + "/ldif/openam_suffix.ldif");
             EmbeddedOpenDS.startServer(odsRoot);
         }
     }
