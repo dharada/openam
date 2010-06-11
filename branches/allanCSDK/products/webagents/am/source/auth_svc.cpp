@@ -110,8 +110,6 @@ const char *HTTP_NEGO = "Negotiation";
 const char *HTTP_CODE = "HttpErrorCode";
 const char *HTTP_TOKEN = "HttpToken";
 
-
-const char *REDIRECT_CALLBACK = "RedirectCallback";
 const char *REDIRECT_URL = "RedirectUrl";
 const char *REDIRECT_DATA = "RedirectData";
 const char *REDIRECT_STATUS = "Status";
@@ -1943,18 +1941,6 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
 
  */
 
-
-
-
-typedef struct am_auth_redirect_callback_info {
-    const char *redirectUrl;
-    const char *method;
-    const char *status;
-    const char *statusParameter;
-    const char *redirectBackUrlCookie;
-    const char **redirectData;
-
-} am_auth_redirect_callback_t;
 
 
 void
