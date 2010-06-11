@@ -40,6 +40,7 @@ import com.sun.identity.shared.debug.Debug;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
@@ -209,17 +210,37 @@ public class EmbeddedOpenDS {
         */
 
         String zipFileName = "/WEB-INF/template/opends/opends.zip";
-        URL zipUrl = null;
+        FileInputStream fin = new FileInputStream(
+                AMSetupServlet.getResourceAsStream(servletCtx, zipFileName));
+        FileOutputStream fout = new FileOutputStream(odsRoot + "/opends.zip");
 
         try {
-            zipUrl = AMSetupServlet.getResource(servletCtx, zipFileName);
-        } catch (MalformedURLException mue) {
+            while (fin.available() > 0) {
+                fout.write(fin.read());
+            }
+        } catch (IOException ioe) {
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
-                    "EmbeddedOpenDS.setup(): Error loading OpenDS zip", mue);
-            throw mue;
+                "EmbeddedOpenDS.setup(): Error copying zip file", ioe);
+            throw ioe;
+        } finally {
+            if (fin != null) {
+                try {
+                    fin.close();
+                } catch (Exception ex) {
+                    //No handling requried
+                }
+            }
+
+            if (fout != null) {
+                try {
+                    fout.close();
+                } catch (Exception ex) {
+                    //No handling requried
+                }
+            }
         }
 
-        ZipFile opendsZip = new ZipFile(new File(zipUrl.toURI()));
+        ZipFile opendsZip = new ZipFile(odsRoot + "/opends.zip");
         Enumeration files = opendsZip.entries();
 
         while (files.hasMoreElements()) {
