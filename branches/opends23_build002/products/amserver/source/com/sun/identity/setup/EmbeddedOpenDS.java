@@ -212,7 +212,7 @@ public class EmbeddedOpenDS {
         URL zipUrl = null;
 
         try {
-            AMSetupServlet.getResource(servletCtx, zipFileName);
+            zipUrl = AMSetupServlet.getResource(servletCtx, zipFileName);
         } catch (MalformedURLException mue) {
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
                     "EmbeddedOpenDS.setup(): Error loading OpenDS zip", mue);
