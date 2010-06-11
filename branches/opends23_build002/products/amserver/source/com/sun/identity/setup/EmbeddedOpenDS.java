@@ -43,6 +43,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -291,9 +292,8 @@ public class EmbeddedOpenDS {
         };
 
         for (int i = 0 ; i < tagSwapFiles.length; i++) {
-            String fileIn = "/WEB-INF/template/opends/" + tagSwapFiles[i];
-            InputStreamReader fin = new InputStreamReader(
-                AMSetupServlet.getResourceAsStream(servletCtx, fileIn));
+            String fileIn = odsRoot + "/" + tagSwapFiles[i];
+            FileReader fin = new FileReader(fileIn);
 
             StringBuffer sbuf = new StringBuffer();
             char[] cbuf = new char[1024];
