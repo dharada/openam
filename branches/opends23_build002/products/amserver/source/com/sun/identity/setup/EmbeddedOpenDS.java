@@ -290,6 +290,48 @@ public class EmbeddedOpenDS {
             }
         }
 
+        // copy OpenDS jar file
+        String[] opendsJarFiles = {
+            "lib/OpenDS.jar",
+            "lib/je.jar",
+            "lib/activation.jar",
+            "lib/mail.jar"
+        };
+
+        for (int i = 0 ; i < opendsJarFiles.length; i++) {
+            String jarFileName = "/WEB-INF/lib/" + opendsJarFiles[i];
+            BufferedInputStream jin = new BufferedInputStream(
+                AMSetupServlet.getResourceAsStream(servletCtx, jarFileName), 10000);
+            BufferedOutputStream jout = new BufferedOutputStream(
+                new FileOutputStream(odsRoot + "/lib/" + jarFileName), 10000);
+
+            try {
+                while (jin.available() > 0) {
+                    jout.write(jin.read());
+                }
+            } catch (IOException ioe) {
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Error copying zip file", ioe);
+                throw ioe;
+            } finally {
+                if (jin != null) {
+                    try {
+                        jin.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+
+                if (jout != null) {
+                    try {
+                        jout.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+            }
+        }
+
         // create tag swapped files
         String[] tagSwapFiles = {
             "ldif/openam_suffix.ldif.template"
