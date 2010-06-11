@@ -210,6 +210,7 @@ public class EmbeddedOpenDS {
         }
         */
 
+        SetupProgress.reportStart("emb.opends.start", null);
         String zipFileName = "/WEB-INF/template/opends/opends.zip";
         BufferedInputStream bin = new BufferedInputStream(
                 AMSetupServlet.getResourceAsStream(servletCtx, zipFileName), 10000);
@@ -283,6 +284,15 @@ public class EmbeddedOpenDS {
                 }
             }
         }
+
+        // remove zip
+        File toDelete = new File(odsRoot + "/opends.zip");
+        if (!toDelete.delete()) {
+            Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Unable to delete zip file");
+        }
+
+        SetupProgress.reportStart("emb.opends.stop", null);
 
         // now setup OpenDS
         EmbeddedOpenDS.setupOpenDS(odsRoot, map);
