@@ -2603,7 +2603,8 @@ public class AMSetupServlet extends HttpServlet {
     }
 
     static URL getResource(ServletContext
-        servletContext, String file) {
+        servletContext, String file)
+    throws MalformedURLException {
 
         if (servletContext == null) {
             // remove leading '/'

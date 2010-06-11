@@ -47,6 +47,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -208,7 +209,16 @@ public class EmbeddedOpenDS {
         */
 
         String zipFileName = "/WEB-INF/template/opends/opends.zip";
-        URL zipUrl = AMSetupServlet.getResource(servletCtx, zipFileName);
+        URL zipUrl = null;
+
+        try {
+            AMSetupServlet.getResource(servletCtx, zipFileName);
+        } catch (MalformedURLException mue) {
+            Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Error loading OpenDS zip", mue);
+            throw mue;
+        }
+
         ZipFile opendsZip = new ZipFile(new File(zipUrl.toURI()));
         Enumeration files = opendsZip.entries();
 
