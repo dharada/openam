@@ -111,6 +111,33 @@ const char *HTTP_CODE = "HttpErrorCode";
 const char *HTTP_TOKEN = "HttpToken";
 
 
+const char *REDIRECT_CALLBACK = "RedirectCallback";
+const char *REDIRECT_URL = "RedirectUrl";
+const char *REDIRECT_DATA = "RedirectData";
+const char *REDIRECT_STATUS = "Status";
+const char *REDIRECT_STATUS_PARAM = "RedirectStatusParam";
+const char *REDIRECT_BACK_URL_COOKIE = "RedirectBackUrlCookie";
+const char *REDIRECT_METHOD = "method";
+const char *REDIRECT_NAME = "Name";
+const char *REDIRECT_VALUE = "Value";
+
+
+const char *REDIRECT_CALLBACK_BEGIN = "<RedirectCallback";
+const char *REDIRECT_CALLBACK_END = "</RedirectCallback>";
+const char *REDIRECT_URL_BEGIN = "<RedirectUrl>";
+const char *REDIRECT_URL_END = "</RedirectUrl>";
+const char *REDIRECT_DATA_BEGIN = "<RedirectData>";
+const char *REDIRECT_DATA_END = "</RedirectData>";
+const char *REDIRECT_STATUS_BEGIN = "<Status>";
+const char *REDIRECT_STATUS_END = "</Status>";
+const char *REDIRECT_STATUS_PARAM_BEGIN = "<RedirectStatusParam>";
+const char *REDIRECT_STATUS_PARAM_END = "</RedirectStatusParam>";
+const char *REDIRECT_BACK_URL_COOKIE_BEGIN = "<RedirectBackUrlCookie>";
+const char *REDIRECT_BACK_URL_COOKIE_END = "</RedirectBackUrlCookie>";
+const char *REDIRECT_NAME_BEGIN = "<Name>";
+const char *REDIRECT_NAME_END = "</Name>";
+const char *REDIRECT_VALUE_BEGIN = "<Value>";
+const char *REDIRECT_VALUE_END = "</Value>";
 
 // VALUE is defined in utils.cpp
 // const char *VALUE = "Value";
@@ -1891,8 +1918,43 @@ AuthService::processHTTPCallback(am_auth_http_callback_t &http_cb,
  * processRedirectCallback
  *             Process redirect callback from server.
  * Throws: InternalException upon error
+ **
+ * <RedirectCallBack method=XXX>
+ * <RedirectURL>
+ *     magicEncoded URL
+ * </RedirectURL>
+ * <RedirectData>
+ *    <RedirectName>
+ *         Name
+ *    </RedirectName>
+ *    <RedirectValue>
+ *         value
+ *    </RedirectValue>
+ * </RedirectData>
+ * <RedirectStatusParam>
+ *     RedirectStatus
+ * </RedirectStatusParam>
+ * <RedirectBackUrlCookie>
+ *     RedirectBackURL
+ * </RedirectBackUrlCookie>
+ * <Status>
+ *     status
+ * </Status>
+
  */
 
+
+
+
+typedef struct am_auth_redirect_callback_info {
+    const char *redirectUrl;
+    const char *method;
+    const char *status;
+    const char *statusParameter;
+    const char *redirectBackUrlCookie;
+    const char **redirectData;
+
+} am_auth_redirect_callback_t;
 
 
 void
@@ -1900,6 +1962,47 @@ AuthService::processRedirectCallback(am_auth_redirect_callback_t &redirect_cb,
 			const XMLElement &callbackNode)
 {
 
+    std::string redirectMethodStr;
+    redirect_cb.method = NULL;
+    if(callbackNode.getAttributeValue(REDIRECT_METHOD, redirectMethodStr)) {
+	redirect_cb.method = (const char *) strdup(redirectMethodStr.c_str());
+    } else {
+        redirect_cb.method = (const char *) strdup("get");
+    }
+
+    
+    XMLElement redirectURLNode;
+    if(callbackNode.getSubElement(REDIRECT_URL, redirectURLNode)) {
+	std::string redirectURL;
+	if(redirectURLNode.getValue(redirectURL) && redirectURL.length() > 0) {
+	    redirect_cb.redirectUrl = (const char *) strdup(redirectURL.c_str());
+	}
+    }
+
+    XMLElement redirectDataNode;
+    if(callbackNode.getSubElement(REDIRECT_DATA, redirectDATANode)) {
+        // Process all redirect data
+    }
+
+    XMLElement redirectStatusNode;
+    if(callbackNode.getSubElement(REDIRECT_STATUS, redirectStatusNode)) {
+	std::string redirectStatus;
+	if(redirectStatusNode.getValue(redirectStatus) && redirectStatus.length() > 0) {
+	    redirect_cb.statusParameter = (const char *) strdup(redirectStatus.c_str());
+	} else {
+	    redirect_cb.statusParameter = (const char *) strdup("AM_AUTH_SUCCESS_PARAM");
+        }
+    }
+
+    XMLElement redirectCookieNode;
+    if(callbackNode.getSubElement(REDIRECT_BACK_URL_COOKIE, redirectCookieNode)) {
+	std::string redirectCookie;
+	if(redirectCookieNode.getValue(redirectCookie) && redirectCookie.length() > 0) {
+	    redirect_cb.redirectBackUrlCookie = (const char *) strdup(redirectCookie.c_str());
+	} else {
+            redirect_cb.redirectBackUrlCookie = (const char *) strdup("AM_REDIRECT_BACK_SERVER_URL");
+        }
+    }
 
     return;
 } // processRedirectCallback

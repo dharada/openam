@@ -127,10 +127,13 @@ typedef struct am_auth_http_callback_info {
  * Redirect callback structure.
  */
 
+
 typedef struct am_auth_redirect_callback_info {
     const char *redirectUrl;
     const char *method;
     const char *status;
+    const char *statusParameter;
+    const char *redirectBackUrlCookie;
     const char **redirectData;
 
 } am_auth_redirect_callback_t;
