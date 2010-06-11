@@ -106,11 +106,6 @@ public class EmbeddedOpenDS {
      */
     public static void setup(Map map, ServletContext servletCtx)
         throws Exception {
-        // Victor
-        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        // Just for debugging, what did we get ?
-        debug.error("EmbeddOpenDS.setup: MAP received: /n" + map + "/n");
-        // Victor
         // Determine Cipher to be used
         SetupProgress.reportStart("emb.installingemb.null", null);
         String xform =  getSupportedTransformation();
@@ -144,8 +139,10 @@ public class EmbeddedOpenDS {
         String[] files = {
             // "config/upgrade/schema.ldif.5097",
             // "config/upgrade/config.ldif.5097",
-            "config/upgrade/schema.ldif.6181",
-            "config/upgrade/config.ldif.6181",
+           //  "config/upgrade/schema.ldif.6181",
+           //  "config/upgrade/config.ldif.6181",
+            "config/upgrade/schema.ldif.6400",
+            "config/upgrade/config.ldif.6400",
             "config/config.ldif",
             "config/admin-backend.ldif",
             "config/famsuffix.ldif",
@@ -334,22 +331,15 @@ public class EmbeddedOpenDS {
 
     public static void setupReplication(Map map) throws Exception
     {
-        // Victor
-        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        // Victor
         // Setup replication
         SetupProgress.reportStart("emb.creatingreplica", null);
-        debug.error("EmbeddedOpenDS.setupReplication: before SetupReplicationEnable");
         int ret = setupReplicationEnable(map);
-        debug.error("EmbeddedOpenDS.setupReplication: after SetupReplicationEnable");
         if (ret == 0) {
-            debug.error("after if = 0 SetupReplicationEnable");
             ret = setupReplicationInitialize(map);
             SetupProgress.reportEnd("emb.success", null);
             Debug.getInstance(SetupConstants.DEBUG_NAME).message(
                 "EmbeddedOpenDS.setupReplication: replication setup succeeded.");
         } else {
-            debug.error("after if <> 0 SetupReplicationEnable");
             Object[] params = {Integer.toString(ret)};
             SetupProgress.reportEnd("emb.failed.param", params);
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
@@ -376,8 +366,6 @@ public class EmbeddedOpenDS {
       */
     public static int setupReplicationEnable(Map map)
     {
-        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        debug.error("setupReplicationEnable: Entering");
         String[] enableCmd= {
             "enable",                // 0
             "--no-prompt",           // 1
@@ -427,8 +415,7 @@ public class EmbeddedOpenDS {
         enableCmd[9] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
         enableCmd[19] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
         enableCmd[25] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
-        debug.error("setupReplicationEnable: " + concat(enableCmd));
-        // Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
+        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
         if (debug.messageEnabled()) {
             debug.message("EmbeddedOpenDS.setupReplicationEnable: "+
                 "Host 1 "+enableCmd[3]);
@@ -443,11 +430,10 @@ public class EmbeddedOpenDS {
             enableCmd, false,
             SetupProgress.getOutputStream(), 
             SetupProgress.getOutputStream(), 
-            null);         
-        // SetupProgress.reportEnd("JUST GOT OUT OF THE REPLICATION ENABLE", null);
+            null);
         if (ret == 0) {
             SetupProgress.reportEnd("emb.success", null);
-            debug.error("setupReplicationEnable: success");
+            debug.message("setupReplicationEnable: success");
 
         } else {
             debug.error("setupReplicationEnable: failed ! ret=" + ret);
@@ -468,8 +454,6 @@ public class EmbeddedOpenDS {
       */
     public static int setupReplicationInitialize(Map map)
     {
-        Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
-        debug.error("setupReplicationInitialize: Entering");
         String[] initializeCmd= {
             "initialize",                 // 0
             "--no-prompt",                // 1
@@ -490,7 +474,6 @@ public class EmbeddedOpenDS {
             "--trustAll"                  // 16
         };
 
-        debug.error("setupReplicationInitialize: After defining the array");
         initializeCmd[3] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
         initializeCmd[9] = (String)map.get(SetupConstants.DS_EMB_REPL_HOST2);
         initializeCmd[11] = (String)map.get(SetupConstants.DS_EMB_REPL_PORT2);
@@ -501,7 +484,6 @@ public class EmbeddedOpenDS {
             SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
         initializeCmd[15] = "4445";
 
-        debug.error("setupReplicationInitialize: After replacing some values in the array");
         Object[] params = {concat(initializeCmd)};
         SetupProgress.reportStart("emb.replcommand", params);
 
@@ -511,10 +493,8 @@ public class EmbeddedOpenDS {
             null); 
 
         if (ret == 0) {
-            debug.error("setupReplicationInitialize: Initialization replications success");
             SetupProgress.reportEnd("emb.success", null);
         } else {
-            debug.error("setupReplicationInitialize: Initialization replications failed");
             SetupProgress.reportEnd("emb.failed", null);
         }
         return ret;
