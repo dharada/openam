@@ -2602,6 +2602,19 @@ public class AMSetupServlet extends HttpServlet {
         }
     }
 
+    static URL getResource(ServletContext
+        servletContext, String file) {
+
+        if (servletContext == null) {
+            // remove leading '/'
+            file = file.substring(1);
+            return Thread.currentThread().getContextClassLoader()
+                .getResource(file);
+        } else {
+            return servletContext.getResource(file);
+        }
+    }
+
     // Method to convert the domain name to the root suffix.
     // eg., Domain Name amqa.test.com is converted to root suffix
     // DC=amqa,DC=test,DC=com

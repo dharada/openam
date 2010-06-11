@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.setup;
 
 import com.sun.identity.common.ShutdownListener;
@@ -36,11 +40,14 @@ import com.sun.identity.shared.debug.Debug;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -50,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -70,7 +79,8 @@ import org.opends.server.tools.RebuildIndex;
 import org.opends.server.types.DirectoryEnvironmentConfig;
 import org.opends.server.util.EmbeddedUtils;
 
-// Until we have apis to setup replication we will use the clin interface.
+// OpenDS does not have APIs to install and setup replication yet
+import org.opends.server.tools.InstallDS;
 import org.opends.guitools.replicationcli.ReplicationCliMain;
 
 /**
@@ -109,6 +119,7 @@ public class EmbeddedOpenDS {
         // Determine Cipher to be used
         SetupProgress.reportStart("emb.installingemb.null", null);
         String xform =  getSupportedTransformation();
+
         if (xform == null) {
             SetupProgress.reportEnd("emb.noxform", null);
             throw new Exception("No transformation found");
@@ -118,16 +129,17 @@ public class EmbeddedOpenDS {
             SetupProgress.reportEnd("emb.success.param", params);
         }
 
-        String basedir = (String)map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
+        String basedir = (String) map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
         String odsRoot = basedir + "/" +
             SetupConstants.SMS_OPENDS_DATASTORE;
         new File(basedir).mkdir();
         new File(odsRoot).mkdir();
+        /*
         String[] subDirectories =
-        { "adminDb", "bak", "bin", "changelogDb", "classes",
-          "config", "db", "db_verify", "ldif", "lib",
-          "locks", "logs", "db_rebuild", "db_unindexed",
-          "db_index_test", "db_import_test", "config/schema", 
+        { "bak", "bin", "changelogDb", "classes",
+          "config", "db", "import-tmp", "ldif", "legal-notices",
+          "lib", "lib/extensions", "locks", "logs", "snmp", "snmp/mib",
+          "config/messages"config/schema",
           "config/upgrade" };
 
         // create sub dirs
@@ -193,6 +205,54 @@ public class EmbeddedOpenDS {
                 }
             }
         }
+        */
+
+        String zipFileName = "/WEB-INF/template/opends/opends.zip";
+        URL zipUrl = AMSetupServlet.getResource(servletCtx, zipFileName);
+        ZipFile opendsZip = new ZipFile(new File(zipUrl.toURI()));
+        Enumeration files = opendsZip.entries();
+
+        while (files.hasMoreElements()) {
+            ZipEntry file = (ZipEntry) files.nextElement();
+            File f = new File(odsRoot + "/" + file.getName());
+
+            if (file.isDirectory()) {
+                f.mkdir();
+                continue;
+            }
+
+            InputStream is = opendsZip.getInputStream(file);
+            FileOutputStream fos = new java.io.FileOutputStream(f);
+
+            try {
+                while (is.available() > 0) {
+                    fos.write(is.read());
+                }
+            } catch (IOException ioe) {
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Error loading ldifs", ioe);
+                throw ioe;
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+            }
+        }
+
+        // now setup OpenDS
+        EmbeddedOpenDS.setupOpenDS(odsRoot, map);
 
         Object[] params = {odsRoot};
         SetupProgress.reportStart("emb.installingemb", params);
@@ -238,6 +298,90 @@ public class EmbeddedOpenDS {
              }
         }
         return null;
+    }
+
+    /**
+     * Runs the OpenDS setup command to create our instance
+     *
+     * @param odsRoot File system directory where <code>OpenDS</code>
+     *                is installed.
+     * @param map The map of configuration options
+     * @throws Exception upon encountering errors.
+     */
+    public static void setupOpenDS(String odsRoot, Map map)
+    throws Exception {
+        SetupProgress.reportStart("emb.setupopends", null);
+
+        int ret = runOpenDSSetup(map);
+
+        if (ret == 0) {
+            SetupProgress.reportEnd("emb.setupopends.success", null);
+            Debug.getInstance(SetupConstants.DEBUG_NAME).message(
+                "EmbeddedOpenDS.setupOpenDS: OpenDS setup succeeded.");
+        } else {
+            Object[] params = {Integer.toString(ret)};
+            SetupProgress.reportEnd("emb.setupopends.failed.param", params);
+            Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                "EmbeddedOpenDS.setupOpenDS. Error setting up OpenDS");
+            throw new ConfiguratorException(
+                    "configurator.embsetupopendsfailed");
+        }
+    }
+
+     /**
+      * Runs the OpenDS setup command like this:
+      * $ ./setup --cli --adminConnectorPort 4444
+      * --baseDN dc=opensso,dc=java,dc=net --rootUserDN "cn=directory manager"
+      * --doNotStart --ldapPort 50389 --skipPortCheck --rootUserPassword xxxxxxx
+      * --jmxPort 1689 --no-prompt
+      *
+      *  @param map Map of properties collected by the configurator.
+      *  @return status : 0 == success, !0 == failure
+      */
+    public static int runOpenDSSetup(Map map) {
+        String[] setupCmd= {
+            "--cli",                        // 0
+            "--adminConnectorPort",         // 1
+            "4444",                         // 2
+            "--baseDN",                     // 3
+            "dc=opensso,dc=java,dc=net",    // 4
+            "--rootUserDN",                 // 5
+            "cn=Directory Manager",         // 6
+            "--doNotStart",                 // 7
+            "--ldapPort",                   // 8
+            "50389",                        // 9
+            "--skipPortCheck",              // 10
+            "--rootUserPassword",           // 11
+            "xxxxxxx",                      // 12
+            "--jmxPort",                    // 13
+            "1689",                         // 14
+            "--no-prompt"                   // 15
+        };
+
+        //setupCmd[2] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT);
+        setupCmd[4] = (String) map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
+        setupCmd[6] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_DN);
+        setupCmd[9] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+        //setupCmd[14] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_JMX_SERVER_PORT);
+
+        Object[] params = {concat(setupCmd)};
+        SetupProgress.reportStart("emb.setupcommand", params);
+
+        setupCmd[12] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
+
+        int ret = InstallDS.mainCLI(
+            setupCmd, true,
+            SetupProgress.getOutputStream(),
+            SetupProgress.getOutputStream(),
+            null);
+
+        if (ret == 0) {
+            SetupProgress.reportEnd("emb.success", null);
+        } else {
+            SetupProgress.reportEnd("emb.failed", null);
+        }
+
+        return ret;
     }
 
     /**
