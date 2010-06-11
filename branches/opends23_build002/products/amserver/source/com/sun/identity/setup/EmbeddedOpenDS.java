@@ -81,7 +81,7 @@ import org.opends.server.util.EmbeddedUtils;
 
 // OpenDS does not have APIs to install and setup replication yet
 import org.opends.server.tools.InstallDS;
-import org.opends.guitools.replicationcli.ReplicationCliMain;
+import org.opends.server.tools.dsreplication.ReplicationCliMain;
 
 /**
   * This class encapsulates all <code>OpenDS</code>  dependencies.
