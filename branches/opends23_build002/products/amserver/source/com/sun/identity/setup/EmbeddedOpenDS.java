@@ -337,9 +337,10 @@ public class EmbeddedOpenDS {
                     "EmbeddedOpenDS.setup(): Unable to delete zip file");
         }
 
-        SetupProgress.reportStart("emb.opends.stop", null);
+        SetupProgress.reportEnd("emb.opends.stop", null);
 
         // now setup OpenDS
+        System.setProperty("org.opends.quicksetup.Root", odsRoot);
         EmbeddedOpenDS.setupOpenDS(odsRoot, map);
 
         Object[] params = {odsRoot};
