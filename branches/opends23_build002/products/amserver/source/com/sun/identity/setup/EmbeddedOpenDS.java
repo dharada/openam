@@ -37,10 +37,11 @@ import com.sun.identity.common.ShutdownManager;
 import com.sun.identity.common.ShutdownPriority;
 import com.sun.identity.shared.debug.Debug;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
@@ -210,30 +211,31 @@ public class EmbeddedOpenDS {
         */
 
         String zipFileName = "/WEB-INF/template/opends/opends.zip";
-        FileInputStream fin = new FileInputStream(
-                AMSetupServlet.getResourceAsStream(servletCtx, zipFileName));
-        FileOutputStream fout = new FileOutputStream(odsRoot + "/opends.zip");
+        BufferedInputStream bin = new BufferedInputStream(
+                AMSetupServlet.getResourceAsStream(servletCtx, zipFileName), 10000);
+        BufferedOutputStream bout = new BufferedOutputStream(
+                new FileOutputStream(odsRoot + "/opends.zip"), 10000);
 
         try {
-            while (fin.available() > 0) {
-                fout.write(fin.read());
+            while (bin.available() > 0) {
+                bout.write(bin.read());
             }
         } catch (IOException ioe) {
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
                 "EmbeddedOpenDS.setup(): Error copying zip file", ioe);
             throw ioe;
         } finally {
-            if (fin != null) {
+            if (bin != null) {
                 try {
-                    fin.close();
+                    bin.close();
                 } catch (Exception ex) {
                     //No handling requried
                 }
             }
 
-            if (fout != null) {
+            if (bout != null) {
                 try {
-                    fout.close();
+                    bout.close();
                 } catch (Exception ex) {
                     //No handling requried
                 }
