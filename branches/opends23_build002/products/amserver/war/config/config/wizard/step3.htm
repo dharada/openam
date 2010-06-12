@@ -36,7 +36,7 @@
         field = "";
     }  
     
-   function validatePort(port) {
+   function validatePort() {
         field = "configStorePort";
         var callUrl = "$context$path?actionLink=validateLocalPort";
         var param = "&port=" + $('configStorePort').value;
@@ -425,7 +425,7 @@
                         </td>
                     </tr>  
                     <tr>
-			<td><label for="configStorePort"><em>*&nbsp;</em>
+			<td><label for="configStoreAdminPort"><em>*&nbsp;</em>
                             $page.getLocalizedString("port.label")</label></td>
                         <td>
                             <input id="configStorePort" name="configStorePort" 
@@ -436,7 +436,7 @@
                             <span id="configStorePortStatus"></span></td>
                     </tr>
                     <tr>
-			<td><label for="configStorePort"><em>*&nbsp;</em>
+			<td><label for="configStoreJmxPort"><em>*&nbsp;</em>
                             $page.getLocalizedString("admin.port.label")</label></td>
                         <td>
                             <input id="configStoreAdminPort" name="configStoreAdminPort"
@@ -444,7 +444,7 @@
                                    value="$configStoreAdminPort"
                                    onkeyup="APP.callDelayed(this, validateAdminPort)"
                                    onchange="APP.callDelayed(this, validateAdminPort)"/>
-                            <span id="configStorePortStatus"></span></td>
+                            <span id="configStoreAdminPortStatus"></span></td>
                     </tr>
                     <tr>
 			<td><label for="configStoreJmxPort"><em>*&nbsp;</em>
@@ -455,7 +455,7 @@
                                    value="$configStoreJmxPort"
                                    onkeyup="APP.callDelayed(this, validateJmxPort)"
                                    onchange="APP.callDelayed(this, validateJmxPort)"/>
-                            <span id="configStorePortStatus"></span></td>
+                            <span id="configStoreJmxPortStatus"></span></td>
                     </tr>
                     <tr>                    
                         <td><label for="encryptionKey"><em>*&nbsp;</em>
