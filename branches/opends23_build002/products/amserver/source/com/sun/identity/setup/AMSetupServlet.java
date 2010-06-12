@@ -1777,7 +1777,17 @@ public class AMSetupServlet extends HttpServlet {
         dsConfig.loadSchemaFiles(schemaFiles);
 
         if (dataStore.equals(SetupConstants.SMS_EMBED_DATASTORE)) {
-            EmbeddedOpenDS.rebuildIndex(map);
+            int ret = EmbeddedOpenDS.rebuildIndex(map);
+
+            if (ret != 0) {
+                Object[] error = { Integer.toString(ret) };
+                SetupProgress.reportStart("emb.rebuildindex.failed", null);
+                SetupProgress.reportEnd("emb.rebuildindex.failedmsg", error);
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "AMSetupServlet.writeSchemaFiles: " +
+                    "Unable to rebuild indexes in OpenDS: " + ret);
+                throw new Exception("Unable to rebuild indexes in OpenDS: " + ret);
+            }
         }
 
         for(Iterator iter = absSchemaFiles.iterator(); iter.hasNext(); ) {

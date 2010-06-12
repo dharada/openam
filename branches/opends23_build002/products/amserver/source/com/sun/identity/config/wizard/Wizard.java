@@ -59,6 +59,10 @@ public class Wizard extends AjaxPage {
     public static String defaultRootSuffix = "dc=opensso,dc=java,dc=net";
     public String defaultPort = Integer.toString(
         AMSetupServlet.getUnusedPort(hostName, 50389, 1000));
+    public String defaultAdminPort = Integer.toString(
+        AMSetupServlet.getUnusedPort(hostName, 4444, 1000));
+    public String defaultJmxPort = Integer.toString(
+        AMSetupServlet.getUnusedPort(hostName, 1689, 1000));
     
     /**
      * This is the 'execute' operation for the entire wizard.  This method 
@@ -144,7 +148,15 @@ public class Wizard extends AjaxPage {
 
         tmp = getAttribute("configStorePort", defaultPort);
         request.addParameter(
-            SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT, tmp); 
+            SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT, tmp);
+
+        tmp = getAttribute("configStoreAdminPort", defaultAdminPort);
+        request.addParameter(
+            SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT, tmp);
+
+        tmp = getAttribute("configStoreJmxPort", defaultJmxPort);
+        request.addParameter(
+            SetupConstants.CONFIG_VAR_DIRECTORY_JMX_SERVER_PORT, tmp);
 
         tmp = getAttribute("rootSuffix", defaultRootSuffix);
         request.addParameter(SetupConstants.CONFIG_VAR_ROOT_SUFFIX, tmp);

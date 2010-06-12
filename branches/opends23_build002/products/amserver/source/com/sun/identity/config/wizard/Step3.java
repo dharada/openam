@@ -67,6 +67,10 @@ public class Step3 extends LDAPStoreWizardPage {
         new ActionLink("setConfigType", this, "setConfigType");
     public ActionLink validateLocalPortLink = 
         new ActionLink("validateLocalPort", this, "validateLocalPort");
+    public ActionLink validateLocalAdminPortLink =
+        new ActionLink("validateLocalAdminPort", this, "validateLocalAdminPort");
+    public ActionLink validateLocalJmxPortLink =
+        new ActionLink("validateLocalJmxPort", this, "validateLocalJmxPort");
     public ActionLink validateEncKey =
         new ActionLink("validateEncKey", this, "validateEncKey");
     
@@ -87,6 +91,12 @@ public class Step3 extends LDAPStoreWizardPage {
         val = getAttribute("configStorePort", getAvailablePort(50389));
         addModel("configStorePort", val);
         addModel("localConfigPort", val);
+
+        val = getAttribute("configStoreAdminPort", getAvailablePort(4444));
+        addModel("configStoreAdminPort", val);
+
+        val = getAttribute("configStoreJmxPort", getAvailablePort(1689));
+        addModel("configStoreJmxPort", val);
 
         localRepPort = getAttribute("localRepPort", getAvailablePort(58989));
         addModel("localRepPort", localRepPort);
@@ -228,6 +238,98 @@ public class Step3 extends LDAPStoreWizardPage {
         }
         setPath(null);        
         return false;    
+    }
+
+        public boolean validateLocalAdminPort() {
+        String port = toString("port");
+
+        if (port == null) {
+            writeToResponse(getLocalizedString("missing.required.field"));
+        } else {
+            try {
+                int val = Integer.parseInt(port);
+                if (val < 1 || val > 65535) {
+                    writeToResponse(getLocalizedString("invalid.port.number"));
+                } else {
+                    boolean ok = false;
+                    String type = (String) getContext().getSessionAttribute(
+                            SetupConstants.CONFIG_VAR_DATA_STORE);
+
+                    if ((type == null) || type.equals(
+                            SetupConstants.SMS_EMBED_DATASTORE)) {
+                        String host = (String) getContext().getSessionAttribute(
+                                "configStoreHost");
+                        if (host == null) {
+                            host = "localhost";
+                        }
+                        if (AMSetupServlet.canUseAsPort(host, val)) {
+                            ok = true;
+                        } else {
+                            writeToResponse(getLocalizedString("invalid.port.used"));
+                        }
+                    } else {
+                        ok = true;
+                    }
+                    if (ok) {
+                        getContext().setSessionAttribute("configStoreAdminPort", port);
+                        writeToResponse("ok");
+                    }
+                }
+
+            } catch (NumberFormatException e) {
+                 writeToResponse(getLocalizedString("invalid.port.number"));
+            } catch (NullPointerException ne) {
+                writeToResponse(getLocalizedString("invalid.port.number"));
+            }
+        }
+        setPath(null);
+        return false;
+    }
+
+    public boolean validateLocalJmxPort() {
+        String port = toString("port");
+
+        if (port == null) {
+            writeToResponse(getLocalizedString("missing.required.field"));
+        } else {
+            try {
+                int val = Integer.parseInt(port);
+                if (val < 1 || val > 65535) {
+                    writeToResponse(getLocalizedString("invalid.port.number"));
+                } else {
+                    boolean ok = false;
+                    String type = (String) getContext().getSessionAttribute(
+                            SetupConstants.CONFIG_VAR_DATA_STORE);
+
+                    if ((type == null) || type.equals(
+                            SetupConstants.SMS_EMBED_DATASTORE)) {
+                        String host = (String) getContext().getSessionAttribute(
+                                "configStoreHost");
+                        if (host == null) {
+                            host = "localhost";
+                        }
+                        if (AMSetupServlet.canUseAsPort(host, val)) {
+                            ok = true;
+                        } else {
+                            writeToResponse(getLocalizedString("invalid.port.used"));
+                        }
+                    } else {
+                        ok = true;
+                    }
+                    if (ok) {
+                        getContext().setSessionAttribute("configStoreJmxPort", port);
+                        writeToResponse("ok");
+                    }
+                }
+
+            } catch (NumberFormatException e) {
+                 writeToResponse(getLocalizedString("invalid.port.number"));
+            } catch (NullPointerException ne) {
+                writeToResponse(getLocalizedString("invalid.port.number"));
+            }
+        }
+        setPath(null);
+        return false;
     }
 
     /**

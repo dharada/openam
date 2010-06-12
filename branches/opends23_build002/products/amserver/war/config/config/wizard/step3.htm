@@ -36,7 +36,7 @@
         field = "";
     }  
     
-   function validatePort() {
+   function validatePort(port) {
         field = "configStorePort";
         var callUrl = "$context$path?actionLink=validateLocalPort";
         var param = "&port=" + $('configStorePort').value;
@@ -44,7 +44,27 @@
         callUrl = callUrl + "&ie7fix=" + ie7fix;
         setTimeout("enableNextButton()", 500);
         AjaxUtils.call(callUrl+param, validateUserFields);
-    }    
+    }
+
+    function validateAdminPort() {
+        field = "configStoreAdminPort";
+        var callUrl = "$context$path?actionLink=validateLocalAdminPort";
+        var param = "&port=" + $('configStoreAdminPort').value;
+        ie7fix++;
+        callUrl = callUrl + "&ie7fix=" + ie7fix;
+        setTimeout("enableNextButton()", 500);
+        AjaxUtils.call(callUrl+param, validateUserFields);
+    }
+
+    function validateJmxPort() {
+        field = "configStoreJmxPort";
+        var callUrl = "$context$path?actionLink=validateLocalJmxPort";
+        var param = "&port=" + $('configStoreJmxPort').value;
+        ie7fix++;
+        callUrl = callUrl + "&ie7fix=" + ie7fix;
+        setTimeout("enableNextButton()", 500);
+        AjaxUtils.call(callUrl+param, validateUserFields);
+    }
 
     function validateEncKey() {
         $('nextTabButton').disabled = true;
@@ -290,6 +310,8 @@
             $('nextTabButton').disabled = 
                 !isFieldOK('configStoreHost') ||
                 !isFieldOK('configStorePort') ||
+                !isFieldOK('configStoreAdminPort') ||
+                !isFieldOK('configStoreJmxPort') ||
                 !isEncryptionKeyOk() ||
                 !isFieldOK('rootSuffix');
         } else {
@@ -411,6 +433,28 @@
                                    value="$configStorePort" 
                                    onkeyup="APP.callDelayed(this, validatePort)"
                                    onchange="APP.callDelayed(this, validatePort)"/>
+                            <span id="configStorePortStatus"></span></td>
+                    </tr>
+                    <tr>
+			<td><label for="configStorePort"><em>*&nbsp;</em>
+                            $page.getLocalizedString("admin.port.label")</label></td>
+                        <td>
+                            <input id="configStoreAdminPort" name="configStoreAdminPort"
+                                   type="text" size="5" maxLength="5"
+                                   value="$configStoreAdminPort"
+                                   onkeyup="APP.callDelayed(this, validateAdminPort)"
+                                   onchange="APP.callDelayed(this, validateAdminPort)"/>
+                            <span id="configStorePortStatus"></span></td>
+                    </tr>
+                    <tr>
+			<td><label for="configStoreJmxPort"><em>*&nbsp;</em>
+                            $page.getLocalizedString("jmx.port.label")</label></td>
+                        <td>
+                            <input id="configStoreJmxPort" name="configStoreJmxPort"
+                                   type="text" size="5" maxLength="5"
+                                   value="$configStoreJmxPort"
+                                   onkeyup="APP.callDelayed(this, validateJmxPort)"
+                                   onchange="APP.callDelayed(this, validateJmxPort)"/>
                             <span id="configStorePortStatus"></span></td>
                     </tr>
                     <tr>                    

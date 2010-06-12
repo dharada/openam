@@ -52,6 +52,11 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -82,6 +87,8 @@ import org.opends.server.tools.dsconfig.DSConfig;
 import org.opends.server.tools.RebuildIndex;
 import org.opends.server.types.DirectoryEnvironmentConfig;
 import org.opends.server.util.EmbeddedUtils;
+import org.opends.server.util.ServerConstants;
+import org.opends.server.util.TimeThread;
 
 // OpenDS does not have APIs to install and setup replication yet
 import org.opends.server.tools.InstallDS;
@@ -138,78 +145,6 @@ public class EmbeddedOpenDS {
             SetupConstants.SMS_OPENDS_DATASTORE;
         new File(basedir).mkdir();
         new File(odsRoot).mkdir();
-        /*
-        String[] subDirectories =
-        { "bak", "bin", "changelogDb", "classes",
-          "config", "db", "import-tmp", "ldif", "legal-notices",
-          "lib", "lib/extensions", "locks", "logs", "snmp", "snmp/mib",
-          "config/messages"config/schema",
-          "config/upgrade" };
-
-        // create sub dirs
-        for (int i = 0; i < subDirectories.length; i++) {
-            new File(odsRoot, subDirectories[i]).mkdir();
-        }
-
-        // copy files
-        String[] files = {
-            "config/upgrade/schema.ldif.5097",
-            "config/upgrade/config.ldif.5097",
-            "config/config.ldif",
-            "config/admin-backend.ldif",
-            "config/famsuffix.ldif",
-            "config/schema/00-core.ldif",
-            "config/schema/01-pwpolicy.ldif",
-            "config/schema/02-config.ldif",
-            "config/schema/03-changelog.ldif",
-            "config/schema/03-rfc2713.ldif",
-            "config/schema/03-rfc2714.ldif",
-            "config/schema/03-rfc2739.ldif",
-            "config/schema/03-rfc2926.ldif",
-            "config/schema/03-rfc3112.ldif",
-            "config/schema/03-rfc3712.ldif",
-            "config/schema/03-uddiv3.ldif",
-            "config/schema/04-rfc2307bis.ldif"
-        };
-        for (int i = 0 ; i < files.length; i++) {
-            String file = "/WEB-INF/template/opends/"+files[i];
-            InputStreamReader fin = new InputStreamReader(
-                AMSetupServlet.getResourceAsStream(servletCtx, file));
-
-            StringBuffer sbuf = new StringBuffer();
-            char[] cbuf = new char[1024];
-            int len;
-            while ((len = fin.read(cbuf)) > 0) {
-                sbuf.append(cbuf, 0, len);
-            }
-            FileWriter fout = null;
-
-            try {
-                fout = new FileWriter(odsRoot + "/" + files[i]);
-                String inpStr = sbuf.toString();
-                fout.write(ServicesDefaultValues.tagSwap(inpStr));
-            } catch (IOException e) {
-                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
-                    "EmbeddedOpenDS.setup(): Error loading ldifs", e);
-                throw e;
-            } finally {
-                if (fin != null) {
-                    try {
-                        fin.close();
-                    } catch (Exception ex) {
-                        //No handling requried
-                    }
-                }  
-                if (fout != null) {
-                    try {
-                        fout.close();
-                    } catch (Exception ex) {
-                        //No handling requried
-                    }
-                }
-            }
-        }
-        */
 
         SetupProgress.reportStart("emb.opends.start", null);
         String zipFileName = "/WEB-INF/template/opends/opends.zip";
@@ -256,8 +191,10 @@ public class EmbeddedOpenDS {
                 continue;
             }
 
-            InputStream is = opendsZip.getInputStream(file);
-            FileOutputStream fos = new java.io.FileOutputStream(f);
+            BufferedInputStream is =
+                    new BufferedInputStream(opendsZip.getInputStream(file), 10000);
+            BufferedOutputStream fos =
+                    new BufferedOutputStream(new java.io.FileOutputStream(f), 10000);
 
             try {
                 while (is.available() > 0) {
@@ -292,18 +229,50 @@ public class EmbeddedOpenDS {
 
         // copy OpenDS jar file
         String[] opendsJarFiles = {
-            "lib/OpenDS.jar",
-            "lib/je.jar",
-            "lib/activation.jar",
-            "lib/mail.jar"
+            "OpenDS.jar",
+            "je.jar",
+            "activation.jar",
+            "mail.jar"
         };
 
+        for (int i = 0 ; i < opendsJarFiles.length; i++) {
+            String jarFileName = "/WEB-INF/lib/" + opendsJarFiles[i];
+            ReadableByteChannel inChannel =
+                    Channels.newChannel(AMSetupServlet.getResourceAsStream(servletCtx, jarFileName));
+            FileChannel outChannel = new FileOutputStream(odsRoot + "/lib/" + opendsJarFiles[i]).getChannel();
+
+            try {
+                channelCopy(inChannel, outChannel);
+            } catch (IOException ioe) {
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setup(): Error copying zip file", ioe);
+                throw ioe;
+            } finally {
+                if (inChannel != null) {
+                    try {
+                        inChannel.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+
+                if (outChannel != null) {
+                    try {
+                        outChannel.close();
+                    } catch (Exception ex) {
+                        //No handling requried
+                    }
+                }
+            }
+        }
+
+        /*
         for (int i = 0 ; i < opendsJarFiles.length; i++) {
             String jarFileName = "/WEB-INF/lib/" + opendsJarFiles[i];
             BufferedInputStream jin = new BufferedInputStream(
                 AMSetupServlet.getResourceAsStream(servletCtx, jarFileName), 10000);
             BufferedOutputStream jout = new BufferedOutputStream(
-                new FileOutputStream(odsRoot + "/lib/" + jarFileName), 10000);
+                new FileOutputStream(odsRoot + "/lib/" + opendsJarFiles[i]), 10000);
 
             try {
                 while (jin.available() > 0) {
@@ -330,7 +299,7 @@ public class EmbeddedOpenDS {
                     }
                 }
             }
-        }
+        }*/
 
         // create tag swapped files
         String[] tagSwapFiles = {
@@ -387,7 +356,9 @@ public class EmbeddedOpenDS {
 
         // now setup OpenDS
         System.setProperty("org.opends.quicksetup.Root", odsRoot);
-        EmbeddedOpenDS.setupOpenDS(odsRoot, map);
+        System.setProperty(ServerConstants.PROPERTY_SERVER_ROOT, odsRoot);
+        System.setProperty(ServerConstants.PROPERTY_INSTANCE_ROOT, odsRoot);
+        EmbeddedOpenDS.setupOpenDS(odsRoot + "/config/config.ldif", map);
 
         Object[] params = {odsRoot};
         SetupProgress.reportStart("emb.installingemb", params);
@@ -398,9 +369,37 @@ public class EmbeddedOpenDS {
         if (!isMultiServer(map)) {
             // Default: single / first server.
             SetupProgress.reportStart("emb.creatingfamsuffix", null);
-            EmbeddedOpenDS.shutdownServer("to load ldif");
-            EmbeddedOpenDS.loadLDIF(odsRoot, odsRoot + "/ldif/openam_suffix.ldif");
-            EmbeddedOpenDS.startServer(odsRoot);
+            //EmbeddedOpenDS.shutdownServer("to load ldif");
+            int ret = EmbeddedOpenDS.loadLDIF(map, odsRoot, odsRoot + "/ldif/openam_suffix.ldif");
+            
+            if (ret == 0) {
+                SetupProgress.reportEnd("emb.creatingfamsuffix.success", null);
+            } else {
+                Object[] error = { Integer.toString(ret) };
+                SetupProgress.reportEnd("emb.creatingfamsuffix.failure", error);
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                    "EmbeddedOpenDS.setupOpenDS. Error loading OpenAM suffix");
+            throw new ConfiguratorException(
+                    "emb.creatingfamsuffix.failure");
+            }
+            //EmbeddedOpenDS.startServer(odsRoot);
+        }
+    }
+
+    protected static void channelCopy(ReadableByteChannel from, WritableByteChannel to)
+    throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(16 * 1024);
+
+        while (from.read(buffer) != -1) {
+            buffer.flip();
+            to.write(buffer);
+            buffer.compact();
+        }
+
+        buffer.flip();
+
+        while (buffer.hasRemaining()) {
+            to.write(buffer);
         }
     }
 
@@ -443,11 +442,11 @@ public class EmbeddedOpenDS {
      * @param map The map of configuration options
      * @throws Exception upon encountering errors.
      */
-    public static void setupOpenDS(String odsRoot, Map map)
+    public static void setupOpenDS(String configFile, Map map)
     throws Exception {
         SetupProgress.reportStart("emb.setupopends", null);
 
-        int ret = runOpenDSSetup(map);
+        int ret = runOpenDSSetup(map, configFile);
 
         if (ret == 0) {
             SetupProgress.reportEnd("emb.setupopends.success", null);
@@ -473,7 +472,7 @@ public class EmbeddedOpenDS {
       *  @param map Map of properties collected by the configurator.
       *  @return status : 0 == success, !0 == failure
       */
-    public static int runOpenDSSetup(Map map) {
+    public static int runOpenDSSetup(Map map, String configFile) {
         String[] setupCmd= {
             "--cli",                        // 0
             "--adminConnectorPort",         // 1
@@ -482,27 +481,30 @@ public class EmbeddedOpenDS {
             "dc=opensso,dc=java,dc=net",    // 4
             "--rootUserDN",                 // 5
             "cn=Directory Manager",         // 6
-            "--doNotStart",                 // 7
-            "--ldapPort",                   // 8
-            "50389",                        // 9
-            "--skipPortCheck",              // 10
-            "--rootUserPassword",           // 11
-            "xxxxxxx",                      // 12
-            "--jmxPort",                    // 13
-            "1689",                         // 14
-            "--no-prompt"                   // 15
+            "--ldapPort",                   // 7
+            "50389",                        // 8
+            "--skipPortCheck",              // 9
+            "--rootUserPassword",           // 10
+            "xxxxxxx",                      // 11
+            "--jmxPort",                    // 12
+            "1689",                         // 13
+            "--no-prompt",                  // 14
+            "--configFile",                 // 15
+            "/path/to/config.ldif",         // 16
+            "--doNotStart"                  // 17
         };
 
-        //setupCmd[2] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT);
+        setupCmd[2] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT);
         setupCmd[4] = (String) map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
         setupCmd[6] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_DN);
-        setupCmd[9] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
-        //setupCmd[14] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_JMX_SERVER_PORT);
+        setupCmd[8] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+        setupCmd[13] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_JMX_SERVER_PORT);
+        setupCmd[16] = configFile;
 
         Object[] params = {concat(setupCmd)};
         SetupProgress.reportStart("emb.setupcommand", params);
 
-        setupCmd[12] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
+        setupCmd[11] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
 
         int ret = InstallDS.mainCLI(
             setupCmd, true,
@@ -538,7 +540,7 @@ public class EmbeddedOpenDS {
         config.setServerRoot(new File(odsRoot));
         config.setForceDaemonThreads(true);
         config.setConfigClass(ConfigFileHandler.class);
-        config.setConfigFile(new File(odsRoot+"/config", "config.ldif"));
+        config.setConfigFile(new File(odsRoot + "/config", "config.ldif"));
         debug.message("EmbeddedOpenDS.startServer:starting DS Server...");
         EmbeddedUtils.startServer(config);
         debug.message("...EmbeddedOpenDS.startServer:DS Server started.");
@@ -832,24 +834,46 @@ public class EmbeddedOpenDS {
      *  @param ldif Full path of the ldif file to be loaded.
      *
      */
-    public static void loadLDIF(String odsRoot, String ldif) 
+    public static int loadLDIF(Map map, String odsRoot, String ldif)
     {
+        int ret = 0;
+
         Debug debug = Debug.getInstance(SetupConstants.DEBUG_NAME);
         try {
-            debug.message("EmbeddedOpenDS:loadLDIF("+ldif+")");
+            if (debug.messageEnabled()) {
+                debug.message("EmbeddedOpenDS:loadLDIF(" + ldif + ")");
+            }
+
             String[] args1 = 
             { 
-                "-C", "org.opends.server.extensions.ConfigFileHandler",
-                "-f", odsRoot+"/config/config.ldif",
-                "-n", "userRoot",
-                "-l", ldif,
-                "-Q" 
+                "-C",                                               // 0
+                "org.opends.server.extensions.ConfigFileHandler",   // 1
+                "-f",                                               // 2
+                odsRoot + "/config/config.ldif",                    // 3
+                "-n",                                               // 4
+                "userRoot",                                         // 5
+                "-l",                                               // 6
+                ldif,                                               // 7
+                "-Q",                                               // 8
+                "--trustAll",                                       // 9
+                "-D",                                               // 10
+                "cn=Directory Manager",                             // 11
+                "-w",                                               // 12
+                "password"                                          // 13
             };
-            org.opends.server.tools.ImportLDIF.mainImportLDIF(args1);
-            debug.message("EmbeddedOpenDS:loadLDIF Success");
+            args1[11] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_DN);
+            args1[13] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
+            ret = org.opends.server.tools.ImportLDIF.mainImportLDIF(args1, false,
+                    SetupProgress.getOutputStream(), SetupProgress.getOutputStream());
+
+            if (debug.messageEnabled()) {
+                debug.message("EmbeddedOpenDS:loadLDIF Success");
+            }
         } catch (Exception ex) {
-              debug.error("EmbeddedOpenDS:loadLDIF:ex="+ex);
+              debug.error("EmbeddedOpenDS:loadLDIF:ex=", ex);
         }
+
+        return ret;
     } 
 
     /**
@@ -1298,8 +1322,8 @@ public class EmbeddedOpenDS {
     // This method simulates the OpenDS cli command rebuild-index.
     // eg., rebuild-index -b dc=example,dc=com -i uid -i mail
 
-    public static void rebuildIndex(Map map) throws Exception {
-
+    public static int rebuildIndex(Map map) throws Exception {
+        int ret = 0;
         shutdownServer("Rebuild index");
         String basedir = 
             (String)map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
@@ -1320,10 +1344,12 @@ public class EmbeddedOpenDS {
             "--index",
             "iplanet-am-user-federation-info-key",
             "--index",
-            "sun-fm-saml2-nameid-infokey" };
+            "sun-fm-saml2-nameid-infokey"};
         OutputStream bos = new ByteArrayOutputStream();
         OutputStream boe = new ByteArrayOutputStream();
-        RebuildIndex.mainRebuildIndex(args, true, bos, boe);
+        TimeThread.start();
+        ret = RebuildIndex.mainRebuildIndex(args, true, bos, boe);
+        TimeThread.stop();
         String outStr = bos.toString();
         String errStr = boe.toString();
         if (errStr.length() != 0) {
@@ -1341,5 +1367,6 @@ public class EmbeddedOpenDS {
                 outStr);
         }
         startServer(odsRoot);
+        return ret;
     }
 }
