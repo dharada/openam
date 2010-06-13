@@ -94,9 +94,11 @@ public class Step3 extends LDAPStoreWizardPage {
 
         val = getAttribute("configStoreAdminPort", getAvailablePort(4444));
         addModel("configStoreAdminPort", val);
+        addModel("localConfigAdminPort", val);
 
         val = getAttribute("configStoreJmxPort", getAvailablePort(1689));
         addModel("configStoreJmxPort", val);
+        addModel("localConfigJmxPort", val);
 
         localRepPort = getAttribute("localRepPort", getAvailablePort(58989));
         addModel("localRepPort", localRepPort);

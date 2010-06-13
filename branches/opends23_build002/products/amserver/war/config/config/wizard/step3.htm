@@ -194,17 +194,39 @@
     function localPortResponse(response) {
         var message = response.responseText;
         if (message == "ok") {
-            $('localConfigPortStatus').innerHTML = okString;
+            eval(field + "Valid = true;" );
+            $(field + 'Status').innerHTML = okString;
         } else {
-            $('localConfigPortStatus').innerHTML = errorImage +
+            eval(field + "Valid = false;" );
+            $(field + 'Status').innerHTML = errorImage +
                 '<small>' + message + '</small>';
             $('nextTabButton').disabled = true;
         }
+        field = "";
     }
-    
-    function validateLocalConfigPort() {        
+
+    function validateLocalConfigPort() {
+        field = "localConfigPort";
         var call = "$context$path?actionLink=validateLocalPort";
         var portVal = "&port=" + $('localConfigPort').value;
+        ie7fix++;
+        call = call + "&ie7fix=" + ie7fix;
+        AjaxUtils.call(call+portVal, localPortResponse);
+    }
+
+    function validateLocalConfigAdminPort() {
+        field = "localConfigAdminPort";
+        var call = "$context$path?actionLink=validateLocalAdminPort";
+        var portVal = "&port=" + $('localConfigAdminPort').value;
+        ie7fix++;
+        call = call + "&ie7fix=" + ie7fix;
+        AjaxUtils.call(call+portVal, localPortResponse);
+    }
+
+    function validateLocalConfigJmxPort() {
+        field = "localConfigJmxPort";
+        var call = "$context$path?actionLink=validateLocalJmxPort";
+        var portVal = "&port=" + $('localConfigJmxPort').value;
         ie7fix++;
         call = call + "&ie7fix=" + ie7fix;
         AjaxUtils.call(call+portVal, localPortResponse);
@@ -546,6 +568,16 @@
                                    onchange="APP.callDelayed(this, validateLocalConfigPort)"/>
                             <span id="localConfigPortStatus"></span>                       
                         </td>
+                        <td><label for="localConfigAdminPort"><em>*&nbsp;</em>
+                            $page.getLocalizedString("admin.port.label")</label></td>
+                        <td>
+                            <input id="localConfigAdminPort" name="localConfigAdminPort"
+                                   type="text" class="text" size="5" maxLength="5"
+                                   value="$localConfigAdminPort"
+                                   onkeyup="APP.callDelayed(this, validateLocalAdminPort)"
+                                   onchange="APP.callDelayed(this, validateLocalAdminPort)"/>
+                            <span id="localConfigAdminPortStatus"></span>
+                        </td>
                     </tr> 
                     <tr>
                         <td><label for="localRepPort"><em>*&nbsp;</em>
@@ -558,9 +590,19 @@
                                    onchange="APP.callDelayed(this, validateLocalRepPort)"/>
                             <span id="localRepPortStatus"></span>                       
                         </td>
+                        <td><label for="localConfigJmxPort"><em>*&nbsp;</em>
+                            $page.getLocalizedString("jmx.port.label")</label></td>
+                        <td>
+                            <input id="localConfigJmxPort" name="localConfigJmxPort"
+                                   type="text" class="text" size="5" maxLength="5"
+                                   value="$localConfigJmxPort"
+                                   onkeyup="APP.callDelayed(this, validateLocalJmxPort)"
+                                   onchange="APP.callDelayed(this, validateLocalJmxPort)"/>
+                            <span id="localConfigJmxPortStatus"></span>
+                        </td>
                     </tr>  
                     <tr>
-                        <td colspan="2">
+                        <td colspan="4">
                             <span id="replicationMessage"></span></td>
                     </tr>
                     <tr>
@@ -574,6 +616,7 @@
                                    onchange="APP.callDelayed(this, validateExistingPort)"/>
                             <span id="existingPortStatus"></span>                        
                         </td>
+                        <td></td><td></td>
                     </tr>      
                     <tr>
                         <td><label for="existingRepPort"><em>*&nbsp;</em>
@@ -586,6 +629,7 @@
                                    onchange="APP.callDelayed(this, validateExistingRepPort)"/>
                             <span id="existingRepPortStatus"></span>
                         </td>
+                        <td></td><td></td>
                     </tr>   
                 </table>
             </div>
