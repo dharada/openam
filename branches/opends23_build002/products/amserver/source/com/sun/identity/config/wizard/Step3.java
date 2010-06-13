@@ -507,7 +507,7 @@ public class Step3 extends LDAPStoreWizardPage {
                     // set the replication ports pulled from the remote
                     // server in the session and pass back to the client
                     String existing = (String)data.get(
-                        BootstrapData.DS_PORT);
+                        SetupConstants.DS_EMB_REPL_ADMINPORT2);
                     getContext().setSessionAttribute(
                         SessionAttributeNames.EXISTING_PORT, existing);
                     addObject(sb, "existingPort", existing);

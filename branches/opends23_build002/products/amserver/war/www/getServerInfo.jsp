@@ -26,6 +26,8 @@
 
 --%>
 
+<%-- Portions Copyrighted [2010] [ForgeRock AS] --%>
+
 <%@ page
 import="com.iplanet.am.util.SystemProperties,
         com.iplanet.services.naming.WebtopNaming,
@@ -126,6 +128,8 @@ import="com.iplanet.am.util.SystemProperties,
     //   ii) replication port available -> retrieve it
     String replPort = null;
     String replPortAvailable = null;
+    String adminport = null;
+
     if (isEmbeddedDS) {
         replPort = EmbeddedOpenDS.getReplicationPort(username, password, 
             "localhost", dsport);
@@ -134,6 +138,12 @@ import="com.iplanet.am.util.SystemProperties,
             replPortAvailable = "false";
             replPort = ""+ AMSetupServlet.getUnusedPort("localhost", 50889, 1000);
         }
+
+        adminPort = EmbeddedOpenDS.getAdminPort(username, password,
+                "localhost", dsport);
+
+        if (adminPort == null) {
+            adminPort = "4444";
     }
     // We have collected all the data - return a response
     StringBuffer buf = new StringBuffer();
@@ -159,6 +169,10 @@ import="com.iplanet.am.util.SystemProperties,
     if (replPort != null) {
         buf.append(BootstrapData.DS_REPLICATIONPORT).append("=").
             append(replPort).append("&");
+    }
+    if (adminPort != null) {
+        buf.append(SetupConstants.DS_EMB_REPL_ADMINPORT2).append("=").
+            append(adminPort).append("&");
     }
     if (replPortAvailable != null) {
         buf.append(BootstrapData.DS_REPLICATIONPORT_AVAILABLE).append("=").

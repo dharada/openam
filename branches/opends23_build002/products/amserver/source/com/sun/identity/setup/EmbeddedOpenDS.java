@@ -942,6 +942,59 @@ public class EmbeddedOpenDS {
         return replPort;
        
     }
+
+    /**
+     *  Get admin port of the OpenDS server
+     *
+     * @param username The username of the directory admin
+     * @param password The password of the directory admin
+     * @param hostname The hostname of the directory server
+     * @param port The port of the directory server
+     * @return The admin port
+     */
+    public static String getAdminPort(
+        String username,
+        String password,
+        String hostname,
+        String port
+    ) {
+        final String adminConnectorDN = "cn=Administration Connector,cn=config";
+        final String[] attrs = { "ds-cfg-listen-port" };
+        String adminPort = null;
+        LDAPConnection ld = null;
+
+        try {
+            LDAPConnection lc = getLDAPConnection(
+                hostname,
+                port,
+                username,
+                password
+            );
+
+            if (lc != null) {
+                LDAPEntry le = lc.read(adminConnectorDN, attrs);
+
+                if (le != null) {
+                    LDAPAttribute la = le.getAttribute(attrs[0]);
+
+                    if (la != null) {
+                        Enumeration en = la.getStringValues();
+
+                        if (en != null && en.hasMoreElements()) {
+                             adminPort = (String) en.nextElement();
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                "EmbeddedOpenDS.getAdminPort(). Error getting admin port:", ex);
+        } finally {
+            disconnectDServer(ld);
+        }
+
+        return adminPort;
+    }
    
     /**
      * Synchronizes replication server info with current list of opensso servers. 

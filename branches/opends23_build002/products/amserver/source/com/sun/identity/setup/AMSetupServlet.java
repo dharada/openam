@@ -1560,7 +1560,7 @@ public class AMSetupServlet extends HttpServlet {
 
     /**
       * Obtains misc config data from a remote OpenSSO server :
-      *     opends port
+      *     opends admin port
       *     config basedn
       *     flag to indicate replication is already on or not
       *     opends replication port or opends sugested port
