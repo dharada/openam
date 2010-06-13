@@ -38,6 +38,7 @@ import="com.iplanet.am.util.SystemProperties,
         com.sun.identity.setup.AMSetupServlet,
         com.sun.identity.setup.BootstrapData,
         com.sun.identity.setup.EmbeddedOpenDS,
+        com.sun.identity.setup.SetupConstants,
         java.io.File,
         java.net.URLDecoder,
         java.net.URLEncoder,
@@ -128,7 +129,7 @@ import="com.iplanet.am.util.SystemProperties,
     //   ii) replication port available -> retrieve it
     String replPort = null;
     String replPortAvailable = null;
-    String adminport = null;
+    String adminPort = null;
 
     if (isEmbeddedDS) {
         replPort = EmbeddedOpenDS.getReplicationPort(username, password, 
