@@ -63,6 +63,10 @@ public class Step7 extends AjaxPage {
         add("rootSuffix", tmp);
         tmp = getAttribute("configStorePort", getAvailablePort(50389));
         add("configStorePort", tmp);
+        tmp = getAttribute("configStoreAdminPort", getAvailablePort(4444));
+        add("configStoreAdminPort", tmp);
+        tmp = getAttribute("configStoreJmxPort", getAvailablePort(1689));
+        add("configStoreJmxPort", tmp);
         tmp = getAttribute("configStoreLoginId", Wizard.defaultUserName);
         add("configStoreLoginId", tmp);
 
