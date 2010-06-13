@@ -25,6 +25,10 @@
  * $Id: Step7.java,v 1.15 2009/10/27 05:31:45 hengming Exp $
  *
  */
+
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.config.wizard;
 
 import com.sun.identity.config.SessionAttributeNames;

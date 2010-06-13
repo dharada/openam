@@ -671,15 +671,14 @@ public class EmbeddedOpenDS {
             "--adminPassword",       // 24
             "xxxxxxxx",              // 25 
             "--baseDN",              // 26
-            "dc=example,dc=com"      // 27
+            "dc=example,dc=com",     // 27
+            "--trustAll"             // 28
         };
         enableCmd[3] = (String) map.get(SetupConstants.DS_EMB_REPL_HOST2);
-        enableCmd[5] = (String) map.get(SetupConstants.DS_EMB_REPL_PORT2);
+        enableCmd[5] = (String) map.get(SetupConstants.DS_EMB_REPL_ADMINPORT2);
         enableCmd[11] = (String) map.get(SetupConstants.DS_EMB_REPL_REPLPORT2);
-
-        //enableCmd[13] = "localhost";
         enableCmd[13] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_HOST);
-        enableCmd[15] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+        enableCmd[15] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT);
         enableCmd[21] = (String) map.get(SetupConstants.DS_EMB_REPL_REPLPORT1);
         enableCmd[27] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
 
@@ -748,11 +747,11 @@ public class EmbeddedOpenDS {
         };
         initializeCmd[3] = (String)map.get(SetupConstants.CONFIG_VAR_ROOT_SUFFIX);
         initializeCmd[9] = (String)map.get(SetupConstants.DS_EMB_REPL_HOST2);
-        initializeCmd[11] = (String)map.get(SetupConstants.DS_EMB_REPL_PORT2);
+        initializeCmd[11] = (String)map.get(SetupConstants.DS_EMB_REPL_ADMINPORT2);
         initializeCmd[13] = (String)map.get(
             SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_HOST);
         initializeCmd[15] = (String)map.get(
-            SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
+            SetupConstants.CONFIG_VAR_DIRECTORY_ADMIN_SERVER_PORT);
 
         Object[] params = {concat(initializeCmd)};
         SetupProgress.reportStart("emb.replcommand", params);

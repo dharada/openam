@@ -25,6 +25,11 @@
  * $Id: Wizard.java,v 1.27 2009/01/17 02:05:35 kevinserwin Exp $
  *
  */
+
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.config.wizard;
 
 import com.sun.identity.config.SessionAttributeNames;
@@ -135,7 +140,7 @@ public class Wizard extends AjaxPage {
                 request.addParameter(SetupConstants.DS_EMB_REPL_HOST2, tmp);
 
                 tmp = getAttribute("existingPort", "");
-                request.addParameter(SetupConstants.DS_EMB_REPL_PORT2, tmp);
+                request.addParameter(SetupConstants.DS_EMB_REPL_ADMINPORT2, tmp);
 
                 tmp = getAttribute("existingRepPort", "");
                 request.addParameter(SetupConstants.DS_EMB_REPL_REPLPORT2, tmp);

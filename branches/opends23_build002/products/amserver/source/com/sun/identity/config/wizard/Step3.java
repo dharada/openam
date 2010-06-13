@@ -25,6 +25,10 @@
  * $Id: Step3.java,v 1.39 2009/12/17 17:43:39 goodearth Exp $
  *
  */
+
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.config.wizard;
 
 import com.iplanet.am.util.SSLSocketFactoryManager;
