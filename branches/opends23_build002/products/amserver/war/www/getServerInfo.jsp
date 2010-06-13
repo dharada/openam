@@ -132,7 +132,7 @@ import="com.iplanet.am.util.SystemProperties,
     String adminPort = null;
 
     if (isEmbeddedDS) {
-        replPort = EmbeddedOpenDS.getReplicationPort(username, password, 
+        replPort = EmbeddedOpenDS.getReplicationPort(dsmgr, dspwd,
             "localhost", dsport);
         replPortAvailable = "true";
         if (replPort == null) {
@@ -140,11 +140,12 @@ import="com.iplanet.am.util.SystemProperties,
             replPort = ""+ AMSetupServlet.getUnusedPort("localhost", 50889, 1000);
         }
 
-        adminPort = EmbeddedOpenDS.getAdminPort(username, password,
+        adminPort = EmbeddedOpenDS.getAdminPort(dsmgr, dspwd,
                 "localhost", dsport);
 
         if (adminPort == null) {
             adminPort = "4444";
+        }
     }
     // We have collected all the data - return a response
     StringBuffer buf = new StringBuffer();
