@@ -291,11 +291,15 @@
             document.getElementById("configStoreSSL").disabled = true;
             document.getElementById("configStoreHost").disabled = true;
             document.getElementById("configStoreHost").value = "localhost";
+            document.getElementById("configStoreAdminPort").style.display = "";
+            document.getElementById("configStoreJmxPort").style.display = "";
         } else {
             document.getElementById("configStoreSSL").disabled = false;
             document.getElementById("configStoreHost").disabled = false;
 	    remoteDSHost = document.getElementById("configStoreHost").value;
             document.getElementById("configStoreHost").value = remoteDSHost;
+            document.getElementById("configStoreAdminPort").style.display = "none";
+            document.getElementById("configStoreJmxPort").style.display = "none";
         }
     }
 
