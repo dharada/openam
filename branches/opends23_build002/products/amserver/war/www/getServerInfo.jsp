@@ -38,6 +38,7 @@ import="com.iplanet.am.util.SystemProperties,
         com.sun.identity.setup.AMSetupServlet,
         com.sun.identity.setup.BootstrapData,
         com.sun.identity.setup.EmbeddedOpenDS,
+        com.sun.identity.setup.JCECrypt,
         com.sun.identity.setup.SetupConstants,
         java.io.File,
         java.net.URLDecoder,
@@ -132,7 +133,7 @@ import="com.iplanet.am.util.SystemProperties,
     String adminPort = null;
 
     if (isEmbeddedDS) {
-        replPort = EmbeddedOpenDS.getReplicationPort(dsmgr, dspwd,
+        replPort = EmbeddedOpenDS.getReplicationPort(dsmgr, JCECrypt.decode(dspwd),
             "localhost", dsport);
         replPortAvailable = "true";
         if (replPort == null) {
@@ -140,7 +141,7 @@ import="com.iplanet.am.util.SystemProperties,
             replPort = ""+ AMSetupServlet.getUnusedPort("localhost", 50889, 1000);
         }
 
-        adminPort = EmbeddedOpenDS.getAdminPort(dsmgr, dspwd,
+        adminPort = EmbeddedOpenDS.getAdminPort(dsmgr, JCECrypt.decode(dspwd),
                 "localhost", dsport);
 
         if (adminPort == null) {
