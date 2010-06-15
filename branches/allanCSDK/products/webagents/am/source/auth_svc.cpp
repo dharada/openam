@@ -1966,7 +1966,7 @@ AuthService::processRedirectCallback(am_auth_redirect_callback_t &redirect_cb,
     }
 
     XMLElement redirectDataNode;
-    if(callbackNode.getSubElement(REDIRECT_DATA, redirectDATANode)) {
+    if(callbackNode.getSubElement(REDIRECT_DATA, redirectDataNode)) {
         // Process all redirect data
     }
 
