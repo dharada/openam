@@ -291,15 +291,15 @@
             document.getElementById("configStoreSSL").disabled = true;
             document.getElementById("configStoreHost").disabled = true;
             document.getElementById("configStoreHost").value = "localhost";
-            document.getElementById("configStoreAdminPort").style.display = "";
-            document.getElementById("configStoreJmxPort").style.display = "";
+            document.getElementById("adminport").style.display = "";
+            document.getElementById("jmxport").style.display = "";
         } else {
             document.getElementById("configStoreSSL").disabled = false;
             document.getElementById("configStoreHost").disabled = false;
 	    remoteDSHost = document.getElementById("configStoreHost").value;
             document.getElementById("configStoreHost").value = remoteDSHost;
-            document.getElementById("configStoreAdminPort").style.display = "none";
-            document.getElementById("configStoreJmxPort").style.display = "none";
+            document.getElementById("adminport").style.display = "none";
+            document.getElementById("jmxport").style.display = "none";
         }
     }
 
@@ -461,7 +461,7 @@
                                    onchange="APP.callDelayed(this, validatePort)"/>
                             <span id="configStorePortStatus"></span></td>
                     </tr>
-                    <tr>
+                    <tr id="adminport">
 			<td><label for="configStoreAdminPort"><em>*&nbsp;</em>
                             $page.getLocalizedString("admin.port.label")</label></td>
                         <td>
@@ -472,7 +472,7 @@
                                    onchange="APP.callDelayed(this, validateAdminPort)"/>
                             <span id="configStoreAdminPortStatus"></span></td>
                     </tr>
-                    <tr>
+                    <tr id="jmxport">
 			<td><label for="configStoreJmxPort"><em>*&nbsp;</em>
                             $page.getLocalizedString("jmx.port.label")</label></td>
                         <td>

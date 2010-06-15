@@ -54,6 +54,7 @@ public class Step7 extends AjaxPage {
         add("configDirectory", tmp);
         
         if (isEmbedded) {
+            add("isEmbedded", "1");
             add("configStoreHost", "localhost");
         } else {
             tmp = getAttribute("configStoreHost", getHostName());
