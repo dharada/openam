@@ -26,6 +26,10 @@
  *
  */
 
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.saml2.meta;
 
 import java.util.Hashtable;
@@ -34,6 +38,9 @@ import com.sun.identity.shared.debug.Debug;
 
 import com.sun.identity.saml2.jaxb.entityconfig.EntityConfigElement;
 import com.sun.identity.saml2.jaxb.metadata.EntityDescriptorElement;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesType;
+import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesElement;
+import com.sun.identity.saml2.jaxb.metadataattr.ObjectFactory;
 
 /**
  * The <code>SAML2MetaCache</code> provides metadata cache.

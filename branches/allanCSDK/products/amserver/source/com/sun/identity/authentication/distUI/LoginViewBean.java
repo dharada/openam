@@ -86,6 +86,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import com.sun.identity.shared.xml.XMLUtils;
+import org.forgerock.openam.authentication.service.protocol.RemoteCookie;
+import org.forgerock.openam.authentication.service.protocol.RemoteHttpServletRequest;
+import org.forgerock.openam.authentication.service.protocol.RemoteHttpServletResponse;
 
 /**
  * A default implementation of <code>LoginViewBean</code> auth Login UI.
@@ -796,7 +799,6 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                     userCredentials[c] = XMLUtils.escapeSpecialCharacters(
 							(String)reqDataHash.get(
                             tokenType + ((Integer)credentials.get(c)).toString()));
-						loginDebug.message("STEVE" + userCredentials[c]);
                 }
             }
         }
@@ -819,14 +821,14 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
         try {
             if ( indexType != null ) {
                 if (indexType.equals(AuthContext.IndexType.RESOURCE)) {
-                     ac.login(indexType, indexName, userCredentials, envMap);   
+                     ac.login(indexType, indexName, userCredentials, envMap, request, response);
                 } else {
-                    ac.login(indexType, indexName, userCredentials);
+                    ac.login(indexType, indexName, userCredentials,request,response);
                 }
                 session.setAttribute("IndexType", indexType.toString());
                 session.setAttribute("IndexName", indexName);
             } else {
-                ac.login(null,null,userCredentials);
+                ac.login(null,null,userCredentials,request,response);
             }
         } catch (AuthLoginException le) {
             loginDebug.message("AuthContext()::login error ", le);
@@ -903,6 +905,28 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                         + redirect_url);
                     }
                     session.invalidate();
+                } else if (ac.getStatus() == AuthContext.Status.RESET) {
+                    LoginFail = true;
+                    setErrorMessage(null);
+                    ResultVal = ErrorMessage;
+
+                    // AuthContext has been reset, send the client back to
+                    // the login URL
+                    if ((loginURL == null) ||
+                        (loginURL.length() == 0) ||
+                        (loginURL.equalsIgnoreCase("null")) ) {
+                        redirect_url = getLoginURL();
+                    } else {
+                        redirect_url = loginURL;
+                    }
+
+                    if (loginDebug.messageEnabled()) {
+                        loginDebug.message(
+                            "LoginFailedURL in getLoginDisplay : "
+                        + redirect_url);
+                    }
+
+                    session.invalidate();
                 } else {
                     redirect_url = gotoOnFailUrl;
                     if ((gotoOnFailUrl == null) ||
@@ -919,6 +943,12 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                     ResultVal = "Unknown status: " + ac.getStatus() + "\n";
                     session.invalidate();
                 }                
+            }
+
+            processRequestResponse(ac.getRemoteRequest(), ac.getRemoteResponse());
+
+            if (loginDebug.messageEnabled()) {
+                loginDebug.message("getLoginDisplay::getLoginDisplay=" + remoteRequestResponseProcessed);
             }
         } catch(Exception e){
             setErrorMessage(e);
@@ -1161,7 +1191,7 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                 getLoginDisplay();
             } else {
                 // Submit the information to auth module
-                ac.submitRequirements(callbacks);
+                ac.submitRequirements(callbacks, request, response);
                 
                 // Check if more information is required
                 if (loginDebug.messageEnabled()) {
@@ -1242,6 +1272,12 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                     }                    
                 }
             }
+
+            if (loginDebug.messageEnabled()) {
+                loginDebug.message("processLoginDisplay::processRequestResponse=" + remoteRequestResponseProcessed);
+            }
+            
+            processRequestResponse(ac.getRemoteRequest(), ac.getRemoteResponse());
         } catch (Exception e) {
             if (loginDebug.messageEnabled()) {
                 loginDebug.message("Error in processing LoginDisplay : ", e);
@@ -1304,16 +1340,98 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
                 processLoginDisplay();
                 break;
             } else if (callbacks[i] instanceof RedirectCallback) {
+                if (loginDebug.messageEnabled()) {
+                    loginDebug.message("addLoginCallbackMessage::processRequestResponse=" + remoteRequestResponseProcessed);
+                }
+
+                processRequestResponse(ac.getRemoteRequest(), ac.getRemoteResponse());
                 processRedirectCallback((RedirectCallback)callbacks[i]);
             } else if (callbacks[i] instanceof HttpCallback) {
+                if (loginDebug.messageEnabled()) {
+                    loginDebug.message("addLoginCallbackMessage::processRequestResponse=" + remoteRequestResponseProcessed);
+                }
+
+                processRequestResponse(ac.getRemoteRequest(), ac.getRemoteResponse());
                 processHttpCallback((HttpCallback)callbacks[i]);
             }
         }
         
         return;
     }
-    
-    
+
+    /**
+     * Processes the request and response objects, primarily the response
+     * object into the local HttpServletResponse
+     *
+     * @param req The incoming remote request
+     * @param res The incoming remote response
+     */
+    protected void processRequestResponse(HttpServletRequest req, HttpServletResponse res) {
+        if (remoteRequestResponseProcessed) {
+            return;
+        }
+
+        RemoteHttpServletRequest remoteRequest = (RemoteHttpServletRequest) req;
+        RemoteHttpServletResponse remoteResponse = (RemoteHttpServletResponse) res;
+
+        loginDebug.message("req is " + remoteRequest);
+        loginDebug.message("res is " + remoteResponse);
+                
+        if (remoteRequest != null) {
+            // TODO should really worry the attributes
+        }
+        
+        if (remoteResponse != null) {
+            Set cookies = remoteResponse.getCookies();
+            
+            if (loginDebug.messageEnabled()) {
+                loginDebug.message("cookies" + cookies);
+            }
+            
+            Iterator it = cookies.iterator();
+        
+            while (it.hasNext()) {
+                RemoteCookie remoteCookie = (RemoteCookie) it.next();
+                response.addCookie(remoteCookie.getCookie());
+                
+                if (loginDebug.messageEnabled()) {
+                    loginDebug.message("Added cookie " + remoteCookie.getCookie().getName());
+                }
+            }
+            
+            Map headers = remoteResponse.getHeaders();
+            Set keys = headers.keySet();
+            
+            it = keys.iterator();
+            
+            while (it.hasNext()) {
+                String name = (String) it.next();
+                Object obj = headers.get(name);
+                
+                if (obj instanceof String) {
+                    response.addHeader(name, (String) obj);
+                } else if (obj instanceof Integer) {
+                    response.addIntHeader(name, ((Integer) obj).intValue());
+                }
+            }
+            
+            Map dateHeaders = remoteResponse.getDateHeaders();
+            keys = dateHeaders.keySet();
+            
+            it = keys.iterator();
+            
+            while (it.hasNext()) {
+                String name = (String) it.next();
+                Long date = (Long) headers.get(name);
+       
+                response.addDateHeader(name, date.longValue());
+            }
+
+            // process only once per request
+            remoteRequestResponseProcessed = true;
+        }
+    }
+
     /**
      * Returns tile Index.
      *
@@ -1475,7 +1593,7 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
             String orgName = ssoToken.getProperty("Organization");
             String orgParam = AuthClientUtils.getOrgParam(reqDataHash);
             String queryOrg = (orgParam != null)? orgParam : "/";
-            String newOrgName = AuthClientUtils.getDomainNameByRequest(reqDataHash);
+            String newOrgName = AuthClientUtils.getDomainNameByRequest(request,reqDataHash);
             if (loginDebug.messageEnabled()) {
                 loginDebug.message("original org is : " + orgName);
                 loginDebug.message("query org is : " + queryOrg);
@@ -2118,6 +2236,7 @@ extends com.sun.identity.authentication.UI.AuthViewBeanBase {
     public String[] userCredentials = null; 
     private boolean cookieTimeToLiveEnabled = false;
     private int cookieTimeToLive = 0;
+    private boolean remoteRequestResponseProcessed = false;
     
     /** Default parameter name for old token */
     public static final String TOKEN_OLD = "Login.Token";

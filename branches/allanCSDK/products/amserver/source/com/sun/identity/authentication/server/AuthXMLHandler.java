@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.authentication.server;
 
 import com.iplanet.am.util.SystemProperties;
@@ -38,6 +42,7 @@ import com.iplanet.services.comm.share.Request;
 import com.iplanet.services.comm.share.RequestSet;
 import com.iplanet.services.comm.share.Response;
 import com.iplanet.services.comm.share.ResponseSet;
+import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
 import com.iplanet.sso.SSOTokenManager;
 
@@ -81,6 +86,8 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.forgerock.openam.authentication.service.protocol.RemoteHttpServletResponse;
 
 /**
  * <code>AuthXMLHandler</code> class implements the <code>RequestHandler</code>.
@@ -308,19 +315,38 @@ public class AuthXMLHandler implements RequestHandler {
                 indexNameLoc.equals("Application"))) {
                 try {
                     String ssoTokenID = authXMLRequest.getAppSSOTokenID();
+
                     if (debug.messageEnabled()) {
                         debug.message("Session ID = : " + ssoTokenID);
                     }
+
                     SSOTokenManager manager = SSOTokenManager.getInstance();
                     SSOToken appSSOToken = manager.createSSOToken(ssoTokenID);
+
+                    // if the token isn't valid, let the client know so they
+                    // retry
                     if (!manager.isValidToken(appSSOToken)) {
-                        debug.message("App SSOToken is not valid");
-                        throw new AuthException(
-                            AMAuthErrorCode.REMOTE_AUTH_INVALID_SSO_TOKEN, null);
+                        if (debug.messageEnabled()) {
+                            debug.message("App SSOToken is not valid");
+                        }
+
+                        setErrorCode(authResponse, new AuthException(
+                            AMAuthErrorCode.REMOTE_AUTH_INVALID_SSO_TOKEN, null));
+                        return authResponse;
                     } else {
                         debug.message("App SSOToken is VALID");
-                    } 
-                }catch (Exception exp) {
+                    }
+                } catch (SSOException ssoe) {
+                    // token is unknown to OpenAM, let the client know so they
+                    // can retry
+                    if (debug.messageEnabled()) {
+                        debug.message("App SSOToken is not valid: " + ssoe.getMessage());
+                    }
+
+                    setErrorCode(authResponse, new AuthException(
+                        AMAuthErrorCode.REMOTE_AUTH_INVALID_SSO_TOKEN, null));
+                    return authResponse;
+                } catch (Exception exp) {
                     debug.error("Got Exception", exp);
                     setErrorCode(authResponse, exp);
                     return authResponse;
@@ -369,12 +395,9 @@ public class AuthXMLHandler implements RequestHandler {
                     processNewRequest(servletRequest, servletResponse,
                         authResponse, loginState, authContext);
                     postProcess(loginState, authResponse);
-                } catch (Exception ae) {
-                    debug.error("Error creating AuthContext ", ae);
-                    if (messageEnabled) {
-                        debug.message("Exception " , ae);
-                    }
-                    setErrorCode(authResponse, ae);
+                } catch (Exception ex) {
+                    debug.error("Error in NewAuthContext ", ex);
+                    setErrorCode(authResponse, ex);
                 }
                 break;
             case AuthXMLRequest.Login:
@@ -395,18 +418,22 @@ public class AuthXMLHandler implements RequestHandler {
                         clientHost = servletRequest.getRemoteAddr();
                     }
                     loginState.setClient(clientHost);
+                    loginState.setHttpServletRequest(authXMLRequest.getClientRequest());
+                    loginState.setHttpServletResponse(authXMLRequest.getClientResponse());
                     authContext.login();
-                    setServletRequest(servletRequest,authContext);
+                    //setServletRequest(servletRequest,authContext);
                     processRequirements(authContext,authResponse, params,
                         servletRequest);
+
+                    authResponse.setRemoteRequest(loginState.getHttpServletRequest());
+                    authResponse.setRemoteResponse(loginState.getHttpServletResponse());
+
                     postProcess(loginState, authResponse);
                     checkACException(authResponse, authContext);
-                } catch (Exception le) {
-                    debug.error("Error during login ", le);
-                    if (messageEnabled) {
-                        debug.message("Exception " , le);
-                    }
-                    setErrorCode(authResponse, le);
+                } catch (Exception ex) {
+                    debug.error("Error during login ", ex);
+                    setErrorCode(authResponse, ex);
+                    authResponse.setLoginStatus(authContext.getStatus());
                 }
                 break;
             case AuthXMLRequest.LoginIndex:
@@ -434,6 +461,8 @@ public class AuthXMLHandler implements RequestHandler {
                         clientHost = servletRequest.getRemoteAddr();
                     }
                     loginState.setClient(clientHost);
+                    loginState.setHttpServletRequest(authXMLRequest.getClientRequest());
+                    loginState.setHttpServletResponse(authXMLRequest.getClientResponse());
                     String locale = authXMLRequest.getLocale();
                     if (locale != null && locale.length() > 0) {
                         if (debug.messageEnabled()) {
@@ -445,47 +474,47 @@ public class AuthXMLHandler implements RequestHandler {
                         authContext.login(indexType,indexName, false, 
                             envMap, null);
                     }
-                    setServletRequest(servletRequest,authContext);
+                    //setServletRequest(servletRequest,authContext);
                     processRequirements(authContext,authResponse, params,
                         servletRequest);
+                    authResponse.setRemoteRequest(loginState.getHttpServletRequest());
+                    authResponse.setRemoteResponse(loginState.getHttpServletResponse());
                     postProcess(loginState, authResponse);
                     checkACException(authResponse, authContext);
-                } catch (Exception le) {
-                    debug.error("Login Exception ", le);
-                    if (messageEnabled) {
-                        debug.message("Exception " , le);
-                    }
-                    setErrorCode(authResponse, le);
+                } catch (Exception ex) {
+                    debug.error("Exception during LoginIndex", ex);
+                    setErrorCode(authResponse, ex);
                 }
                 break;
             case AuthXMLRequest.LoginSubject:
                 try {
                     Subject subject = authXMLRequest.getSubject();
                     authContext.login(subject);
-                    setServletRequest(servletRequest,authContext);
+                    //setServletRequest(servletRequest,authContext);
                     processRequirements(authContext,authResponse, params,
                         servletRequest);
                     postProcess(loginState, authResponse);
                     checkACException(authResponse, authContext);
-                } catch (AuthLoginException le) {
-                    debug.error("Login Exception ", le);
-                    if (messageEnabled) {
-                        debug.message("Exception " , le);
-                    }
-                    setErrorCode(authResponse, le);
+                } catch (AuthLoginException ale) {
+                    debug.error("Exception during LoginSubject", ale);
+                    setErrorCode(authResponse, ale);
                 }
                 break;
             case AuthXMLRequest.SubmitRequirements:
                 try {
-                    setServletRequest(servletRequest,authContext);
+                    //setServletRequest(servletRequest,authContext);
                     Callback[] submittedCallbacks =
                     authXMLRequest.getSubmittedCallbacks();
+                    loginState.setHttpServletRequest(authXMLRequest.getClientRequest());
+                    loginState.setHttpServletResponse(authXMLRequest.getClientResponse());
                     authContext.submitRequirements(submittedCallbacks);
                     Callback[] reqdCallbacks = null;
                     if (authContext.hasMoreRequirements()) {
                         reqdCallbacks = authContext.getRequirements();
                         authResponse.setReqdCallbacks(reqdCallbacks);
                     }
+                    authResponse.setRemoteRequest(loginState.getHttpServletRequest());
+                    authResponse.setRemoteResponse(loginState.getHttpServletResponse());
                     postProcess(loginState, authResponse);
                     loginStatus = authContext.getStatus();
                     authResponse.setLoginStatus(loginStatus);
@@ -493,12 +522,9 @@ public class AuthXMLHandler implements RequestHandler {
                         getOldSession();
                     authResponse.setOldSession(oldSession);
                     checkACException(authResponse, authContext);
-                } catch (Exception le) {
-                    debug.error("Error during login ", le);
-                    if (messageEnabled) {
-                        debug.message("Exception " , le);
-                    }
-                    setErrorCode(authResponse, le);
+                } catch (Exception ex) {
+                    debug.error("Error during submit requirements ", ex);
+                    setErrorCode(authResponse, ex);
                 }
                 break;
             case AuthXMLRequest.QueryInformation:
@@ -512,12 +538,9 @@ public class AuthXMLHandler implements RequestHandler {
                     authResponse.setAuthContext(authContext);
                     postProcess(loginState, authResponse);
                     checkACException(authResponse, authContext);
-                } catch (Exception ae) {
-                    debug.error("Error aborting ", ae);
-                    if (messageEnabled) {
-                        debug.message("Exception " , ae);
-                    }
-                    setErrorCode(authResponse, ae);
+                } catch (Exception ex) {
+                    debug.error("Error during Query Information", ex);
+                    setErrorCode(authResponse, ex);
                 }
                 break;
             case AuthXMLRequest.Logout:
@@ -646,12 +669,9 @@ public class AuthXMLHandler implements RequestHandler {
                     loginStatus = authContext.getStatus();
                     authResponse.setLoginStatus(loginStatus);
                     checkACException(authResponse, authContext);
-                } catch (AuthLoginException le) {
-                    debug.error("Error aborting ", le);
-                    if (messageEnabled) {
-                        debug.message("Exception " , le);
-                    }
-                    setErrorCode(authResponse, le);
+                } catch (AuthLoginException ale) {
+                    debug.error("Error aborting ", ale);
+                    setErrorCode(authResponse, ale);
                 }
                 break;
         }

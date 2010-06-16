@@ -26,8 +26,6 @@
  *
  */
 
-
-
 package com.sun.identity.saml2.profile;
 
 import java.io.ByteArrayInputStream;

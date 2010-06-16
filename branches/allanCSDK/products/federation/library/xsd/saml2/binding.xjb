@@ -26,6 +26,10 @@
 
 -->
 
+<!--
+    Portions Copyrighted 2010 ForgeRock AS
+-->
+
 <jxb:bindings version="1.0"
                xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
                xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -113,6 +117,19 @@
       <jxb:package name="com.sun.identity.saml2.jaxb.entityconfig">
          <jxb:javadoc>
      <![CDATA[<body> Package level documentation for generated package com.sun.identity.saml2.jaxb.entityconfig. </body>]]>
+         </jxb:javadoc>
+      </jxb:package>
+      <jxb:nameXmlTransform>
+          <jxb:elementName suffix="Element"/>
+      </jxb:nameXmlTransform>
+    </jxb:schemaBindings>
+  </jxb:bindings>
+
+  <jxb:bindings schemaLocation="sstc-metadata-attr.xsd" node="/xs:schema">
+    <jxb:schemaBindings>
+      <jxb:package name="com.sun.identity.saml2.jaxb.metadataattr">
+         <jxb:javadoc>
+     <![CDATA[<body> Package level documentation for generated package com.sun.identity.saml2.jaxb.metadata. </body>]]>
          </jxb:javadoc>
       </jxb:package>
       <jxb:nameXmlTransform>

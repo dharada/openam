@@ -4268,7 +4268,7 @@ public class LoginState {
      * Sets servlet response.
      * @param servletResponse servletResponse object to be set
      */
-    protected void setHttpServletResponse(HttpServletResponse servletResponse) {
+    public void setHttpServletResponse(HttpServletResponse servletResponse) {
         this.servletResponse = servletResponse;
     }
     
@@ -4324,6 +4324,23 @@ public class LoginState {
     
     public String getLoginLockoutNotification() {
         return loginLockoutNotification;
+    }
+
+    public void incrementFailCount(String failedUserId) {
+        if (failedUserId != null) {
+            AMAccountLockout amAccountLockout = new AMAccountLockout(this);
+            boolean accountLocked = amAccountLockout.isLockedOut(failedUserId);
+
+            if ((!accountLocked) && (amAccountLockout.isLockoutEnabled())) {
+                amAccountLockout.invalidPasswd(failedUserId);
+
+                if (debug.messageEnabled()) {
+                    debug.message("LoginState::incrementFailCount incremented fail count for " + failedUserId);
+                }
+            }
+        } else {
+            debug.error("LoginState::incrementFailCount called with null user id");
+        }
     }
     
     /**
