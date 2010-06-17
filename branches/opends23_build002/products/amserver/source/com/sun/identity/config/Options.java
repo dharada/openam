@@ -58,7 +58,7 @@ public class Options extends TemplatedPage {
         isOpenDS2x = EmbeddedOpenDS.isOpenDSVer2x();
         addModel("isOpenDS2x", Boolean.valueOf(isOpenDS2x));
 
-        if (isOpenDS2x) {
+        if (!isOpenDS2x) {
             addModel("odsdir", AMSetupServlet.getBaseDir());
         }
     }
