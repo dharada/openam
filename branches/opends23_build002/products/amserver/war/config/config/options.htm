@@ -260,7 +260,7 @@
         /* #end
         */
 
-        #if ( !$isOpenDS2x )
+        #if ( $isOpenDS1x )
             YAHOO.sun.identity.config.options.cannotContinue = new YAHOO.widget.Panel("cannotContinue", { fixedcenter: true, modal: true, close: false, visible:false, constraintoviewport:true });
             YAHOO.sun.identity.config.options.cannotContinue.render();
             YAHOO.sun.identity.config.options.cannotContinue.show();
@@ -418,7 +418,7 @@
     </div>
 #end
 
-#if ( !$isOpenDS2x )
+#if ( $isOpenDS1x )
 <style type="text/css">
 	div.singlecolumn{
 		width:560px;

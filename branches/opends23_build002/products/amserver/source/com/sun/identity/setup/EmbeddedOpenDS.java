@@ -1423,10 +1423,10 @@ public class EmbeddedOpenDS {
     }
 
     /**
-      * @return true if installed OpenDS is version 2.x
+      * @return true if installed OpenDS is version 1.0.2
       */
-    public static boolean isOpenDSVer2x() {
-        boolean openDSVer2x = false;
+    public static boolean isOpenDSVer1Installed() {
+        boolean openDSVer1x = false;
 
         String odsRoot = AMSetupServlet.getBaseDir() +
             AMSetupServlet.OPENDS_DIR;
@@ -1434,10 +1434,10 @@ public class EmbeddedOpenDS {
         File openDsDir = new File(odsRoot);
         File instanceLoc = new File(odsRoot + "/instance.loc");
 
-        if (openDsDir.exists() && instanceLoc.exists()) {
-            openDSVer2x = true;
+        if (openDsDir.exists() && !instanceLoc.exists()) {
+            openDSVer1x = true;
         }
 
-        return openDSVer2x;
+        return openDSVer1x;
     }
 }

@@ -55,10 +55,10 @@ public class Options extends TemplatedPage {
         upgrade = !getConfigurator().isNewInstall();
         addModel( "upgrade", Boolean.valueOf( upgrade ) );
 
-        isOpenDS2x = EmbeddedOpenDS.isOpenDSVer2x();
-        addModel("isOpenDS2x", Boolean.valueOf(isOpenDS2x));
+        isOpenDS1x = EmbeddedOpenDS.isOpenDSVer1Installed();
+        addModel("isOpenDS1x", Boolean.valueOf(isOpenDS1x));
 
-        if (!isOpenDS2x) {
+        if (isOpenDS1x) {
             addModel("odsdir", AMSetupServlet.getBaseDir());
         }
     }
