@@ -28,6 +28,7 @@
 package com.sun.identity.config;
 
 import com.sun.identity.config.util.TemplatedPage;
+import com.sun.identity.setup.AMSetupServlet;
 import com.sun.identity.setup.EmbeddedOpenDS;
 import net.sf.click.control.ActionLink;
 
@@ -56,6 +57,10 @@ public class Options extends TemplatedPage {
 
         isOpenDS2x = EmbeddedOpenDS.isOpenDSVer2x();
         addModel("isOpenDS2x", Boolean.valueOf(isOpenDS2x));
+
+        if (isOpenDS2x) {
+            addModel("odsdir", AMSetupServlet.getBaseDir());
+        }
     }
 
     public boolean upgrade() {
