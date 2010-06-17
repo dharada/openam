@@ -40,7 +40,7 @@ public class Options extends TemplatedPage {
 
     protected boolean passwordUpdateRequired = true;
     protected boolean upgrade = false;
-    protected boolean isOpenDS2x = true;
+    protected boolean isOpenDS1x = false;
     
     private java.util.Locale configLocale = null;
     
