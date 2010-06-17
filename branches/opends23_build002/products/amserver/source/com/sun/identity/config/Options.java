@@ -28,6 +28,7 @@
 package com.sun.identity.config;
 
 import com.sun.identity.config.util.TemplatedPage;
+import com.sun.identity.setup.EmbeddedOpenDS;
 import net.sf.click.control.ActionLink;
 
 public class Options extends TemplatedPage {
@@ -38,6 +39,7 @@ public class Options extends TemplatedPage {
 
     protected boolean passwordUpdateRequired = true;
     protected boolean upgrade = false;
+    protected boolean isOpenDS2x = true;
     
     private java.util.Locale configLocale = null;
     
@@ -51,6 +53,9 @@ public class Options extends TemplatedPage {
             Boolean.valueOf( passwordUpdateRequired ) );
         upgrade = !getConfigurator().isNewInstall();
         addModel( "upgrade", Boolean.valueOf( upgrade ) );
+
+        isOpenDS2x = EmbeddedOpenDS.isOpenDSVer2x();
+        addModel("isOpenDS2x", Boolean.valueOf(isOpenDS2x));
     }
 
     public boolean upgrade() {

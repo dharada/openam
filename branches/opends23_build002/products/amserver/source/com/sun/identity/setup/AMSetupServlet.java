@@ -1132,7 +1132,7 @@ public class AMSetupServlet extends HttpServlet {
         }
     }
     
-    private static String getBaseDir()
+    protected static String getBaseDir()
         throws ConfiguratorException {
         String configDir = getPresetConfigDir();
         if ((configDir != null) && (configDir.length() > 0)) {
