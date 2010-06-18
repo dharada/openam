@@ -25,6 +25,11 @@
  * $Id: auth_context.cpp,v 1.3 2008/06/25 08:14:31 qcheng Exp $
  *
  */ 
+
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 #include "auth_context.h"
 #include "log.h"
 #include "am_sso.h"
@@ -116,6 +121,26 @@ AuthContext::cleanupCallbacks() {
 		// clean prompt
 		cleanupCharArray (
 		    callback.callback_info.password_callback.prompt);
+	    }
+	    break;
+	case HTTPCallback:
+	    {
+		// clean prompt  Insert cleanup for HTTP
+		cleanupCharArray (
+		    callback.callback_info.http_callback.tokenHeader);
+		cleanupCharArray (
+		    callback.callback_info.http_callback.negoHeader);
+		cleanupCharArray (
+		    callback.callback_info.http_callback.negoValue);
+		cleanupCharArray (
+		    callback.callback_info.http_callback.negoErrorCode);
+
+	    }
+	    break;
+	case RedirectCallback:
+	    {
+		// clean prompt Insert cleanup for Redirect
+
 	    }
 	    break;
 	case TextInputCallback:

@@ -25,6 +25,11 @@
  * $Id: am_utils.cpp,v 1.3 2008/06/25 08:14:29 qcheng Exp $
  *
  */ 
+
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 #include <stdexcept>
 #include <am_utils.h>
 #include "http.h"
@@ -44,7 +49,7 @@ am_http_cookie_encode(const char *cookie, char *buf, int len)
 	try {
 	    std::string encoded = Http::encode(std::string(cookie));
 	    const char *encoded_str = encoded.c_str();
-	    if (strlen(encoded_str) >= len)
+	    if ((int)strlen(encoded_str) >= len)
 		sts = AM_BUFFER_TOO_SMALL;
 	    else 
 		strcpy(buf, encoded_str);
@@ -71,7 +76,7 @@ am_http_cookie_decode(const char *cookie, char *buf, int len)
         try {
             std::string decoded = Http::decode(std::string(cookie));
             const char *decoded_str = decoded.c_str();
-            if (strlen(decoded_str) >= len)
+            if ((int)strlen(decoded_str) >= len)
                 sts = AM_BUFFER_TOO_SMALL;
             else 
                 strcpy(buf, decoded_str);
