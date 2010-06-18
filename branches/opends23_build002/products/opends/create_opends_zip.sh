@@ -25,12 +25,21 @@
 # This script creates the cut down OpenDS.zip for inclusion in the build
 # OpenDS libraries must be copied into extlib manually
 
+SED=/usr/bin/sed
 UNZIP=/usr/bin/unzip
 ZIP=/usr/bin/zip
 ZIP_FILE=opends.zip
 LIST=opends_inclusion_list
+LDIF=ldif
+LDIF_FILE=openam_suffix.ldif.template
+CONFIG=config/config.ldif
+
+echo "Remember to remove SNMP connection handler from config.ldif"
 
 PWD=`pwd`
 cd "${@}"
+cp ../${LDIF_FILE} ${LDIF}
+${SED} -e 's/ds-cfg-single-structural-objectclass-behavior: reject/ds-cfg-single-structural-objectclass-behavior: accept/' ${CONFIG} > ${CONFIG}.out
+mv ${CONFIG}.out ${CONFIG}
 ${ZIP} -r -i@../${LIST} ../${ZIP_FILE} .
 cd ${PWD}
