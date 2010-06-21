@@ -39,6 +39,7 @@ ThreadPool::ThreadPool(std::size_t startThreads,
     lock = NULL;
     exitNow = false;
     condVar = NULL;
+    threadStarted = NULL;
     maxThreads = maxNumThreads;
     activeThreads = 0;
     workQueue.clear();
@@ -59,6 +60,7 @@ ThreadPool::init(std::size_t startThreads,
     activeThreads = 0;
     exitNow = false;
     condVar = NULL;
+    threadStarted = NULL;
 
     lock = PR_NewLock();
     if(lock == NULL) {
@@ -72,6 +74,16 @@ ThreadPool::init(std::size_t startThreads,
 
     condVar = PR_NewCondVar(lock);
     if(condVar == NULL) {
+	PRErrorCode error = PR_GetError();
+	Log::log(logID, Log::LOG_ERROR,
+		 "ThreadPool::ThreadPool(size_t, size_t) : NSPRException : "
+		 "Error  during PR_NewCondVar() : Error Code = %s.",
+		 PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT));
+	throw NSPRException("ThreadPool::ThreadPool", "PR_NewCondVar", error);
+    }
+
+    threadStarted = PR_NewCondVar(lock);
+    if(threadStarted == NULL) {
 	PRErrorCode error = PR_GetError();
 	Log::log(logID, Log::LOG_ERROR,
 		 "ThreadPool::ThreadPool(size_t, size_t) : NSPRException : "
@@ -97,6 +109,11 @@ ThreadPool::createNewThread()
     std::size_t x = activeThreads;
     std::size_t cnt = 0;
 
+    if (activeThreads >= maxThreads)
+        return;
+
+    PR_Lock(lock);
+
     PRThread  *thread = PR_CreateThread(PR_SYSTEM_THREAD,
 					::spin,
 					this,
@@ -116,10 +133,13 @@ ThreadPool::createNewThread()
     // a thread pool and immediately try distructing it, the
     // ~ThreadPool will take a lock and prevent from all the
     // worker threads from entering the wait-for-work state.
-    while(activeThreads == x) {
-	PR_Sleep(PR_TicksPerSecond());
-	++cnt;
-	if(cnt == MAX_THREAD_WAKEUP_TIME) {
+
+    // This WaitCondVar will allow the newly created thread to run...
+    // once the thread is run, It will mark the threadStarted, and
+    // WaitCondVar will return Already Locked
+    PR_WaitCondVar(threadStarted,PR_TicksPerSecond() * MAX_THREAD_WAKEUP_TIME);
+
+    if(activeThreads == x) {
 	    Log::log(logID, Log::LOG_ERROR,
 		     "ThreadPool::createNewThread(): Attempt to create "
 		     "thread failed.");
@@ -127,8 +147,8 @@ ThreadPool::createNewThread()
 				    "Thread not started.  The host process "
 				    "may not be multi-threaded.",
 				    AM_FAILURE);
-	}
     }
+    PR_Unlock(lock);
 
     return;
 }
@@ -213,6 +233,8 @@ ThreadPool::~ThreadPool() {
 
     PR_DestroyCondVar(condVar);
     condVar = NULL;
+    PR_DestroyCondVar(threadStarted);
+    threadStarted = NULL;
 	PR_DestroyLock(lock);
     lock = NULL;
     Log::log(logID, Log::LOG_INFO,
@@ -237,6 +259,8 @@ void
 
     PR_Lock(ptr->lock);
     ptr->activeThreads++;
+    PR_NotifyCondVar(threadStarted);   // Let the caller know we have started
+
     while(ptr->activeThreads <= ptr->maxThreads &&
 	  ptr->exitNow == false) {
 	if(ptr->workQueue.size() > 0) {
