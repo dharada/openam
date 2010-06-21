@@ -137,7 +137,11 @@ ThreadPool::createNewThread()
     // This WaitCondVar will allow the newly created thread to run...
     // once the thread is run, It will mark the threadStarted, and
     // WaitCondVar will return Already Locked
+    Log::log(ThreadPool::logID, Log::LOG_INFO,"::createNewThread Unlocking...");
+
     PR_WaitCondVar(threadStarted,PR_TicksPerSecond() * MAX_THREAD_WAKEUP_TIME);
+
+    Log::log(ThreadPool::logID, Log::LOG_INFO,"::createNewThread Returning...");
 
     if(activeThreads == x) {
 	    Log::log(logID, Log::LOG_ERROR,
@@ -259,13 +263,15 @@ void
 
     PR_Lock(ptr->lock);
     ptr->activeThreads++;
-    PR_NotifyCondVar(threadStarted);   // Let the caller know we have started
+    Log::log(ThreadPool::logID, Log::LOG_INFO,"Setting ThreadStarted");
+    PR_NotifyCondVar(ptr->threadStarted);   // Let the caller know we have started
 
     while(ptr->activeThreads <= ptr->maxThreads &&
 	  ptr->exitNow == false) {
 	if(ptr->workQueue.size() > 0) {
 	    ThreadFunction *func = *(ptr->workQueue.begin());
 	    ptr->workQueue.erase(ptr->workQueue.begin());
+            Log::log(ThreadPool::logID, Log::LOG_INFO,"::Spin Unlocking...");
 	    PR_Unlock(ptr->lock);
 	    try {
 		Log::log(ThreadPool::logID, Log::LOG_DEBUG,
@@ -285,8 +291,10 @@ void
 
 	    PR_Lock(ptr->lock);
 	} else {
-	    if(ptr->exitNow == false)
+	    if(ptr->exitNow == false) {
+                Log::log(ThreadPool::logID, Log::LOG_INFO,"::Spin Waiting...");
 		PR_WaitCondVar(ptr->condVar, PR_INTERVAL_NO_TIMEOUT);
+            };
 	    Log::log(ThreadPool::logID, Log::LOG_DEBUG,
 		     "spin() : Thread awakened: "
 		     "activeThreads = %u ; maxThreads = %u ; "
