@@ -25,6 +25,10 @@
  * data.
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 #ifndef __AUDIT_LOG_H__
 #define __AUDIT_LOG_H__
 
@@ -57,13 +61,13 @@ private:
     
 public:
     /* Throws NSPRException upon NSPR error */
-    AuditLog(LogService *logService,
-             AgentProfileService *agentProfileService,
+    AuditLog(LogService *logServiceParam,
+             AgentProfileService *agentProfileServiceParam,
              PRTime fetchInterval, 
              const char *messStr)
             : htcID(Log::addModule("Polling")),
-              logService(logService),
-              agentProfileService(agentProfileService),
+              logService(logServiceParam),
+              agentProfileService(agentProfileServiceParam),
               sleepTime(fetchInterval),
               lock(NULL), condVar(NULL), stayAlive(true),
               doneExit(false), message(messStr) {

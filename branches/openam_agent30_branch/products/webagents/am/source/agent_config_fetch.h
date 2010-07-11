@@ -30,6 +30,10 @@
  * data.
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 #ifndef __AGENT_CONFIG_FETCH_H__
 #define __AGENT_CONFIG_FETCH_H__
 
@@ -65,10 +69,10 @@ private:
     
 public:
     /* Throws NSPRException upon NSPR error */
-    AgentConfigFetch(AgentProfileService *agentProfileService,
+    AgentConfigFetch(AgentProfileService *agentProfileServiceParam,
                      PRTime fetchInterval, const char *messStr)
             : htcID(Log::addModule("Polling")),
-              agentProfileService(agentProfileService),
+              agentProfileService(agentProfileServiceParam),
               sleepTime(fetchInterval),
               lock(NULL), condVar(NULL), stayAlive(true),
               doneExit(false), message(messStr) {
