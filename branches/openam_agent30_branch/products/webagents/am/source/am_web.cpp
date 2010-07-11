@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * "Portions Copyrighted [2010] [ForgeRock AS]"
+ */
+
 #include <ctype.h>
 #include <stdio.h>
 #if (!defined(WINNT) && !defined(_AMD64_))
