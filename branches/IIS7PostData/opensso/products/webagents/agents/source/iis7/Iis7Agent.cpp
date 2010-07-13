@@ -85,6 +85,90 @@ BOOL RegisterAgentModule()
     return TRUE;
 }
 
+// Method to check and create post page
+static am_status_t check_for_post_data(IHttpContext* pHttpContext,
+                                       char *requestURL, char **page,
+                                       void *agent_config)
+{
+    const char *thisfunc = "check_for_post_data()";
+    const char *post_data_query = NULL;
+    am_web_postcache_data_t get_data = {NULL, NULL};
+    const char *actionurl = NULL;
+    const char *postdata_cache = NULL;
+    am_status_t status = AM_SUCCESS;
+    am_status_t status_tmp = AM_SUCCESS;
+    CHAR* buffer_page = NULL;
+    char *stickySessionValue = NULL;
+    char *stickySessionPos = NULL;
+    char *temp_uri = NULL;
+    *page = NULL;
+
+    if(requestURL == NULL) {
+        status = AM_INVALID_ARGUMENT;
+    }
+    // Check if magic URI is present in the URL
+    if(status == AM_SUCCESS) {
+        post_data_query = strstr(requestURL, POST_PRESERVE_URI);
+        if (post_data_query != NULL) {
+            post_data_query += strlen(POST_PRESERVE_URI);
+            // Check if a query parameter for the  sticky session has been
+            // added to the dummy URL. Remove it if it is the case.
+            status_tmp = am_web_get_postdata_preserve_URL_parameter
+                       (&stickySessionValue, agent_config);
+            if (status_tmp == AM_SUCCESS) {
+                stickySessionPos = strstr(post_data_query, stickySessionValue);
+                if (stickySessionPos != NULL) {
+                    size_t len = strlen(post_data_query) -
+                                 strlen(stickySessionPos)-1;
+                    temp_uri = malloc(len+1);
+                    memset(temp_uri,0,len+1);
+                    strncpy(temp_uri, post_data_query, len);
+                    post_data_query = temp_uri;
+                }
+            }
+        }
+    }
+    // If magic uri present search for corresponding value in hashtable
+    if((status == AM_SUCCESS) && (post_data_query != NULL) &&
+       (strlen(post_data_query) > 0))
+    {
+        am_web_log_debug("%s: POST Magic Query Value: %s",
+                         thisfunc, post_data_query);
+        if(am_web_postcache_lookup(post_data_query, &get_data,
+                                   agent_config) == B_TRUE) {
+            postdata_cache = get_data.value;
+            actionurl = get_data.url;
+            am_web_log_debug("%s: POST hashtable actionurl: %s",
+                             thisfunc, actionurl);
+            // Create the post page
+            buffer_page = am_web_create_post_page(post_data_query,
+                                   postdata_cache,actionurl, agent_config);
+            *page = strdup(buffer_page);
+            if (*page == NULL) {
+                am_web_log_error("%s: Not enough memory to allocate page");
+                status = AM_NO_MEMORY;
+            }
+            am_web_postcache_data_cleanup(&get_data);
+            if (buffer_page != NULL) {
+                am_web_free_memory(buffer_page);
+            }
+        } else {
+            am_web_log_error("%s: Found magic URI (%s) but entry is not in POST"
+                           " hash table",thisfunc, post_data_query);
+            status = AM_FAILURE;
+       }
+    }
+    if (temp_uri != NULL) {
+        free(temp_uri);
+        temp_uri = NULL;
+    }
+    if (stickySessionValue != NULL) {
+        am_web_free_memory(stickySessionValue);
+        stickySessionValue = NULL;
+    }
+    return status;
+}
+
 /*
  *This function gets invoked at every request by OnBeginRequest.
  *
@@ -106,6 +190,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     CHAR* dpro_cookie = NULL;
     BOOL isLocalAlloc = FALSE;    
     BOOL redirectRequest = FALSE;
+    CHAR* post_page = NULL;
     CHAR *set_cookies_list = NULL;
     CHAR *set_headers_list = NULL;
     CHAR *request_hdrs = NULL;
