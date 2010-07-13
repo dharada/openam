@@ -119,11 +119,11 @@ static am_status_t check_for_post_data(IHttpContext* pHttpContext,
             status_tmp = am_web_get_postdata_preserve_URL_parameter
                        (&stickySessionValue, agent_config);
             if (status_tmp == AM_SUCCESS) {
-                stickySessionPos = strstr(post_data_query, stickySessionValue);
+                stickySessionPos = strstr((char *)post_data_query, stickySessionValue);
                 if (stickySessionPos != NULL) {
                     size_t len = strlen(post_data_query) -
                                  strlen(stickySessionPos)-1;
-                    temp_uri = malloc(len+1);
+                    temp_uri = (char *)malloc(len+1);
                     memset(temp_uri,0,len+1);
                     strncpy(temp_uri, post_data_query, len);
                     post_data_query = temp_uri;
@@ -341,7 +341,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
 
     if (status == AM_SUCCESS) {
         if (B_TRUE == am_web_is_postpreserve_enabled(agent_config)) {
-            status = check_for_post_data(pHttpContext, requestURL, &post_page,
+            status = check_for_post_data(pHttpContext, requestURL.c_str(), &post_page,
                                          agent_config);
         }
     }
