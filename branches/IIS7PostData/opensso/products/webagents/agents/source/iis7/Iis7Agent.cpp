@@ -50,6 +50,9 @@ boolean_t agentInitialized = B_FALSE;
 
 #define EMPTY_STRING        ""
 #define AGENT_DESCRIPTION   "Sun OpenSSO Policy Agent 3.0 for Microsoft IIS 7.0"
+#define	MAGIC_STR		"sunpostpreserve"
+#define	POST_PRESERVE_URI	"/dummypost/"MAGIC_STR
+
 const CHAR agentDescription[]       = { AGENT_DESCRIPTION };
 const CHAR httpProtocol[]           = "http";
 const CHAR httpsProtocol[]          = "https";
