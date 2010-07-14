@@ -134,15 +134,15 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
     // already been saved in the response variable, so we need
     // to get them here only if response is NULL.
     if (status == AM_SUCCESS) {
-        if (response == NULL) {
-            status =  GetEntity(pHttpContext, response_string);
+        if (response.size() == 0) {
+            status =  GetEntity(pHttpContext, response);
             if (status != AM_SUCCESS) {
                 return AM_FAILURE;
             }
         }
     }
     if (status == AM_SUCCESS) {
-        if (response != NULL && strlen(response.c_str()) > 0) {
+        if (response.size()) > 0) {
             if (AM_SUCCESS == register_post_data(pHttpContext,post_urls->action_url,
                                        post_urls->post_time_key, response.c_str(),
                                        agent_config))
