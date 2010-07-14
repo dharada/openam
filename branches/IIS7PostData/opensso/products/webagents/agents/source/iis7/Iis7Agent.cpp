@@ -515,7 +515,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                                             &lbCookieHeader, B_TRUE,
                                             agent_config);
                     if (status_tmp == AM_NO_MEMORY) {
-                        retStatus = status_tmp;
+                        retStatus = RQ_NOTIFICATION_FINISH_REQUEST;
                     } else {
                         if (status_tmp == AM_SUCCESS) {
                             am_web_log_debug("%s: Setting LB cookie for "
@@ -523,7 +523,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                                              thisfunc);
                             set_cookie(lbCookieHeader, args);
                         }
-                        retStatus = send_post_data(pECB, post_page,
+                        retStatus = send_post_data(pHttpContext, post_page,
                                                  set_cookies_list);
                     }
                     if (lbCookieHeader != NULL) {
