@@ -118,9 +118,9 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
 {
     const char *thisfunc = "process_request_with_post_data_preservation()";
     am_status_t status = AM_SUCCESS;
-    DWORD returnValue = HSE_STATUS_SUCCESS;
+    DWORD returnValue = AM_FAILURE;
     post_urls_t *post_urls = NULL;
-    char *response = NULL;
+    string response = "";
 
     if (*resp != NULL) {
         response = *resp;
@@ -128,23 +128,23 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
     status = am_web_create_post_preserve_urls(requestURL, &post_urls,
                                               agent_config);
     if (status != AM_SUCCESS) {
-        returnValue = send_error(pECB);
+        returnValue = AM_FAILURE;
     }
     // In CDSSO mode, for a POST request, the post data have
     // already been saved in the response variable, so we need
     // to get them here only if response is NULL.
     if (status == AM_SUCCESS) {
         if (response == NULL) {
-            status =  GetEntity(pHttpContext, response);
+            status =  GetEntity(pHttpContext, response_string);
             if (status != AM_SUCCESS) {
                 return AM_FAILURE;
             }
         }
     }
     if (status == AM_SUCCESS) {
-        if (response != NULL && strlen(response) > 0) {
+        if (response != NULL && strlen(response.c_str()) > 0) {
             if (AM_SUCCESS == register_post_data(pHttpContext,post_urls->action_url,
-                                       post_urls->post_time_key, response,
+                                       post_urls->post_time_key, response.c_str(),
                                        agent_config))
             {
                 char *lbCookieHeader = NULL;
