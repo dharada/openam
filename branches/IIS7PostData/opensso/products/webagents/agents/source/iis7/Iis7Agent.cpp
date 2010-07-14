@@ -88,6 +88,117 @@ BOOL RegisterAgentModule()
     return TRUE;
 }
 
+static am_status_t register_post_data(IHttpContext* pHttpContext,
+                         char *url, const char *key, char* response,
+                         void* agent_config)
+{
+    const char *thisfunc = "register_post_data()";
+    am_web_postcache_data_t post_data;
+    am_status_t status = AM_SUCCESS;
+
+    post_data.value = response;
+    post_data.url = url;
+    am_web_log_debug("%s: Register POST data key :%s", thisfunc, key);
+    if (am_web_postcache_insert(key, &post_data, agent_config) == B_FALSE) {
+        am_web_log_error("Register POST data insert into"
+                         " hash table failed:%s",key);
+        status = AM_FAILURE;
+    }
+
+    return status;
+}
+
+DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
+                                    am_status_t request_status,
+                                    am_policy_result_t *policy_result,
+                                    char *requestURL,
+                                    void **args,
+                                    char **resp,
+                                    void* agent_config)
+{
+    const char *thisfunc = "process_request_with_post_data_preservation()";
+    am_status_t status = AM_SUCCESS;
+    DWORD returnValue = HSE_STATUS_SUCCESS;
+    post_urls_t *post_urls = NULL;
+    char *response = NULL;
+
+    if (*resp != NULL) {
+        response = *resp;
+    }
+    status = am_web_create_post_preserve_urls(requestURL, &post_urls,
+                                              agent_config);
+    if (status != AM_SUCCESS) {
+        returnValue = send_error(pECB);
+    }
+    // In CDSSO mode, for a POST request, the post data have
+    // already been saved in the response variable, so we need
+    // to get them here only if response is NULL.
+    if (status == AM_SUCCESS) {
+        if (response == NULL) {
+            status =  GetEntity(pHttpContext, response);
+            if (status != AM_SUCCESS) {
+                return AM_FAILURE;
+            }
+        }
+    }
+    if (status == AM_SUCCESS) {
+        if (response != NULL && strlen(response) > 0) {
+            if (AM_SUCCESS == register_post_data(pHttpContext,post_urls->action_url,
+                                       post_urls->post_time_key, response,
+                                       agent_config))
+            {
+                char *lbCookieHeader = NULL;
+                // If using a LB in front of the agent and if the sticky
+                // session mode is COOKIE, the lb cookie needs to be set there.
+                // If am_web_get_postdata_preserve_lbcookie()
+                // returns AM_INVALID_ARGUMENT, it means that the
+                // sticky session feature is disabled (ie no LB) or
+                // that the sticky session mode is set to URL.
+                status = am_web_get_postdata_preserve_lbcookie(
+                          &lbCookieHeader, B_FALSE, agent_config);
+                if (status == AM_NO_MEMORY) {
+                    returnValue = AM_FAILURE;
+                } else {
+                    if (status == AM_SUCCESS) {
+                        am_web_log_debug("%s: Setting LB cookie "
+                                         "for post data preservation.",
+                                         thisfunc);
+                        set_cookie(lbCookieHeader, args);
+                    }
+                    returnValue = do_redirect(pHttpContext, request_status,
+                                              policy_result,
+                                              post_urls->dummy_url,
+                                              REQUEST_METHOD_POST, args,
+                                              agent_config);
+                }
+                if (lbCookieHeader != NULL) {
+                    am_web_free_memory(lbCookieHeader);
+                    lbCookieHeader = NULL;
+                }
+            } else {
+                am_web_log_error("%s: register_post_data() "
+                     "failed.", thisfunc);
+                returnValue = send_error(pECB);
+            }
+        } else {
+            am_web_log_debug("%s: This is a POST request with no post data. "
+                             "Redirecting as a GET request.", thisfunc);
+            returnValue = do_redirect(pECB, request_status,
+                                      policy_result,
+                                      requestURL,
+                                      REQUEST_METHOD_GET, args,
+                                      agent_config);
+        }
+    }
+    if (post_urls != NULL) {
+        am_web_clean_post_urls(post_urls);
+        post_urls = NULL;
+    }
+
+    return returnValue;
+}
+
+
 // Method to check and create post page
 static am_status_t check_for_post_data(IHttpContext* pHttpContext,
                                        char *requestURL, char **page,
@@ -569,11 +680,11 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
             if (strcmp(requestMethod, REQUEST_METHOD_POST) == 0
                 && B_TRUE == am_web_is_postpreserve_enabled(agent_config))
             {
-                returnValue = process_request_with_post_data_preservation
+                status = process_request_with_post_data_preservation
                                   (pHttpContext, status, &pOphResources->result,
                                    requestURL.c_str(), args, &response, agent_config);
             } else {
-                returnValue = do_redirect(pHttpContext, status, &OphResources.result,
+                status = do_redirect(pHttpContext, status, &OphResources.result,
                          requestURL.c_str(), requestMethod, args, agent_config);
             }
             break;
@@ -589,7 +700,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
             if (strcmp(requestMethod, REQUEST_METHOD_POST) == 0
                 && B_TRUE == am_web_is_postpreserve_enabled(agent_config))
             {
-                returnValue = process_request_with_post_data_preservation
+                status = process_request_with_post_data_preservation
                                   (pECB, status, &pOphResources->result,
                                    requestURL, args, &response, agent_config);
             } else {
@@ -1756,115 +1867,6 @@ am_status_t set_request_headers(IHttpContext *pHttpContext, void** args)
 }
 
 // Method to register POST data in agent cache
-static am_status_t register_post_data(IHttpContext* pHttpContext,
-                         char *url, const char *key, char* response,
-                         void* agent_config)
-{
-    const char *thisfunc = "register_post_data()";
-    am_web_postcache_data_t post_data;
-    am_status_t status = AM_SUCCESS;
-
-    post_data.value = response;
-    post_data.url = url;
-    am_web_log_debug("%s: Register POST data key :%s", thisfunc, key);
-    if (am_web_postcache_insert(key, &post_data, agent_config) == B_FALSE) {
-        am_web_log_error("Register POST data insert into"
-                         " hash table failed:%s",key);
-        status = AM_FAILURE;
-    }
-
-    return status;
-}
-
-DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
-                                    am_status_t request_status,
-                                    am_policy_result_t *policy_result,
-                                    char *requestURL,
-                                    void **args,
-                                    char **resp,
-                                    void* agent_config)
-{
-    const char *thisfunc = "process_request_with_post_data_preservation()";
-    am_status_t status = AM_SUCCESS;
-    DWORD returnValue = HSE_STATUS_SUCCESS;
-    post_urls_t *post_urls = NULL;
-    char *response = NULL;
-
-    if (*resp != NULL) {
-        response = *resp;
-    }
-    status = am_web_create_post_preserve_urls(requestURL, &post_urls,
-                                              agent_config);
-    if (status != AM_SUCCESS) {
-        returnValue = send_error(pECB);
-    }
-    // In CDSSO mode, for a POST request, the post data have
-    // already been saved in the response variable, so we need
-    // to get them here only if response is NULL.
-    if (status == AM_SUCCESS) {
-        if (response == NULL) {
-            status =  GetEntity(pHttpContext, response);
-            if (status != AM_SUCCESS) {
-                return AM_FAILURE;
-            }
-        }
-    }
-    if (status == AM_SUCCESS) {
-        if (response != NULL && strlen(response) > 0) {
-            if (AM_SUCCESS == register_post_data(pHttpContext,post_urls->action_url,
-                                       post_urls->post_time_key, response,
-                                       agent_config))
-            {
-                char *lbCookieHeader = NULL;
-                // If using a LB in front of the agent and if the sticky
-                // session mode is COOKIE, the lb cookie needs to be set there.
-                // If am_web_get_postdata_preserve_lbcookie()
-                // returns AM_INVALID_ARGUMENT, it means that the
-                // sticky session feature is disabled (ie no LB) or
-                // that the sticky session mode is set to URL.
-                status = am_web_get_postdata_preserve_lbcookie(
-                          &lbCookieHeader, B_FALSE, agent_config);
-                if (status == AM_NO_MEMORY) {
-                    returnValue = AM_FAILURE;
-                } else {
-                    if (status == AM_SUCCESS) {
-                        am_web_log_debug("%s: Setting LB cookie "
-                                         "for post data preservation.",
-                                         thisfunc);
-                        set_cookie(lbCookieHeader, args);
-                    }
-                    returnValue = do_redirect(pHttpContext, request_status,
-                                              policy_result,
-                                              post_urls->dummy_url,
-                                              REQUEST_METHOD_POST, args,
-                                              agent_config);
-                }
-                if (lbCookieHeader != NULL) {
-                    am_web_free_memory(lbCookieHeader);
-                    lbCookieHeader = NULL;
-                }
-            } else {
-                am_web_log_error("%s: register_post_data() "
-                     "failed.", thisfunc);
-                returnValue = send_error(pECB);
-            }
-        } else {
-            am_web_log_debug("%s: This is a POST request with no post data. "
-                             "Redirecting as a GET request.", thisfunc);
-            returnValue = do_redirect(pECB, request_status,
-                                      policy_result,
-                                      requestURL,
-                                      REQUEST_METHOD_GET, args,
-                                      agent_config);
-        }
-    }
-    if (post_urls != NULL) {
-        am_web_clean_post_urls(post_urls);
-        post_urls = NULL;
-    }
-
-    return returnValue;
-}
 
 /*
  * Invoked during CDSSO. It jsut returns RQ_NOTIFICATION_CONTINUE now to let the 
