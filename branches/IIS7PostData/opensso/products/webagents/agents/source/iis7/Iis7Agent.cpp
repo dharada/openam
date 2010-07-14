@@ -178,12 +178,12 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
             } else {
                 am_web_log_error("%s: register_post_data() "
                      "failed.", thisfunc);
-                returnValue = send_error(pECB);
+                returnValue = AM_FAILURE;
             }
         } else {
             am_web_log_debug("%s: This is a POST request with no post data. "
                              "Redirecting as a GET request.", thisfunc);
-            returnValue = do_redirect(pECB, request_status,
+            returnValue = do_redirect(pHttpContext, request_status,
                                       policy_result,
                                       requestURL,
                                       REQUEST_METHOD_GET, args,
@@ -323,6 +323,9 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     void *args[] = {(void *) tmpPecb, (void *) &set_headers_list,
                     (void *) &set_cookies_list, (void *) &request_hdrs };
     void *agent_config=NULL;
+    string response = "";
+
+
     IHttpRequest* req = pHttpContext->GetRequest();
     IHttpResponse* res = pHttpContext->GetResponse();
 
@@ -525,7 +528,6 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                 (am_web_is_url_enforced(requestURL.c_str(), pathInfo.c_str(), 
                  clientIP, agent_config) == B_TRUE)))
             {
-                string response = "";
                 GetEntity(pHttpContext, response);
                 if (status == AM_SUCCESS) {
                     //Set original method to GET
