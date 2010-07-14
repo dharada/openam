@@ -341,7 +341,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
 
     if (status == AM_SUCCESS) {
         if (B_TRUE == am_web_is_postpreserve_enabled(agent_config)) {
-            status = check_for_post_data(pHttpContext, requestURL.c_str(), &post_page,
+            status = check_for_post_data(pHttpContext, (char *)requestURL.c_str(), &post_page,
                                          agent_config);
         }
     }
@@ -409,10 +409,10 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         if ((am_web_is_cdsso_enabled(agent_config) == B_TRUE) && 
                 (strcmp(requestMethod, REQUEST_METHOD_POST) == 0)) 
         {
-            if (dpro_cookie == NULL) &&
+            if ((dpro_cookie == NULL) &&
                 ((post_page != NULL) ||
                 (am_web_is_url_enforced(requestURL.c_str(), pathInfo.c_str(), 
-                 clientIP, agent_config) == B_TRUE)) 
+                 clientIP, agent_config) == B_TRUE)))
             {
                 string response = "";
                 GetEntity(pHttpContext, response);
@@ -515,7 +515,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                                             &lbCookieHeader, B_TRUE,
                                             agent_config);
                     if (status_tmp == AM_NO_MEMORY) {
-                        returnValue = status_tmp;
+                        retStatus = status_tmp;
                     } else {
                         if (status_tmp == AM_SUCCESS) {
                             am_web_log_debug("%s: Setting LB cookie for "
@@ -523,7 +523,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                                              thisfunc);
                             set_cookie(lbCookieHeader, args);
                         }
-                        returnValue = send_post_data(pECB, post_page, 
+                        retStatus = send_post_data(pECB, post_page,
                                                  set_cookies_list);
                     }
                     if (lbCookieHeader != NULL) {
