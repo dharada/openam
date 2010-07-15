@@ -286,8 +286,9 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     size_t page_len = 0;
     HRESULT hr;
     REQUEST_NOTIFICATION_STATUS retStatus = RQ_NOTIFICATION_CONTINUE;
+    USHORT content_len = 0;
 
-    am_status_t status = AM_SUCCESS;
+    IHttpRequest* req = pHttpContext->GetRequest();
 
     page_len = strlen(page);
 
@@ -295,10 +296,13 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
                       thisfunc, set_cookies_list);
     am_web_log_debug("%s: Post form:\n%s", thisfunc, page);
 
-    hr = pHttpResponse->SetStatus(200,"Status OK",0, S_OK);
-    hr = pHttpResponse->SetHeader("Content-Type","text/html",
+//    hr = pHttpResponse->SetStatus(200,"Status OK",0, S_OK);
+    hr = req->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
-    hr = pHttpResponse->SetHeader("Content-Length",buff,
+    content_len = page_len+strlen(set_cookies_list));
+    char buff[256];
+    itoa(content_len,buff,10);
+    hr = req->SetHeader("Content-Length",buff,
                                        (USHORT)strlen(buff),TRUE);
 
     set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
@@ -310,7 +314,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     dataChunk.DataChunkType = HttpDataChunkFromMemory;
     dataChunk.FromMemory.pBuffer = (PVOID) pszBuffer;
     dataChunk.FromMemory.BufferLength = (USHORT) page_len;
-    hr = pHttpResponse->WriteEntityChunks(&dataChunk,1,FALSE,TRUE,&cbSent);
+    hr = req->WriteEntityChunks(&dataChunk,1,FALSE,TRUE,&cbSent);
 
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
