@@ -383,6 +383,8 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     IHttpRequest* req = pHttpContext->GetRequest();
     IHttpResponse* res = pHttpContext->GetResponse();
 
+    am_web_log_error("ProcessRequest -- Starting");
+
     if (readAgentConfigFile == FALSE) {
         EnterCriticalSection(&initLock);
         if (readAgentConfigFile == FALSE) {
@@ -416,10 +418,14 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     res->SetHeader("Cache-Control","no-store",(USHORT)strlen("no-store"),TRUE);
     res->DisableKernelCache(9);
 
+        am_web_log_error("ProcessRequest -- Check 001");
+
+
     // Get the request url
     status = get_request_url(pHttpContext, requestURL, origRequestURL,
                              pathInfo, agent_config);
     // Handle notification
+        am_web_log_error("ProcessRequest -- Check 002");
     if ((status == AM_SUCCESS) &&
         (B_TRUE == am_web_is_notification(origRequestURL.c_str(), 
                                           agent_config)))
@@ -433,10 +439,12 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         return retStatus;
     }
     // Get the request method
+        am_web_log_error("ProcessRequest -- Check 003");
     if (status == AM_SUCCESS) {
         status = GetVariable(pHttpContext,"REQUEST_METHOD", &reqMethod,
                  &requestMethodSize, TRUE);
     }
+        am_web_log_error("ProcessRequest -- Check 004");
     if (status == AM_SUCCESS) {
         if(requestMethodSize > 0) {
             requestMethod = (char*)malloc(requestMethodSize + 1);
@@ -453,11 +461,13 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
     // Get the HTTP_COOKIE header
+        am_web_log_error("ProcessRequest -- Check 005");
     if (status == AM_SUCCESS) {
         status = GetVariable(pHttpContext,"HTTP_COOKIE", 
                 &pOphResources->cookies, &pOphResources->cbCookies, FALSE);
     }
     // Check for SSO Token in Http Cookie
+        am_web_log_error("ProcessRequest -- Check 006");
     if (status == AM_SUCCESS) {
         if (pOphResources->cbCookies > 0) {
             char *cookieValue = NULL;
@@ -507,6 +517,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
 
+        am_web_log_error("ProcessRequest -- Check 007");
     if (status == AM_SUCCESS) {
         if (B_TRUE == am_web_is_postpreserve_enabled(agent_config)) {
             status = check_for_post_data(pHttpContext, (char *)requestURL.c_str(), &post_page,
@@ -514,6 +525,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
 
+        am_web_log_error("ProcessRequest -- Check 008");
     // Create the environment map
     if (status == AM_SUCCESS) {
         status = am_map_create(&env_parameter_map);
@@ -525,6 +537,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     //
     // Get the client IP address header set by the proxy, if there is one
     
+        am_web_log_error("ProcessRequest -- Check 009");
     if (status == AM_SUCCESS) {
         clientIP_hdr_name = (PCSTR) am_web_get_client_ip_header_name(agent_config);
         if (clientIP_hdr_name != NULL) {
@@ -533,6 +546,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
     // Get the client host name header set by the proxy, if there is one
+        am_web_log_error("ProcessRequest -- Check 010");
     if (status == AM_SUCCESS) {
         clientHostname_hdr_name = 
                (PCSTR) am_web_get_client_hostname_header_name(agent_config);
@@ -544,6 +558,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     }
     // If the client IP and host name headers contain more than one
     // value, take the first value.
+        am_web_log_error("ProcessRequest -- Check 011");
     if (status == AM_SUCCESS) {
         if ((clientIP_hdr != NULL) || (clientHostname_hdr != NULL)) {
             status = am_web_get_client_ip_host((char *) clientIP_hdr,
@@ -552,6 +567,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
     // Set the IP address and host name in the environment map
+        am_web_log_error("ProcessRequest -- Check 012");
     if ((status == AM_SUCCESS) && (clientIP != NULL)) {
         isClientIPLocalAlloc = FALSE;
         status = am_web_set_host_ip_in_env_map(clientIP, clientHostname,
@@ -559,6 +575,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     }
     // If the client IP was not obtained previously,
     // get it from the REMOTE_ADDR header.
+        am_web_log_error("ProcessRequest -- Check 013");
     if ((status == AM_SUCCESS) && (clientIP == NULL)) {
         PCSTR tmpClientIP = NULL;
         DWORD tmpClientIPLength = 0;
@@ -570,6 +587,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         strncpy(clientIP, (char*)tmpClientIP, tmpClientIPLength);
     }
 
+        am_web_log_error("ProcessRequest -- Check 014");
     //  process post data in CDSSO
     if (status == AM_SUCCESS) 
     {
@@ -628,6 +646,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
         }
     }
     // Check if the user is authorized to access the resource.
+        am_web_log_error("ProcessRequest -- Check 015");
     if (status == AM_SUCCESS) {
         status = am_web_is_access_allowed(dpro_cookie, requestURL.c_str(),
                                         pathInfo.c_str(), requestMethod,
@@ -642,6 +661,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
     }
 
     //  Check for status and proceed accordingly
+        am_web_log_error("ProcessRequest -- Check 016");
     switch(status) {
         case AM_SUCCESS:
             if (am_web_is_logout_url(requestURL.c_str(), agent_config) 
@@ -666,6 +686,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                     status = set_request_headers(pHttpContext, args);
                 }
             }
+        am_web_log_error("ProcessRequest -- Check 017");
             if (status == AM_SUCCESS) {
                  if (post_page != NULL) {
                     char *lbCookieHeader = NULL;
