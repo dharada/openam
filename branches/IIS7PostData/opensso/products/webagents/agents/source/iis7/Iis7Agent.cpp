@@ -299,7 +299,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
 //    hr = pHttpResponse->SetStatus(200,"Status OK",0, S_OK);
     hr = req->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
-    content_len = page_len+strlen(set_cookies_list));
+    content_len = page_len+strlen(set_cookies_list);
     char buff[256];
     itoa(content_len,buff,10);
     hr = req->SetHeader("Content-Length",buff,
@@ -314,8 +314,8 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
         if (NULL == pvBuffer)
         {
             // Set the error status.
-            pProvider->SetErrorStatus(
-                HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY));
+ //           pProvider->SetErrorStatus(
+  //              HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY));
             // End additional processing.
             return RQ_NOTIFICATION_FINISH_REQUEST;
         }
