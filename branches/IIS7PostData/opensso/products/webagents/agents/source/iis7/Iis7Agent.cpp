@@ -113,7 +113,7 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
                                     am_policy_result_t *policy_result,
                                     char *requestURL,
                                     void **args,
-                                    char **resp,
+                                    char *resp,
                                     void* agent_config)
 {
     const char *thisfunc = "process_request_with_post_data_preservation()";
@@ -122,8 +122,8 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
     post_urls_t *post_urls = NULL;
     string response = "";
 
-    if (*resp != NULL) {
-        response = *resp;
+    if (resp != NULL) {
+        response = resp;
     }
     status = am_web_create_post_preserve_urls(requestURL, &post_urls,
                                               agent_config);
