@@ -308,22 +308,32 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
 
     //Send the post page
-    DWORD cbSent;
-    PCSTR pszBuffer = page;
-    HTTP_DATA_CHUNK dataChunk;
-    dataChunk.DataChunkType = HttpDataChunkFromMemory;
-    dataChunk.FromMemory.pBuffer = (PVOID) pszBuffer;
-    dataChunk.FromMemory.BufferLength = (USHORT) page_len;
-    hr = req->WriteEntityChunks(&dataChunk,1,FALSE,TRUE,&cbSent);
+    void * pvBuffer = pHttpContext->AllocateRequestMemory(page_len);
+
+        // Test for an error.
+        if (NULL == pvBuffer)
+        {
+            // Set the error status.
+            pProvider->SetErrorStatus(
+                HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY));
+            // End additional processing.
+            return RQ_NOTIFICATION_FINISH_REQUEST;
+        }
+
+        // Copy a string into the buffer.
+        strcpy((char*)pvBuffer,page);
+        // Insert the entity body into the buffer.
+        hr = pHttpContext->GetRequest()->InsertEntityBody(
+            pvBuffer,(DWORD)strlen((char*)pvBuffer));
+
 
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
                          "Attempted message = %s ", thisfunc, page);
         retStatus = RQ_NOTIFICATION_FINISH_REQUEST;
-;
     }
 
-    return ewrStatus;
+    return retStatus;
 }
 
 
