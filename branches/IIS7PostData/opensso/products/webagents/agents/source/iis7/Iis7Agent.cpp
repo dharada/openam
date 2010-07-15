@@ -108,7 +108,7 @@ static am_status_t register_post_data(IHttpContext* pHttpContext,
     return status;
 }
 
-DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
+am_status_t process_request_with_post_data_preservation(IHttpContext* pHttpContext,
                                     am_status_t request_status,
                                     am_policy_result_t *policy_result,
                                     char *requestURL,
