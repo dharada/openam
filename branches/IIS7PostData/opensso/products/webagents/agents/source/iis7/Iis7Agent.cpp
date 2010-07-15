@@ -677,7 +677,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
             {
                 status = process_request_with_post_data_preservation
                                   (pHttpContext, status, &pOphResources->result,
-                                   (char *)requestURL.c_str(), args, &response, agent_config);
+                                   (char *)requestURL.c_str(), args, (char *)response.c_str(), agent_config);
             } else {
                 status = do_redirect(pHttpContext, status, &OphResources.result,
                          requestURL.c_str(), requestMethod, args, agent_config);
@@ -697,7 +697,7 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
             {
                 status = process_request_with_post_data_preservation
                                   (pHttpContext, status, &pOphResources->result,
-                                   (char *)requestURL.c_str(), args, &response, agent_config);
+                                   (char *)requestURL.c_str(), args, (char *)response.c_str(), agent_config);
             } else {
             status = do_redirect(pHttpContext, status, &OphResources.result,
                               requestURL.c_str(), requestMethod, 
