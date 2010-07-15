@@ -138,7 +138,7 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
     }
     if ((status == AM_SUCCESS) && (response.size()) > 0) {
             if (AM_SUCCESS == register_post_data(pHttpContext,post_urls->action_url,
-                                       post_urls->post_time_key, response.c_str(),
+                                       post_urls->post_time_key, (char *)response.c_str(),
                                        agent_config))
             {
                 char *lbCookieHeader = NULL;
@@ -182,7 +182,6 @@ DWORD process_request_with_post_data_preservation(IHttpContext* pHttpContext,
                                       requestURL,
                                       REQUEST_METHOD_GET, args,
                                       agent_config);
-        }
     }
     if (post_urls != NULL) {
         am_web_clean_post_urls(post_urls);
