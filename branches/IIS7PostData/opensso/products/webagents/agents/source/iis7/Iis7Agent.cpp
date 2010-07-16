@@ -304,8 +304,8 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     hr = req->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
     am_web_log_debug("%s: req-setHeader worked", thisfunc);
-    content_len = page_len;
-    if (set_cookies_list != NULL) content_line += strlen(set_cookies_list);
+    content_len = (USHORT)page_len;
+    if (set_cookies_list != NULL) content_len += strlen(set_cookies_list);
     am_web_log_debug("%s: Content Length = %d", thisfunc, content_len);
 
     char buff[256];
