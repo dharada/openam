@@ -292,7 +292,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     REQUEST_NOTIFICATION_STATUS retStatus = RQ_NOTIFICATION_CONTINUE;
     USHORT content_len = 0;
 
-    IHttpRequest* req = pHttpContext->GetRequest();
+    IHttpResponse* res = pHttpContext->GetResponse();
 
     page_len = strlen(page);
 
@@ -300,42 +300,41 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
                       thisfunc, set_cookies_list);
     am_web_log_debug("%s: Post form:\n%s", thisfunc, page);
 
-//    hr = pHttpResponse->SetStatus(200,"Status OK",0, S_OK);
-    hr = req->SetHeader("Content-Type","text/html",
+    hr = res->SetStatus(200,"Status OK",0, S_OK);
+    hr = res->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
-    am_web_log_debug("%s: req-setHeader worked", thisfunc);
+    am_web_log_debug("%s: res-setHeader worked", thisfunc);
     content_len = (USHORT)page_len;
-    if (set_cookies_list != NULL) content_len += strlen(set_cookies_list);
+    if (set_cookies_list != NULL)
+        content_len += strlen(set_cookies_list);
     am_web_log_debug("%s: Content Length = %d", thisfunc, content_len);
 
     char buff[256];
     itoa(content_len,buff,10);
-    hr = req->SetHeader("Content-Length",buff,
+    hr = res->SetHeader("Content-Length",buff,
                                        (USHORT)strlen(buff),TRUE);
 
     am_web_log_debug("%s: Set Header - contentLength = %s", thisfunc, buff);
-    if (set_cookies_list != NULL) set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
+    if (set_cookies_list != NULL) 
+        set_headers_in_context(pHttpContext, set_cookies_list, TRUE);
     am_web_log_debug("%s: Set Headers ", thisfunc);
 
     //Send the post page
     void * pvBuffer = pHttpContext->AllocateRequestMemory(page_len);
 
-        // Test for an error.
-        if (NULL == pvBuffer)
-        {
-            // Set the error status.
- //           pProvider->SetErrorStatus(
-  //              HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY));
-            // End additional processing.
-            return RQ_NOTIFICATION_FINISH_REQUEST;
-        }
+    if (FAILED(hr)) {
+        am_web_log_error("%s: SetHeader failed.", thisfunc);
+        status = AM_FAILURE;
+    }
+    DWORD cbSent;
+    HTTP_DATA_CHUNK dataChunk;
+    strcpy(pvBuffer,page);
+    dataChunk.DataChunkType = HttpDataChunkFromMemory;
+    dataChunk.FromMemory.pBuffer = (PVOID) pvBuffer;
+    dataChunk.FromMemory.BufferLength = (USHORT) page_len;
+    hr = pHttpResponse->WriteEntityChunks(&dataChunk,1,
+                                        FALSE,FALSE,&cbSent);
 
-        // Copy a string into the buffer.
-        strcpy((char*)pvBuffer,page);
-        // Insert the entity body into the buffer.
-        hr = pHttpContext->GetRequest()->InsertEntityBody(
-            pvBuffer,(DWORD)strlen((char*)pvBuffer));
-        pHttpContext->GetRequest()->SetHttpMethod("POST");
     am_web_log_debug("%s: Set Request Value %s", thisfunc);
 
     if (FAILED(hr)) {
