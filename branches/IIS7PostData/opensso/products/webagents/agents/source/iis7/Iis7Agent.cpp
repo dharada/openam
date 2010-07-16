@@ -324,15 +324,15 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
 
     if (FAILED(hr)) {
         am_web_log_error("%s: SetHeader failed.", thisfunc);
-        status = AM_FAILURE;
+        return RQ_NOTIFICATION_FINISH_REQUEST;
     }
     DWORD cbSent;
     HTTP_DATA_CHUNK dataChunk;
-    strcpy(pvBuffer,page);
+    strcpy((char *)pvBuffer,page);
     dataChunk.DataChunkType = HttpDataChunkFromMemory;
     dataChunk.FromMemory.pBuffer = (PVOID) pvBuffer;
     dataChunk.FromMemory.BufferLength = (USHORT) page_len;
-    hr = pHttpResponse->WriteEntityChunks(&dataChunk,1,
+    hr = res->WriteEntityChunks(&dataChunk,1,
                                         FALSE,FALSE,&cbSent);
 
     am_web_log_debug("%s: Set Request Value %s", thisfunc);
@@ -340,7 +340,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
                          "Attempted message = %s ", thisfunc, page);
-        retStatus = RQ_NOTIFICATION_FINISH_REQUEST;
+        return RQ_NOTIFICATION_FINISH_REQUEST;
     }
 
     return retStatus;
