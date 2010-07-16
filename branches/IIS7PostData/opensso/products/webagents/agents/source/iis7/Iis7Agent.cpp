@@ -335,9 +335,12 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     dataChunk.FromMemory.pBuffer = (PVOID) pvBuffer;
     dataChunk.FromMemory.BufferLength = (USHORT) page_len;
         am_web_log_error("%s: before Write Entity Chunk.", thisfunc);
-    hr = res->WriteEntityChunks(&dataChunk,1,
-                                        FALSE,FALSE,&cbSent);
-        am_web_log_error("%s: After Write Entity Chunk.", thisfunc);
+    hr = res->WriteEntityChunks(&dataChunk,1,FALSE,FALSE,&cbSent);
+
+    BOOL fCompletionExpected = false;
+    hr = res->Flush(false,false,&cbSent,&fCompletionExpected);
+    am_web_log_error("%s: After Write Entity Chunk.", thisfunc);
+    return RQ_NOTIFICATION_FINISH_REQUEST;
 
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
