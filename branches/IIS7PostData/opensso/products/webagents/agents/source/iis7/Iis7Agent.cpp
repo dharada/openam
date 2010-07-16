@@ -159,11 +159,13 @@ am_status_t process_request_with_post_data_preservation(IHttpContext* pHttpConte
                                          thisfunc);
                         set_cookie(lbCookieHeader, args);
                     }
+                    am_web_log_debug("Post Data - Doing redirect");
                     returnValue = do_redirect(pHttpContext, request_status,
                                               policy_result,
                                               post_urls->dummy_url,
                                               REQUEST_METHOD_POST, args,
                                               agent_config);
+            am_web_log_debug("%d: Redirect returned ",returnValue);
                 }
                 if (lbCookieHeader != NULL) {
                     am_web_free_memory(lbCookieHeader);
@@ -182,6 +184,8 @@ am_status_t process_request_with_post_data_preservation(IHttpContext* pHttpConte
                                       requestURL,
                                       REQUEST_METHOD_GET, args,
                                       agent_config);
+            am_web_log_debug("%d: Redirect returned ",returnValue);
+
     }
     if (post_urls != NULL) {
         am_web_clean_post_urls(post_urls);
@@ -2058,6 +2062,7 @@ static am_status_t do_redirect(IHttpContext* pHttpContext,
                         set_headers_in_context(pHttpContext, set_cookies_list, 
                                                             FALSE);
                     }
+                    am_web_log_debug("Generated Redirect");
                     pHttpResponse->Redirect(redirect_url, true, false);
                     if (FAILED(hr)) {
                         am_web_log_error("%s: SetHeader failed.", thisfunc);
