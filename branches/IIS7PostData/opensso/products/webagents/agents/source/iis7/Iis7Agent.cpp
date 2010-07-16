@@ -304,12 +304,16 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     hr = req->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
     content_len = page_len+strlen(set_cookies_list);
+    am_web_log_debug("%s: Content Length = %d", thisfunc, content_len);
+
     char buff[256];
     itoa(content_len,buff,10);
     hr = req->SetHeader("Content-Length",buff,
                                        (USHORT)strlen(buff),TRUE);
 
+    am_web_log_debug("%s: Set Header - contentLength = %s", thisfunc, buff);
     set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
+    am_web_log_debug("%s: Set Headers %s", thisfunc);
 
     //Send the post page
     void * pvBuffer = pHttpContext->AllocateRequestMemory(page_len);
@@ -329,7 +333,8 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
         // Insert the entity body into the buffer.
         hr = pHttpContext->GetRequest()->InsertEntityBody(
             pvBuffer,(DWORD)strlen((char*)pvBuffer));
-
+        pHttpContext->GetRequest()->SetHttpMethod("POST");
+    am_web_log_debug("%s: Set Request Value %s", thisfunc);
 
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
