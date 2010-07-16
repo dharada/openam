@@ -339,8 +339,6 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
                                         FALSE,FALSE,&cbSent);
         am_web_log_error("%s: After Write Entity Chunk.", thisfunc);
 
-    am_web_log_debug("%s: Set Request Value %s", thisfunc);
-
     if (FAILED(hr)) {
         am_web_log_error("%s: WriteClient did not succeed: "
                          "Attempted message = %s ", thisfunc, page);
