@@ -315,7 +315,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
 
     am_web_log_debug("%s: Set Header - contentLength = %s", thisfunc, buff);
     if (set_cookies_list != NULL) set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
-    am_web_log_debug("%s: Set Headers %s", thisfunc);
+    am_web_log_debug("%s: Set Headers ", thisfunc);
 
     //Send the post page
     void * pvBuffer = pHttpContext->AllocateRequestMemory(page_len);
