@@ -770,6 +770,18 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                          requestURL.c_str(), requestMethod, args, agent_config);
                 am_web_log_info("Redirect Request result = %d",status);
             }
+            am_web_log_info("Redirect RFor Invalid Session");
+            {
+                HRESULT hr;
+                // Buffer to store the byte count.
+                DWORD cbSent = 0;
+                // Buffer to store if asyncronous completion is pending.
+                BOOL fCompletionExpected = false;
+                hr = res->Flush(false,false,&cbSent,&fCompletionExpected);
+
+            }
+            am_web_log_info("After Flush Invalid Session");
+
             break;
 
         case AM_ACCESS_DENIED:
