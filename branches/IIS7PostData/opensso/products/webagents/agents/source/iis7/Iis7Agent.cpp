@@ -322,18 +322,22 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
     //Send the post page
     void * pvBuffer = pHttpContext->AllocateRequestMemory(page_len);
 
-    if (FAILED(hr)) {
-        am_web_log_error("%s: SetHeader failed.", thisfunc);
+    if (pvBuffer == NULL) {
+        am_web_log_error("%s: AllocRequestMemory Failed.", thisfunc);
         return RQ_NOTIFICATION_FINISH_REQUEST;
     }
     DWORD cbSent;
     HTTP_DATA_CHUNK dataChunk;
+        am_web_log_error("%s: Before String Copy.", thisfunc);
     strcpy((char *)pvBuffer,page);
+        am_web_log_error("%s: After String Copy.", thisfunc);
     dataChunk.DataChunkType = HttpDataChunkFromMemory;
     dataChunk.FromMemory.pBuffer = (PVOID) pvBuffer;
     dataChunk.FromMemory.BufferLength = (USHORT) page_len;
+        am_web_log_error("%s: before Write Entity Chunk.", thisfunc);
     hr = res->WriteEntityChunks(&dataChunk,1,
                                         FALSE,FALSE,&cbSent);
+        am_web_log_error("%s: After Write Entity Chunk.", thisfunc);
 
     am_web_log_debug("%s: Set Request Value %s", thisfunc);
 
