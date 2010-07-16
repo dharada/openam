@@ -303,7 +303,9 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
 //    hr = pHttpResponse->SetStatus(200,"Status OK",0, S_OK);
     hr = req->SetHeader("Content-Type","text/html",
                                            (USHORT)strlen("text/html"),TRUE);
-    content_len = page_len+strlen(set_cookies_list);
+    am_web_log_debug("%s: req-setHeader worked", thisfunc);
+    content_len = page_len;
+    if (set_cookies_list != NULL) content_line += strlen(set_cookies_list);
     am_web_log_debug("%s: Content Length = %d", thisfunc, content_len);
 
     char buff[256];
@@ -312,7 +314,7 @@ REQUEST_NOTIFICATION_STATUS send_post_data(IHttpContext* pHttpContext, char *pag
                                        (USHORT)strlen(buff),TRUE);
 
     am_web_log_debug("%s: Set Header - contentLength = %s", thisfunc, buff);
-    set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
+    if (set_cookies_list != NULL) set_headers_in_context(pHttpContext, set_cookies_list, FALSE);
     am_web_log_debug("%s: Set Headers %s", thisfunc);
 
     //Send the post page
