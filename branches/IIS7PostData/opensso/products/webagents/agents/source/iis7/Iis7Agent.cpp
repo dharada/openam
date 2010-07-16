@@ -764,9 +764,11 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                 status = process_request_with_post_data_preservation
                                   (pHttpContext, status, &pOphResources->result,
                                    (char *)requestURL.c_str(), args, (char *)response.c_str(), agent_config);
-            } else {
+                am_web_log_info("Post Request result = %d",status);
+             } else {
                 status = do_redirect(pHttpContext, status, &OphResources.result,
                          requestURL.c_str(), requestMethod, args, agent_config);
+                am_web_log_info("Redirect Request result = %d",status);
             }
             break;
 
@@ -876,6 +878,8 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
 
     OphResourcesFree(pOphResources);
     am_web_delete_agent_configuration(agent_config);
+    am_web_log_info("FINAL return result result = %d",status);
+
     return retStatus;
 }
 
