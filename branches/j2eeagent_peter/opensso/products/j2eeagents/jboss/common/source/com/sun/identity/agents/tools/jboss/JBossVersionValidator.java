@@ -229,7 +229,7 @@ public class JBossVersionValidator extends ValidatorBase
         }
 
                
-        if (version32 || version40 || version50) {
+        if (version32 || version40 || version42 || version50) {
             validVersion = true;
         } else {
             Debug.log(
@@ -240,5 +240,4 @@ public class JBossVersionValidator extends ValidatorBase
 
         return validVersion;
     }
-
 }
