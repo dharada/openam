@@ -46,7 +46,7 @@ public class AmJBossAgentServiceResolver extends ServiceResolver {
           
     public String getGlobalJ2EEAuthHandlerImpl() {
         boolean webauth = false; 
-        webauth = new Boolean(AmRealmManager.getSystemAccess().getManager().getConfiguration("jboss.webauth.available")).booleanValue();
+        webauth = AmRealmManager.getSystemAccess().getManager().getConfigurationBoolean("jboss.webauth.available");
             if (webauth == true){
                 return AmJBossJ2EEAuthHandler.class.getName();
             }            
