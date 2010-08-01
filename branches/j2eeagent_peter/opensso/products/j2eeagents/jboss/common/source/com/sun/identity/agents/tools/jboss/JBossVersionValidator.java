@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.agents.tools.jboss;
 
 import com.sun.identity.install.tools.configurator.IStateAccess;

@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.agents.jboss.v40;
 
 import com.sun.identity.agents.filter.J2EEAuthenticationHandler;
