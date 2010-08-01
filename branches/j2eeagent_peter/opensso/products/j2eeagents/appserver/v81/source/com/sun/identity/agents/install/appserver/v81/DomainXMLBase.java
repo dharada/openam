@@ -26,15 +26,16 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.agents.install.appserver.v81;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
-import java.io.*;
 import java.io.File;
-
 import com.sun.identity.install.tools.configurator.IStateAccess;
 import com.sun.identity.install.tools.configurator.InstallConstants;
 import com.sun.identity.install.tools.util.ConfigUtil;
@@ -43,7 +44,7 @@ import com.sun.identity.install.tools.util.xml.XMLDocument;
 import com.sun.identity.install.tools.util.xml.XMLElement;
 import com.sun.identity.install.tools.util.FileUtils;
 import com.sun.identity.agents.install.appserver.IConfigKeys;
-import com.sun.identity.install.tools.util.OSChecker;
+import com.sun.identity.agents.install.configurator.EncryptTask;
 
 /**
  * The class used by the installer to make changes in domain.xml file
@@ -53,7 +54,7 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
 {    
     public DomainXMLBase() {        
     }
- 
+
     public boolean addAgentJavaConfig(XMLDocument domainXMLDoc, 
         XMLElement instanceConfig, IStateAccess stateAccess) throws Exception {
         boolean status = false;
@@ -86,93 +87,69 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
         return status;
     }
 
-     private boolean getVersion(IStateAccess stateAccess) {
-         String ConfigDir = (String)stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR);
-         String command;
-         boolean version = false;
-         String line = null;
-         try{
-            if(OSChecker.isWindows())
-                command = ConfigDir + "/../../../bin/asadmin.bat version";
-            else
-                command = ConfigDir + "/../../../bin/asadmin version";
-            Process p = Runtime.getRuntime().exec(command);
-            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while ((line = input.readLine()) != null) {
-                  if(line.startsWith("Version") && line.indexOf( "v3" ) > -1) {
-                     version = true;
-                     Debug.log("Identified Glassfish server version:" + line); 
-                  }
-		  else{
-		     Debug.log("Info:" + line);	
-                  }
-            }
-         }catch (IOException e){ 
-              Debug.log("Version check: Error - Unable to identify Glassfish server version");
-          }
-       return version;
-      }
-
     private String appendAgentClassPath(String classpath, 
-        IStateAccess stateAccess) throws Exception{               
-        StringBuffer sb = new StringBuffer(classpath);        
-        String[] agentEntries =  getAgentClasspathEntries(stateAccess);
-        int count = agentEntries.length;       
-        if(getVersion(stateAccess)) {
-           String ConfigDir = (String)stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR);
-           String LibDir = ConfigDir + "/../lib";
-           String libPath = ConfigUtil.getLibPath();
-           String localeDir = ConfigUtil.getLocaleDirPath();
-           String LibClassDir = LibDir + FILE_SEP + "classes";
-           File srcDir = new File(localeDir);
-           File desDir = new File(LibClassDir);
-           FileUtils.copyJarFile(libPath,LibDir,STR_AGENT_JAR);
-           FileUtils.copyJarFile(libPath,LibDir,STR_FM_CLIENT_SDK_JAR);
-           FileUtils.copyDirContents(srcDir,desDir);
-           StringBuffer buffer = new StringBuffer(256);
-           buffer.append(ConfigUtil.getHomePath()).append(FILE_SEP);
-           buffer.append(getAgentInstanceName(stateAccess)).append(FILE_SEP);
-           buffer.append(INSTANCE_CONFIG_DIR_NAME);
-           sb.append(STR_SERVER_CLASSPATH_SEP).append(buffer.toString());
-           Debug.log("DomainXMLBase.appendAgentClassPath(): Copied jar files" +
-                     LibDir + "and resource files to" + LibClassDir);
-        }
-        else { 
-           for (int i = 0; i < count; i++) {
-               sb.append(STR_SERVER_CLASSPATH_SEP);
-               sb.append(agentEntries[i]);
+            IStateAccess stateAccess) throws Exception {
+        StringBuilder sb = new StringBuilder(classpath);
+        String[] agentEntries = getAgentClasspathEntries(stateAccess);
+        int count = agentEntries.length;
+
+            for (int i = 0; i < count; i++) {
+                sb.append(STR_SERVER_CLASSPATH_SEP);
+                sb.append(agentEntries[i]);
             }
-        }
         String resultClasspath = sb.toString();
-        Debug.log("DomainXMLBase.appendAgentClassPath() Original " +
-                "classpath: " + classpath + "\nResult classpath: " + 
-                resultClasspath);
-        
-      return resultClasspath;
+        Debug.log("DomainXMLBase.appendAgentClassPath() Original "
+                + "classpath: " + classpath + "\nResult classpath: "
+                + resultClasspath);
+
+        return resultClasspath;
     }
-    
-    private void addAgentJVMOptions(XMLDocument domainXMLDoc, 
-        XMLElement javaConfig, IStateAccess stateAccess) throws Exception {           
+
+    /**
+     * For GlassFish v3 servers this function will copy the agent libraries and
+     * the agent resources along with the agent configurations onto the GlassFish
+     * domain classpath
+     *
+     * @param stateAccess
+     * @return <code>true</code> if the copy was successful, <code>false</code>
+     * otherwise
+     */
+    public boolean copyAgentFiles(IStateAccess stateAccess) {
+        try {
+            String ConfigDir = (String) stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR);
+            String LibDir = ConfigDir + "/../lib";
+            String libPath = ConfigUtil.getLibPath();
+            String localeDir = ConfigUtil.getLocaleDirPath();
+            String LibClassDir = LibDir + FILE_SEP + "classes";
+            File srcDir = new File(localeDir);
+            File desDir = new File(LibClassDir);
+            FileUtils.copyJarFile(libPath, LibDir, STR_AGENT_JAR);
+            FileUtils.copyJarFile(libPath, LibDir, STR_FM_CLIENT_SDK_JAR);
+            FileUtils.copyDirContents(srcDir, desDir);
+
+            String agentConfigDir = System.getProperty(EncryptTask.STR_DEBUG_DIR_PROPERTY) + "/../../config";
+            FileUtils.copyDirContents(new File(agentConfigDir), desDir);
+
+            Debug.log("DomainXMLBase.appendAgentClassPath(): Copied jar files"
+                    + LibDir + "and config/resource files to " + LibClassDir);
+            return true;
+        } catch (Exception ex) {
+            Debug.log("ERROR occured while copying the agent files to GlassFish", ex);
+            return false;
+        }
+    }
+
+    private void addAgentJVMOptions(XMLDocument domainXMLDoc,
+            XMLElement javaConfig, IStateAccess stateAccess) throws Exception {
         Iterator iter = getAgentJVMOptions(stateAccess).iterator();
-        StringBuffer sb = new StringBuffer(256);
-        if(getVersion(stateAccess)){
-           String LOG_FILE = (String)stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR) + FILE_SEP + "logging.properties";
-           while (iter.hasNext()) {
-               String option = (String) iter.next();
-               sb.append("java ").append(option).append("\n");
-               FileUtils.appendDataToFile(LOG_FILE,sb.toString());
-               sb.delete(0, sb.length());
-               Debug.log("DomainXMLBase.addAgentJVMOptions: Addedd log options to" + LOG_FILE);
-            }
-        } else{
-           while (iter.hasNext()) {
-              String option = (String) iter.next();
-              sb.append("<jvm-options>").append(option).append("</jvm-options>");
-              XMLElement jvmOption = domainXMLDoc.newElementFromXMLFragment(
-                  sb.toString());
-              javaConfig.addChildElement(jvmOption, true);
-              sb.delete(0, sb.length()); // clear the buffer
-           }
+        StringBuilder sb = new StringBuilder(256);
+        while (iter.hasNext()) {
+            String option = (String) iter.next();
+            sb.append("<jvm-options>").append(option).append("</jvm-options>");
+            XMLElement jvmOption = domainXMLDoc.newElementFromXMLFragment(
+                    sb.toString());
+            javaConfig.addChildElement(jvmOption, true);
+            sb.delete(0, sb.length()); // clear the buffer
         }
     }
         
@@ -214,12 +191,12 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
         return status;
     }
     
-    public boolean removeAgentClasspath(XMLElement instanceConfig, 
-        IStateAccess stateAccess) throws Exception {
+    public boolean removeAgentClasspath(XMLElement instanceConfig,
+            IStateAccess stateAccess) throws Exception {
         boolean status = false;
-        
-        XMLElement javaConfig = getUniqueElement(STR_JAVA_CONFIG_ELEMENT, 
-            instanceConfig);
+
+        XMLElement javaConfig = getUniqueElement(STR_JAVA_CONFIG_ELEMENT,
+                instanceConfig);
         if (javaConfig != null) {
             String classPathTag = STR_CLASSPATH_ATTR;
             String classpath = javaConfig.getAttributeValue(classPathTag);
@@ -229,40 +206,51 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
                 classpath = javaConfig.getAttributeValue(classPathTag);
             }
             if (classpath != null) {
-                String updatedClasspath = deleteAgentClasspath(classpath, 
-                    stateAccess);
+                String updatedClasspath = deleteAgentClasspath(classpath,
+                        stateAccess);
                 javaConfig.updateAttribute(classPathTag, updatedClasspath);
                 status = true;
             } else {
-                Debug.log("DomainXMLBase.removeAgentClasspath() - " +
-                    "Error: Missing '" + classPathTag + "' " +
-                    "attribute");                
-            }            
-           if (getVersion(stateAccess)) {
-               removeAgentFiles(stateAccess);
-               removeAgentLogOptions(stateAccess);
+                Debug.log("DomainXMLBase.removeAgentClasspath() - "
+                        + "Error: Missing '" + classPathTag + "' "
+                        + "attribute");
             }
-            else {
-               // Remove the Agent JVMOptions. If error occurs Exception is thrown
-               removeAgentJVMOptions(javaConfig, stateAccess);
-            }
+
+            // Remove the Agent JVMOptions. If error occurs Exception is thrown
+            removeAgentJVMOptions(javaConfig, stateAccess);
         } else {
-            Debug.log("DomainXMLBase.removeAgentClasspath() - Error:" + 
-                " Missing '" + STR_JAVA_CONFIG_ELEMENT + "' element.");
+            Debug.log("DomainXMLBase.removeAgentClasspath() - Error:"
+                    + " Missing '" + STR_JAVA_CONFIG_ELEMENT + "' element.");
         }
-                
+
         return status;
     }
 
-    private void removeAgentFiles(IStateAccess stateAccess) {
-          String ConfigDir = (String)stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR);
-          String LibDir = ConfigDir + FILE_SEP + "../lib";
-          String LibClassDir = LibDir + FILE_SEP + "classes";
-          String localeDir = ConfigUtil.getLocaleDirPath();
-          FileUtils.removeJarFiles(LibDir,STR_AGENT_JAR);
-          FileUtils.removeJarFiles(LibDir,STR_FM_CLIENT_SDK_JAR);
-          FileUtils.removeFiles(localeDir,LibClassDir);
-          Debug.log("DomainXMLBase.removeAgentFiles: Deleted Agent files from" + LibDir);
+    /**
+     * Removes agent files from GlassFish v3 domain libraries, should be only used
+     * with v3
+     *
+     * @param stateAccess
+     */
+    public boolean removeAgentFiles(IStateAccess stateAccess) {
+        try {
+            String ConfigDir = (String) stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR);
+            String LibDir = ConfigDir + FILE_SEP + "../lib";
+            String libClassDir = LibDir + FILE_SEP + "classes";
+            String localeDir = ConfigUtil.getLocaleDirPath();
+            String agentConfigDir = stateAccess.get(InstallConstants.STR_DEBUG_DIR_PREFIX_TAG)
+                    + "/../../config";
+
+            FileUtils.removeJarFiles(LibDir, STR_AGENT_JAR);
+            FileUtils.removeJarFiles(LibDir, STR_FM_CLIENT_SDK_JAR);
+            FileUtils.removeFiles(localeDir, libClassDir);
+            FileUtils.removeFiles(agentConfigDir, libClassDir);
+            Debug.log("DomainXMLBase.removeAgentFiles: Deleted Agent files from" + LibDir);
+            return true;
+        } catch (Exception ex) {
+            Debug.log("ERROR while deleting agent files from GlassFish", ex);
+            return false;
+        }
     }
 
     private String deleteAgentClasspath(String classpath, 
@@ -300,13 +288,6 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
         return resultClasspath;
     }
 
-    private void removeAgentLogOptions(IStateAccess stateAccess) throws Exception{
-         String LOG_FILE = (String)stateAccess.get(STR_KEY_AS_INST_CONFIG_DIR) + FILE_SEP + "logging.properties";
-         FileUtils.removeLines(LOG_FILE,STR_LOG_COMPATMODE_OPTION);
-         FileUtils.removeLines(LOG_FILE,STR_LOG_CONFIG_FILE_OPTION_PREFIX);
-         Debug.log("DomainXMLBase.removeAgentLogOptions: Removed Agent log options from" + LOG_FILE);
-    }
-    
     private void removeAgentJVMOptions(XMLElement javaConfig, 
             IStateAccess stateAccess) throws Exception {
         ArrayList jvmOptions = javaConfig.getNamedChildElements(
@@ -547,8 +528,6 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
 
     public static final String STR_LOG_CONFIG_FILE_OPTION_PREFIX =
         "-Djava.util.logging.config.file=";
-    public static final String STR_LOG_CONFIG_FILENAME = 
-        "OpenSSOAgentLogConfig.properties";
     public static final String STR_LOG_COMPATMODE_OPTION = 
         "-DLOG_COMPATMODE=Off";    
     public static final String STR_SERVERS_ELEMENT = "servers";
@@ -572,8 +551,6 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants
         
     public static final String STR_SERVER_CLASSPATH_SEP = 
         "${path.separator}";
-    
-    public static final String STR_AS_GROUP = "as81Tools";
     
     public static final String STR_AGENT_JAR = "agent.jar";
     public static final String STR_FM_CLIENT_SDK_JAR = "openssoclientsdk.jar";

@@ -26,11 +26,13 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.agents.install.appserver.v81;
 
 import java.io.File;
 import java.util.Map;
-
 import com.sun.identity.install.tools.configurator.IStateAccess;
 import com.sun.identity.install.tools.configurator.ITask;
 import com.sun.identity.install.tools.configurator.InstallException;
@@ -38,6 +40,7 @@ import com.sun.identity.install.tools.util.Debug;
 import com.sun.identity.install.tools.util.LocalizedMessage;
 import com.sun.identity.install.tools.util.xml.XMLDocument;
 import com.sun.identity.install.tools.util.xml.XMLElement;
+import org.forgerock.openam.agents.install.appserver.VersionChecker;
 
 
 /** 
@@ -71,10 +74,15 @@ public class UnconfigureDomainXMLTask extends DomainXMLBase
                     XMLDocument domainXMLDoc = new XMLDocument(serverXML);
                     XMLElement instanceConfig = getInstanceConfig(domainXMLDoc, 
                         serverInstanceName); 
-                    if (instanceConfig != null) {                
-                        status = removeAgentClasspath(instanceConfig, stateAccess);
-                        status &= removeAgentRealm(domainXMLDoc, instanceConfig, 
-                            stateAccess);
+                    if (instanceConfig != null) {
+                        if (VersionChecker.isGlassFishv3(stateAccess)) {
+                            status = removeAgentFiles(stateAccess);
+                            status &= removeAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
+                        } else {
+                            status = removeAgentClasspath(instanceConfig, stateAccess);
+                            status &= removeAgentRealm(domainXMLDoc, instanceConfig,
+                                    stateAccess);
+                        }
                         domainXMLDoc.setIndentDepth(8);
                         domainXMLDoc.store();
                     }

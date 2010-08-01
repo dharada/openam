@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.install.tools.util;
 
 import java.io.BufferedInputStream;
@@ -1359,6 +1362,36 @@ public class FileUtils {
         }
 
         return reader;
+    }
+
+    /**
+     * Returns the parent folder upper level count to the current path
+     * 
+     * @param path path to a file/folder
+     * @param level how much should we go upper in the path
+     * @return path to the parent upper the given level, for example: 
+     * (/a/b/c/d, 3) will result in /a
+     */
+    public static String getParentDirPath(String path, int level) {
+        String ret = path;
+        for (int i = 0 ; i < level; i++) {
+            if (path != null) {
+                ret = getParentDirPath(path);
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * Returns the parent folder of the given file/folder
+     *
+     * @param path path to a file/folder
+     * @return path to the parent, it may be null, if there is no parent.
+     */
+    public static String getParentDirPath(String path) {
+        File dir = new File(path);
+        return dir.getParent();
     }
 
     private static final String FILE_SEP = 
