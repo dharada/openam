@@ -61,6 +61,7 @@ EXPORTED_LIBS := $(APACHE22_LIB)
 OBJS := $(APACHE22_OBJS)
 $(APACHE22_LIB): $(APACHE22_OBJS) libamapc.def
 	$(MAKE_SHARED_LIB)
+	$(INCLUDE_MANIFEST)
 	$(CP) $(APACHE22_LIB_NAME).dll $(DEST_LIB_DIR)
 
 all: $(APACHE22_LIB)
@@ -68,6 +69,7 @@ all: $(APACHE22_LIB)
 clean: clean_libs clean_objs
 	$(RM) $(APACHE22_LIB_NAME).o $(APACHE22_LIB_NAME).dll $(APACHE22_LIB_NAME).lib $(APACHE22_LIB_NAME).exp
 	$(RM) *.pdb
+	$(RM) *.manifest
 
 else
 APACHE22_LIB_NAME := libamapc22

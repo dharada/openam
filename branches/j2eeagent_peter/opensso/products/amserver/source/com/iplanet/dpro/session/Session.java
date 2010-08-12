@@ -1575,11 +1575,19 @@ public class Session extends GeneralTaskRunnable {
             }
             if (exceptionMessage.indexOf(SessionBundle.getString(
                     "appTokenInvalid")) != -1)  {
+                if (sessionDebug.messageEnabled()) {
+                    sessionDebug.message("Session."
+                        + "processSessionResponseException: AppTokenInvalid = TRUE");
+                }
+
                 if (!isServerMode()&& !(this.sessionID.getComingFromAuth())) {
-                    if (appSSOToken != null) {
-                       SSOTokenManager tokenMgr = SSOTokenManager.getInstance();
+                    if (sessionDebug.messageEnabled()) {
+                        sessionDebug.message("Session."
+                            + "processSessionResponseException: Destorying AppToken");
+                    }
+                     if (appSSOToken != null) {
                        try {
-                           tokenMgr.destroyToken(appSSOToken);
+                           AdminTokenAction.invalid(appSSOToken);
                        } catch ( Exception e ) {
                            // do nothing
                        }
@@ -1594,6 +1602,11 @@ public class Session extends GeneralTaskRunnable {
                     SSOToken newAppSSOToken = (SSOToken) 
                         AccessController.doPrivileged(
                             AdminTokenAction.getInstance());
+                   if (sessionDebug.messageEnabled()) {
+                        sessionDebug.message("Session."
+                            + "processSessionResponseException: creating New AppToken"
+                            + "TokenID = " + newAppSSOToken);
+                    }
                     createContext(newAppSSOToken);
                 }
             } else {

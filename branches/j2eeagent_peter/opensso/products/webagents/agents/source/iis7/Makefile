@@ -61,13 +61,15 @@ all: export_libs
 
 $(IIS7_LIB): $(EXPORTED_OBJS) Iis7Agent.def
 	$(MAKE_SHARED_LIB)
+	$(INCLUDE_MANIFEST)
 
 
 all: $(DEST_PACKAGE_SCRATCH_DIR) $(IIS7_LIB)
 
 clean: clean_libs clean_objs
 	$(RM) $(EXPORTED_LIBS:%$(SO_EXT)=%*) $(EXPORTED_OBJS)
-	$(RM) $(IIS7_LIB_NAME).pdb $(IIS7_LIB_NAME).lib $(IIS7_LIB_NAME).exp $(IIS7_LIB)
+	$(RM) *.pdb $(IIS7_LIB_NAME).lib $(IIS7_LIB_NAME).exp $(IIS7_LIB)
+	$(RM) $(IIS7_LIB_NAME).manifest
 
 else
 all clean:

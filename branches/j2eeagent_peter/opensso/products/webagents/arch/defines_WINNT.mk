@@ -52,6 +52,7 @@ CXX := cc
 endif
 
 LINK := link
+MT := mt
 
 EXE_EXT := .exe
 MAPFILE_EXT := .def
@@ -159,3 +160,6 @@ MAKE_SHARED_LIB = $(LINK) $(LD_MAKE_SHARED_LIB_FLAG) -nologo -SUBSYSTEM:WINDOWS 
 	$(LD_VERSION_LIB_FLAG) $(LD_FILTER_SYMS_FLAG) \
 	$(filter %.o, $^) $(PLATFORM_SHARED_OBJS) $(LDLIBS) -OUT:$@
 endif
+
+INCLUDE_MANIFEST = ${MT} -manifest $(MSCRT_DIR)/Microsoft.VC90.CRT.manifest -outputresource:$@\;2
+INCLUDE_MANIFEST_LOCAL = ${MT} -manifest $@.manifest -outputresource:$@\;2

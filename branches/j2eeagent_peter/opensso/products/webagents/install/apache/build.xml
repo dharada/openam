@@ -140,12 +140,35 @@
     </target>
 
     <target name="copy-WINNT-library">
-        <copy todir="${container.web_agent.lib.dir}">
+        <!-- don't copy to lib, copy to bin. FIXME when we have the manifests correct
+        <copy todir="${container.web_agent.lib.dir}">-->
+        <copy todir="${container.web_agent.bin.dir}">
             <fileset dir="${webagents.apache.src.dir}">
                     <include name="libamapc2.dll"/>
                     <include name="libamapc2.pdb"/>
             </fileset>
         </copy>
+        <!-- FIXME: this is only here until we fix the manifests-->
+        <copy todir="${container.web_agent.bin.dir}">
+            <fileset dir="${container.web_agent.lib.dir}">
+                    <include name="*"/>
+            </fileset>
+        </copy>
+
+        <!-- delete unncessary files/directories, since these are not used -->
+        <delete dir="${container.web_agent.lib.dir}"/>
+        <mkdir dir="${container.web_agent.lib.dir}"/>
+        <copy todir="${container.web_agent.lib.dir}">
+            <fileset dir="${container.web_agent.bin.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        <delete>
+            <fileset dir="${container.web_agent.bin.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </delete>
+        <!-- end fixme -->
     </target>
 
     <target name="copy-HP-UX-library">

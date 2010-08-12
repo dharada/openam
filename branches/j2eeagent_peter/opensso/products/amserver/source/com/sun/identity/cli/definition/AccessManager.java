@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
+
 package com.sun.identity.cli.definition;
 
 
@@ -1026,6 +1030,41 @@ public class AccessManager {
         resourceStrings={
             "add-plugin-interface-succeed=Plug-in interface, {1} was add to service, {0}."})
     private String add_plugin_interface;
+
+    @SubCommandInfo(
+        implClassName="org.forgerock.openam.cli.schema.AddPluginSchema",
+        description="Add Plug-in schema to service.",
+        webSupport="true",
+        mandatoryOptions={
+            "servicename|s|s|Name of service.",
+            "interfacename|i|s|Name of interface.",
+            "pluginname|g|s|Name of Plug-in.",
+            "i18nkey|k|s|Plug-in I18n Key.",
+            "i18nname|n|s|Plug-in I18n Name.",
+            "classname|c|s|Name of the Plugin Schema class implementation"},
+        optionAliases={},
+        macro="authentication",
+        optionalOptions={},
+        resourceStrings={
+            "add-plugin-schema-succeed=Plug-in schema, {1} was added to service, {0}.",
+            "add-plugin-schema-failed=Plug-in schema, {1} was not added to service, {0}: {2}"})
+    private String add_plugin_schema;
+
+    @SubCommandInfo(
+        implClassName="org.forgerock.openam.cli.schema.RemovePluginSchema",
+        description="Add Plug-in interface to service.",
+        webSupport="true",
+        mandatoryOptions={
+            "servicename|s|s|Name of service.",
+            "interfacename|i|s|Name of interface.",
+            "pluginname|g|s|Name of Plug-in."},
+        optionAliases={},
+        macro="authentication",
+        optionalOptions={},
+        resourceStrings={
+            "remove-plugin-schema-succeed=Plug-in schema, {1} was removed from the service, {0}.",
+            "remove-plugin-schema-failed=Plug-in schema, {1} was not removed from the service, {0}: {2}"})
+    private String remove_plugin_schema;
 
     @SubCommandInfo(
         implClassName="com.sun.identity.cli.schema.SetPluginSchemaPropertiesViewBeanURL",
@@ -2340,6 +2379,23 @@ public class AccessManager {
         }
     )
     private String remove_site_members;
+
+    @SubCommandInfo(
+        implClassName="org.forgerock.openam.cli.serverconfig.SetSiteID",
+        description="Set the ID of a site.",
+        webSupport="true",
+        mandatoryOptions={
+            "sitename|s|s|Site name, e.g. mysite",
+            "siteid|i|s|Site's ID, e.g. 10"},
+        optionAliases={},
+        optionalOptions={},
+        macro="authentication",
+        resourceStrings={
+            "set-site-id-succeeded=Site ID was modified.",
+            "set-site-id-no-exists=Site did not exist."
+        }
+    )
+    private String set_site_id;
 
     @SubCommandInfo(
         implClassName="com.sun.identity.cli.serverconfig.SetSitePrimaryURL",

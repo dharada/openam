@@ -97,6 +97,7 @@ $(EXPORTED_LIBS): $(OBJS) $(LIB_MAPFILE)
 	echo "dest inc dir :" $(DEST_INC_DIR)
 	echo "proxy dir :" $(PROXY40_INC_DIR)
 	$(MAKE_SHARED_LIB)
+	$(INCLUDE_MANIFEST)
 endif
 
 clean: clean_objs clean_libs
@@ -105,6 +106,7 @@ ifeq ($(OS_ARCH),WINNT)
 	$(RM) $(EXPORTED_LIBS:.dll=.exp) $(EXPORTED_LIBS:.dll=.lib)
 	$(RM) *.pdb
 	$(RM) *.ilk
+	$(RM) *.manifest
 endif
 
 include $(USERX_ROOT)/arch/rules.mk

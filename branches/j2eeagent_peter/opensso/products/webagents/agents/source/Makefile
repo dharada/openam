@@ -52,7 +52,7 @@ BUILD_AGENT := apache sjsws apache22 proxy40
 endif
 endif
 ifeq ($(OS_ARCH), WINNT)
-BUILD_AGENT += iis7
+BUILD_AGENT += iis6 iis7
 endif
 endif
 
@@ -70,7 +70,7 @@ endif
 
 ifeq ($(OS_ARCH), WINNT)
 ifeq ($(CYGWIN_ARCH), WOW64)
-SUBDIRS += iis7 iis6
+SUBDIRS += $(BUILD_AGENT)
 else
 SUBDIRS += $(BUILD_AGENT)
 endif

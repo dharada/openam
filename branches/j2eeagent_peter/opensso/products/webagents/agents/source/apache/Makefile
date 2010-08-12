@@ -60,6 +60,7 @@ EXPORTED_LIBS := $(APACHE25_LIB)
 OBJS := $(APACHE25_OBJS)
 $(APACHE25_LIB): $(APACHE25_OBJS) libamapc.def
 	$(MAKE_SHARED_LIB)
+	$(INCLUDE_MANIFEST)
 	$(CP) $(APACHE25_LIB_NAME).dll $(DEST_LIB_DIR)
 
 all: $(APACHE25_LIB)
@@ -67,6 +68,7 @@ all: $(APACHE25_LIB)
 clean: clean_libs clean_objs
 	$(RM) $(APACHE25_LIB_NAME).o $(APACHE25_LIB_NAME).dll $(APACHE25_LIB_NAME).lib $(APACHE25_LIB_NAME).exp
 	$(RM) *.pdb
+	$(RM) *.manifest
 
 else
 # else of WINNT condition

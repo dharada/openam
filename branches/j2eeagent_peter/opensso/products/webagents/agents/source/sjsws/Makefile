@@ -125,6 +125,9 @@ endif
 
 $(ES6_LIB): $(ES6_OBJS) $(LIB_MAPFILE)
 	$(MAKE_SHARED_LIB)
+ifeq ($(OS_ARCH), WINNT)
+	$(INCLUDE_MANIFEST)
+endif
 
 ifeq ($(OS_ARCH), Linux)
 #all: $(EXPORTED_LIBS)
@@ -137,6 +140,7 @@ clean: clean_libs clean_objs
 ifeq ($(OS_ARCH),WINNT)
 	$(RM) $(EXPORTED_LIBS:.dll=.exp) $(EXPORTED_LIBS:.dll=.lib)
 	$(RM) *.pdb
+	$(RM) *.manifest
 endif
 
 include $(USERX_ROOT)/arch/rules.mk
