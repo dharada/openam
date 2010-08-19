@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -52,7 +53,7 @@ public class ServerClasspathBase implements IConstants, IConfigKeys {
         Debug.log("ServerClasspathBase.updateJettyStartupJarFile(): " +
                 "Update jar file");
         boolean status = false;
-        ArrayList<String> agentClasspathsDirs = getAgentClasspathDirectories(
+        List<String> agentClasspathsDirs = getAgentClasspathDirectories(
                 stateAccess);
         String homeDir = (String) stateAccess.get(STR_KEY_JETTY_HOME_DIR);
         Debug.log("ServerClasspathBase.updateJettyStartupJarFile(): " + 
