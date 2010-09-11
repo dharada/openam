@@ -70,15 +70,9 @@ public class ConfigureDomainXMLTask extends DomainXMLBase implements ITask {
                     XMLElement instanceConfig = getInstanceConfig(
                             domainXMLDoc, serverInstanceName);
                     if (instanceConfig != null) {
-                        if (VersionChecker.isGlassFishv3(stateAccess)) {
-                            status = copyAgentFiles(stateAccess);
-                            status &= addAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
-                        } else {
-                            status = addAgentJavaConfig(domainXMLDoc, instanceConfig,
-                                    stateAccess);
-                            status &= addAgentRealm(domainXMLDoc, instanceConfig,
-                                    stateAccess);
-                        }
+                        status &= addAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
+                        status = addAgentJavaConfig(domainXMLDoc, instanceConfig,
+                                stateAccess);
                         domainXMLDoc.setIndentDepth(2);
                         domainXMLDoc.store();
                     }
@@ -136,13 +130,9 @@ public class ConfigureDomainXMLTask extends DomainXMLBase implements ITask {
                     XMLElement instanceConfig = getInstanceConfig(domainXMLDoc,
                             serverInstanceName);
                     if (instanceConfig != null) {
-                        if (VersionChecker.isGlassFishv3(stateAccess)) {
-                            status = removeAgentFiles(stateAccess);
-                            status &= removeAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
-                        } else {
+                        status &= removeAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
+                        if (!VersionChecker.isGlassFishv3(stateAccess)) {
                             status = removeAgentClasspath(instanceConfig, stateAccess);
-                            status &= removeAgentRealm(domainXMLDoc, instanceConfig,
-                                    stateAccess);
                         }
                         domainXMLDoc.setIndentDepth(8);
                         domainXMLDoc.store();
