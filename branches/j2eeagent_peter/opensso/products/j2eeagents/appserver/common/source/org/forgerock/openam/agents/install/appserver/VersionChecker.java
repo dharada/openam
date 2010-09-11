@@ -42,6 +42,14 @@ public class VersionChecker {
 
     private static String versionString = null;
 
+    /**
+     * Checks the version of the GlassFish server
+     *
+     * @param stateAccess for agent configuration
+     * @return returns <code>true</code> if the GlassFish Server version is v3
+     * or greater, and returns <code>false</code> if GlassFish Server version is
+     * v2. If the version can't be identified, then the server is v2 by default.
+     */
     public static boolean isGlassFishv3(IStateAccess stateAccess) {
         if (versionString == null) {
             initVersionString(stateAccess);
@@ -68,12 +76,10 @@ public class VersionChecker {
     }
 
     /**
-     * Checks the version of the GlassFish server
+     * Initializes the versionstring value. Basically it runs an
+     * 'asadmin version' command and stores the versionstring.
      *
-     * @param stateAccess for agent configuration
-     * @return returns <code>true</code> if the GlassFish Server version is v3
-     * or greater, and returns <code>false</code> if GlassFish Server version is
-     * v2. If the version can't be identified, then the server is v2 by default.
+     * @param stateAccess for accessing agent configuration
      */
     private static void initVersionString(IStateAccess stateAccess) {
         String configDir = (String) stateAccess.get(IConfigKeys.STR_KEY_AS_INST_CONFIG_DIR);
