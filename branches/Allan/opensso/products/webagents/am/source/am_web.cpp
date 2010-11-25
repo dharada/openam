@@ -430,8 +430,12 @@ static am_bool_t is_server_alive(const Utils::url_info_t *info_ptr,
 
     return status;
 }
-
-static Utils::url_info_t *find_active_login_server(void* agent_config) 
+/*
+ * ARF - Added in a new parameter,  the URL.  This is after port and host replacement
+ * and can be used as a lookup into the Login URLs.  this is to support
+ * different Login URLs for different virtual hosts,  or different incoming URLs
+ */
+static Utils::url_info_t *find_active_login_server(void* agent_config,URL& url)
 {
     AgentConfigurationRefCntPtr* agentConfigPtr =
         (AgentConfigurationRefCntPtr*) agent_config;
@@ -440,7 +444,9 @@ static Utils::url_info_t *find_active_login_server(void* agent_config)
     Utils::url_info_t *result = URL_INFO_PTR_NULL;
     unsigned int i = 0;
     Utils::url_info_list_t *url_list = NULL;
+    PRBool login_host_filter = (*agentConfigPtr)->login_host_filter;
 
+    
     if(initialized == AM_TRUE) {
 	PR_Lock((*agentConfigPtr)->lock);
 
@@ -449,15 +455,22 @@ static Utils::url_info_t *find_active_login_server(void* agent_config)
 	} else {
 	    url_list = &(*agentConfigPtr)->login_url_list;
 	}
+        std::string req_host = url->getHost();
 
 	if ((*agentConfigPtr)->ignore_server_check == AM_FALSE) {
 	    for (i = 0; i < url_list->size; ++i) {
-		    am_web_log_max_debug("find_active_login_server(): "
+                if (login_host_filter && url_list->list[i].filter) {
+ 		   am_web_log_max_debug("find_active_login_server(): using Host Filtering"
+		    "Trying server: %s for %s", req_host,url_list->list[i].filter);
+                   if (strncmp(req_host , url_list->list[i].filter) != 0)
+                        continue;
+                }
+		am_web_log_max_debug("find_active_login_server(): "
 		    "Trying server: %s", url_list->list[i].url);
-		    if (is_server_alive(&url_list->list[i], agent_config)) {
+		if (is_server_alive(&url_list->list[i], agent_config)) {
 			    result = &url_list->list[i];
 			    break;
-		    }
+                }
 	    }
 	} else {
 	    result = &url_list->list[i];
@@ -2664,7 +2677,7 @@ am_web_get_url_to_redirect(am_status_t status,
                     Utils::url_info_t *url_info_ptr;
                     std::string encoded_url;
                     std::string retVal;
-                    url_info_ptr = find_active_login_server(agent_config);
+                    url_info_ptr = find_active_login_server(agent_config,gotoURL);
                     if (NULL == url_info_ptr) {
                         am_web_log_warning("%s: unable to find active Access "
                                      "Manager Auth server.", thisfunc);

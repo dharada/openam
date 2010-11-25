@@ -406,7 +406,8 @@ REQUEST_NOTIFICATION_STATUS ProcessRequest(IHttpContext* pHttpContext,
                 am_web_log_error("%s: Agent intialization failed.", thisfunc);
                 do_deny(pHttpContext);
                 retStatus = RQ_NOTIFICATION_FINISH_REQUEST;
-                return retStatus;
+                LeaveCriticalSection(&initLock);   // Lets reset this before returning
+               return retStatus;
             }  else {
                 am_web_log_debug("ProcessRequest: Agent intialized");
             }

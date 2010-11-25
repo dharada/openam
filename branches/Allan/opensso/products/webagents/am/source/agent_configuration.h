@@ -169,7 +169,8 @@ public:
     PRBool doRemoteLog; //utility member to determine whether to remote log or not
     const char * clientIPHeader;
     const char * clientHostnameHeader;
-    PRBool encodeCookieSpecialChars; 
+    PRBool encodeCookieSpecialChars;
+    PRBool login_host_filter;  // Do we have Virtual host Login URLS
     
     AgentConfiguration();
     AgentConfiguration(am_properties_t properties);
@@ -262,6 +263,7 @@ public:
         this->clientIPHeader = NULL;
         this->clientHostnameHeader = NULL;
         this->encodeCookieSpecialChars = AM_FALSE;
+        this->login_host_filter = AM_FALSE;
 
     }
     
@@ -307,6 +309,7 @@ public:
         this->agent_server_url.port = 0;
         this->agent_server_url.has_parameters = AM_FALSE;
         this->agent_server_url.has_patterns = AM_FALSE;
+        this->agent_server_url.filter = NULL;
     }
     
     void setProperties(am_properties_t props) {

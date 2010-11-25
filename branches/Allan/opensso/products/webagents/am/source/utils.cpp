@@ -1090,6 +1090,7 @@ am_status_t Utils::parse_url(const char *url_str,
     }
     
     if (AM_SUCCESS == status) {
+        entry_ptr->filter = NULL;
         entry_ptr->url = (char *)malloc(url_len + 1);
         entry_ptr->host = (char *)malloc(url_len - host_offset + 1);
         entry_ptr->protocol = const_cast<char *>(protocol);
@@ -1191,7 +1192,7 @@ am_status_t Utils::parse_url_list(const char *url_list_str,
                     size_t len = 0;
                     
                     while (temp_ptr[len] != '\0' && temp_ptr[len] != ' ' &&
-                            temp_ptr[len] != sep) {
+                            temp_ptr[len] != sep && temp_ptr[len] != '|') {    // Allow for Host Filter
                         len += 1;
                     }
                     
@@ -1199,8 +1200,27 @@ am_status_t Utils::parse_url_list(const char *url_list_str,
                             &list_ptr->list[list_ptr->size],
                             validateURLs);
                     
-                    if (AM_SUCCESS == status) {
+
+                    if (AM_SUCCESS == status) {  // Now parse the Filter
                         temp_ptr += len;
+                        if (temp_ptr[len] == '|') {
+                            temp_ptr += 1;
+                            while (temp_ptr[len] != '\0' && temp_ptr[len] != ' ' &&
+                                temp_ptr[len] != sep ) {
+                            len += 1;
+                            }
+                            char *filter = (char *)malloc(len + 1);
+                            if (filter != NULL) {
+                                memcpy(filter, temp_ptr, len);
+                                filter[len] = '\0';
+                                list_ptr->list[list_ptr->size]->filter = filter;
+                            } else {
+                                 status = AM_NO_MEMORY;
+                                 // Do I need to free the allocated list?
+                                 // I dont think so
+                            }
+                            temp_ptr += len;
+                        }
                         list_ptr->size += 1;
                     } else {
                         break;

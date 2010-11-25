@@ -404,7 +404,18 @@ am_status_t AgentConfiguration::populateAgentProperties()
                     thisfunc, AM_WEB_URI_PREFIX, agent_prefix_url);
         }
     }
-    
+
+
+    /* Get the login Host Filter.*/
+    if (AM_SUCCESS == status) {
+
+        parameter = AM_WEB_LOGIN_URL_HOST_FILTER_PROPERTY;
+        status = am_properties_get_boolean_with_default(this->properties,
+                parameter,
+                AM_FALSE,
+                &this->login_host_filter);
+    }
+
     /* Get the login URL.*/
     if (AM_SUCCESS == status) {
         const char *property_str;

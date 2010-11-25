@@ -103,6 +103,8 @@ typedef struct url_info {
     unsigned short port;
     am_bool_t has_parameters;
     am_bool_t has_patterns;
+
+    char *filter;       // Filter to be applied to URL for matching
 } url_info_t;
 
 typedef struct url_info_list {
