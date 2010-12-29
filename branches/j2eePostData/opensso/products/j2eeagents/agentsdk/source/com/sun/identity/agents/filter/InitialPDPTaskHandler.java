@@ -40,6 +40,8 @@ import com.sun.identity.agents.common.IPDPCacheEntry;
 import com.sun.identity.agents.util.IUtilConstants;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
@@ -101,7 +103,7 @@ implements IInitialPDPTaskHandler, iPDPTaskConstants {
         //it must be POST request
         if (ctx.HTTP_METHOD_POST.equalsIgnoreCase(request.getMethod())) {
             //get all posted data
-            Map parameterMap = request.getParameterMap();
+            Map parameterMap = getParameterMap(request);
             if (isLogMessageEnabled()) {
                 logMessage("InitialPDPTaskHandler: POSTed data: " +
                         parameterMap);
@@ -123,16 +125,16 @@ implements IInitialPDPTaskHandler, iPDPTaskConstants {
                         sunpostpreserve);
             }
 
-            StringBuilder gotoURL = new StringBuilder();
-            gotoURL.append(ctx.getApplicationContextURL());
-            gotoURL.append('/');
-            gotoURL.append(DUMMY_POST);
-            gotoURL.append('/');
-            gotoURL.append(sunpostpreserve);
+            StringBuilder redirectURL = new StringBuilder();
+            redirectURL.append(ctx.getApplicationContextURL());
+            redirectURL.append('/');
+            redirectURL.append(DUMMY_POST);
+            redirectURL.append('/');
+            redirectURL.append(sunpostpreserve);
             if (_pdpStickySessionMode.equalsIgnoreCase(
                     STICKY_SESSION_URL_MODE)) {
-                gotoURL.append('?');
-                gotoURL.append(_pdpStickySessionModeValue);
+                redirectURL.append('?');
+                redirectURL.append(_pdpStickySessionModeValue);
             } else {
 
                 Cookie cookie = new Cookie(_pdpStickySessionLBKeyName,
@@ -156,14 +158,22 @@ implements IInitialPDPTaskHandler, iPDPTaskConstants {
                         ", entry: " + pdpCacheEntry);
             }
 
-
-            result = ctx.getAuthRedirectResult(null,
-                    gotoURL.toString());
-
+            result = ctx.getCustomRedirectResult(redirectURL.toString());
 
         }
 
         return result;
+    }
+
+    private Map getParameterMap(HttpServletRequest request) {
+        HashMap parameters = new HashMap();
+        for (Enumeration<String> e = request.getParameterNames();
+            e.hasMoreElements(); ) {
+            String name = e.nextElement();
+            String[] values = request.getParameterValues(name);
+            parameters.put(name, values);
+        }
+        return parameters;
     }
 
     private static synchronized int getNextRequestNumber() {
