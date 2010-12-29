@@ -46,7 +46,7 @@ public class PDPCache implements IPDPCache, IFilterConfigurationConstants {
     }
 
     private void expireEntries() {
-        if (_expireThread == null) {
+        if (_expireThread == null || !_expireThread.isAlive()) {
             _expireThread = new Thread(new ExpireThread(), "PDPCache Cleaner");
             _expireThread.start();
         }
@@ -76,7 +76,6 @@ public class PDPCache implements IPDPCache, IFilterConfigurationConstants {
                     }
                 }
             }
-            _expireThread = null;
         }
     }
 }
