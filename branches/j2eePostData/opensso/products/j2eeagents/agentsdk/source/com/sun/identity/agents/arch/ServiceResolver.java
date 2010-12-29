@@ -37,6 +37,8 @@ import com.sun.identity.agents.common.HttpServletRequestHelper;
 import com.sun.identity.agents.common.LibertyAuthnResponseHelper;
 import com.sun.identity.agents.common.NotenforcedIPHelper;
 import com.sun.identity.agents.common.NotenforcedURIHelper;
+import com.sun.identity.agents.common.PDPCache;
+import com.sun.identity.agents.common.PDPCacheEntry;
 import com.sun.identity.agents.common.PatternMatcher;
 import com.sun.identity.agents.common.URLPatternMatcher;
 import com.sun.identity.agents.common.ProfileAttributeHelper;
@@ -55,6 +57,7 @@ import com.sun.identity.agents.filter.CDSSOTaskHandler;
 import com.sun.identity.agents.filter.CDSSOURLPolicyTaskHandler;
 import com.sun.identity.agents.filter.ErrorPageTaskHandler;
 import com.sun.identity.agents.filter.FQDNTaskHandler;
+import com.sun.identity.agents.filter.InitialPDPTaskHandler;
 import com.sun.identity.agents.filter.FormLoginTaskHandler;
 import com.sun.identity.agents.filter.InboundLegacyUserAgentTaskHandler;
 import com.sun.identity.agents.filter.LocalAuthTaskHandler;
@@ -64,6 +67,7 @@ import com.sun.identity.agents.filter.NotenforcedListTaskHandler;
 import com.sun.identity.agents.filter.NotificationTaskHandler;
 import com.sun.identity.agents.filter.OutboundLegacyUserAgentTaskHandler;
 import com.sun.identity.agents.filter.PortCheckTaskHandler;
+import com.sun.identity.agents.filter.PostSSOPDPTaskHandler;
 import com.sun.identity.agents.filter.ProfileAttributeTaskHandler;
 import com.sun.identity.agents.filter.RedirectCheckResultHandler;
 import com.sun.identity.agents.filter.ResponseAttributeTaskHandler;
@@ -196,6 +200,14 @@ public abstract class ServiceResolver {
         return result;
     }
 
+    public String getPDPCacheImpl() {
+        return PDPCache.class.getName();
+    }
+
+    public String getPDPCacheEntryImpl() {
+        return PDPCacheEntry.class.getName();
+    }
+
     public abstract String getGlobalJ2EEAuthHandlerImpl();
     
     public abstract String getGlobalJ2EELogoutHandlerImpl();
@@ -238,6 +250,14 @@ public abstract class ServiceResolver {
     
     public String getFQDNTaskHandlerImpl() {
         return FQDNTaskHandler.class.getName();
+    }
+
+    public String getInitialPDPTaskHandlerImpl() {
+        return InitialPDPTaskHandler.class.getName();
+    }
+
+    public String getPostSSOPDPTaskHandlerImpl() {
+        return PostSSOPDPTaskHandler.class.getName();
     }
 
     public String getInboundLegacyUserAgentTaskHandlerImpl() {
@@ -330,6 +350,7 @@ public abstract class ServiceResolver {
     public ArrayList getPostSSOCommonInboundTaskHandlerImpls(AmFilterMode mode,
             boolean cdssoEnabled) {
         ArrayList handlers = new ArrayList();
+        handlers.add(getPostSSOPDPTaskHandlerImpl());
         handlers.add(getApplicationLogoutHandlerImpl());
         handlers.add(getProfileAttributeTaskHandlerImpl());
         handlers.add(getSessionAttributeTaskHandlerImpl());

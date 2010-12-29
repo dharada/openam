@@ -538,6 +538,12 @@ public interface IFilterConfigurationConstants {
 
         "ignore.path.info";
 
+    public static final String CONFIG_POSTDATA_PRESERVE_ENABLE =
+            "postdata.preserve.enable";
+    public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_MODE =
+            "postdata.preserve.stickysession.mode";
+    public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_VALUE =
+            "postdata.preserve.stickysession.value";
 
 
 
@@ -684,7 +690,12 @@ public interface IFilterConfigurationConstants {
     public static final boolean DEFAULT_WEBSERVICE_PROCESS_GET = true;
 
 
-    public static final boolean DEFAULT_IGNORE_PATH_INFO = false; 
+    public static final boolean DEFAULT_IGNORE_PATH_INFO = false;
+
+    public static final boolean DEFAULT_POSTDATA_PRESERVE_ENABLE = false;
+
+    public static final String DEFAULT_POSTDATA_PRESERVE_STICKYSESSION_MODE =
+            "URL";
 
 
     // Other supporting constants
