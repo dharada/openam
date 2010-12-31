@@ -25,6 +25,9 @@
  * $Id: AmFilterManager.java,v 1.2 2008/06/25 05:51:43 qcheng Exp $
  *
  */
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 
 package com.sun.identity.agents.filter;
 

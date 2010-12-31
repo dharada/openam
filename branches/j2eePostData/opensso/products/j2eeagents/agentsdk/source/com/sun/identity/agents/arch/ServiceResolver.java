@@ -25,7 +25,9 @@
  * $Id: ServiceResolver.java,v 1.7 2009/05/26 22:47:57 leiming Exp $
  *
  */
-
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 package com.sun.identity.agents.arch;
 
 import java.util.ArrayList;

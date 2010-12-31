@@ -47,7 +47,9 @@
 
 
  */
-
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 
 
 package com.sun.identity.agents.filter;
@@ -540,8 +542,10 @@ public interface IFilterConfigurationConstants {
 
     public static final String CONFIG_POSTDATA_PRESERVE_ENABLE =
             "postdata.preserve.enable";
+    public static final String CONFIG_POSTDATA_PRESERVE_CACHE_CLEANUP_INTERVAL =
+            "postdata.preserve.cache.cleanup.interval";
     public static final String CONFIG_POSTDATA_PRESERVE_TTL =
-            "postdata.preserve.ttl";
+            "postdata.preserve.cache.entry.ttl";
     public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_MODE =
             "postdata.preserve.stickysession.mode";
     public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_VALUE =
@@ -695,6 +699,9 @@ public interface IFilterConfigurationConstants {
     public static final boolean DEFAULT_IGNORE_PATH_INFO = false;
 
     public static final boolean DEFAULT_POSTDATA_PRESERVE_ENABLE = false;
+    // 5 minutes
+    public static final long DEFAULT_POSTDATA_PRESERVE_CACHE_CLEANUP_INTERVAL =
+            5 * 60 * 1000;
     //postdata preservation default to 5 minutes
     public static final long DEFAULT_POSTDATA_PRESERVE_TTL = 5 * 1000 * 60;
 

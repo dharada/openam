@@ -25,6 +25,9 @@
  * $Id: SSOTaskHandler.java,v 1.4 2008/06/25 05:51:48 qcheng Exp $
  *
  */
+ /*
+ * Portions Copyrighted [2010] [ForgeRock AS]
+ */
 
 package com.sun.identity.agents.filter;
 
