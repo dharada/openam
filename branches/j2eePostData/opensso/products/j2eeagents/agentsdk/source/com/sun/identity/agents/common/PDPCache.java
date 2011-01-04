@@ -26,37 +26,33 @@
 package com.sun.identity.agents.common;
 
 import com.sun.identity.agents.arch.Manager;
-import com.sun.identity.agents.filter.AmFilterModule;
 import com.sun.identity.agents.filter.IFilterConfigurationConstants;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import com.sun.identity.common.PeriodicCleanUpMap;
+import com.sun.identity.common.SystemTimerPool;
+import com.sun.identity.common.TimerPool;
+import java.util.Date;
 /**
  *
  * @author mad
  */
 public class PDPCache implements IPDPCache, IFilterConfigurationConstants {
     public PDPCache(Manager manager) {
-        _cache = Collections.synchronizedMap(new HashMap<String, IPDPCacheEntry>());
-        _ttl = manager.getConfigurationLong(CONFIG_POSTDATA_PRESERVE_TTL,
-                                            DEFAULT_POSTDATA_PRESERVE_TTL);
-        _cleanUpInterval = manager.getConfigurationLong(
-                            CONFIG_POSTDATA_PRESERVE_CACHE_CLEANUP_INTERVAL,
-                            DEFAULT_POSTDATA_PRESERVE_CACHE_CLEANUP_INTERVAL);
-        _lastCleaningUp = System.currentTimeMillis();
+        if (_cache == null) {
+            _ttl = manager.getConfigurationLong(CONFIG_POSTDATA_PRESERVE_TTL,
+                                                DEFAULT_POSTDATA_PRESERVE_TTL);
+            _cache = new PeriodicCleanUpMap(_ttl, _ttl);
+            doSchedule();
+        }
     }
 
     public void initialize() {
    }
 
     public boolean addEntry(String key, IPDPCacheEntry entry) {
-        expireEntries();
         return _cache.put(key, entry) != null;
     }
 
     public boolean removeEntry(String key) {
-        expireEntries();
         if (_cache.containsKey(key)) {
            _cache.remove(key);
            return true;
@@ -65,50 +61,19 @@ public class PDPCache implements IPDPCache, IFilterConfigurationConstants {
     }
 
     public IPDPCacheEntry getEntry(String key) {
-        IPDPCacheEntry entry = _cache.get(key);
-        expireEntries();
+        IPDPCacheEntry entry = (IPDPCacheEntry)_cache.get(key);
         return entry;
     }
 
-    public void expireEntries() {
-        long now = System.currentTimeMillis();
-        if (_lastCleaningUp + _cleanUpInterval < now) {
-            if (_expireThread == null || !_expireThread.isAlive()) {
-                _expireThread = new Thread(new ExpireThread(), "PDPCache Cleaner");
-                _expireThread.start();
-                _lastCleaningUp = now;
-            }
-        }
+    /* Schedule the periodic containers to SystemTimerPool. */
+    private static void doSchedule() {
+        TimerPool pool = SystemTimerPool.getTimerPool();
+        Date nextRun = new Date(((System.currentTimeMillis() +
+            _ttl) / 1000) * 1000);
+        pool.schedule(_cache, nextRun);
     }
 
-    private Map<String, IPDPCacheEntry> _cache;
-    private static Thread _expireThread;
-    private static long _lastCleaningUp;
-    private static long _cleanUpInterval;
+
+    private static PeriodicCleanUpMap _cache;
     private static long _ttl;
-
-    private class ExpireThread implements Runnable {
-        public void run() {
-            long currentTime = System.currentTimeMillis();
-            if (AmFilterModule.getModule().isLogMessageEnabled()) {
-                AmFilterModule.getModule().logMessage("PDPCache$ExpireThread: " +
-                        "Thread started at: " + currentTime);
-            }
-            synchronized(_cache) {
-                for (Iterator<String> i = _cache.keySet().iterator();
-                        i.hasNext(); ) {
-                    String key = i.next();
-                    IPDPCacheEntry entry = _cache.get(key);
-                    if (entry.getCreationTime() + _ttl < currentTime) {
-                        i.remove();
-                        if (AmFilterModule.getModule().isLogMessageEnabled()) {
-                            AmFilterModule.getModule().logMessage("PDPCache$ExpireThread: " +
-                                    "Entry expired: " + key +
-                                    ", creation time: " + entry.getCreationTime());
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

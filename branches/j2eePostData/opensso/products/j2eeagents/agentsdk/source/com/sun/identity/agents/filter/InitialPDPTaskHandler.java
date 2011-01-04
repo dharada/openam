@@ -189,10 +189,9 @@ implements IInitialPDPTaskHandler, IPDPTaskConstants {
         // a hardcoded part
         urlPart.append(SUN_POST_PRESERVE);
         //date with time
-        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
         Date date = new Date();
         date.setTime(creationTime);
-        urlPart.append(sdf.format(date));
+        urlPart.append(_sdf.format(date));
         //LB key of the agent
         urlPart.append('.');
         urlPart.append(  lbAgentKey);
@@ -290,4 +289,5 @@ implements IInitialPDPTaskHandler, IPDPTaskConstants {
     private String _pdpStickySessionLBKeyValue;
 
     private static int _requestNumber = 1;
+    private static SimpleDateFormat _sdf = new SimpleDateFormat(DATE_FORMAT);
 }

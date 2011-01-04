@@ -27,18 +27,11 @@ package com.sun.identity.agents.filter;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.sun.identity.agents.arch.AgentException;
 import com.sun.identity.agents.arch.Manager;
-import com.sun.identity.agents.arch.ServiceFactory;
 import com.sun.identity.agents.common.IPDPCache;
 import com.sun.identity.agents.common.IPDPCacheEntry;
-import com.sun.identity.agents.util.IUtilConstants;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -49,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class PostSSOPDPTaskHandler extends AmFilterTaskHandler
 implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
+
 
     /**
      * The constructor that takes a <code>Manager</code> instance in order
@@ -87,7 +81,6 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
         throws AgentException
     {
         AmFilterResult result = null;
-        HttpServletRequest request = ctx.getHttpServletRequest();
         HttpServletResponse response = ctx.getHttpServletResponse();
 
         //check URL if this is request to dummypost
@@ -179,38 +172,39 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
         }
     }
 
-    private String createInputTag(String name, String[] values) {
+    private StringBuilder createInputTag(String name, String[] values) {
         StringBuilder result = new StringBuilder();
         if (values != null && values.length > 0) {
             for (int i = 0; i < values.length; i++) {
-                result.append("<input type=\"hidden\" ");
-                result.append("name=\"").append(name).append("\" ");
-                result.append("value=\"").append(values[i]).append("\"/>");
+                result.append(String.format(HTML_FORM_INPUT_FIELD,
+                                    name, values[i]));
             }
         }
-        return result.toString();
+        return result;
     }
 
     private String createForm(IPDPCacheEntry entry) {
+
         StringBuilder result = new StringBuilder();
-        result.append("<html><body>");
-        result.append("<form name=\"pdpForm\" action=\"");
-        result.append(entry.getOriginalURL());
-        result.append("\" method=\"POST\">");
+        result.append(String.format(HTML_PAGE_FORM_HEAD,
+                             entry.getOriginalURL()));
         Map parameters = entry.getParameterMap();
         for (Iterator i = parameters.keySet().iterator(); i.hasNext(); ) {
             String keyName = (String)i.next();
             String[] keyValues = (String[])parameters.get(keyName);
             result.append(createInputTag(keyName, keyValues));
         }
-        result.append("</form>");
-        result.append("<script type=\"text/javascript\">");
-        result.append("document.pdpForm.submit()");
-        result.append("</script>");
-        result.append("language=\"javascript\">");
-        result.append("</body></html>");
+        result.append(HTML_PAGE_FORM_TAIL);
 
         return result.toString();
     }
     private boolean _isPDPCheckEnabled;
+
+    private static final String HTML_PAGE_FORM_HEAD="<html><body>" +
+        "<form name=\"pdpForm\" action=\"%s\" method=\"POST\">";
+    private static final String HTML_FORM_INPUT_FIELD="<input type=\"hidden\"" +
+         " name=\"%s\" value=\"%s\"/>";
+    private static final String HTML_PAGE_FORM_TAIL="</form>" +
+        "<script type=\"text/javascript\" language=\"javascript\">" +
+        "document.pdpForm.submit()</script></body></html>";
 }
