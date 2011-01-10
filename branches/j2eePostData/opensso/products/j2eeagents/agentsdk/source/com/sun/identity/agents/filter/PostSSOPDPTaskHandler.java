@@ -134,13 +134,14 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
                     pdpCache.removeEntry(sunpostpreserve);
                 } else {
                     //get redirection URI for requested application context
-                    String baseURL = ctx.getBaseURL();
-                    String appCtx = applicationContextURL.substring(
-                                            baseURL.length());
-                    if (appCtx.length() > 1) {
-                        appCtx = appCtx.substring(1);
+                    String applicationName = getApplicationName(
+                                                ctx.getHttpServletRequest());
+                    if (isLogMessageEnabled()) {
+                        logMessage("PostSSOPDPTaskHandler: application name: " +
+                                   applicationName);
                     }
-                    String uri = (String)_applicationDefaultURLs.get(appCtx);
+                    String uri = (String)_applicationDefaultURLs.get(
+                                                            applicationName);
                     if (uri != null && uri.trim().length() != 0) {
                         if (isLogMessageEnabled()) {
                             logMessage("PostSSOPDPTaskHandler: no PDP entry, " +
@@ -152,7 +153,7 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
                         if (isLogMessageEnabled()) {
                             logMessage("PostSSOPDPTaskHandler: no default " +
                                        "redirection URL for application: " +
-                                       appCtx + " - forbidding access");
+                                       applicationName + " - forbidding access");
                         }
                         result = ctx.getBlockAccessResult();
                     }
