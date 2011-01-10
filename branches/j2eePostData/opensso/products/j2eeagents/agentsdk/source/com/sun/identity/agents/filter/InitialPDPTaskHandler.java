@@ -266,14 +266,7 @@ implements IInitialPDPTaskHandler, IPDPTaskConstants {
                     _pdpStickySessionMode);
         }
         _pdpStickySessionModeValue = getConfiguration(
-                CONFIG_POSTDATA_PRESERVE_STICKYSESSION_VALUE);
-        if (_pdpStickySessionModeValue == null ||
-            _pdpStickySessionModeValue.trim().length() == 0) {
-            logError("InitialPDPTaskHandler: missing PDP stiky session mode value: " +
-                     _pdpStickySessionMode);
-            throw new AgentException("Missing PDP sticky session mode");
-        }
-
+                CONFIG_POSTDATA_PRESERVE_STICKYSESSION_VALUE, "");
         if (isLogMessageEnabled()) {
             logMessage("InitialPDPTaskHandler: sticky session mode value: " +
                     _pdpStickySessionModeValue);

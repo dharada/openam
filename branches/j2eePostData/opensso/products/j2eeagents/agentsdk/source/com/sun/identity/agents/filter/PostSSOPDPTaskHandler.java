@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 ForgeRock AS. All Rights Reserved
+ * Copyright (c) 2010-2011 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -31,13 +31,14 @@ import com.sun.identity.agents.arch.AgentException;
 import com.sun.identity.agents.arch.Manager;
 import com.sun.identity.agents.common.IPDPCache;
 import com.sun.identity.agents.common.IPDPCacheEntry;
+import com.sun.identity.shared.encode.URLEncDec;
 import java.util.Iterator;
 import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
- * This task handler provides the necessary functionality to process incoming
- * requests for FQDN compliance.
+ * This task handler provides the necessary functionality to process POST data
+ * preserved during initial request
  * </p>
  */
 public class PostSSOPDPTaskHandler extends AmFilterTaskHandler
@@ -62,6 +63,7 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
     throws AgentException {
         super.initialize(context, mode);
         initPDPEnabledFlag();
+        initApplicationDefaultURLs();
     }
 
     /**
@@ -131,8 +133,29 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
                     result = ctx.getServeDataResult(createForm(pdpEntry));
                     pdpCache.removeEntry(sunpostpreserve);
                 } else {
-                    //forbid access if PDP doesn't exist
-                    result = ctx.getBlockAccessResult();
+                    //get redirection URI for requested application context
+                    String baseURL = ctx.getBaseURL();
+                    String appCtx = applicationContextURL.substring(
+                                            baseURL.length());
+                    if (appCtx.length() > 1) {
+                        appCtx = appCtx.substring(1);
+                    }
+                    String uri = (String)_applicationDefaultURLs.get(appCtx);
+                    if (uri != null && uri.trim().length() != 0) {
+                        if (isLogMessageEnabled()) {
+                            logMessage("PostSSOPDPTaskHandler: no PDP entry, " +
+                                        "redirecting to: " + uri);
+                        }
+                        result = ctx.getCustomRedirectResult(uri);
+                    } else {
+                        //forbid access
+                        if (isLogMessageEnabled()) {
+                            logMessage("PostSSOPDPTaskHandler: no default " +
+                                       "redirection URL for application: " +
+                                       appCtx + " - forbidding access");
+                        }
+                        result = ctx.getBlockAccessResult();
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -172,6 +195,15 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
         }
     }
 
+    private void initApplicationDefaultURLs() {
+        _applicationDefaultURLs = getConfigurationMap(
+                                    CONFIG_POSTDATA_PRESERVE_NOENTRY_URL);
+        if (isLogMessageEnabled()) {
+            logMessage("PostSSOPDPTaskHandler: cache noentry URLs: " +
+                    _applicationDefaultURLs);
+        }
+    }
+
     private StringBuilder createInputTag(String name, String[] values) {
         StringBuilder result = new StringBuilder();
         if (values != null && values.length > 0) {
@@ -200,11 +232,13 @@ implements IPostSSOPDPTaskHandler, IPDPTaskConstants {
     }
     private boolean _isPDPCheckEnabled;
 
+    private static Map _applicationDefaultURLs;
     private static final String HTML_PAGE_FORM_HEAD="<html><body>" +
         "<form name=\"pdpForm\" action=\"%s\" method=\"POST\">";
     private static final String HTML_FORM_INPUT_FIELD="<input type=\"hidden\"" +
          " name=\"%s\" value=\"%s\"/>";
     private static final String HTML_PAGE_FORM_TAIL="</form>" +
         "<script type=\"text/javascript\" language=\"javascript\">" +
-        "document.pdpForm.submit()</script></body></html>";
+            "document.pdpForm.submit();" +
+        "</script></body></html>";
 }

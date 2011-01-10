@@ -48,7 +48,7 @@
 
  */
  /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 
@@ -544,6 +544,8 @@ public interface IFilterConfigurationConstants {
             "postdata.preserve.enable";
     public static final String CONFIG_POSTDATA_PRESERVE_TTL =
             "postdata.preserve.cache.entry.ttl";
+    public static final String CONFIG_POSTDATA_PRESERVE_NOENTRY_URL =
+            "postdata.preserve.cache.noentry.url";
     public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_MODE =
             "postdata.preserve.stickysession.mode";
     public static final String CONFIG_POSTDATA_PRESERVE_STICKYSESSION_VALUE =
