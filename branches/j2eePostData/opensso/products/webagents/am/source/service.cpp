@@ -70,6 +70,47 @@ namespace {
 extern smi::SSOTokenService *get_sso_token_service();
 extern AgentProfileService* agentProfileService;
 
+std::string normalize_Response_Attr(std::string value)
+{
+    std::map<std::string,int> values;
+
+    std::string::iterator str_it = value.begin();
+    std::map<std::string,int>::iterator map_it;
+    std::string result;
+    int str_count=0;
+
+    while(1)
+    {
+        std::string::iterator start = str_it;
+        std::string::iterator end;
+
+        while ((str_it < value.end()) &&( *str_it != '|'))
+            str_it++;
+        
+        end = str_it;
+        if (*str_it == '|') {
+            end = str_it-1;
+            str_it++;
+        };
+
+        std::string newVal(start,end);
+
+        values.insert(pair<std::string,int>(newVal,0);
+
+        if (str_it == value.end()) break;
+
+    }
+
+
+    for ( map_it=values.begin() ; map_it != values.end(); map_it++ ) {
+        if (str_count++ ) result.append('|');
+        result.append(map_it->first);
+    }
+       
+    return result;
+}
+
+
 string trimUriOrgEntry(const string& uriString) {
     string retVal(uriString);
 
@@ -1061,7 +1102,7 @@ Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
 				(*iter_response_attr).first;
                             std::string responseAttr = 
                                 (*iter_response_attr).second;
-                            std::string responseValue; 
+                            std::string responseValue;
                             std::string tmpValue; 
                             if (response_attributes_map.size() > 0) {
                                 KeyValueMap::const_iterator iter = 
@@ -1076,11 +1117,10 @@ Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
                             if (iter_response != responseAttrs.end()) {
                                 for (std::size_t i=0;
 				     i<iter_response->second.size(); ++i) {
-                                 responseValue.append(iter_response->second[i]);
-                                 if (i < (iter_response->second.size()-1)) {
-                                    responseValue.append(
-                                                  attrMultiValueSeparator);
-                                  }
+                                        responseValue.append(iter_response->second[i]);
+                                        if (i < (iter_response->second.size()-1)) {
+                                            responseValue.append(attrMultiValueSeparator);
+                                        }
                                 }
                             }
                             if ((!tmpValue.empty() > 0) && 
@@ -1097,8 +1137,15 @@ Service::setRemUserAndAttrs(am_policy_result_t *policy_res,
                                      "Response Attribute value for %s found "
                                      "in response = %s", 
                                 responseKey.c_str(), responseValue.c_str());
+                                responseValue = normalize_Response_Attr(responseValue);
+
+                                Log::log(logID, Log::LOG_MAX_DEBUG,
+                                     "Response Attribute value AFTER NORMALIZATION for %s found "
+                                     "in response = %s",
+                                responseKey.c_str(), responseValue.c_str());
+
                                 response_attributes_map.insert(responseAttr,
-                                                               responseValue);
+                                                                responseValue);
                             }
                       }
                     }
