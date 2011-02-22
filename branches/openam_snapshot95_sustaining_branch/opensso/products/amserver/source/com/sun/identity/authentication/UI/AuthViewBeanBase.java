@@ -26,7 +26,9 @@
  *
  */
 
-
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 
 package com.sun.identity.authentication.UI;
 
@@ -105,7 +107,11 @@ public abstract class AuthViewBeanBase extends ViewBeanBase {
         }
         
         String charset = AuthClientUtils.getCharSet(client_type, accLocale);
-        response.setContentType(content_type+";charset="+charset);
+
+		if (response != null) {
+        	response.setContentType(content_type+";charset="+charset);
+		}
+		
         String jCharset = BrowserEncoding.mapHttp2JavaCharset(charset);
         if (loginDebug.messageEnabled()) {
             loginDebug.message("In setPageEncoding - charset : " + charset);
