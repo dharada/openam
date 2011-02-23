@@ -2368,6 +2368,7 @@ public class AuthClientUtils {
             // retrieves cookies from the response
             Map headers = conn.getHeaderFields();
             processCookies(headers, request, response);
+            origRequestData.put("HTTP_HEADERS", headers);
 
             out.flush();
 
