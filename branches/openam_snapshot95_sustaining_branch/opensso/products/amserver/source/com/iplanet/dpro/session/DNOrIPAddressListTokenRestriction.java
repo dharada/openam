@@ -26,18 +26,14 @@
  *
  */
 
+/**
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.iplanet.dpro.session;
 
 import com.iplanet.am.util.Misc;
 import com.iplanet.am.util.Debug;
-import com.iplanet.dpro.session.service.SessionService;
-import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.iplanet.sso.SSOToken;
-import com.sun.identity.security.AdminTokenAction;
-import java.security.AccessController;
-import com.sun.identity.shared.datastruct.CollectionHelper;
-import com.sun.identity.sm.ServiceSchema;
-import com.sun.identity.sm.ServiceSchemaManager;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -46,7 +42,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Map;
 
 /**
  * <code>DNOrIPAddressListTokenRestriction</code> implements
@@ -72,24 +67,26 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
       * If strict DN checking is desired this property needs to be defined
       * with value "true"
       */
-    private static boolean dnRestrictionOnly;
+    //private static boolean dnRestrictionOnly;
 
-    private static final String SESSION_DNRESTRICTIONONLY_ATTR_NAME =
-        "iplanet-am-session-dnrestrictiononly";
+    //private static final String SESSION_DNRESTRICTIONONLY_ATTR_NAME =
+    //    "iplanet-am-session-dnrestrictiononly";
 
-    private static final String AM_SESSION_SERVICE = "iPlanetAMSessionService";
-    private static SSOToken adminToken = null;
+    //private static final String AM_SESSION_SERVICE = "iPlanetAMSessionService";
+    //private static SSOToken adminToken = null;
 
-   static {
-       debug = Debug.getInstance("amSession");
-       dnRestrictionOnly = getDNRestrictionOnly();
-       if (debug.messageEnabled()) {
-           debug.message(
-               "DNOrIPAddressListTokenRestriction"
-             +": fetching value for dnRestrictionOnly:"+
-              dnRestrictionOnly);
-       }
-   }
+    private final static String DN_PREFIX = "uid=";
+    private final static String DN_SUFFIX = ",ou=agents,o=amroot";
+
+    static {
+        debug = Debug.getInstance("amSession");
+        /*dnRestrictionOnly = getDNRestrictionOnly();
+
+        if (debug.messageEnabled()) {
+            debug.message("DNOrIPAddressListTokenRestriction" +
+                 ": fetching value for dnRestrictionOnly:" + dnRestrictionOnly);
+        }*/
+    }
 
    /**
     * Constructs <code>DNOrIPAddressListTokenRestriction</code> object based on
@@ -110,8 +107,8 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
                 addressList.add(InetAddress.getByName(val)); 
                 hostmatch = true; 
             } catch (java.net.UnknownHostException e) { 
-                if (SessionService.sessionDebug.warningEnabled()) { 
-                    SessionService.sessionDebug.warning(
+                if (debug.warningEnabled()) {
+                    debug.warning(
                     "DNOrIPAddressListTokenRestriction.constructor: " +
                     "failure resolving host " + val); 
                 } 
@@ -121,18 +118,20 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
             } 
         }
 
-        StringBuffer buf = null;
+        StringBuilder buf = null;
         if (dn.indexOf("|") > 0) {
             StringTokenizer st = new StringTokenizer(dn, "|");
             while(st.hasMoreTokens()) {
                 if (buf == null) {
-                    buf = new StringBuffer(Misc.canonicalize(st.nextToken()));
+                    buf = new StringBuilder(convertToSunAMFormat(
+                                            Misc.canonicalize(st.nextToken())));
                 } else {
-                    buf.append("|").append(Misc.canonicalize(st.nextToken()));
+                    buf.append("|").append(convertToSunAMFormat(
+                                            Misc.canonicalize(st.nextToken())));
                 }
             }
         } else {
-            buf = new StringBuffer(Misc.canonicalize(dn));
+            buf = new StringBuilder(convertToSunAMFormat(Misc.canonicalize(dn)));
         }
         this.dn = buf.toString();
         buf.append("\n");
@@ -189,47 +188,47 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
         if (context == null) {
             return false;
         } else if (context instanceof SSOToken) {
-            if (SessionService.sessionDebug.messageEnabled()) {
-                SessionService.sessionDebug.message(
+            if (debug.messageEnabled()) {
+                debug.message(
                    "DNOrIPAddressListTokenRestriction"
                    +".isSatisfied(): context is instance of SSOToken");
             }
             SSOToken usedBy = (SSOToken) context;
-            String udn = Misc.canonicalize(usedBy.getPrincipal().getName());
+            String rdn = getRDN(Misc.canonicalize(usedBy.getPrincipal().getName()));
             StringTokenizer st = new StringTokenizer(dn, "|");
             while(st.hasMoreTokens()) {
-                if (st.nextToken().equals(udn)) {
+                if (st.nextToken().contains(rdn)) {
                     return true;
                 }
             }
 
             if (debug.messageEnabled()) {
-                debug.message("DNOrIPAddressListTokenRestriction:isSatisfied SSOToken of " + udn + " does not match with restriction " + dn);
+                debug.message("DNOrIPAddressListTokenRestriction:isSatisfied SSOToken of " + rdn + " is not contained in restriction " + dn);
             }
             return false;
         } else if (context instanceof InetAddress) {
-            if (dnRestrictionOnly) {
+            /*if (dnRestrictionOnly) {
                 SessionService.sessionDebug.error(
                      "DNOrIPAddressListTokenRestriction"
                     +".isSatisfied():dnRestrictionOnly"
                     +" is true, hence cannot accept passed IP as"
                     +" restriction");
                 return false;
-            } else {
-                if (SessionService.sessionDebug.messageEnabled()) {
-                    SessionService.sessionDebug.message(
+            } else {*/
+                if (debug.messageEnabled()) {
+                    debug.message(
                          "DNOrIPAddressListTokenRestriction"
                         +".isSatisfied(): dnRestrictionOnly is false");
-                    SessionService.sessionDebug.message(
+                    debug.message(
                          "DNOrIPAddressListTokenRestriction"
                         +".isSatisfied(): IP based"
                         +" restriction received and accepted");
                 }
                 return addressList.contains(context);
-            }
+            //}
         } else {
-            if (SessionService.sessionDebug.warningEnabled()) {
-                SessionService.sessionDebug.warning("Unknown context type:"
+            if (debug.warningEnabled()) {
+                debug.warning("Unknown context type:"
                         + context);
             }
             return false;
@@ -258,7 +257,7 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
     * Gets the admin token for checking the dn restriciton property
     * @return admin <code>SSOTken</code>
     */
-    static SSOToken getAdminToken() {
+    /*static SSOToken getAdminToken() {
         if (adminToken == null) {
             try {
                 adminToken = (SSOToken) AccessController.doPrivileged(
@@ -280,13 +279,13 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
                     + " Failed to get the session service instance");
         }
         return ss;
-    }
+    }*/
 
     /*
      * Gets the  value of the "iplanet-am-session-dnrestrictiononly"
      * session global attribute.
      */
-    private static boolean getDNRestrictionOnly() {
+    /*private static boolean getDNRestrictionOnly() {
         boolean dnRestrictionOnly = false;
         try {
             ServiceSchemaManager ssm = new ServiceSchemaManager(
@@ -306,5 +305,23 @@ public class DNOrIPAddressListTokenRestriction implements TokenRestriction {
             }
         }
         return dnRestrictionOnly;
+    }*/
+
+    private static String getRDN(String dn) {
+        String rdn = null;
+
+        if ((dn.indexOf('=') == -1) || (dn.indexOf(',')) == -1) {
+            return dn;
+        }
+
+        rdn = dn.substring(dn.indexOf('=') + 1, dn.indexOf(','));
+        return rdn;
+    }
+
+    private static String convertToSunAMFormat(String dn) {
+        StringBuilder oldFormatDN = new StringBuilder();
+        oldFormatDN.append(DN_PREFIX).append(getRDN(dn)).append(DN_SUFFIX);
+
+        return oldFormatDN.toString();
     }
 }
