@@ -29,7 +29,6 @@
 /*
  * Portions Copyrighted 2011 ForgeRock AS
  */
-
 package com.sun.identity.monitoring;
 
 import com.iplanet.am.util.SystemProperties;
@@ -82,10 +81,6 @@ public class SsoServerAuthSvcImpl extends SsoServerAuthSvc {
         if (debug == null) {
             debug = Debug.getInstance("amMonitoring");
         }
-        AuthenticationFailureRate = new Long(0);
-        AuthenticationSuccessRate = new Long(0);
-        AuthenticationFailureCount = new Long(0);
-        AuthenticationSuccessCount = new Long(0);
 
         String intervalValue =
             SystemProperties.get(Constants.AUTH_RATE_MONITORING_INTERVAL);

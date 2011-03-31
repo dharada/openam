@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2011] [ForgeRock AS]
+ * Portions Copyrighted 2011 ForgeRock AS
  */
 package com.sun.identity.monitoring;
 
@@ -72,11 +72,6 @@ public class SsoServerSAML2SvcImpl extends SsoServerSAML2Svc {
         if (debug == null) {
             debug = Debug.getInstance("amMonitoring");
         }
-        SAML2HostedIDPCount = new Long(0);
-        SAML2RemoteIDPCount = new Long(0);
-        SAML2FedSessionCount = new Long(0);
-        SAML2IDPSessionCount = new Long(0);
-        SAML2Status = "dormant";
     }
 
     public void incHostedIDPCount() {

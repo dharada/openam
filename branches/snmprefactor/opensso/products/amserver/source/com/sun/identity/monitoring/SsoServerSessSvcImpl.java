@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.monitoring;
 
 import com.sun.identity.shared.debug.Debug;
@@ -60,13 +63,6 @@ public class SsoServerSessSvcImpl extends SsoServerSessSvc {
         if (debug == null) {
             debug = Debug.getInstance("amMonitoring");
         }
-        SessionAveSessSize = new Integer(0);
-        SessionNotifListnrCount = new Long(0);
-        SessionNotifCount = new Long(0);
-        SessionValidationsCount = new Long(0);
-        SessionCreatedCount = new Long(0);
-        SessionActiveCount = new Long(0);
-        SessionSFOBroker = "N/A";
     }
 
     /*

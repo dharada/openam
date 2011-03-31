@@ -26,7 +26,7 @@
  *
  */
 /*
- * Portions Copyrighted [2011] [ForgeRock AS]
+ * Portions Copyrighted 2011 ForgeRock AS
  */
 package com.sun.identity.monitoring;
 
@@ -63,10 +63,6 @@ public class SsoServerEntitlementSvcImpl extends SsoServerEntitlementSvc {
         if (debug == null) {
             debug = Debug.getInstance("amMonitoring");
         }
-        NumReferrals = new Integer(0);
-        NumCachedReferrals = new Integer(0);
-        NumPolicies = new Integer(0);
-        NumCachedPolicies = new Integer(0);
     }
 
     public Integer getNumReferrals() throws SnmpStatusException {

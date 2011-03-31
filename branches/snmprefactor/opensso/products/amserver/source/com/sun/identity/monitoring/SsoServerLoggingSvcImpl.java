@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.monitoring;
 
 import com.sun.identity.shared.debug.Debug;
@@ -79,14 +82,7 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
             int ind = 1;
             // DB Handler
             lg_dbh = new SsoServerLoggingHdlrEntryImpl(myMib);
-            lg_dbh.LoggingHdlrConnRqts = new Long(0);
-            lg_dbh.LoggingHdlrDroppedCt = new Long(0);
-            lg_dbh.LoggingHdlrFailureCt = new Long(0);
-            lg_dbh.LoggingHdlrSuccessCt = new Long(0);
             lg_dbh.LoggingHdlrName = DB_HANDLER_NAME;
-            lg_dbh.LoggingHdlrRqtCt = new Long(0);
-            lg_dbh.LoggingHdlrConnMade = new Long(0);
-            lg_dbh.LoggingHdlrConnFailed = new Long(0);
             lg_dbh.LoggingHdlrIndex = new Integer(ind++);
 
             final ObjectName dbhName =
@@ -105,14 +101,7 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
 
             // File Handler
             lg_fh = new SsoServerLoggingHdlrEntryImpl(myMib);
-            lg_fh.LoggingHdlrConnRqts = new Long(0);
-            lg_fh.LoggingHdlrDroppedCt = new Long(0);
-            lg_fh.LoggingHdlrFailureCt = new Long(0);
-            lg_fh.LoggingHdlrSuccessCt = new Long(0);
             lg_fh.LoggingHdlrName = FILE_HANDLER_NAME;
-            lg_fh.LoggingHdlrRqtCt = new Long(0);
-            lg_fh.LoggingHdlrConnMade = new Long(0);
-            lg_fh.LoggingHdlrConnFailed = new Long(0);
             lg_fh.LoggingHdlrIndex = new Integer(ind++);
 
             final ObjectName fhName =
@@ -131,14 +120,7 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
 
             // Secure File Handler
             lg_sfh = new SsoServerLoggingHdlrEntryImpl(myMib);
-            lg_sfh.LoggingHdlrConnRqts = new Long(0);
-            lg_sfh.LoggingHdlrDroppedCt = new Long(0);
-            lg_sfh.LoggingHdlrFailureCt = new Long(0);
-            lg_sfh.LoggingHdlrName = new String(SECURE_FILE_HANDLER_NAME);
-            lg_sfh.LoggingHdlrRqtCt = new Long(0);
-            lg_sfh.LoggingHdlrSuccessCt = new Long(0);
-            lg_sfh.LoggingHdlrConnMade = new Long(0);
-            lg_sfh.LoggingHdlrConnFailed = new Long(0);
+            lg_sfh.LoggingHdlrName = SECURE_FILE_HANDLER_NAME;
             lg_sfh.LoggingHdlrIndex = new Integer(ind++);
 
             final ObjectName sfhName =
@@ -157,14 +139,7 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
 
             // Remote Handler
             lg_rh = new SsoServerLoggingHdlrEntryImpl(myMib);
-            lg_rh.LoggingHdlrConnRqts = new Long(0);
-            lg_rh.LoggingHdlrDroppedCt = new Long(0);
-            lg_rh.LoggingHdlrFailureCt = new Long(0);
-            lg_rh.LoggingHdlrSuccessCt = new Long(0);
-            lg_rh.LoggingHdlrRqtCt = new Long(0);
             lg_rh.LoggingHdlrName = REMOTE_HANDLER_NAME;
-            lg_rh.LoggingHdlrConnMade = new Long(0);
-            lg_rh.LoggingHdlrConnFailed = new Long(0);
             lg_rh.LoggingHdlrIndex = new Integer(ind++);
 
             final ObjectName rhName =

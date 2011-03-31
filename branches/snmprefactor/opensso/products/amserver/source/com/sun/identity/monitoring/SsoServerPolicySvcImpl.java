@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.monitoring;
 
 import com.sun.identity.shared.debug.Debug;
@@ -58,9 +61,6 @@ public class SsoServerPolicySvcImpl extends SsoServerPolicySvc {
         if (debug == null) {
             debug = Debug.getInstance("amMonitoring");
         }
-        PolicyEvalsOut = new Long(0);
-        PolicyEvalsIn = new Long(0);
-        PolicyStatus = "dormant";
     }
 
     /*
