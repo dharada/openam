@@ -26,6 +26,10 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
+
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
@@ -99,8 +103,8 @@ public class SessionRequestHandler implements RequestHandler {
             this.clientToken = null;
             String requester = sreq.getRequester();
             if (requester != null) {
+                context = RestrictedTokenContext.unmarshal(requester);
                 try {
-                    context = RestrictedTokenContext.unmarshal(requester);
                     if (context instanceof SSOToken) {
                         SSOTokenManager ssoTokenManager =
                           SSOTokenManager.getInstance();
