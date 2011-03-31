@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 package com.iplanet.services.ldap.event;
@@ -573,10 +573,20 @@ public class EventService implements Runnable {
                         }
                         _retryErrorCodes = getPropertyRetryErrorCodes(
                             EVENT_CONNECTION_ERROR_CODES);
-                        if (_retryErrorCodes.contains("" + resultCode)) {
-                            resetErrorSearches(true);
-                        } else { // Some other network error
+                                                
+                        // Catch special error codition in
+                        // LDAPSearchListener.getResponse
+                        String msg = ex.getLDAPErrorMessage();
+                        if ((resultCode == LDAPException.OTHER) &&
+                            (msg != null) && msg.equals("Invalid response")) {
+                            // We should not try to resetError and retry
                             processNetworkError(ex);
+                        } else {
+                            if (_retryErrorCodes.contains("" + resultCode)) {
+                                resetErrorSearches(true);
+                            } else { // Some other network error
+                                processNetworkError(ex);
+                            }
                         }
                     }
                 }
@@ -1220,12 +1230,14 @@ public class EventService implements Runnable {
                     }
                     iter.remove();
                 } catch (Exception e) {
+                    debugger.error("RetryTask", e);
                     // Ignore exception and retry as we are in the process of
                     // re-establishing the searches. Notify Listeners after the
                     // attempt
                 }
             }
             if (--numRetries == 0) {
+                debugger.error("NumRetries " + numRetries);
                 runPeriod = -1;
             }
         }
