@@ -40,20 +40,17 @@ import javax.management.MBeanServer;
  */
 public class SsoServerIdRepoSvcImpl extends SsoServerIdRepoSvc {
     private static Debug debug = null;
-    private static String myMibName;
 
     /**
      * Constructor
      */
     public SsoServerIdRepoSvcImpl (SnmpMib myMib) {
         super(myMib);
-        myMibName = myMib.getMibName();
         init(myMib, null);
     }
 
     public SsoServerIdRepoSvcImpl (SnmpMib myMib, MBeanServer server) {
         super(myMib, server);
-        myMibName = myMib.getMibName();
         init(myMib, server);
     }
 

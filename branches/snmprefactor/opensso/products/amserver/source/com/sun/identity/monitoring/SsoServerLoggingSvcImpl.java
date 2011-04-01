@@ -45,7 +45,6 @@ import javax.management.ObjectName;
  */
 public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
     private static Debug debug = null;
-    private static String myMibName;
     private boolean isBogus = true;
     private static SsoServerLoggingHdlrEntryImpl lg_dbh = null;
     private static SsoServerLoggingHdlrEntryImpl lg_fh = null;
@@ -56,20 +55,19 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
     public static final String SECURE_FILE_HANDLER_NAME = "Secure File Handler";
     public static final String REMOTE_HANDLER_NAME = "Remote Handler";
 
-    private Map handlerMap = new HashMap();
+    private Map<String, SsoServerLoggingHdlrEntryImpl> handlerMap =
+            new HashMap<String, SsoServerLoggingHdlrEntryImpl>();
 
     /**
      * Constructor
      */
     public SsoServerLoggingSvcImpl (SnmpMib myMib) {
         super(myMib);
-        myMibName = myMib.getMibName();
         init(myMib, null);
     }
 
     public SsoServerLoggingSvcImpl (SnmpMib myMib, MBeanServer server) {
         super(myMib, server);
-        myMibName = myMib.getMibName();
         init(myMib, server);
     }
 
@@ -169,14 +167,14 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
      * Setter for the "LoggingBufferSize" variable.
      */
     public void setSsoServerLoggingBufferSize(long l) {
-        LoggingBufferSize = new Long(l);
+        LoggingBufferSize = l;
     }
 
     /**
      * Setter for the "LoggingBufferTime" variable.
      */
     public void setSsoServerLoggingBufferTime(long l) {
-        LoggingBufferTime = new Long(l);
+        LoggingBufferTime = l;
     }
 
     /**
@@ -197,14 +195,14 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
      * Setter for the "LoggingNumberHistoryFiles" variable.
      */
     public void setSsoServerLoggingNumberHistoryFiles(long l) {
-        LoggingNumHistFiles = new Long(l);
+        LoggingNumHistFiles = l;
     }
 
     /**
      * Setter for the "LoggingMaxLogSize" variable.
      */
     public void setSsoServerLoggingMaxLogSize(long l) {
-        LoggingMaxLogSize = new Long(l);
+        LoggingMaxLogSize = l;
     }
 
     /**
@@ -225,7 +223,7 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
      * Setter for the "LoggingRecsRejected" variable.
      */
     public void setSsoServerLoggingRecsRejected(long l) {
-        LoggingRecsRejected = new Long(l);
+        LoggingRecsRejected = l;
     }
 
     /**
@@ -252,14 +250,8 @@ public class SsoServerLoggingSvcImpl extends SsoServerLoggingSvc {
     public SsoServerLoggingHdlrEntryImpl getHandler(String handlerName) {
         String classMethod = "SsoServerLoggingSvcImpl.getHandler:";
 
-        if (!Agent.isRunning()) {
-            return null;
-        }
-
         if ((handlerName != null) && (handlerName.length() > 0)) {
-            SsoServerLoggingHdlrEntryImpl handler =
-                    (SsoServerLoggingHdlrEntryImpl) handlerMap.get(
-                    handlerName);
+            SsoServerLoggingHdlrEntryImpl handler = handlerMap.get(handlerName);
             if (handler != null) {
                 return handler;
             } else {

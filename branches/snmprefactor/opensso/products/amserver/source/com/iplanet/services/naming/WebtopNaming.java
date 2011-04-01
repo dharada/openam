@@ -27,9 +27,8 @@
  */
 
 /*
- * Portions Copyrighted [2010-2011] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
-
 package com.iplanet.services.naming;
 
 import java.net.MalformedURLException;
@@ -56,6 +55,7 @@ import com.iplanet.services.naming.service.NamingService;
 import com.iplanet.services.naming.share.NamingBundle;
 import com.iplanet.services.naming.share.NamingRequest;
 import com.iplanet.services.naming.share.NamingResponse;
+import com.sun.identity.monitoring.MonitoringUtil;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
 import java.util.HashMap;
@@ -1436,7 +1436,7 @@ public class WebtopNaming {
          * start the monitoring agent, if not already started
          */
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        if (isServerMode() && !Agent.isRunning() && !sitemonitorDisabled) {
+        if (isServerMode() && !MonitoringUtil.isRunning() && !sitemonitorDisabled) {
             Date date1 = new Date();
             String startDate = sdf.format(date1);
 
@@ -1484,16 +1484,15 @@ public class WebtopNaming {
                         startDate(startDate).
                         namingTable(namingTable).build();
     
-                int rtn = Agent.siteAndServerInfo(srvrInfo);
+                Agent.siteAndServerInfo(srvrInfo);
 
-                if (debug.warningEnabled()) {
+                if (debug.messageEnabled()) {
                     Date date = new Date();
-                    debug.warning (classMethod +
-                        "monitoring agent config returns " + rtn + "\n" +
+                    debug.message(classMethod +
+                        "monitoring agent config returned\n" +
                         "    End time = " + sdf.format(date));
                 }
 
-                Agent.setWebtopConfig(true);
                 return 0;
             } else {
                 debug.error(classMethod + "null proto/server/port/uri");
