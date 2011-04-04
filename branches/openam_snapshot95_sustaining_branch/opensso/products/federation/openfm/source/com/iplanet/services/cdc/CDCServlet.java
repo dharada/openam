@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 package com.iplanet.services.cdc;
@@ -54,6 +54,7 @@ import com.sun.identity.federation.message.common.AuthnContext;
 import com.sun.identity.federation.message.common.FSMsgException;
 import com.sun.identity.federation.message.common.IDPProvidedNameIdentifier;
 import com.sun.identity.federation.services.util.FSServiceUtils;
+import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.saml.assertion.AssertionIDReference;
 import com.sun.identity.saml.assertion.AudienceRestrictionCondition;
 import com.sun.identity.saml.assertion.Conditions;
@@ -63,7 +64,6 @@ import com.sun.identity.saml.assertion.SubjectLocality;
 import com.sun.identity.saml.common.SAMLException;
 import com.sun.identity.saml.protocol.Status;
 import com.sun.identity.saml.protocol.StatusCode;
-import com.sun.identity.shared.encode.URLEncDec;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.DateUtils;
 import com.sun.identity.shared.debug.Debug;
@@ -75,7 +75,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -430,6 +429,7 @@ public class CDCServlet extends HttpServlet {
                 debug.error("CDCServlet.doGetPost", ssoe);
             } catch (Exception e) {
                 debug.error("CDCServlet.doGetPost", e);
+                spValidator = new LdapSPValidator();
                 showError(response, FORBIDDEN_STR_MATCH);
             }
         }
