@@ -103,8 +103,8 @@ public class SessionRequestHandler implements RequestHandler {
             this.clientToken = null;
             String requester = sreq.getRequester();
             if (requester != null) {
-                context = RestrictedTokenContext.unmarshal(requester);
                 try {
+                    context = RestrictedTokenContext.unmarshal(requester);
                     if (context instanceof SSOToken) {
                         SSOTokenManager ssoTokenManager =
                           SSOTokenManager.getInstance();
