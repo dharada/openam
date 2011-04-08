@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 package com.iplanet.dpro.session;
@@ -47,13 +47,11 @@ import com.iplanet.services.comm.share.Request;
 import com.iplanet.services.comm.share.RequestSet;
 import com.iplanet.services.comm.share.Response;
 import com.iplanet.services.naming.WebtopNaming;
-import com.iplanet.sso.SSOToken;
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.common.SearchResults;
 import com.sun.identity.common.ShutdownListener;
 import com.sun.identity.common.ShutdownManager;
 import com.sun.identity.common.SystemTimerPool;
-import com.sun.identity.common.TaskRunnable;
 import com.sun.identity.common.TimerPool;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
@@ -65,7 +63,6 @@ import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
 import com.iplanet.sso.SSOTokenManager;
 
-import java.net.InetAddress;
 import java.net.URL;
 import java.util.Date;
 import java.util.Hashtable;
@@ -1644,9 +1641,17 @@ public class Session extends GeneralTaskRunnable {
                     if (sessionDebug.messageEnabled()) {
                         sessionDebug.message("Session."
                             + "processSessionResponseException: creating New AppToken"
-                            + "TokenID = " + newAppSSOToken);
+                            + " TokenID = " + newAppSSOToken);
                     }
                     createContext(newAppSSOToken);
+                } else {
+                    if (sessionDebug.messageEnabled()) {
+                        sessionDebug.message("Session."
+                            + "processSessionResponseException: AppToken invalid in" +
+                              " server mode; throwing exception");
+                    }
+                    RestrictedTokenContext.clear();
+                    throw new SessionException(sres.getException());
                 }
             } else {
                 throw new SessionException(sres.getException());
