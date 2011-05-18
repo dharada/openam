@@ -337,7 +337,7 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
         return status;
     }
     
-    public boolean removeLifecycleModule(XMLDocument domainXMLDoc, String serverInstanceName) throws Exception {
+    public boolean removeLifecycleModule(XMLDocument domainXMLDoc, String serverInstanceName, IStateAccess stateAccess) throws Exception {
         boolean status = true;
 
     	// Obtain the domain root <domain> element
@@ -349,7 +349,7 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
         XMLElement serverElement = getServer(domainRoot, serverInstanceName);
         
         if (applicationsElement != null && serverElement != null) {
-	        XMLElement lifecycleModuleElement = getLifecycleModule(applicationsElement);
+	        XMLElement lifecycleModuleElement = getLifecycleModule(applicationsElement, stateAccess);
 	        if (lifecycleModuleElement != null) {
 	        	lifecycleModuleElement.delete();
 	        }
@@ -404,8 +404,17 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
                 STR_NAME_ATTR, STR_AGENT_REALM);
     }
     
-    private XMLElement getLifecycleModule(XMLElement applications) {
-        return getElement(applications, STR_APPLICATION_ELEMENT,
+    private XMLElement getLifecycleModule(XMLElement applications, IStateAccess stateAccess) {
+    	
+    	String moduleElement = null;
+    	
+    	if (VersionChecker.isGlassFishv3(stateAccess)) {
+    		moduleElement = STR_APPLICATION_ELEMENT_V3;
+    	} else {
+    		moduleElement = STR_APPLICATION_ELEMENT_V2;
+    	}
+
+    	return getElement(applications, moduleElement,
                 STR_NAME_ATTR, STR_AGENT_LIFECYCLE_MODULE);
     }
     
@@ -546,7 +555,8 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
     public static final String STR_JAVA_CONFIG_ELEMENT = "java-config";
     public static final String STR_SECURITY_SERVICE_ELEMENT =
             "security-service";
-    public static final String STR_APPLICATION_ELEMENT = "application";
+    public static final String STR_APPLICATION_ELEMENT_V3 = "application";
+    public static final String STR_APPLICATION_ELEMENT_V2 = "lifecycle-module";
     public static final String STR_APPLICATIONS_ELEMENT = "applications";
     public static final String STR_APPLICATION_REF_ELEMENT = "application-ref";
     
