@@ -158,7 +158,7 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
         return status;
     }
 
-    public boolean addLifecycleModule(XMLDocument domainXMLDoc, String serverInstanceName) throws Exception {
+    public boolean addLifecycleModule(XMLDocument domainXMLDoc, String serverInstanceName, IStateAccess stateAccess) throws Exception {
         boolean status = true;
 
     	// Obtain the domain root <domain> element
@@ -172,11 +172,11 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
         if (applicationsElement != null && serverElement != null) {
             // Create lifecycleModule element
             XMLElement lifecycleModule = domainXMLDoc.newElementFromXMLFragment(
-            		getLifecycleModuleStanza());
+            		getLifecycleModuleStanza(stateAccess));
             applicationsElement.addChildElementAt(lifecycleModule, 0, true);
 
             // Create application reference
-            XMLElement applicationRef = domainXMLDoc.newElementFromXMLFragment(getLifecycleModuleApplicationRef());
+            XMLElement applicationRef = domainXMLDoc.newElementFromXMLFragment(getLifecycleModuleApplicationRef(stateAccess));
             serverElement.addChildElementAt(applicationRef,  0, true);
         } else {
             Debug.log("DomainXMLBase.addLifecycleModule() - Error: "
@@ -189,19 +189,33 @@ public class DomainXMLBase implements InstallConstants, IConfigKeys, IConstants 
     }
     
     
-    private String getLifecycleModuleStanza() {
+    private String getLifecycleModuleStanza(IStateAccess stateAccess) {
+    	
         StringBuilder sb = new StringBuilder();
-        sb.append("<application name=\"ASLifeCycleListener\" object-type=\"user\">");
-        sb.append("<property name=\"is-failure-fatal\" value=\"false\"></property>");
-        sb.append("<property name=\"class-name\" value=\"" + STR_AGENT_LIFECYCLE_MODULE_CLASS + "\"></property>");
-        sb.append("<property name=\"isLifecycle\" value=\"true\"></property>");
-        sb.append("</application>");
-        
+
+        if (VersionChecker.isGlassFishv3(stateAccess)) {
+	        sb.append("<application name=\"" + STR_AGENT_LIFECYCLE_MODULE + "\" object-type=\"user\">");
+	        sb.append("<property name=\"is-failure-fatal\" value=\"false\"></property>");
+	        sb.append("<property name=\"class-name\" value=\"" + STR_AGENT_LIFECYCLE_MODULE_CLASS + "\"></property>");
+	        sb.append("<property name=\"isLifecycle\" value=\"true\"></property>");
+	        sb.append("</application>");
+        } else {
+	        sb.append("<lifecycle-module name=\"" + STR_AGENT_LIFECYCLE_MODULE + "\" ");
+	        sb.append("class-name=\"" + STR_AGENT_LIFECYCLE_MODULE_CLASS + "\" ");
+	        sb.append("is-failure-fatal=\"false\" ");
+	        sb.append("object-type=\"user\"/>");
+        	
+        }
         return sb.toString();
     }
     
-    private String getLifecycleModuleApplicationRef() {
-    	return "<application-ref ref=\"ASLifeCycleListener\" virtual-servers=\"server\"></application-ref>";
+    private String getLifecycleModuleApplicationRef(IStateAccess stateAccess) {
+    	
+        if (VersionChecker.isGlassFishv3(stateAccess)) {
+        	return "<application-ref ref=\"" + STR_AGENT_LIFECYCLE_MODULE + "\" virtual-servers=\"server\"></application-ref>";
+        } else {
+        	return "<application-ref disable-timeout-in-minutes=\"30\" enabled=\"true\" lb-enabled=\"false\" ref=\"" + STR_AGENT_LIFECYCLE_MODULE + "\"/>";
+        }
     }
     
     

@@ -72,7 +72,7 @@ public class ConfigureDomainXMLTask extends DomainXMLBase implements ITask {
                     
                     if (instanceConfig != null) {
                         status &= addAgentRealm(domainXMLDoc, instanceConfig, stateAccess);
-                        status &= addLifecycleModule(domainXMLDoc, serverInstanceName);
+                        status &= addLifecycleModule(domainXMLDoc, serverInstanceName, stateAccess);
                         status = addAgentJavaConfig(domainXMLDoc, instanceConfig,
                                 stateAccess);
                         domainXMLDoc.setIndentDepth(2);
