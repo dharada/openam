@@ -41,10 +41,8 @@ public class ASLifeCycleListener implements LifecycleListener {
 			throws ServerLifecycleException {
 		int eventType = le.getEventType();
         if (eventType == LifecycleEvent.STARTUP_EVENT) {
-        	System.out.println(">>>>>>Starting Up.");
             CommonLifeCycleListener.startup();
         } else if (eventType == LifecycleEvent.SHUTDOWN_EVENT) {
-        	System.out.println("<<<<<<Shutting Down.");
             CommonLifeCycleListener.shutdown();
         }
 		
