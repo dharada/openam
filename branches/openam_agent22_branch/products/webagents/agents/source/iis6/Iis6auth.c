@@ -1014,8 +1014,7 @@ CHAR* get_cookie_value(HTTP_FILTER_CONTEXT *pfc, tOphResources* pOphResources,
                    break;
                 }
             }
-            if (cookieValue != NULL) {
-                cookieValue = strchr(cookieValue ,'=');
+            if (cookieValue != NULL && (cookieValue = strchr(cookieValue ,'=')) != NULL) {
                 cookieValue = &cookieValue[1]; // 1 vs 0 skips over '='
                 // find the end of the cookie
                 length = 0;

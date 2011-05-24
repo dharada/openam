@@ -478,9 +478,8 @@ DWORD FilterRequest::GetCookieValue(HTTP_FILTER_CONTEXT *pContext, const char*
             }
         }
 
-        if (pszValue != NULL) 
+        if (pszValue != NULL && (pszValue = strchr(pszValue ,'=')) != NULL) 
         {
-            pszValue = strchr(pszValue ,'=');
             pszValue = &pszValue[1]; // 1 vs 0 skips over '='
             
             // find the end of the cookie

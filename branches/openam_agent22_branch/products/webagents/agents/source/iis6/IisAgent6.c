@@ -1696,8 +1696,7 @@ DWORD WINAPI HttpExtensionProc(EXTENSION_CONTROL_BLOCK *pECB)
                             break;
                         }
                     }
-                    if (cookieValue != NULL) {
-                        cookieValue = strchr(cookieValue ,'=');
+                    if (cookieValue != NULL && (cookieValue = strchr(cookieValue ,'=')) != NULL) {
                         cookieValue = &cookieValue[1]; // 1 vs 0 skips over '='
                         // find the end of the cookie
                         length = 0;
