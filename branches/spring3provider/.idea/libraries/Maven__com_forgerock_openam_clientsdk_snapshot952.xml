@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="Maven: com.forgerock.openam:clientsdk:snapshot952">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/forgerock/openam/clientsdk/snapshot952/clientsdk-snapshot952.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/forgerock/openam/clientsdk/snapshot952/clientsdk-snapshot952-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/forgerock/openam/clientsdk/snapshot952/clientsdk-snapshot952-sources.jar!/" />
+      <root url="file://$PROJECT_DIR$/../openam/products/amserver/source" />
+      <root url="file://$PROJECT_DIR$/../openam/products/amserver/source" />
+      <root url="file://$PROJECT_DIR$/../openam/products/shared/source" />
+      <root url="file://$PROJECT_DIR$/../openam/products/federation/openfm/source" />
+    </SOURCES>
+  </library>
+</component>

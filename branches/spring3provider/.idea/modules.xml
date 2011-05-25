@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/example/examplewar.iml" filepath="$PROJECT_DIR$/example/examplewar.iml" />
+      <module fileurl="file://$PROJECT_DIR$/provider/opensso-springsecurity.iml" filepath="$PROJECT_DIR$/provider/opensso-springsecurity.iml" />
+    </modules>
+  </component>
+</project>
+
