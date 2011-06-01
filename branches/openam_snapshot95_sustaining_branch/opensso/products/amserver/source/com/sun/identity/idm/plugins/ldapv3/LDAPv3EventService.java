@@ -601,14 +601,12 @@ public class LDAPv3EventService implements Runnable {
                         break;
                     } else {
                         int resultCode = ex.getLDAPResultCode();
-                        if (debugger.warningEnabled()) {
-                            debugger.warning(
-                                "LDAPv3EventService.run() LDAPException " +
-                                "received:" + " randomID=" + randomID, ex);
-                        }
-
+                        debugger.error(
+                            "LDAPv3EventService.run() LDAPException " +
+                            "received:" + " randomID=" + randomID, ex);
+                        
                         // Catch special error codition in
-                       // LDAPSearchListener.getResponse
+                        // LDAPSearchListener.getResponse
                         String msg = ex.getLDAPErrorMessage();
                         if ((resultCode == LDAPException.OTHER) &&
                             (msg != null) && msg.equals("Invalid response")) {
