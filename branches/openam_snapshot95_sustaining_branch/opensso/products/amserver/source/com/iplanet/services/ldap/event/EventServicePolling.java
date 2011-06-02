@@ -128,16 +128,36 @@ public class EventServicePolling extends EventService {
         return "EventServicePolling";
     }
 
-    private boolean processExceptionErrorCodes(Exception ex, int errorCode) {
-            
+    private boolean processExceptionErrorCodes(Exception ex, int errorCode) {            
         boolean successState = true;
-        if (_retryErrorCodes.contains(Integer.toString(errorCode))) {
-            // Call Only the parent method, because at this point we
-            // want to interrupt only if required.
-            resetErrorSearches(true);
-        } else { // Some other error
-            processNetworkError(ex);
+        
+        if (ex instanceof LDAPException) {
+            LDAPException lex = (LDAPException) ex;
+            String msg = lex.getMessage();
+            
+            if ((errorCode == LDAPException.OTHER) &&
+                (msg != null) && msg.equals("Invalid response")) {
+                // We should not try to resetError and retry
+                processNetworkError(ex);
+            } else {
+                if (_retryErrorCodes.contains("" + Integer.toString(errorCode))) {
+                    // Call Only the parent method, because at this point we
+                    // want to interrupt only if required.
+                    resetErrorSearches(true);
+                } else { // Some other network error
+                    processNetworkError(ex);
+                }
+            }
+        } else {
+            if (_retryErrorCodes.contains("" + Integer.toString(errorCode))) {
+                // Call Only the parent method, because at this point we
+                // want to interrupt only if required.
+                resetErrorSearches(true);
+            } else { // Some other network error
+                processNetworkError(ex);
+            }
         }
+        
         return successState;
     }
     

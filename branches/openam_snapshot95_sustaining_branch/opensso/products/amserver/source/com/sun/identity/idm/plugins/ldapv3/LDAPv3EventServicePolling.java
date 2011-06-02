@@ -226,7 +226,7 @@ public class LDAPv3EventServicePolling extends LDAPv3EventService {
         
         if (ex instanceof LDAPException) {
             LDAPException lex = (LDAPException) ex;
-            String msg = lex.getLDAPErrorMessage();
+            String msg = lex.getMessage();
             
             if ((errorCode == LDAPException.OTHER) &&
                 (msg != null) && msg.equals("Invalid response")) {
