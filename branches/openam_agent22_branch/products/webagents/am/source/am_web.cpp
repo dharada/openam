@@ -4109,6 +4109,8 @@ am_web_get_request_url(const char *host_hdr, const char *protocol,
            }
        }
     }
+     // sets override request url, if override is set
+    (void)overrideProtoHostPort(url);
     // Save the url in request_url
     std::string urlStr;
     url.getURLString(urlStr);
@@ -4911,7 +4913,7 @@ am_web_result_attr_map_set(
                         std::string hdr_or_cookie_name_s(keyRef.c_str());
                         const char * hdr_or_cookie_name =
                                              hdr_or_cookie_name_s.c_str();
-                        if (setFunc != NULL) {
+                        /*if (setFunc != NULL) {
                             set_sts = setFunc(hdr_or_cookie_name, NULL, args);
                             if (set_sts != AM_SUCCESS) {
                                 am_web_log_warning("%s: Error %s "
@@ -4920,7 +4922,7 @@ am_web_result_attr_map_set(
                                             am_status_to_string(set_sts),
                                             hdr_or_cookie_name);
                             }
-                        }
+                        }*/
                         const KeyValueMap::mapped_type &valueRef =
                                                       iter_header->second;
                         am_web_log_max_debug("%s: Iterating over %u values.",
