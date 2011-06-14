@@ -4109,8 +4109,12 @@ am_web_get_request_url(const char *host_hdr, const char *protocol,
            }
        }
     }
-     // sets override request url, if override is set
-    (void)overrideProtoHostPort(url);
+    // sets override request url, if override is set.
+    std::string urlStrTmp;
+    url.getURLString(urlStrTmp);
+    if (agent_info.override_notification_url || am_web_is_notification(urlStrTmp.c_str()) == B_FALSE) {
+	(void)overrideProtoHostPort(url);
+    }
     // Save the url in request_url
     std::string urlStr;
     url.getURLString(urlStr);
