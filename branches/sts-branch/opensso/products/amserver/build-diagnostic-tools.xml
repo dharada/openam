@@ -62,7 +62,26 @@
             <include name="**/*.jar"/>
         </fileset>
     </path>
-    
+   
+    <!-- build class path for legacy JAXB xjc -->
+    <path id="build.class.path.jaxb1">
+        <pathelement location="${amserver.classes.dir}"/>
+        <pathelement location="${sharedlib.classes.dir}"/>
+        
+	<fileset dir="${jaxb1.extlib.dir}"
+            includes="**/*.jar"
+            excludes=""/>
+	<fileset dir="${lockhart.dir}/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+	<fileset dir="${extlib.dir}"
+            includes="**/*.jar"
+            excludes="webservices-api.jar,webservices-rt.jar,webservices-tools.jar,jaxb-impl.jar,jaxb-xjc.jar,jaxb-api.jar,jaxb-libs.jar"/>
+        <fileset dir="${jatolib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+ 
     <property name="odt.path" value="/com/sun/identity/diagnostic"/>
     <property name="odt.package.path" value="${amserver.src.dir}/${odt.path}"/>
     <property name="odt.tools.dir" value="${amserver.built.dir}/diagnostic"/>
@@ -276,7 +295,7 @@
         <property name="xsd.services.files" value="${xsd.services.dir}/service.xsd"/>
         <java classname="com.sun.tools.xjc.Driver"
               maxmemory="128m" failonerror="true" fork="true">
-            <classpath refid="build.class.path"/>
+            <classpath refid="build.class.path.jaxb1"/>
             <arg line="-b &quot;${xsd.services.dir}/binding.xjb&quot; -d &quot;${amserver.src.dir}&quot; &quot;${xsd.services.files}&quot;"/>
         </java>
     </target>

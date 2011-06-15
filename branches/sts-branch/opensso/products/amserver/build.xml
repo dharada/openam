@@ -54,6 +54,24 @@
         </fileset>
     </path>
 
+    <!-- JAXB 1.x build class path for enabling JAXB generation without major refactoring -->
+    <path id="build.class.path.jaxb1">
+        <pathelement location="${amserver.classes.dir}"/>
+        <pathelement location="${sharedlib.classes.dir}"/>
+        <fileset dir="${jaxb1.extlib.dir}"
+            includes="**/*.jar"
+            excludes=""/>
+        <fileset dir="${lockhart.dir}/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${jatolib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${extlib.dir}"
+            includes="**/*.jar"
+            excludes="webservices-api.jar,webservices-rt.jar,webservices-tools.jar,jaxb-impl.jar,jaxb-xjc.jar,jaxb-api.jar,jaxb-libs.jar"/>
+    </path>
+
     <path id="build.ent.class.path">
         <pathelement location="${sharedlib.classes.dir}"/>
         <fileset dir="${extlib.dir}"
@@ -429,8 +447,8 @@
     </target>
     
     <target name="am-xacml" unless="amserver.xacml.done">
-        <java classname="com.sun.tools.internal.xjc.Driver"
-            classpath="${env.JAVA_HOME}/lib/tools.jar"
+        <java classname="com.sun.tools.xjc.Driver"
+            classpath="${build.class.path.jaxb1}"
             maxmemory="256m" failonerror="true" fork="true">
             <arg line="-b &quot;${amserver.built.xsd.dir}/xacml-core-v3.xjb&quot; -extension -d &quot;${amserver.built.src.dir}&quot; &quot;${amserver.built.xsd.dir}/xacml-core-v3-schema-cd-1.xsd&quot;"/>
         </java>
