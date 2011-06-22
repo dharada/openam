@@ -78,10 +78,13 @@ public abstract class ProviderConfig {
      */
     public static final String WSS_PROVIDER_CONFIG_PLUGIN =
          "com.sun.identity.wss.provider.config.plugin";
- 
+
+    protected static final String DEFAULT_REALM = "/";
+    
      protected List secMech = null;
      protected String serviceURI = null;
      protected String providerName = null; 
+     protected String realm = null; 
      protected String wspEndpoint = null;
      protected String wssProxyEndpoint = null;
      protected String providerType = null;
@@ -154,6 +157,15 @@ public abstract class ProviderConfig {
      */
     public String getProviderName() {
         return providerName;
+    }
+
+    /**
+     * Returns the realm of the Provider.
+     *
+     * @return the realm name.
+     */
+    public String getRealm() {
+        return realm;
     }
 
     /**
@@ -930,21 +942,35 @@ public abstract class ProviderConfig {
      protected abstract boolean isExists();
 
     /**
-     * Initializes the provider.
+     * Initializes the provider, assumes root realm.
      *
      * @param providerName the provider name.
-     *
      * @param providerType the provider type.
-     *
      * @param token Single Sign-on token.
-     * 
      * @param isEndPoint Boolean flag indicating whether provider needs to be 
      * searched based on its end point value.
+     * @exception ProviderException if there is any failure.
+     */
+    protected void init(String providerName, 
+        String providerType, SSOToken token, boolean isEndPoint) 
+        throws ProviderException {
+        // Initialize for the root realm as default
+        init(providerName, providerType, "/", token, isEndPoint);
+    }
+
+    /**
+     * Initializes the provider for a given realm.
      *
+     * @param providerName the provider name.
+     * @param providerType the provider type.
+     * @param realm the realm name.
+     * @param token Single Sign-on token.
+     * @param isEndPoint Boolean flag indicating whether provider needs to be 
+     * searched based on its end point value.
      * @exception ProviderException if there is any failure.
      */
     protected abstract void init(String providerName, 
-        String providerType, SSOToken token, boolean isEndPoint) 
+        String providerType, String realm, SSOToken token, boolean isEndPoint) 
         throws ProviderException;
 
     /**
@@ -960,20 +986,33 @@ public abstract class ProviderConfig {
     }
 
     /**
-     * Returns the provider configuration for a given provider name.
+     * Returns the provider configuration for a given provider name. Assumes
+     * the root realm.
      *
      * @param providerName the provider name.
-     *
      * @param providerType the provider type.
-     *
      * @exception ProviderException if unable to retrieve.
      */
     public static ProviderConfig getProvider(
            String providerName, String providerType) throws ProviderException {
+        return getProvider(providerName, providerType, DEFAULT_REALM);
+    }
+    
+    /**
+     * Returns the provider configuration for a given provider name within a
+     * certain realm.
+     *
+     * @param providerName the provider name.
+     * @param providerType the provider type.
+     * @param realm the realm name.
+     * @exception ProviderException if unable to retrieve.
+     */
+    public static ProviderConfig getProvider(
+           String providerName, String providerType, String realm) throws ProviderException {
 
          ProviderConfig pc = getConfigAdapter(); 
          SSOToken adminToken = getAdminToken();
-         pc.init(providerName, providerType, adminToken, false);
+         pc.init(providerName, providerType, realm, adminToken, false);
          return pc; 
     }
     
@@ -991,25 +1030,58 @@ public abstract class ProviderConfig {
     public static ProviderConfig getProvider(
            String providerName, String providerType, boolean initialize)
            throws ProviderException {
+        return getProvider(providerName, providerType, DEFAULT_REALM, initialize);
+    }
+    
+    /**
+     * Returns the provider configuration for a given provider name and realm.
+     * @param providerName the provider name.    
+     * @param providerType the provider type.
+     * @param realm the realm name.
+     * @param initialize if set to false the provider configuration will not
+     *        be retrieved from the persistent store and returns just the
+     *        memory image of the provider configuration. Also if set to
+     *        false the provider configuration can not be saved persistently
+     *        using {@link #store()}.
+     * @exception ProviderException if unable to retrieve.
+     */
+    public static ProviderConfig getProvider(
+           String providerName, String providerType, String realm, boolean initialize)
+           throws ProviderException {
            
          if(!initialize) {
             return getConfigAdapter();
          }
-         return getProvider(providerName, providerType);
+         return getProvider(providerName, providerType, realm);
     }
     
     /**
-     * Returns the provider configuration for a given end point     
+     * Returns the provider configuration for a given end point within the root
+     * realm.
      *
      * @param endpoint the end point is the search string to retrieve the
      *        provider configuration.
-     *
      * @param providerType the provider type.
-     *          
      * @exception ProviderException if unable to retrieve.
      */
     public static ProviderConfig getProviderByEndpoint(
         String endpoint, String providerType) 
+        throws ProviderException {
+        return getProviderByEndpoint(endpoint, providerType, DEFAULT_REALM);
+    }
+
+    /**
+     * Returns the provider configuration for a given end point within a certain
+     * realm.
+     *
+     * @param endpoint the end point is the search string to retrieve the
+     *        provider configuration.
+     * @param providerType the provider type.
+     * @param realm the realm name.
+     * @exception ProviderException if unable to retrieve.
+     */
+    public static ProviderConfig getProviderByEndpoint(
+        String endpoint, String providerType, String realm) 
         throws ProviderException {
 
          ProviderConfig pc = getConfigAdapter(); 
@@ -1017,20 +1089,32 @@ public abstract class ProviderConfig {
          pc.init(endpoint, providerType, adminToken, true);
          return pc; 
     }
-
+    
     /**
      * Checks if the provider of given type does exists.
      * 
      * @param providerName the name of the provider.
-     *
      * @param providerType type of the provider.
-     *
      * @return true if the provider exists with a given name and type.
      */
     public static boolean isProviderExists(String providerName, 
                   String providerType) {
+        return isProviderExists(providerName, providerType, DEFAULT_REALM);
+    }
+    
+    /**
+     * Checks if the provider of given type does exist within the given realm.
+     * 
+     * @param providerName the name of the provider.
+     * @param providerType type of the provider.
+     * @param realm the name of the realm.
+     * @return true if the provider exists with a given name and type.
+     */
+    public static boolean isProviderExists(String providerName, 
+                  String providerType, String realm) {
         try {
-            ProviderConfig config = getProvider(providerName, providerType);
+            ProviderConfig config = getProvider(providerName, providerType, 
+                    realm);
             return config.isExists();
         } catch (ProviderException pe) {
             ProviderUtils.debug.error("ProviderConfig.isProviderExists:: " +
@@ -1040,21 +1124,34 @@ public abstract class ProviderConfig {
     }
     
     /**
-     * Checks if the provider of given type does exists.
+     * Checks if the provider of given type does exist in the root realm.
      * 
      * @param providerName the name of the provider.
-     *
      * @param providerType type of the provider.
-     * 
      * @param isEndPoint flag to indicate check/search based on WSP end point.
      *
      * @return true if the provider exists with a given name and type.
      */
     public static boolean isProviderExists(String providerName, 
                   String providerType, boolean isEndPoint) {
+        return isProviderExists(providerName, providerType, DEFAULT_REALM, isEndPoint);
+    }
+
+    /**
+     * Checks if the provider of given type does exists within the given realm.
+     * 
+     * @param providerName the name of the provider.
+     * @param providerType type of the provider.
+     * @param realm the name of the realm.
+     * @param isEndPoint flag to indicate check/search based on WSP end point.
+     *
+     * @return true if the provider exists with a given name and type.
+     */
+    public static boolean isProviderExists(String providerName, 
+                  String providerType, String realm, boolean isEndPoint) {
         try {
             ProviderConfig config = getProviderByEndpoint(
-                    providerName, providerType);
+                    providerName, providerType, realm);
             return config.isExists();
         } catch (ProviderException pe) {
             ProviderUtils.debug.error("ProviderConfig.isProviderExists:: " +
@@ -1064,19 +1161,30 @@ public abstract class ProviderConfig {
     }
 
     /**
-     * Removes the provider configuration.
+     * Removes the provider configuration in the root realm.
      * 
      * @param providerName the name of the provider.
-     * 
      * @param providerType the type of the provider.
-     * 
      * @exception ProviderException if any failure.
      */
     public static void deleteProvider(
            String providerName, String providerType) throws ProviderException {
+        deleteProvider(providerName, providerType, DEFAULT_REALM);
+    }
+
+    /**
+     * Removes the provider configuration in the given realm.
+     * 
+     * @param providerName the name of the provider.
+     * @param providerType the type of the provider.
+     * @param realm the name of the realm.
+     * @exception ProviderException if any failure.
+     */
+    public static void deleteProvider(
+           String providerName, String providerType, String realm) throws ProviderException {
 
         ProviderConfig pc = getConfigAdapter();
-        pc.init(providerName, providerType, getAdminToken(), false);
+        pc.init(providerName, providerType, realm, getAdminToken(), false);
         pc.delete();
     }
 

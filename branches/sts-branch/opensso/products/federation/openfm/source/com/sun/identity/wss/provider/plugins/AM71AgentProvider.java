@@ -98,15 +98,16 @@ public class AM71AgentProvider extends ProviderConfig {
      private boolean profilePresent;
 
      public void init (String providerName, 
-           String providerType, SSOToken token, boolean isEndpoint) throws ProviderException {
+           String providerType, String realm, SSOToken token, boolean isEndpoint) throws ProviderException {
 
         this.providerName = providerName;
         this.providerType = providerType;
+        this.realm = (realm == null || realm.isEmpty() ? "/" : realm);
         this.token = token;
 
         if(debug.messageEnabled()) {
            debug.message("AM71AgentProvider: providerName = " + providerName +
-               " providerType = " + providerType);
+               ", providerType = " + providerType + ", realm = " + realm);
         }
 
         if (providerType.equals(ProviderConfig.WSP)) {
@@ -122,7 +123,7 @@ public class AM71AgentProvider extends ProviderConfig {
         // Obtain the provider from Agent profile
         try {
             if (idRepo == null) {
-                idRepo = new AMIdentityRepository(token, "/");
+                idRepo = new AMIdentityRepository(token, realm);
             }
  
             if (agentConfigAttribute == null) {
@@ -296,6 +297,11 @@ public class AM71AgentProvider extends ProviderConfig {
 
     public void store() throws ProviderException {
 
+        // Set the root realm as default is none other is set
+        if (realm == null || realm.isEmpty()) {
+            realm = "/";
+        }
+        
         Set set = new HashSet(); 
         if(providerType != null) { 
            set.add(getKeyValue(TYPE, providerType));
@@ -393,7 +399,7 @@ public class AM71AgentProvider extends ProviderConfig {
             if (profilePresent) {
                 // Construct AMIdentity object and save
                 AMIdentity id = new AMIdentity(token,
-                    providerName + providerType, IdType.AGENT, "/", null);
+                    providerName + providerType, IdType.AGENT, realm, null);
                 debug.message("AM71AgentProvider:Attributes to be stored: "
                     + attributes);
                 id.setAttributes(attributes);
@@ -401,7 +407,7 @@ public class AM71AgentProvider extends ProviderConfig {
             } else {
                 // Create a new Agent profile
                 if (idRepo == null) {
-                    idRepo = new AMIdentityRepository(token, "/");
+                    idRepo = new AMIdentityRepository(token, realm);
                 }
                 idRepo.createIdentity(IdType.AGENT,
                     providerName + providerType, attributes);
@@ -418,14 +424,19 @@ public class AM71AgentProvider extends ProviderConfig {
             return;
         }
 
+        // Set the root realm as default is none other is set
+        if (realm == null || realm.isEmpty()) {
+            realm = "/";
+        }
+
         // Delete the agent profile
         try {
             if (idRepo == null) {
-                idRepo = new AMIdentityRepository(token, "/");
+                idRepo = new AMIdentityRepository(token, realm);
             }
             // Construct AMIdentity object to delete
             AMIdentity id = new AMIdentity(token,
-                providerName + providerType, IdType.AGENT, "/", null);
+                providerName + providerType, IdType.AGENT, realm, null);
             Set identities = new HashSet();
             identities.add(id);
             idRepo.deleteIdentities(identities);
