@@ -28,15 +28,17 @@
 
 package com.sun.identity.wss.trust;
 
-import com.sun.identity.wss.trust.WSTException;
+import com.sun.xml.bind.AnyTypeAdapter;
 import org.w3c.dom.Element;
 import java.util.List;
+import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
  * This abstract class <code>RequestSecurityToken</code> represents the
  * WS-Trust protocol element RequestSecurityToken.
  */
-
+@XmlJavaTypeAdapter(AnyTypeAdapter.class)
 public abstract class RequestSecurityToken {
     
     protected static final String REQUEST_SECURITY_TOKEN = 
@@ -109,6 +111,7 @@ public abstract class RequestSecurityToken {
      * Returns the OnBehalfOf <code>Element</code>
      * @return the OnBehalfOf <code>Element</code>
      */
+    @XmlAnyElement
     public Element getOnBehalfOf() {
         return oboToken;
     }

@@ -28,13 +28,16 @@
 
 package com.sun.identity.wss.trust;
 
-import com.sun.identity.wss.trust.WSTException;
+import com.sun.xml.bind.AnyTypeAdapter;
+import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.w3c.dom.Element;
 
 /**
  * This abstract class <code>RequestSecurityTokenResponse</code> represents the
  * WS-Trust protocol element RequestSecurityTokenResponse. 
  */
+@XmlJavaTypeAdapter(AnyTypeAdapter.class)
 public abstract class RequestSecurityTokenResponse {
     
     
@@ -91,6 +94,7 @@ public abstract class RequestSecurityTokenResponse {
      * Returns the requested security token as a DOM Element.
      * @return the requested security token as a DOM Element
      */
+    @XmlAnyElement
     public Element getRequestedSecurityToken() {
         return requestedSecurityToken;
     }
