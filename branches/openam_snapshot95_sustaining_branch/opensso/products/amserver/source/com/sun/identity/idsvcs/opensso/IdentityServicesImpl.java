@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2010 ForgeRock AS
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 package com.sun.identity.idsvcs.opensso;
 
@@ -204,12 +204,28 @@ public class IdentityServicesImpl
                 }
                 lc.submitRequirements(callbacks);
             }
+            
+            // Without this property defined the default will be false which is 
+            // backwards compatable.
+            boolean useGenericAuthenticationException = 
+                    Boolean.parseBoolean(SystemProperties.get(
+                    Constants.GENERIC_SOAP_REST_AUTHENTICATION_EXCEPTION, "false"));
+            
+            if (debug.messageEnabled() && useGenericAuthenticationException) {
+                debug.message("IdentityServicesImpl:authenticate returning an InvalidCredentials exception for invalid passwords.");
+            }
+            
             // validate the password..
             if (lc.getStatus() != AuthContext.Status.SUCCESS) {
                 String ec = lc.getErrorCode();
                 String em = lc.getErrorMessage();
                 if(ec.equals(AMAuthErrorCode.AUTH_INVALID_PASSWORD)) {
-                    throw new InvalidPassword(em);
+                    if (useGenericAuthenticationException) {
+                        // We can't use the error message as it is for invalid password
+                        throw new InvalidCredentials("");
+                    } else {
+                        throw new InvalidPassword(em);
+                    }
                 } else if (ec.equals(AMAuthErrorCode.AUTH_PROFILE_ERROR) ||
                     ec.equals(AMAuthErrorCode.AUTH_USER_NOT_FOUND)) {
                     throw new UserNotFound(em);
@@ -220,7 +236,12 @@ public class IdentityServicesImpl
                 } else if (ec.equals(AMAuthErrorCode.AUTH_ACCOUNT_EXPIRED)) {
                     throw new AccountExpired(em);
                 } else if (ec.equals(AMAuthErrorCode.AUTH_LOGIN_FAILED)) {
-                    throw new InvalidCredentials(em);
+                    if (useGenericAuthenticationException) {
+                        // We can't use the error message to be consistent with the invalid password case                        
+                        throw new InvalidCredentials("");
+                    } else {
+                        throw new InvalidCredentials(em);
+                    }
                 } else if (ec.equals(AMAuthErrorCode.AUTH_MAX_SESSION_REACHED)) {
                     throw new MaximumSessionReached(em);
                 }
@@ -384,7 +405,7 @@ public class IdentityServicesImpl
             attrNames = new ArrayList();
             for (int i = 0; i < attributeNames.length; i++) {
                 attrNames.add(attributeNames[i]);
-            }
+        }
         }
         return attributes(attrNames, subject);
     }
@@ -549,7 +570,7 @@ public class IdentityServicesImpl
 
             for (int i = 0; i < attributes.length; i++) {
                 searchAttrsList.add(attributes[i]);
-            }
+        }
         }
 
         List identities = search(filter, searchAttrsList, admin);
@@ -927,7 +948,7 @@ public class IdentityServicesImpl
 
             for (int i = 0; i < attributes.length; i++) {
                 attrList.add(attributes[i]);
-            }
+        }
         }
 
         return read(name, attrList, admin);

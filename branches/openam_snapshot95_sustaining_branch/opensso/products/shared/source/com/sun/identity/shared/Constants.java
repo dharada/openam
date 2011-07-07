@@ -1122,4 +1122,11 @@ public interface Constants {
      */
     String CLIENT_IP_ADDR_HEADER =
         "com.sun.identity.authentication.client.ipAddressHeader";
+    
+    /**
+     * Switch to allow for a generic Authentication Exception rather than
+     * the more specific InvalidPassword Exception from the SOAP and REST API
+     */
+    public static final String GENERIC_SOAP_REST_AUTHENTICATION_EXCEPTION =
+            "openam.auth.soap.rest.generic.authentication.exception";
 }
