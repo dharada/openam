@@ -182,7 +182,7 @@ $(STD_LIB)_LDLIBS := $(NSS_DYNAMIC_LIBS) $(NSPR_LIBS)
 
 ifeq ($(OS_ARCH), WINNT)
 ifdef   OS_IS_CYGWIN
-$(STD_LIB)_LDLIBS += user32.lib
+$(STD_LIB)_LDLIBS += user32.lib wininet.lib Ws2_32.lib
 else
 $(STD_LIB)_LDLIBS += -luser32
 endif
