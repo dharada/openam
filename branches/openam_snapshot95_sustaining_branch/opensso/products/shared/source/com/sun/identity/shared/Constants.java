@@ -705,7 +705,13 @@ public interface Constants {
      * Property string for URL Checker Target URL
      */
     String URLCHECKER_TARGET_URL = "com.sun.identity.urlchecker.targeturl";
-
+    
+    /**
+     * Configuration property to enable the GET request for ClusterState
+     * OPENAM-255
+     */
+    public static final String URLCHECKER_DOREQUEST = "com.sun.identity.urlchecker.dorequest";
+    
     /**
      * Property string for URL Checker Target URL
      */
