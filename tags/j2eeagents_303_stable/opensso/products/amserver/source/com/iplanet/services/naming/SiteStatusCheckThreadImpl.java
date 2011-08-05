@@ -232,8 +232,7 @@ public class SiteStatusCheckThreadImpl implements SiteStatusCheck {
                                 debug.message("URLChecker.check() : " +
                                     "setting status to " + 
                             	    "** UNAVAILABLE ** for " + 
-                            	    url.toExternalForm() + "responseCode=" + 
-				    responseCode);
+                            	    url.toExternalForm());
                             }
                             if (cnt == urlCheckerRetryLimit) {
                                 getUrlStatus().setStatus(
