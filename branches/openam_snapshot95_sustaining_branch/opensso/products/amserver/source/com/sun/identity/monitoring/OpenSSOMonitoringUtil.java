@@ -40,7 +40,6 @@ import java.util.StringTokenizer;
 import com.iplanet.am.util.SystemProperties;
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
-import com.sun.identity.entitlement.EntitlementException;
 import com.sun.identity.entitlement.util.NetworkMonitor;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.AMIdentityRepository;
@@ -52,6 +51,8 @@ import com.sun.identity.shared.debug.Debug;
 
 public class OpenSSOMonitoringUtil {
 
+    private static boolean initialized = false;
+    private static boolean isMonAvailable = true;
     private String [] networkMonitors = {
         "dbLookupPrivileges",
         "dbLookupReferrals",
@@ -289,4 +290,30 @@ public class OpenSSOMonitoringUtil {
         }
         return null;
     }
+
+    /**
+     * In case OpenDMK is not available on classpath, monitorable classes should
+     * use the following method to discover such scenario since this method will
+     * safely (without exception) recognize it.
+     *
+     * @return <code>true</code> if OpenDMK is present and the monitoring is
+     * enabled.
+     */
+    public static boolean isRunning() {
+        if (!initialized) {
+            try {
+                Class.forName("com.sun.identity.monitoring.Agent");
+            } catch (ClassNotFoundException cnfe) {
+                isMonAvailable = false;
+            } catch (NoClassDefFoundError ncdfe) {
+                // if the Agent class is avaliable, but the SNMP library isn't (ssoadm)
+                // TODO: fix this when the project is modularized
+                isMonAvailable = false;
+            }
+            initialized = true;
+        }
+        
+        return isMonAvailable ? Agent.isRunning() : false;
+    }
+
 }

@@ -1212,6 +1212,10 @@ public class Agent {
         }
     }
 
+    public static Object getConnPoolSvcMBean() {
+        return mib2 == null ? null : mib2.getConnPoolGroup();
+     }
+
     public static String getSsoProtocol() {
         if (agentSvrInfo != null) {
             return (agentSvrInfo.serverProtocol);

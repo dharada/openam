@@ -28,23 +28,18 @@
 
 package com.sun.identity.common;
 
-import com.sun.identity.common.GeneralTaskRunnable;
-import com.sun.identity.common.HeadTaskRunnable;
-import com.sun.identity.common.SystemTimer;
-import com.sun.identity.common.SystemTimerPool;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.StringTokenizer;
 import com.iplanet.am.util.SSLSocketFactoryManager;
 import com.iplanet.am.util.SystemProperties;
 import com.iplanet.services.ldap.DSConfigMgr;
-import com.sun.identity.common.FallBackManager;
+import com.sun.identity.monitoring.Agent;
+import com.sun.identity.monitoring.OpenSSOMonitoringUtil;
+import com.sun.identity.monitoring.SsoServerConnPoolSvcImpl;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.ldap.LDAPConnection;
 import com.sun.identity.shared.ldap.LDAPException;
@@ -323,6 +318,8 @@ public class LDAPConnectionPool {
                     }
                 }
                 currentConnectionCount = busyConnectionCount = 0;
+                adjustBusyConnections(-busyConnectionCount);
+                adjustCurrentConnections(-currentConnectionCount);
                 pool = null;
             }
             if ((ldc != null) && (ldc.isConnected())) {
@@ -382,11 +379,13 @@ public class LDAPConnectionPool {
                  */
                     if ((busyConnectionCount == maxSize) || (waitCount > 0)) {
                         waitCount++;
+                        long now = System.currentTimeMillis();
                         if (timeout > 0) {
                             this.wait(timeout);
                         } else {
                             this.wait();
                         }
+                        monitorWaitingTime(now);
                         waitCount--;
                     }
                     if (!defunct) {
@@ -418,8 +417,8 @@ public class LDAPConnectionPool {
             try {
                 con = createConnection(LDAPConnPoolUtils.connectionPoolsStatus);
                 backupPool.add(con);
-                currentConnectionCount++;
-                busyConnectionCount++;
+                adjustCurrentConnections(+1);
+                adjustBusyConnections(1);
             } catch(Exception ex) {
                 debug.error("LDAPConnection pool:" + name +
                     ":Error while adding a connection.", ex);
@@ -428,7 +427,7 @@ public class LDAPConnectionPool {
             if (currentConnectionCount > busyConnectionCount) {
                 con = pool[currentConnectionCount - busyConnectionCount - 1];
                 pool[currentConnectionCount - busyConnectionCount - 1] = null;
-                busyConnectionCount++;
+                adjustBusyConnections(1);
                 currentPool.remove(con);
                 if ((cleaner != null) && 
                     ((currentConnectionCount - busyConnectionCount) >=
@@ -489,7 +488,8 @@ public class LDAPConnectionPool {
                         }
                         if (backupPool.contains(ld) && currentPool.add(ld)) {
                             localConn.returnsLocalConnection();
-                            busyConnectionCount--;
+                            incReleasedConns();
+                            adjustBusyConnections(-1);
                             // return connections from the end of array                    
                             pool[currentConnectionCount - busyConnectionCount -
                                 1] = ld;
@@ -578,6 +578,7 @@ public class LDAPConnectionPool {
             backupPool.add(pool[i]);
             currentPool.add(pool[i]);
         }
+        adjustCurrentConnections(minSize);
         currentConnectionCount = minSize;
         busyConnectionCount = 0;
         waitCount = 0;
@@ -780,7 +781,7 @@ public class LDAPConnectionPool {
                     ":Error during disconnect.", e);
             }
             pool[currentConnectionCount - busyConnectionCount - 1] = null;
-            currentConnectionCount--;
+            adjustCurrentConnections(-1);
         }
     }
     
@@ -1243,6 +1244,41 @@ public class LDAPConnectionPool {
     private HashSet currentPool;
     private ThreadLocalConnection localConn;
     static FallBackManager fMgr;
+
+    private void monitorWaitingTime(long then) {
+        if (OpenSSOMonitoringUtil.isRunning()) {
+            long now = System.currentTimeMillis();
+            SsoServerConnPoolSvcImpl monitor =
+                    (SsoServerConnPoolSvcImpl) Agent.getConnPoolSvcMBean();
+            monitor.updateWaitingTime(then, now);
+        }
+    }
+
+    private void adjustBusyConnections(int diff) {
+        busyConnectionCount += diff;
+        if (OpenSSOMonitoringUtil.isRunning()) {
+            SsoServerConnPoolSvcImpl monitor =
+                    (SsoServerConnPoolSvcImpl) Agent.getConnPoolSvcMBean();
+            monitor.adjustBusyConnections(diff);
+        }
+    }
+
+    private void adjustCurrentConnections(int diff) {
+        currentConnectionCount += diff;
+        if (OpenSSOMonitoringUtil.isRunning()) {
+            SsoServerConnPoolSvcImpl monitor =
+                    (SsoServerConnPoolSvcImpl) Agent.getConnPoolSvcMBean();
+            monitor.adjustCurrentConnections(diff);
+        }
+    }
+
+    private void incReleasedConns() {
+        if (OpenSSOMonitoringUtil.isRunning()) {
+            SsoServerConnPoolSvcImpl monitor =
+                     (SsoServerConnPoolSvcImpl) Agent.getConnPoolSvcMBean();
+            monitor.incReleasedConns();
+        }
+    }
 
     class ThreadLocalConnection {
 
