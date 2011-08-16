@@ -25,6 +25,9 @@
  * $Id: AMTuneUtil.java,v 1.14 2009/05/04 23:34:10 ykwon Exp $
  */
 
+/**
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.tune.util;
 
 import com.sun.identity.tune.common.FileHandler;
@@ -1462,7 +1465,7 @@ import java.util.zip.ZipOutputStream;
                 int idx = s.indexOf(" ");
                 if (idx != -1) {
                     String permission = s.substring(0, idx);
-                    if (!permission.equals("-r--------")) {
+                    if (!permission.startsWith("-r--------")) {
                         String msg = getResourceBundle().getString(
                                 "pt-error-password-file-not-readonly");
                         Object[] param = {fileName};
