@@ -26,7 +26,7 @@
  */
 
 /*
- * Portions Copyrighted 2010 ForgeRock AS
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 package com.sun.identity.entitlement;
@@ -478,11 +478,21 @@ public final class ReferralPrivilege implements IPrivilege, Cloneable {
                             Subject subjectSubRealm = new Subject(false,
                                 subject.getPrincipals(), new HashSet(),
                                 subject.getPrivateCredentials());
-
+                            
+                            // Fix for OPENAM-790
+                            // Ensure that the Entitlement environment contains the correct 
+                            // Policy Configuration for the realm is being evaluated.
+                            Map savedConfig = ec.updatePolicyConfigForSubRealm(environment, rlm);
+                            
                             List<Entitlement> entitlements = evaluator.evaluate(
                                 rlm,
                                 adminSubject, subjectSubRealm, applicationName,
                                 resName, environment, recursive);
+                            
+                            if (savedConfig != null) {
+                                ec.restoreSavedPolicyConfig(environment, savedConfig);
+                            }
+                            
                             if (entitlements != null) {
                                 entitlementCombiner.add(entitlements);
                                 results = entitlementCombiner.getResults();
