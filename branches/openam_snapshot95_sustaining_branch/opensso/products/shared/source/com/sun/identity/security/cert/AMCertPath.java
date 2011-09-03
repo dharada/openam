@@ -26,6 +26,12 @@
  *
  */
 
+
+/*
+ * Portions Copyrighted 2010-2011 ForgeRock AS
+ */
+
+
 package com.sun.identity.security.cert;
 
 import java.lang.reflect.Method;
@@ -48,6 +54,9 @@ import java.util.Vector;
 
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.security.SecurityDebug;
+import com.sun.identity.shared.configuration.SystemPropertiesManager;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Class AMCertPath is special cased Certpath validation class.
@@ -59,9 +68,9 @@ public class AMCertPath {
 
     private static CertificateFactory cf = null;
     private static CertPathValidator cpv = null;
-    private CertStore store = null;
-    public static Debug debug = SecurityDebug.debug;
-    public static boolean OCSPCheck = false;
+    private CertStore store = null; //GuardedBy("AMCertPath.class")
+    private static Debug debug = SecurityDebug.debug;
+    private static boolean OCSPCheck = false; //GuardedBy("AMCertPath.class")
     
     static {
     	try {
@@ -87,7 +96,9 @@ public class AMCertPath {
 		
             CollectionCertStoreParameters collection = 
                                 new CollectionCertStoreParameters(crls);
-            store = CertStore.getInstance("Collection", collection);
+            synchronized(AMCertPath.class) {
+                store = CertStore.getInstance("Collection", collection);
+            }
         } else {
             if (debug.messageEnabled()) {
                 debug.message("AMCertPath:AMCertPath: no crl");
@@ -98,7 +109,7 @@ public class AMCertPath {
     /**
      * It does cert path validation together with CRL check and ocsp checking 
      * if they are properly configured.
-     * @param certs
+     * @param X509Certificate[] certs
      **/
     public boolean verify(X509Certificate[] certs, boolean crlEnabled,
                           boolean ocspEnabled) {
@@ -106,36 +117,55 @@ public class AMCertPath {
             debug.message("AMCertPath.verify: invoked !");
         }
         try {
-            List certList = Arrays.asList(certs);
-            CertPath cp= (CertPath) cf.generateCertPath(certList);
+            final List<X509Certificate> certList = Arrays.asList(certs);
+            final CertPath cp= (CertPath) cf.generateCertPath(certList);
 
             // init PKIXParameters
-            Class trustMgrClass = Class.forName(
+            Class<?> trustMgrClass = Class.forName(
                   "com.sun.identity.security.keystore.AMX509TrustManager");
             Object trustMgr = (Object) trustMgrClass.newInstance();
-            Method method = trustMgrClass.getMethod("getKeyStore", (Class)null);
-            KeyStore keystore = (KeyStore) method.invoke(trustMgr, (Object)null);
-            PKIXParameters pkixparams= new PKIXParameters(keystore);
+            Method method = trustMgrClass.getMethod("getKeyStore");
+            KeyStore keystore = (KeyStore) method.invoke(trustMgr);
+            PKIXParameters pkixparams= new PKIXParameters(keystore);           
             if (debug.messageEnabled()) {
                 debug.message("AMCertPath.verify: crlEnabled ---> " + crlEnabled);
                 debug.message("AMCertPath.verify: ocspEnabled ---> " + ocspEnabled);
             }
 
-            if (ocspEnabled && !OCSPCheck) {
-                Security.setProperty("ocsp.enable", "true"); 
-                OCSPCheck = true;
+            if (ocspEnabled) {
+                synchronized(AMCertPath.class) {
+                    if (!OCSPCheck) {
+                        Security.setProperty("ocsp.enable", "true");
+                        final String responderURLString = getResponderURLString();
+                        if (responderURLString != null && responderURLString.trim().length() != 0) {
+                            Security.setProperty("ocsp.responderURL", responderURLString);
+                        }
+                        OCSPCheck = true;
+                    }
+                }
+                // If setRevocationEnabled is not set to true,
+                // OCSP validation is not performed by JCE
+                pkixparams.setRevocationEnabled(true);
+                if (debug.messageEnabled()) {
+                    debug.message("AMCertPath.verify: pkixparams.setRevocationEnabled "
+                            + "set to TRUE");
+                }
+            } else {
+                pkixparams.setRevocationEnabled(crlEnabled);
             }
 
-            pkixparams.setRevocationEnabled(crlEnabled);
-            if (store != null) {
-            	pkixparams.addCertStore(store);
+
+            synchronized(AMCertPath.class) {
+                if (store != null) {
+                    pkixparams.addCertStore(store);
+                }
             }
             
             // validate
             CertPathValidatorResult cpvResult= cpv.validate(cp, pkixparams);
 
             if (debug.messageEnabled()) {
-                debug.message("AMCertPath.verify: PASS" + cpvResult.toString());
+                debug.message("AMCertPath.verify: PASS " + cpvResult.toString());
             }
         } catch (java.security.cert.CertPathValidatorException e) {
             debug.error("AMCertPath.verify: FAILED - " + e.getMessage());
@@ -149,6 +179,29 @@ public class AMCertPath {
         }
 
 	return true;
+    }
+
+    /*
+     * returns <code>null</code> if no or invalid value is specified for
+     * <code>com.sun.identity.authentication.ocsp.responder.url</code>
+     */
+    private String getResponderURLString() {
+        final String responderURLString = SystemPropertiesManager.get(
+                "com.sun.identity.authentication.ocsp.responder.url");
+        if (responderURLString != null) {
+            try {
+                final URL responderURL = new URL(responderURLString);
+            } catch (MalformedURLException urlEx) {
+                debug.error("AMCertPath.getResponderURLString: Invalid ocsp responder url configured", urlEx);
+            } finally {
+                return responderURLString;
+            }
+        } else {
+            if (debug.warningEnabled()) {
+                debug.warning("AMCertPath.getResponderURLString: No ocsp responder url configured");
+            }
+        }
+        return responderURLString;
     }
     
     
