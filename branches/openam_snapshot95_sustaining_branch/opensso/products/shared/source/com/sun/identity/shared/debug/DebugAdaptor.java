@@ -24,11 +24,15 @@
  *
  * $Id: DebugAdaptor.java,v 1.1 2009/08/19 05:41:17 veiming Exp $
  */
-
+/**
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.shared.debug;
 
 /**
  * Adaptor for sharing out the OpenSSO debug provider.
+ *
+ * @deprecated Use {@link Debug#getInstance(java.lang.String)} instead.
  */
 public class DebugAdaptor {
     private DebugAdaptor() {

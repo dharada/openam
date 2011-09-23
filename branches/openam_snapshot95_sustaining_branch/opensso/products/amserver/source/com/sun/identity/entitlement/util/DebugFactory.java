@@ -24,7 +24,9 @@
  *
  * $Id: DebugFactory.java,v 1.2 2010/01/07 00:19:12 veiming Exp $
  */
-
+/**
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.entitlement.util;
 
 import com.sun.identity.shared.debug.DebugAdaptor;
@@ -33,6 +35,8 @@ import com.sun.identity.shared.debug.IDebugProvider;
 
 /**
  * Providers the debug provider handler.
+ *
+ * @deprecated Use {@link com.sun.identity.shared.debug.Debug#getInstance(java.lang.String)} instead.
  */
 public final class DebugFactory {
     private static DebugFactory instance = new DebugFactory();
