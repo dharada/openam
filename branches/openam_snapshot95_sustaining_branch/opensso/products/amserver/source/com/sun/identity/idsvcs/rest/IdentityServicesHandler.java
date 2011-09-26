@@ -58,6 +58,7 @@ import com.sun.identity.idsvcs.UserInactive;
 import com.sun.identity.idsvcs.UserLocked;
 import com.sun.identity.idsvcs.Token;
 import com.sun.identity.idsvcs.UserDetails;
+import com.sun.identity.shared.debug.Debug;
 import java.io.StringWriter;
 
 /**
@@ -66,6 +67,7 @@ import java.io.StringWriter;
 public class IdentityServicesHandler extends HttpServlet {
 
     private static final long serialVersionUID = 2774677132209419157L;
+    private static Debug debug = Debug.getInstance("amIdentityServices");
 
     // =======================================================================
     // Constants
@@ -671,6 +673,8 @@ public class IdentityServicesHandler extends HttpServlet {
                             || e instanceof UserInactive || e instanceof AccountExpired
                             || e instanceof MaximumSessionReached){
                         response.sendError(HttpServletResponse.SC_FORBIDDEN, sw.toString());
+                    } else if (e instanceof InvocationTargetException) {
+                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     } else {
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                     }
@@ -744,6 +748,10 @@ public class IdentityServicesHandler extends HttpServlet {
             } catch (IllegalAccessException e) {
                 throw new GeneralFailure(e.getMessage());
             } catch (InvocationTargetException e) {
+                if (debug.warningEnabled()) {
+                    debug.warning("Exception during invocation", e);
+                   }
+                
                 throw (e.getTargetException());
             }
 
