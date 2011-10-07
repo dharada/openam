@@ -244,6 +244,8 @@ public class IdentityServicesImpl
                     }
                 } else if (ec.equals(AMAuthErrorCode.AUTH_MAX_SESSION_REACHED)) {
                     throw new MaximumSessionReached(em);
+                } else if (ec.equals(AMAuthErrorCode.AUTH_ERROR)) {
+            	    throw new GeneralFailure(em);
                 }
             } else {
                 try {

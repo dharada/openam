@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.StringTokenizer;
+
 import com.sun.identity.shared.ldap.LDAPAttribute;
 import com.sun.identity.shared.ldap.LDAPConnection;
 import com.sun.identity.shared.ldap.LDAPControl;
@@ -408,11 +409,46 @@ public class LDAPAuthUtils {
         }
         userId = user;
         userPassword = password;
-        searchForUser();
-        if (screenState == SERVER_DOWN || screenState == USER_NOT_FOUND) {
-            return;
-        }
-        authenticate();
+        
+        //retry just once if connection was closing
+        boolean shouldRetry = false;
+    	do {
+    	    try {
+    	    	searchForUser();
+    	    	if (screenState == SERVER_DOWN || screenState == USER_NOT_FOUND) {
+    	    		return;
+    	    	}
+    	    	authenticate();
+    	    	shouldRetry = false;
+    	    } catch (LDAPUtilException e) {
+    	    	// cases for err=53
+                // - disconnect in progress
+                // - backend unavailable (read-only, etc)
+                // - server locked down
+                // - reject unauthenticated requests
+                // - low disk space (updates only)
+                // - bind with no password (binds only)
+    	    	// retrying in case "disconnect in progress"
+    	    	int errCode = e.getLDAPResultCode();
+            	Object[] errMsg = e.getMessageArgs();
+            	// there should be arg to err 53 from LDAPAuthUtils
+            	if (errCode == LDAPUtilException.UNWILLING_TO_PERFORM ) {
+                    // if the flag is already on, then we've already retried. 
+            		// not retrying more than once
+            		if (!shouldRetry) {
+            		    debug.error("Retying user authentication due to err("+errCode+") '"+errMsg[0]+"'");
+                        // datastore was closing recycled connection. retry.
+                        shouldRetry = true;
+            		} else {
+            			shouldRetry = false;
+            			throw e;
+            		}
+            	} else {
+            		// generic failure. do not retry
+            		throw e;
+            	}
+    	    }
+    	} while (shouldRetry);
         
     }
     
@@ -487,7 +523,43 @@ public class LDAPAuthUtils {
         }
         userDN = user;
         userPassword = password;
-        authenticate();
+        
+        //retry just once if connection was closing
+        boolean shouldRetry = false;
+    	do {
+    	    try {
+    	    	authenticate();
+    	    	shouldRetry = false;
+    	    } catch (LDAPUtilException e) {
+    	    	// cases for err=53
+                // - disconnect in progress
+                // - backend unavailable (read-only, etc)
+                // - server locked down
+                // - reject unauthenticated requests
+                // - low disk space (updates only)
+                // - bind with no password (binds only)
+    	    	// retrying in case "disconnect in progress"
+    	    	int errCode = e.getLDAPResultCode();
+            	Object[] errMsg = e.getMessageArgs();
+            	// there should be arg to err 53 from LDAPAuthUtils
+            	if (errCode == LDAPUtilException.UNWILLING_TO_PERFORM ) {
+                    // if the flag is already on, then we've already retried. 
+            		// not retrying more than once
+            		if (!shouldRetry) {
+            		    debug.error("Retrying user authentication due to err("+errCode+") '"+errMsg[0]+"'");
+                        // datastore was closing recycled connection. retry.
+                        shouldRetry = true;
+            		} else {
+            			shouldRetry = false;
+            			throw e;
+            		}
+            	} else {
+            		// generic failure. do not retry
+            		throw e;
+            	}
+    	    }
+    	} while (shouldRetry);
+
         userId = user;
     }
     
@@ -813,6 +885,17 @@ public class LDAPAuthUtils {
             ldc = getConnection();
                 ldc.authenticate(request);
                 controls = ldc.getResponseControls();
+            } catch (LDAPException e) {
+            	int errCode = e.getLDAPResultCode();
+            	String errMsg = e.getMessage();
+            	if (errCode == LDAPException.UNWILLING_TO_PERFORM ) {
+            		// if server is unwilling to process this connection, 
+                    // then remove it from pool
+                    cPool.close(ldc, errCode);
+                    // set ldap connection to null so releaseConnection in finally clause will skip
+                    ldc = null;
+            	}
+            	throw e;
             } finally {
                 if (ldc != null) {
                     releaseConnection(ldc);
@@ -873,9 +956,17 @@ public class LDAPAuthUtils {
             } else if (e.getLDAPResultCode() ==
                 LDAPException.UNWILLING_TO_PERFORM
             ) {
-                debug.message("Account Inactivated or Locked ");
+                // cases for err=53
+                // - disconnect in progress
+                // - backend unavailable (read-only, etc)
+                // - server locked down
+                // - reject unauthenticated requests
+                // - low disk space (updates only)
+                // - bind with no password (binds only)
+            	debug.message(serverHost + " unwilling to perform auth request");
+                String[] args = { e.getMessage() };
                 throw new LDAPUtilException("FConnect",
-                    LDAPException.UNWILLING_TO_PERFORM, null);
+                    LDAPException.UNWILLING_TO_PERFORM, args);
             } else if (e.getLDAPResultCode() ==
                 LDAPException.INAPPROPRIATE_AUTHENTICATION
             ) {
