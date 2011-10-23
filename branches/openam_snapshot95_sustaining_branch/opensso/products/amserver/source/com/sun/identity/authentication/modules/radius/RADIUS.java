@@ -25,7 +25,9 @@
  * $Id: RADIUS.java,v 1.3 2009/06/18 18:48:23 bigfatrat Exp $
  *
  */
-
+/**
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.authentication.modules.radius;
 
 import java.io.*;
@@ -129,8 +131,8 @@ public class RADIUS extends AMLoginModule {
                     }
                     server2 = Misc.getServerMapAttr(options, 
                         "iplanet-am-auth-radius-server2");
-                    if (server1 == null) {
-                        server1 = "localhost";
+                    if (server2 == null) {
+                        server2 = "localhost";
                         debug.error("Error: primary server attribute " + 
                             "misconfigured using localhost");
                     }
