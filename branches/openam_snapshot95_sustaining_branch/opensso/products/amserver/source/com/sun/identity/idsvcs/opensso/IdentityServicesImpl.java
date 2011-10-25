@@ -84,6 +84,7 @@ import com.iplanet.sso.SSOToken;
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOTokenManager;
 import com.sun.identity.authentication.service.AMAuthErrorCode;
+import com.sun.identity.authentication.service.AuthUtils;
 import com.sun.identity.common.CaseInsensitiveHashMap;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.common.configuration.AgentConfiguration;
@@ -284,8 +285,7 @@ public class IdentityServicesImpl
         try {
             SSOToken ssoToken = getSSOToken(subject);
             if (ssoToken != null) {
-                SSOTokenManager mgr = SSOTokenManager.getInstance();
-                mgr.destroyToken(ssoToken);
+                AuthUtils.logout(ssoToken.getTokenID().toString(), null, null);
             }
         } catch (TokenExpired te) {
             debug.error("IdentityServicesImpl:logout", te);
