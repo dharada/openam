@@ -1125,7 +1125,7 @@ public class AuthD  {
     public boolean isSuperUser(String dn) {
         if (superUserIdentity == null) {
             superUserIdentity = new AMIdentity(
-                    AccessController.doPrivileged(AdminTokenAction.getInstance()),
+                    (SSOToken) AccessController.doPrivileged(AdminTokenAction.getInstance()),
                     superAdmin,
                     IdType.USER,
                     "/",
