@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2011 ForgeRock AS
  */
 
 
@@ -59,15 +59,11 @@ public class ServiceTypeManager {
 
     private static ServiceTypeManager svtm = null;
 
-    private static SSOToken token;
+    private SSOToken token;
     private Map serviceTypes = Collections.synchronizedMap(new HashMap());
 
     // static variables
     private static Random random = new Random();
-
-    private static boolean sitemonitorDisabled = Boolean.valueOf(
-        SystemProperties.get(Constants.SITEMONITOR_DISABLED, "false")).booleanValue();
-
 
     /**
      * Returns an instance of <code>ServiceTypeManager</code>
@@ -204,18 +200,14 @@ public class ServiceTypeManager {
      * @return the <code>SSOToken</code> of the admininistrator 
      * configured in serverconfig.xml 
      */
-    static SSOToken getSSOToken() throws SSOException{
-        if (!SystemProperties.isServerMode() && (token != null) && !sitemonitorDisabled) {
-            return token;
-        }
-
+    static SSOToken getSSOToken() throws SSOException {
         SSOToken token = (SSOToken) AccessController.doPrivileged(
             AdminTokenAction.getInstance());
         if (token == null) {
             throw (new SSOException(new PolicyException(
             ResBundleUtils.rbName, "invalid_admin", null, null)));
         }
-        return (token);
+        return token;
     }
 
     /**
