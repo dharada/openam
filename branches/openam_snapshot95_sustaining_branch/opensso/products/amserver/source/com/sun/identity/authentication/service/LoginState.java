@@ -608,7 +608,7 @@ public class LoginState {
      */
     public String getOrgName() {
         if (orgName == null) {
-            orgName = DNUtils.DNtoName(getOrgDN());
+            orgName = DNMapper.orgNameToRealmName(getOrgDN());
         }
         return orgName;
     }
@@ -1263,7 +1263,7 @@ public class LoginState {
                         (SSOToken) AccessController.doPrivileged(
                             AdminTokenAction.getInstance());
                     AMAuthenticationManager authManager =
-                        new AMAuthenticationManager(adminToken,orgName);
+                        new AMAuthenticationManager(adminToken,getOrgName());
                     AMAuthenticationInstance authInstance =
                         authManager.getAuthenticationInstance(
                             oldAuthenticationModuleInstanceName);
