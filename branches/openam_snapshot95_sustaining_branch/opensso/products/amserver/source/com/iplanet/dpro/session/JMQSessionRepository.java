@@ -26,21 +26,19 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2012 ForgeRock AS
+ */
+
 package com.iplanet.dpro.session;
 
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.common.SystemTimer;
-import com.sun.identity.common.TaskRunnable;
-import com.sun.identity.common.TimerPool;
 import com.iplanet.am.util.SystemProperties;
-import com.iplanet.dpro.session.SessionException;
-import com.iplanet.dpro.session.SessionID;
 import com.iplanet.dpro.session.service.AMSessionRepository;
 import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
-import com.iplanet.dpro.session.share.SessionBundle;
 import com.sun.identity.session.util.SessionUtils;
-import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,8 +46,8 @@ import java.util.Map;
 import javax.jms.IllegalStateException;
 import com.sun.identity.ha.FAMRecord;
 import com.sun.identity.ha.FAMRecordPersister;
-import com.sun.identity.ha.jmqdb.FAMRecordJMQPersister;
 import com.sun.identity.ha.FAMPersisterManager;
+import com.sun.identity.shared.Constants;
 
 /**
  * This class implements JMQ-based session repository which
@@ -128,6 +126,8 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
      */
     private static long runPeriod = 1 * 60 * 1000; // 1 min in milliseconds
 
+    private static boolean caseSensitiveUUID =
+        SystemProperties.getAsBoolean(Constants.CaseSensitiveUUID);
 
     static Debug debug = SessionService.sessionDebug;
 
@@ -318,7 +318,7 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
             String key = SessionUtils.getEncryptedStorageKey(sid);
             byte[] blob = SessionUtils.encode(is);
             long expirationTime = is.getExpirationTime() + gracePeriod;
-            String uuid = is.getUUID();
+            String uuid = caseSensitiveUUID ? is.getUUID() : is.getUUID().toLowerCase();
             if (debug.messageEnabled()) {
                 debug.message("JMQSessionRepository.save(): " + 
                     "session size=" + blob.length + " bytes");
