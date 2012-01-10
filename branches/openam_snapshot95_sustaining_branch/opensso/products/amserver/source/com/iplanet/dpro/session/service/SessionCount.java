@@ -252,7 +252,7 @@ public class SessionCount {
             } else {
                 sessions = Collections.synchronizedSet(new HashSet());
                 sessions.add(is.getID());
-                uuidSessionMap.put(is.getUUID().toLowerCase(), sessions);
+                uuidSessionMap.put((caseSensitiveUUID) ? is.getUUID() : is.getUUID().toLowerCase(), sessions);
             }
         }
     }
