@@ -93,7 +93,7 @@ public class SessionCount {
     private static SSOToken adminToken = null;
     
     private static boolean caseSensitiveUUID =
-        SystemProperties.getAsBoolean(Constants.CaseSensitiveUUID);
+        SystemProperties.getAsBoolean(Constants.CASE_SENSITIVE_UUID);
 
     static {
         try {

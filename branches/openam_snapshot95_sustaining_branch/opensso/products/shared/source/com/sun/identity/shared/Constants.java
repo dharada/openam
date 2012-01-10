@@ -1091,7 +1091,7 @@ public interface Constants {
     public static final String DESTROY_ALL_SESSIONS =
         "openam.session.destroy_all_sessions";
     
-    public static final String CaseSensitiveUUID =
+    public static final String CASE_SENSITIVE_UUID =
         "openam.session.case.sensitive.uuid";
 
     public static final String RETAINED_HTTP_HEADERS_LIST =

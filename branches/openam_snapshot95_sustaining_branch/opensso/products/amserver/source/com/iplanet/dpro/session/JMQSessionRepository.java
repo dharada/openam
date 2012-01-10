@@ -127,7 +127,7 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
     private static long runPeriod = 1 * 60 * 1000; // 1 min in milliseconds
 
     private static boolean caseSensitiveUUID =
-        SystemProperties.getAsBoolean(Constants.CaseSensitiveUUID);
+        SystemProperties.getAsBoolean(Constants.CASE_SENSITIVE_UUID);
 
     static Debug debug = SessionService.sessionDebug;
 
