@@ -26,6 +26,9 @@
  *
  */
 
+/**
+ * Portions Copyrighted 2012
+ */
 package com.sun.identity.idsvcs.rest;
 
 import java.io.PrintWriter;
@@ -45,6 +48,7 @@ import javax.xml.stream.XMLStreamWriter;
 import com.sun.identity.idsvcs.Attribute;
 import com.sun.identity.idsvcs.GeneralFailure;
 import com.sun.identity.idsvcs.IdentityDetails;
+import com.sun.identity.idsvcs.ListWrapper;
 import com.sun.identity.idsvcs.ObjectNotFound;
 import com.sun.identity.idsvcs.Token;
 import com.sun.identity.idsvcs.UserDetails;
@@ -376,27 +380,36 @@ public class MarshallerFactory {
                 wrt.writeEndElement();
 
                 // write the roles.
-                String[] roles = value.getRoles();
-                for (int i = 0; (roles != null && i < roles.length); i++) {
-                    wrt.writeStartElement("role");
-                    wrt.writeAttribute("id", roles[i]);
-                    wrt.writeEndElement();
+                ListWrapper roleList = value.getRoleList();
+                if (roleList != null) {
+                    String[] roles = roleList.getElements();
+                    for (int i = 0; (roles != null && i < roles.length); i++) {
+                        wrt.writeStartElement("role");
+                        wrt.writeAttribute("id", roles[i]);
+                        wrt.writeEndElement();
+                    }
                 }
 
                 // write the groups.
-                String[] groups = value.getGroups();
-                for (int i = 0; (groups != null && i < groups.length); i++) {
-                    wrt.writeStartElement("group");
-                    wrt.writeAttribute("id", groups[i]);
-                    wrt.writeEndElement();
+                ListWrapper groupList = value.getGroupList();
+                if (groupList != null) {
+                    String[] groups = groupList.getElements();
+                    for (int i = 0; (groups != null && i < groups.length); i++) {
+                        wrt.writeStartElement("group");
+                        wrt.writeAttribute("id", groups[i]);
+                        wrt.writeEndElement();
+                    }
                 }
 
                 // write the memberships.
-                String[] members = value.getMembers();
-                for (int i = 0; (members != null && i < members.length); i++) {
-                    wrt.writeStartElement("member");
-                    wrt.writeAttribute("id", members[i]);
-                    wrt.writeEndElement();
+                ListWrapper memberList = value.getMemberList();
+                if (memberList != null) {
+                    String[] members = memberList.getElements();
+                    for (int i = 0; (members != null && i < members.length); i++) {
+                        wrt.writeStartElement("member");
+                        wrt.writeAttribute("id", members[i]);
+                        wrt.writeEndElement();
+                    }
                 }
 
                 // write each of the attributes
@@ -773,30 +786,39 @@ public class MarshallerFactory {
                 wrt.println(details.getRealm());
 
                 // write the roles.
-                String[] roles = details.getRoles();
-                for (int i = 0; (roles != null && i < roles.length); i++) {
-                    // add prefix to denote a parent object..
-                    wrt.print(prfx);
-                    wrt.print("role=");
-                    wrt.println(roles[i]);
+                ListWrapper roleList = details.getRoleList();
+                if (roleList != null) {
+                    String[] roles = roleList.getElements();
+                    for (int i = 0; (roles != null && i < roles.length); i++) {
+                        // add prefix to denote a parent object..
+                        wrt.print(prfx);
+                        wrt.print("role=");
+                        wrt.println(roles[i]);
+                    }
                 }
 
                 // write the groups.
-                String[] groups = details.getGroups();
-                for (int i = 0; (groups != null && i < groups.length); i++) {
-                    // add prefix to denote a parent object..
-                    wrt.print(prfx);
-                    wrt.print("group=");
-                    wrt.println(groups[i]);
+                ListWrapper groupList = details.getGroupList();
+                if (groupList != null) {
+                    String[] groups = groupList.getElements();
+                    for (int i = 0; (groups != null && i < groups.length); i++) {
+                        // add prefix to denote a parent object..
+                        wrt.print(prfx);
+                        wrt.print("group=");
+                        wrt.println(groups[i]);
+                    }
                 }
 
                 // write the members.
-                String[] members = details.getMembers();
-                for (int i = 0; (members != null && i < members.length); i++) {
-                    // add prefix to denote a parent object..
-                    wrt.print(prfx);
-                    wrt.print("member=");
-                    wrt.println(members[i]);
+                ListWrapper memberList = details.getMemberList();
+                if (memberList != null) {
+                    String[] members = memberList.getElements();
+                    for (int i = 0; (members != null && i < members.length); i++) {
+                        // add prefix to denote a parent object..
+                        wrt.print(prfx);
+                        wrt.print("member=");
+                        wrt.println(members[i]);
+                    }
                 }
 
                 // write the attributes..
