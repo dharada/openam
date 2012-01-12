@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2011 ForgeRock AS
+ * Portions Copyrighted 2011-2012 ForgeRock AS
  */
 
 package com.iplanet.dpro.session.service;
@@ -37,6 +37,9 @@ import com.sun.identity.shared.datastruct.CollectionHelper;
 import com.iplanet.dpro.session.Session;
 import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.SessionID;
+import com.iplanet.sso.SSOException;
+import com.iplanet.sso.SSOToken;
+import com.iplanet.sso.SSOTokenManager;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdUtils;
@@ -92,9 +95,13 @@ public class SessionConstraint {
 
     private static QuotaExhaustionAction quotaExhaustionActionDestoryAll = null;
 
+    private static QuotaExhaustionAction quotaExhaustionActionDestroyOldest = null;
+
     private static boolean destroyAllButOne =
             SystemProperties.getAsBoolean(Constants.DESTROY_ALL_SESSIONS);
 
+    private static boolean destroyOldest =
+            SystemProperties.getAsBoolean(Constants.DESTROY_OLDEST_SESSION);
     /*
      * Get the session service
      */
@@ -114,6 +121,7 @@ public class SessionConstraint {
         quotaExhaustionActionDeny = new DenyAccessAction();
         quotaExhaustionActionDestroy = new DestroyNextExpiringSessionAction();
         quotaExhaustionActionDestoryAll = new DestroyAllExistingSessionsAction();
+        quotaExhaustionActionDestroyOldest = new DestroyOldestSessionAction();
     }
 
     static SessionService getSS() {
@@ -121,7 +129,12 @@ public class SessionConstraint {
     }
 
     private static QuotaExhaustionAction getQuotaExhaustionAction() {
-        if ((SessionService.getConstraintResultingBehavior() == DESTROY_OLD_SESSION) &&
+        if (destroyOldest) {
+            if (debug.messageEnabled()) {
+                debug.message("SessionConstraint.getQuotaExhaustionAction: Using quotaExhaustionActionDestroyOldest");
+            }
+            return quotaExhaustionActionDestroyOldest;
+        } else if ((SessionService.getConstraintResultingBehavior() == DESTROY_OLD_SESSION) &&
             !(destroyAllButOne)) {
             if (debug.messageEnabled()) {
 		    debug.message("SessionConstraint." +
@@ -266,6 +279,50 @@ public class SessionConstraint {
                     if (debug.messageEnabled()) {
                         debug.message("Failed to destroy the next "
                                 + "expiring session.", e);
+                    }
+                    // deny the session activation request
+                    // in this case
+                    return true;
+                }
+            }
+            SessionCount.incrementSessionCount(is);
+            return false;
+        }
+    }
+
+    private static class DestroyOldestSessionAction implements QuotaExhaustionAction {
+
+        @Override
+        public boolean action(InternalSession is, Map sessions) {
+            long smallestExpTime = Long.MAX_VALUE;
+            String nextExpiringSessionID = null;
+            for (Map.Entry<String, Long> entry : (Set<Map.Entry<String, Long>>) sessions.entrySet()) {
+                try {
+                    Session session = Session.getSession(new SessionID(entry.getKey()));
+                    session.refresh(false);
+                    long expTime = session.getTimeLeft();
+                    if (expTime < smallestExpTime) {
+                        smallestExpTime = expTime;
+                        nextExpiringSessionID = entry.getKey();
+                    }
+                } catch (SessionException ssoe) {
+                    if (debug.warningEnabled()) {
+                        debug.warning("Failed to create SSOToken", ssoe);
+                    }
+                    // deny the session activation request
+                    // in this case
+                    return true;
+                }
+            }
+
+            if (nextExpiringSessionID != null) {
+                SessionID sessID = new SessionID(nextExpiringSessionID);
+                try {
+                    Session s = Session.getSession(sessID);
+                    s.destroySession(s);
+                } catch (SessionException e) {
+                    if (debug.messageEnabled()) {
+                        debug.message("Failed to destroy the next expiring session.", e);
                     }
                     // deny the session activation request
                     // in this case

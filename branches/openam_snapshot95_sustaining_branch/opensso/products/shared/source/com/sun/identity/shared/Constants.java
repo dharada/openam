@@ -1090,6 +1090,9 @@ public interface Constants {
 
     public static final String DESTROY_ALL_SESSIONS =
         "openam.session.destroy_all_sessions";
+
+    public static final String DESTROY_OLDEST_SESSION =
+            "openam.session.destroy_oldest_session";
     
     public static final String CASE_SENSITIVE_UUID =
         "openam.session.case.sensitive.uuid";
