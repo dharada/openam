@@ -265,6 +265,7 @@ public class CDCServlet extends HttpServlet {
      *         the servlet handles the GET request
      * @throws IOException if the request for the GET could not be handled.
      */
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         doGetPost(request, response);
@@ -281,6 +282,7 @@ public class CDCServlet extends HttpServlet {
      *         the servlet handles the GET request.
      * @throws IOException if the request for the GET could not be handled.
      */
+    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         doGetPost(request, response);
@@ -471,7 +473,7 @@ public class CDCServlet extends HttpServlet {
      * @return The parameters of the request as String.
      */
     private String getParameterString(HttpServletRequest request) {
-        StringBuffer parameterString = new StringBuffer(1024);
+        StringBuilder parameterString = new StringBuilder(1024);
         
         for (Enumeration e = request.getParameterNames(); e.hasMoreElements();){
             String paramName = ((String)e.nextElement());
@@ -500,13 +502,13 @@ public class CDCServlet extends HttpServlet {
         HttpServletRequest request,
         HttpServletResponse response
     ) {
-        StringBuffer adviceList = null;
+        StringBuilder adviceList = null;
         
         for (Enumeration e = request.getParameterNames(); e.hasMoreElements();){
             String paramName = (String)e.nextElement();
             if (adviceParams.contains(paramName)) {
                 if (adviceList == null) {
-                    adviceList = new StringBuffer();
+                    adviceList = new StringBuilder();
                 } else {
                     adviceList.append(AMP);
                 }
@@ -542,7 +544,7 @@ public class CDCServlet extends HttpServlet {
         HttpServletResponse response,
         String policyAdviceList
     ) throws IOException {
-        StringBuffer redirectURL = new StringBuffer(1024);
+        StringBuilder redirectURL = new StringBuilder(1024);
         
         // Check if user has authenticated to another OpenSSO
         // instance
@@ -565,7 +567,7 @@ public class CDCServlet extends HttpServlet {
                 String finalURL = getRedirectURL(request, response);
                 
                 if (finalURL != null) {
-                    StringBuffer gotoURL = new StringBuffer(1024);
+                    StringBuilder gotoURL = new StringBuilder(1024);
                     gotoURL.append(deployDescriptor).append(CDCURI)
                         .append(QUESTION_MARK).append(TARGET_PARAMETER)
                         .append(EQUALS).append(URLEncDec.encode(finalURL))
@@ -591,7 +593,12 @@ public class CDCServlet extends HttpServlet {
                             "set to= " + cdcUrl);
                     }
                     
-                    redirectURL.append(cdcUrl).append(QUESTION_MARK);
+                    if (cdcUrl.indexOf(QUESTION_MARK) == -1) {
+                        redirectURL.append(cdcUrl).append(QUESTION_MARK);
+                    } else {
+                        redirectURL.append(cdcUrl).append(AMP);
+                    }
+                    
                     // check if this is resource based auth case
                     String resourceAuth = request.getParameter(
                         ISAuthConstants.IP_RESOURCE_ENV_PARAM);
