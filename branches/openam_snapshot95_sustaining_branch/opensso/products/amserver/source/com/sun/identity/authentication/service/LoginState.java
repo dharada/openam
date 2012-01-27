@@ -28,7 +28,7 @@
  */
 
 /*
- * Portions Copyrighted 2010-2011 ForgeRock AS
+ * Portions Copyrighted 2010-2012 ForgeRock AS
  */
 
 package com.sun.identity.authentication.service;
@@ -3687,7 +3687,8 @@ public class LoginState {
             if (encoded != null && encoded.equals("true")) {
                 currentGoto = AuthUtils.getBase64DecodedValue(currentGoto);
             }
-            if (!ad.isGotoUrlValid(currentGoto, getOrgDN())) {
+            if (!currentGoto.startsWith("/") &&
+                    !ad.isGotoUrlValid(currentGoto, getOrgDN())) {
                 if (messageEnabled) {
                     ad.debug.message("LoginState.getSuccessLoginURL():" +
                     "Original goto URL is " + currentGoto + " which is " +
