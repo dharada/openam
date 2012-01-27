@@ -27,8 +27,6 @@
  */
 package com.sun.identity.config.util;
 
-import com.sun.identity.config.Configurator;
-import com.sun.identity.config.DummyConfigurator;
 import com.sun.identity.config.SessionAttributeNames;
 import com.sun.identity.setup.AMSetupServlet;
 import com.sun.identity.setup.SetupConstants;
@@ -61,7 +59,6 @@ public abstract class AjaxPage extends Page {
     public static final String RESPONSE_TEMPLATE = "{\"valid\":\"${valid}\", \"body\":\"${body}\"}";
     public static final String OLD_RESPONSE_TEMPLATE = "{\"isValid\":${isValid}, \"errorMessage\":\"${errorMessage}\"}";
    
-    private Configurator configurator = null;
     private static int MIN_PASSWORD_SIZE = 8;
     private boolean rendering = false;
     private String hostName;
@@ -85,15 +82,6 @@ public abstract class AjaxPage extends Page {
 
     public boolean isRendering() {
         return rendering;
-    }
-
-    protected Configurator getConfigurator() {
-        if ( this.configurator == null ) {
-            //TODO - retrieve Configuration instance from runtime environment
-            //servlet context lookup?  JNDI?  Still awaiting word.  Use dummy for now:
-            this.configurator = new DummyConfigurator( this );
-        }
-        return this.configurator;
     }
 
     protected String toString( String paramName ) {

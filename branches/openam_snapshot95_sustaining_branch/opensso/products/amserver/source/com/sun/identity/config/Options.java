@@ -38,7 +38,6 @@ public class Options extends TemplatedPage {
     public ActionLink testUrlLink = new ActionLink("coexistLink", this, "coexist" );
     public ActionLink pushConfigLink = new ActionLink("olderUpgradeLink", this, "olderUpgrade" );
 
-    protected boolean passwordUpdateRequired = true;
     protected boolean upgrade = false;
     protected boolean isOpenDS1x = false;
     
@@ -49,10 +48,7 @@ public class Options extends TemplatedPage {
     }
 
     public void doInit() {
-        passwordUpdateRequired = getConfigurator().isPasswordUpdateRequired();
-        addModel("passwordUpdateRequired",
-            Boolean.valueOf( passwordUpdateRequired ) );
-        upgrade = !getConfigurator().isNewInstall();
+        upgrade = !isNewInstall();
         addModel( "upgrade", Boolean.valueOf( upgrade ) );
 
         isOpenDS1x = EmbeddedOpenDS.isOpenDSVer1Installed();
@@ -63,36 +59,8 @@ public class Options extends TemplatedPage {
         }
     }
 
-    public boolean upgrade() {
-        try {
-            getConfigurator().upgrade();
-            writeToResponse("true");
-        } catch ( Exception e ) {
-            writeToResponse( e.getMessage());
-        }
-        setPath(null);
-        return false;
-    }
-
-    public boolean coexist() {
-        try {
-            getConfigurator().coexist();
-            writeToResponse("true");
-        } catch ( Exception e ) {
-            writeToResponse(e.getMessage());
-        }
-        setPath(null);
-        return false;
-    }
-
-    public boolean olderUpgrade() {
-        try {
-            getConfigurator().olderUpgrade();
-            writeToResponse("true");
-        } catch ( Exception e ) {
-            writeToResponse(e.getMessage());
-        }
-        setPath(null);
-        return false;
+    public boolean isNewInstall() {
+        //for now simulate with url param - if it doesn't exist, assume new install, if it does, assume upgrade:
+        return getContext().getRequest().getParameter( "upgrade" ) == null;
     }
 }
