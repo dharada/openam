@@ -33,17 +33,14 @@
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
-import com.sun.identity.shared.datastruct.CollectionHelper;
 import com.iplanet.dpro.session.Session;
 import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.SessionID;
-import com.iplanet.sso.SSOException;
-import com.iplanet.sso.SSOToken;
-import com.iplanet.sso.SSOTokenManager;
-import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdUtils;
 import com.sun.identity.shared.Constants;
+import com.sun.identity.shared.datastruct.CollectionHelper;
+import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.sm.ServiceSchema;
 import com.sun.identity.sm.ServiceSchemaManager;
 import java.util.Iterator;
@@ -179,7 +176,10 @@ public class SessionConstraint {
         // MULTI_SERVER_MODE mode.
         if (SessionCount.getDeploymentMode() == SessionCount.MULTI_SERVER_MODE)
         {
-            return false;
+            // Override default behaviour if using local sessions in MULTI_SERVER_MODE
+            if (!SessionCount.useLocalSessionsInMultiServerMode()) {
+                return false;
+            }
         }
 
         // Check if it is upgrade scenario
