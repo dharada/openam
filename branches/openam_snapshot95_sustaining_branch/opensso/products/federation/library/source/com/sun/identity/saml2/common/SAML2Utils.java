@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2010-2011 ForgeRock AS
+ * Portions Copyrighted 2010-2012 ForgeRock AS
  */
 
 package com.sun.identity.saml2.common;
@@ -197,6 +197,7 @@ public class SAML2Utils extends SAML2SDKUtils {
             ":" + server_port + server_uri;
     private static int int_server_port = 0;
     private static final String GET_METHOD = "GET";
+    private static final String POST_METHOD = "POST";
     private static final String LOCATION = "Location";
     private static final String EMPTY = "";
     private static final char AMP = '&';
@@ -4490,13 +4491,14 @@ public class SAML2Utils extends SAML2SDKUtils {
     public static HashMap sendRequestToOrigServer(HttpServletRequest request,
         HttpServletResponse response, String sloServerUrl) {
         HashMap origRequestData = new HashMap();
+        String classMethod = "SAML2Utils.sendRequestToOrigServer: ";
 
         // Print request Headers
         if (debug.messageEnabled()) {
             for (Enumeration requestHeaders = request.getHeaderNames() ; requestHeaders.hasMoreElements();) {
                 String name = (String) requestHeaders.nextElement();
                 Enumeration value = (Enumeration) request.getHeaders(name);
-                debug.message("Header name = " + name + " Value = " + value);
+                debug.message(classMethod + "Header name = " + name + " Value = " + value);
             }
         }
 
@@ -4508,11 +4510,17 @@ public class SAML2Utils extends SAML2SDKUtils {
             URL sloRoutingURL = new URL(sloServerUrl);
 
             if (debug.messageEnabled()) {
-                debug.message("Connecting to : " + sloRoutingURL);
+                debug.message(classMethod + "Connecting to : " + sloRoutingURL);
             }
 
             conn = HttpURLConnectionManager.getConnection(sloRoutingURL);
-            conn.setRequestMethod(GET_METHOD);
+            boolean  isGET = request.getMethod().equalsIgnoreCase(GET_METHOD);
+            if (isGET) {
+                conn.setRequestMethod(GET_METHOD);
+            } else {
+                conn.setDoOutput(true);
+                conn.setRequestMethod(POST_METHOD);
+            }
             conn.setFollowRedirects(false);
             conn.setInstanceFollowRedirects(false);
 
@@ -4521,7 +4529,7 @@ public class SAML2Utils extends SAML2SDKUtils {
 
             if (strCookies != null) {
                 if (debug.messageEnabled()) {
-                    debug.message("Sending cookies : " + strCookies);
+                    debug.message(classMethod + "Sending cookies : " + strCookies);
                 }
                 conn.setRequestProperty("Cookie", strCookies);
             }
@@ -4529,15 +4537,31 @@ public class SAML2Utils extends SAML2SDKUtils {
             conn.setRequestProperty("Host", request.getHeader("host"));
             conn.setRequestProperty(SAMLConstants.ACCEPT_LANG_HEADER, request.getHeader(SAMLConstants.ACCEPT_LANG_HEADER));
 
-			// do the remote connection
-			conn.connect();
-
+	    // do the remote connection
+            if (isGET) {
+                conn.connect();
+            } else {
+                OutputStreamWriter writer =
+                        new OutputStreamWriter(conn.getOutputStream());
+                String data = "";
+                Map<String, String[]> params = request.getParameterMap();
+                for (Map.Entry<String, String[]> param : params.entrySet()) {
+                    data = data + param.getKey() + "=" + 
+                            URLEncDec.encode(param.getValue()[0]) + "&";
+                }
+                data = data.substring(0, data.length() - 1);
+                if (debug.messageEnabled()) {
+                    debug.message(classMethod + "DATA to be SENT: " + data);
+                }
+                writer.write(data);
+                writer.close();
+            }
             // Receiving input from Original Federation server...
             if (debug.messageEnabled()) {
-				debug.message("RECEIVING DATA ... ");
-                debug.message("Response Code: " + conn.getResponseCode());
-                debug.message("Response Message: " + conn.getResponseMessage());
-                debug.message("Follow redirect : " + conn.getFollowRedirects());
+				debug.message(classMethod + "RECEIVING DATA ... ");
+                debug.message(classMethod + "Response Code: " + conn.getResponseCode());
+                debug.message(classMethod + "Response Message: " + conn.getResponseMessage());
+                debug.message(classMethod + "Follow redirect : " + conn.getFollowRedirects());
             }
 
             // Check response code
@@ -4556,12 +4580,12 @@ public class SAML2Utils extends SAML2SDKUtils {
                 String in_string = in_buf.toString();
 
                 if (debug.messageEnabled()) {
-                    debug.message("Received response data : " + in_string);
+                    debug.message(classMethod + "Received response data : " + in_string);
                 }
 
                 origRequestData.put(SAML2Constants.OUTPUT_DATA, in_string);
             } else {
-                debug.message("Response code NOT OK");
+                debug.message(classMethod + "Response code NOT OK");
             }
 
             String redirect_url = conn.getHeaderField(LOCATION);
@@ -4575,7 +4599,7 @@ public class SAML2Utils extends SAML2SDKUtils {
             processCookies(headers, request, response);
         } catch (Exception ex) {
             if (debug.messageEnabled()) {
-                debug.message("send exception : ", ex);
+                debug.message(classMethod + "send exception : ", ex);
             }
         } 
 
