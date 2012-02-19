@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -533,11 +534,11 @@ public class IDPSingleLogout {
         HttpServletResponse response,
         String samlRequest,
         String relayState) throws SAML2Exception, SessionException {
-        String method = "processLogoutRequest : ";
+        String classMethod = "IDPSingleLogout.processLogoutRequest : ";
         if (debug.messageEnabled()) {
-            debug.message(method + "IDPSingleLogout:processLogoutRequest");
-            debug.message(method + "samlRequest : " + samlRequest);
-            debug.message(method + "relayState : " + relayState);
+            debug.message(classMethod + "IDPSingleLogout:processLogoutRequest");
+            debug.message(classMethod + "samlRequest : " + samlRequest);
+            debug.message(classMethod + "relayState : " + relayState);
         }
         String rmethod= request.getMethod();
         String binding = SAML2Constants.HTTP_REDIRECT;
@@ -552,12 +553,89 @@ public class IDPSingleLogout {
         if (!SAML2Utils.isIDPProfileBindingSupported(
             realm, idpEntityID, SAML2Constants.SLO_SERVICE, binding))
         {
-            debug.error("SLO service binding " + binding +
+            debug.error(classMethod + "SLO service binding " + binding +
                 " is not supported for " + idpEntityID);
             throw new SAML2Exception(
                 SAML2Utils.bundle.getString("unsupportedBinding"));
         }
-
+              
+        Object session = null;
+        try {
+            session = sessionProvider.getSession(request);
+            if (session == null) {
+                throw new SAML2Exception(
+                        SAML2Utils.bundle.getString("nullSSOToken"));
+            }
+        } catch (SessionException ssoe) {
+            debug.error(classMethod + "SessionException: ", ssoe);
+        }
+        
+        // Check that the request has not been missrouted
+        String idpSessionIndex = IDPSSOUtil.getSessionIndex(session);
+        if (idpSessionIndex == null) {
+            if (debug.messageEnabled()) {
+                debug.message(classMethod + "No SP session participant(s)");
+            }
+            return;
+        }
+        String serverId =
+                idpSessionIndex.substring(idpSessionIndex.length() - 2);
+        if (debug.messageEnabled()) {
+            debug.message(classMethod + "IDPSingleLogout.initiateLogoutRequest: "
+                    + "idpSessionIndex=" + idpSessionIndex + ", id=" + serverId);
+        }
+        if (!serverId.equals(SAML2Utils.getLocalServerID())) {
+            if (debug.warningEnabled()) {
+            debug.warning(classMethod + "SLO request is mis-routed, we are " + 
+                    SAML2Utils.getLocalServerID() + 
+                    " and request is owned by " + serverId);
+            }
+            String remoteServiceURL = SAML2Utils.getRemoteServiceURL(serverId);
+            String remoteLogoutURL = remoteServiceURL
+                    + SAML2Utils.removeDeployUri(request.getRequestURI());
+            String queryString = request.getQueryString();
+            if (queryString != null) {
+                remoteLogoutURL = remoteLogoutURL + QUESTION_MARK + queryString;
+            }
+            HashMap remoteRequestData =
+                    SAML2Utils.sendRequestToOrigServer(request, response, remoteLogoutURL);
+            String redirect_url = null;
+            String output_data = null;
+            if (remoteRequestData != null && !remoteRequestData.isEmpty()) {
+                redirect_url = (String) remoteRequestData.get(SAML2Constants.AM_REDIRECT_URL);
+                output_data = (String) remoteRequestData.get(SAML2Constants.OUTPUT_DATA);
+            }
+            if (debug.messageEnabled()) {
+                debug.message(classMethod + "redirect_url : " + redirect_url);
+                debug.message(classMethod + "output_data : " + output_data);
+            }
+            // if we have a redirect then let the JSP do the redirect
+            if ((redirect_url != null) && !redirect_url.equals("")) {
+                debug.message(classMethod + "Redirecting the response, redirect actioned by the JSP");
+                try {
+                    response.sendRedirect(redirect_url);
+                } catch (IOException ex) {
+                    debug.error(classMethod + "Error when redirecting", ex);
+                }
+                return;
+            }
+            // no redirect, perhaps an error page, return the content
+            try {
+                if ((output_data != null) && (!output_data.equals(""))) {
+                    debug.message(classMethod + "Printing the forwarded response");
+                    response.setContentType("text/html; charset=UTF-8");
+                    java.io.PrintWriter outP = response.getWriter();
+                    outP.println(output_data);
+                    return;
+                }
+            } catch (IOException ioe) {
+                if (debug.messageEnabled()) {
+                    debug.message(classMethod + "IDPSingleLogout error in Request Routing : "
+                            + ioe.toString());
+                }
+            }
+        }
+        
         LogoutRequest logoutReq = null;
         if (rmethod.equals("POST")) {
             logoutReq = LogoutUtil.getLogoutRequestFromPost(samlRequest,
@@ -585,10 +663,10 @@ public class IDPSingleLogout {
             SAML2Utils.getWantLogoutRequestSigned(realm, idpEntityID, 
                             SAML2Constants.IDP_ROLE);
         if (debug.messageEnabled()) {
-            debug.message(method + "metaAlias : " + metaAlias);
-            debug.message(method + "realm : " + realm);
-            debug.message(method + "idpEntityID : " + idpEntityID);
-            debug.message(method + "spEntityID : " + spEntityID);
+            debug.message(classMethod + "metaAlias : " + metaAlias);
+            debug.message(classMethod + "realm : " + realm);
+            debug.message(classMethod + "idpEntityID : " + idpEntityID);
+            debug.message(classMethod + "spEntityID : " + spEntityID);
         }
         
         if (needToVerify) {
@@ -647,12 +725,12 @@ public class IDPSingleLogout {
         // this is SP initiated HTTP based single logout
         boolean isMultiProtocolSession = false;
         int retStatus = SingleLogoutManager.LOGOUT_SUCCEEDED_STATUS;
-        Object session=null;
-        SessionProvider provider = null;
+        // Object session=null;
+        // SessionProvider provider = null;
         try {
-            provider = SessionManager.getProvider();
-            session = provider.getSession(request);
-            if ((session != null) && (provider.isValid(session))
+            // provider = SessionManager.getProvider();
+            // session = provider.getSession(request);
+            if ((session != null) && (sessionProvider.isValid(session))
                 && MultiProtocolUtils.isMultipleProtocolSession(session,
                     SingleLogoutManager.SAML2)) {
                 isMultiProtocolSession = true;
@@ -661,7 +739,7 @@ public class IDPSingleLogout {
                     SingleLogoutManager.getInstance();
                 Set set = new HashSet();
                 set.add(session);
-                String uid =  provider.getPrincipalName(session);
+                String uid =  sessionProvider.getPrincipalName(session);
                 debug.message("IDPSingleLogout.processLogReq: MP/SPinit/Http");
                 retStatus = sloManager.doIDPSingleLogout(set, uid, request, 
                     response, false, false, SingleLogoutManager.SAML2, realm, 
@@ -782,7 +860,7 @@ public class IDPSingleLogout {
         String binding = SAML2Constants.HTTP_REDIRECT;
         if (rmethod.equals("POST")) {
             binding = SAML2Constants.HTTP_POST;
-        }
+        }        
         String metaAlias =
                 SAML2MetaUtils.getMetaAliasByUri(request.getRequestURI()) ;
         String realm = SAML2Utils.
