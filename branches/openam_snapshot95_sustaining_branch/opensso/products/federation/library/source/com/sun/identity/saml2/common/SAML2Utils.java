@@ -169,6 +169,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import com.sun.identity.saml2.plugins.JMQSAML2Repository;
 import com.sun.identity.saml2.profile.AuthnRequestInfoCopy;
+import java.io.OutputStreamWriter;
+import java.util.Set;
 import org.owasp.esapi.ESAPI;
 
 /**
