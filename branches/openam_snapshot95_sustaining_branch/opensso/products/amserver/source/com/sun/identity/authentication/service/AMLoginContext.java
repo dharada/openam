@@ -26,8 +26,9 @@
  *
  */
 
-
-
+/**
+ * Portions Copyrighted 2012 ForgeRock AS
+ */
 package com.sun.identity.authentication.service;
 
 import com.iplanet.sso.SSOException;
@@ -964,7 +965,7 @@ public class AMLoginContext {
      * @param callback submit the required <code>Callbacks</code>
      */
     public void submitRequiredInfo(Callback callback[]) {
-        if (debug.messageEnabled()) {
+        if (debug.messageEnabled() && callback != null && callback.length > 0) {
             debug.message("submit required info... :" + callback[0]);
         }
         if (isPureJAAS()) {
