@@ -4543,8 +4543,6 @@ public class SAML2Utils extends SAML2SDKUtils {
             if (isGET) {
                 conn.connect();
             } else {
-                OutputStreamWriter writer =
-                        new OutputStreamWriter(conn.getOutputStream());
                 String data = "";
                 Map<String, String[]> params = request.getParameterMap();
                 for (Map.Entry<String, String[]> param : params.entrySet()) {
@@ -4555,8 +4553,15 @@ public class SAML2Utils extends SAML2SDKUtils {
                 if (debug.messageEnabled()) {
                     debug.message(classMethod + "DATA to be SENT: " + data);
                 }
-                writer.write(data);
-                writer.close();
+                OutputStreamWriter writer = null;
+                try {
+                    writer = new OutputStreamWriter(conn.getOutputStream());
+                    writer.write(data);
+                } catch (IOException ioe) {
+                    debug.error(classMethod + "Could not write to the destination", ioe);
+                } finally {
+                    writer.close();
+                }
             }
             // Receiving input from Original Federation server...
             if (debug.messageEnabled()) {
@@ -4604,7 +4609,7 @@ public class SAML2Utils extends SAML2SDKUtils {
                 debug.message(classMethod + "send exception : ", ex);
             }
         } 
-
+        
         return (origRequestData);
     }
 

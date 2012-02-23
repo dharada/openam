@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2012 ForgeRock AS
  */
 
 package com.sun.identity.saml2.profile;
@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,7 +52,6 @@ import com.sun.identity.plugin.monitoring.MonitorManager;
 import com.sun.identity.plugin.session.SessionException;
 import com.sun.identity.plugin.session.SessionManager;
 import com.sun.identity.plugin.session.SessionProvider;
-import com.sun.identity.saml.common.SAMLUtils;
 import com.sun.identity.saml2.assertion.Issuer;
 import com.sun.identity.saml2.assertion.NameID;
 import com.sun.identity.saml2.common.SAML2Constants;
@@ -64,9 +62,6 @@ import com.sun.identity.saml2.jaxb.entityconfig.BaseConfigType;
 import com.sun.identity.saml2.jaxb.entityconfig.SPSSOConfigElement;
 import com.sun.identity.saml2.jaxb.metadata.SPSSODescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.IDPSSODescriptorElement;
-import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesType;
-import com.sun.identity.saml2.jaxb.metadataattr.EntityAttributesElement;
-import com.sun.identity.saml2.jaxb.metadataattr.ObjectFactory;
 import com.sun.identity.saml2.logging.LogUtil;
 import com.sun.identity.saml2.meta.SAML2MetaException;
 import com.sun.identity.saml2.meta.SAML2MetaManager;
@@ -97,6 +92,9 @@ public class IDPSingleLogout {
     static final Status PARTIAL_LOGOUT_STATUS =
         SAML2Utils.generateStatus(SAML2Constants.RESPONDER,
         SAML2Utils.bundle.getString("partialLogout"));
+    static final Status ALREADY_LOGGEDOUT =
+        SAML2Utils.generateStatus(SAML2Constants.SUCCESS,
+         SAML2Utils.bundle.getString("sloAlreadyLoggedout"));   
     private final static String QUESTION_MARK = "?";
     private static FedMonAgent agent;
     private static FedMonSAML2Svc saml2Svc;
@@ -200,66 +198,17 @@ public class IDPSingleLogout {
                 return;
             }
 
-            // check request has not been mis-routed
-            // find out remote serice URL based on server id
-            // server id is the last two digit of the session index
-            String serverId =
-                idpSessionIndex.substring(idpSessionIndex.length() - 2);
-
-            if (debug.messageEnabled()) {
-                debug.message("IDPSingleLogout.initiateLogoutRequest: " +
-                    "idpSessionIndex=" + idpSessionIndex +", id=" + serverId);
-            }
-
-            if (!serverId.equals(SAML2Utils.getLocalServerID())) {
-                debug.error("SLO request is mis-routed, we are " + SAML2Utils.getLocalServerID() +
-                            " and request is owned by " + serverId);
-            	String remoteServiceURL = SAML2Utils.getRemoteServiceURL(serverId);
-                String remoteLogoutURL = remoteServiceURL +
-                   SAML2Utils.removeDeployUri(request.getRequestURI());
-            
-                String queryString = request.getQueryString();
-            
-                if (queryString != null) {
-                    remoteLogoutURL = remoteLogoutURL + QUESTION_MARK + queryString;
-                }
-
-                HashMap remoteRequestData =
-                    SAML2Utils.sendRequestToOrigServer(request, response, remoteLogoutURL);
-                String redirect_url = null;
-                String output_data = null;
-
-                if (remoteRequestData != null && !remoteRequestData.isEmpty()) {
-                    redirect_url = (String) remoteRequestData.get(SAML2Constants.AM_REDIRECT_URL);
-                    output_data = (String) remoteRequestData.get(SAML2Constants.OUTPUT_DATA);
-                }
-
-                if (debug.messageEnabled()) {
-                    debug.message("redirect_url : " + redirect_url);
-                    debug.message("output_data : " + output_data);
-                }
-
-                // if we have a redirect then let the JSP do the redirect
-                if ((redirect_url != null) && !redirect_url.equals("")) {
-                    debug.message("Redirecting the response, redirect actioned by the JSP");
-                                    return;
-                }
-
-                // no redirect, perhaps an error page, return the content
-                try {
-                    if ((output_data != null) && (!output_data.equals(""))) {
-                        debug.message("Printing the forwarded response");
-                        response.setContentType("text/html; charset=UTF-8");
-                        java.io.PrintWriter outP = response.getWriter();
-                        outP.println(output_data);
-                        return;
-                    }
-                } catch (IOException ioe) {
-                    if (debug.messageEnabled()) {
-                        debug.message("IDPSingleLogout error in Request Routing : "
-                            + ioe.toString());
-                    }
-                }
+            // If request has been misrouted and we don't  have SAML2 Failover
+            // then send the request to the original server
+            if (!SAML2Utils.isSAML2FailOverEnabled() && 
+                   isMisroutedRequest(request, response, session)) {
+                   return;
+            } else {
+               if (debug.messageEnabled()) {
+                    debug.message("IDPSingleLogout.initiateLogoutRequest: "
+                        + "SAML2 Failover will be attempted. Be sure SFO is "
+                            + "properly configured or the attempt will fail");
+                } 
             }
 
             IDPSession idpSession = (IDPSession)IDPCache.
@@ -557,84 +506,7 @@ public class IDPSingleLogout {
                 " is not supported for " + idpEntityID);
             throw new SAML2Exception(
                 SAML2Utils.bundle.getString("unsupportedBinding"));
-        }
-              
-        Object session = null;
-        try {
-            session = sessionProvider.getSession(request);
-            if (session == null) {
-                throw new SAML2Exception(
-                        SAML2Utils.bundle.getString("nullSSOToken"));
-            }
-        } catch (SessionException ssoe) {
-            debug.error(classMethod + "SessionException: ", ssoe);
-        }
-        
-        // Check that the request has not been missrouted
-        String idpSessionIndex = IDPSSOUtil.getSessionIndex(session);
-        if (idpSessionIndex == null) {
-            if (debug.messageEnabled()) {
-                debug.message(classMethod + "No SP session participant(s)");
-            }
-            return;
-        }
-        String serverId =
-                idpSessionIndex.substring(idpSessionIndex.length() - 2);
-        if (debug.messageEnabled()) {
-            debug.message(classMethod + "IDPSingleLogout.initiateLogoutRequest: "
-                    + "idpSessionIndex=" + idpSessionIndex + ", id=" + serverId);
-        }
-        if (!serverId.equals(SAML2Utils.getLocalServerID())) {
-            if (debug.warningEnabled()) {
-            debug.warning(classMethod + "SLO request is mis-routed, we are " + 
-                    SAML2Utils.getLocalServerID() + 
-                    " and request is owned by " + serverId);
-            }
-            String remoteServiceURL = SAML2Utils.getRemoteServiceURL(serverId);
-            String remoteLogoutURL = remoteServiceURL
-                    + SAML2Utils.removeDeployUri(request.getRequestURI());
-            String queryString = request.getQueryString();
-            if (queryString != null) {
-                remoteLogoutURL = remoteLogoutURL + QUESTION_MARK + queryString;
-            }
-            HashMap remoteRequestData =
-                    SAML2Utils.sendRequestToOrigServer(request, response, remoteLogoutURL);
-            String redirect_url = null;
-            String output_data = null;
-            if (remoteRequestData != null && !remoteRequestData.isEmpty()) {
-                redirect_url = (String) remoteRequestData.get(SAML2Constants.AM_REDIRECT_URL);
-                output_data = (String) remoteRequestData.get(SAML2Constants.OUTPUT_DATA);
-            }
-            if (debug.messageEnabled()) {
-                debug.message(classMethod + "redirect_url : " + redirect_url);
-                debug.message(classMethod + "output_data : " + output_data);
-            }
-            // if we have a redirect then let the JSP do the redirect
-            if ((redirect_url != null) && !redirect_url.equals("")) {
-                debug.message(classMethod + "Redirecting the response, redirect actioned by the JSP");
-                try {
-                    response.sendRedirect(redirect_url);
-                } catch (IOException ex) {
-                    debug.error(classMethod + "Error when redirecting", ex);
-                }
-                return;
-            }
-            // no redirect, perhaps an error page, return the content
-            try {
-                if ((output_data != null) && (!output_data.equals(""))) {
-                    debug.message(classMethod + "Printing the forwarded response");
-                    response.setContentType("text/html; charset=UTF-8");
-                    java.io.PrintWriter outP = response.getWriter();
-                    outP.println(output_data);
-                    return;
-                }
-            } catch (IOException ioe) {
-                if (debug.messageEnabled()) {
-                    debug.message(classMethod + "IDPSingleLogout error in Request Routing : "
-                            + ioe.toString());
-                }
-            }
-        }
+        }    
         
         LogoutRequest logoutReq = null;
         if (rmethod.equals("POST")) {
@@ -705,6 +577,30 @@ public class IDPSingleLogout {
             }   
         }
 
+        // Get the local session, if it does not exist send a succesful
+        // Logout Response with a status message of "Already Logout" 
+        Object session = null;
+        try {
+            session = sessionProvider.getSession(request);
+        } catch (SessionException ssoe) {
+            sendAlreadyLogedOutResp(response, logoutReq, relayState,
+                             realm, idpEntityID, spEntityID, binding);
+            return;
+        }
+        
+        // If the request has been misrouted and we don't  have SAML2 Failover
+        // then send the request to the original server 
+        if (session != null && !SAML2Utils.isSAML2FailOverEnabled()
+                && isMisroutedRequest(request, response, session)) {
+            return;
+        } else {
+            if (debug.messageEnabled()) {
+                debug.message(classMethod
+                        + "SAML2 Failover will be attempted. Be sure SFO is "
+                        + "properly configured or the attempt will fail");
+            }
+        }
+        
         LogoutResponse logoutRes = processLogoutRequest(
             logoutReq, request, response, binding, relayState,
             idpEntityID, realm, true);
@@ -725,11 +621,7 @@ public class IDPSingleLogout {
         // this is SP initiated HTTP based single logout
         boolean isMultiProtocolSession = false;
         int retStatus = SingleLogoutManager.LOGOUT_SUCCEEDED_STATUS;
-        // Object session=null;
-        // SessionProvider provider = null;
         try {
-            // provider = SessionManager.getProvider();
-            // session = provider.getSession(request);
             if ((session != null) && (sessionProvider.isValid(session))
                 && MultiProtocolUtils.isMultipleProtocolSession(session,
                     SingleLogoutManager.SAML2)) {
@@ -1861,5 +1753,138 @@ public class IDPSingleLogout {
               nameIDValue);
            }
         }
+    }
+    
+     /**
+     * Checks if a SAML2 request has been misrouted, if so, it send the 
+     * request to  the original server, gets the response and redirects it
+     * or posts it back
+     *
+     * @param request the Servlet request
+     * @param response the Servlet response
+     * @param session the Single Sign On session.
+     *  
+     * @return true if the request was misrouted and ti was forwarded to 
+     * the original server
+     * @throws SAML2Exception, SessionException 
+     */
+    private static boolean isMisroutedRequest(HttpServletRequest request,
+            HttpServletResponse response, Object session)
+            throws SAML2Exception, SessionException {
+
+        String classMethod = "IDPSingleLogout.isMisroutedRequest : ";
+        
+        // Check that the request has not been missrouted
+        String idpSessionIndex = IDPSSOUtil.getSessionIndex(session);
+        if (idpSessionIndex == null) {
+            if (debug.messageEnabled()) {
+                debug.message(classMethod + "No SP session participant(s)");
+            }
+            MultiProtocolUtils.invalidateSession(session, request,
+                response, SingleLogoutManager.SAML2);    
+            return true;
+        }
+        String serverId =
+                idpSessionIndex.substring(idpSessionIndex.length() - 2);
+        if (debug.messageEnabled()) {
+            debug.message(classMethod + "idpSessionIndex=" + idpSessionIndex + 
+                    ", id=" + serverId);
+        }
+        
+        // If misrouted, route it to the proper server
+        if (!serverId.equals(SAML2Utils.getLocalServerID())) {
+            if (debug.warningEnabled()) {
+                debug.warning(classMethod + "SLO request is mis-routed, we are "
+                        + SAML2Utils.getLocalServerID()
+                        + " and request is owned by " + serverId);
+            }
+            String remoteServiceURL = SAML2Utils.getRemoteServiceURL(serverId);
+            String remoteLogoutURL = remoteServiceURL
+                    + SAML2Utils.removeDeployUri(request.getRequestURI());
+            String queryString = request.getQueryString();
+            if (queryString != null) {
+                remoteLogoutURL = remoteLogoutURL + QUESTION_MARK + queryString;
+            }
+            HashMap remoteRequestData =
+                    SAML2Utils.sendRequestToOrigServer(request, response, remoteLogoutURL);
+            String redirect_url = null;
+            String output_data = null;
+            if (remoteRequestData != null && !remoteRequestData.isEmpty()) {
+                redirect_url = (String) remoteRequestData.get(SAML2Constants.AM_REDIRECT_URL);
+                output_data = (String) remoteRequestData.get(SAML2Constants.OUTPUT_DATA);
+            }
+            if (debug.messageEnabled()) {
+                debug.message(classMethod + "redirect_url : " + redirect_url);
+                debug.message(classMethod + "output_data : " + output_data);
+            }
+            // if we have a redirect then let the JSP do the redirect
+            if ((redirect_url != null) && !redirect_url.equals("")) {
+                if (debug.messageEnabled()) {
+                    debug.message(classMethod + "Redirecting the response, "
+                            + "redirect actioned by the JSP");
+                }
+                try {
+                    response.sendRedirect(redirect_url);
+                } catch (IOException ex) {
+                    debug.error(classMethod + "Error when redirecting", ex);
+                }
+                return true;
+            }
+            // no redirect, perhaps an error page, return the content
+            try {
+                if ((output_data != null) && (!output_data.equals(""))) {
+                    if (debug.messageEnabled()) {
+                        debug.message(classMethod + "Printing the forwarded response");
+                    }
+                    response.setContentType("text/html; charset=UTF-8");
+                    java.io.PrintWriter outP = response.getWriter();
+                    outP.println(output_data);
+                    return true;
+                }
+            } catch (IOException ioe) {
+                if (debug.messageEnabled()) {
+                    debug.message(classMethod + "IDPSingleLogout error in Request Routing : "
+                            + ioe.toString());
+                }
+            }
+        } 
+        return false;
+    }
+
+    /**
+     * Checks if a SAML2 request has been misrouted, if so, it send the 
+     * request to  the original server, gets the response and redirects it
+     * or posts it back
+     *
+     * @param response the Servlet response
+     * @param logoutReq the SAML 2.0 Logout Request
+     * @param relayState the original relay state that came with the request
+     * @param realm the realm where the hosted entity has been defined
+     * @param idpEntityID The entity id of the hosted IdP
+     * @param spEntityID The entity id of the remote SP
+     * @param binding The binding that the IdP should reply with to the SP
+     * 
+     * @throws SAML2Exception
+     */
+    private static void sendAlreadyLogedOutResp(HttpServletResponse response,
+            LogoutRequest logoutReq, String relayState,
+            String realm, String idpEntityID, String spEntityID,
+            String binding) throws SAML2Exception {
+        
+        String classMethod = "IDPSingleLogout.sendAlreadyLogedOutResp";
+        debug.message(classMethod + "No session in the IdP. "
+                + "We are already logged out. Generating success logout");
+        LogoutResponse logRes = LogoutUtil.generateResponse(ALREADY_LOGGEDOUT,
+                logoutReq.getID(), SAML2Utils.createIssuer(idpEntityID),
+                realm, SAML2Constants.IDP_ROLE,
+                logoutReq.getIssuer().getSPProvidedID());
+        String location = getSingleLogoutLocation(
+                spEntityID, realm, binding);
+        debug.message(classMethod + "Location found: " + location
+                + " for binding " + binding);
+        logRes.setDestination(XMLUtils.escapeSpecialCharacters(location));
+        LogoutUtil.sendSLOResponse(response, logRes, location,
+                relayState, realm, idpEntityID, SAML2Constants.IDP_ROLE,
+                spEntityID, binding);
     }
 }
