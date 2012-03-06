@@ -677,7 +677,7 @@ public class IdentityServicesHandler extends HttpServlet {
                     } else if (e instanceof InvocationTargetException) {
                         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     } else {
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, sw.toString());
                     }
                 } catch (Exception ex) {
                     throw new ServletException(ex);
