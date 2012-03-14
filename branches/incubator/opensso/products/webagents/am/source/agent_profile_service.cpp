@@ -400,7 +400,8 @@ am_status_t AgentProfileService::fetchAndUpdateAgentConfigCacheInternal
                             }  else if (strcasecmp(repoType, 
                                        AGENT_PROPERTIES_CENTRALIZED) == 0) {
                                 // REMOTE repo type
-                                am_properties_create(&properties);
+                                // no need to create, this bring leaks
+                                //am_properties_create(&properties);
                                 am_properties_copy(tmpPropPtr, &properties);
                             } else { //treat as misconfiguration
                                 am_web_log_error("%s: Repository type property is "
@@ -443,6 +444,7 @@ am_status_t AgentProfileService::fetchAndUpdateAgentConfigCacheInternal
                     status = AM_REST_ATTRS_SERVICE_FAILURE;
                 }                
             }           
+            am_properties_destroy(tmpPropPtr);
     }
     //Insert the AMAgentConfiguration object in the hast table with the current
     //time stamp as its key.

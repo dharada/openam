@@ -967,7 +967,7 @@ am_agent_init(boolean_t* pAgentInitialized)
     int agentAuthenticated = AM_FALSE;
     SSOToken ssoToken;
     AgentConfigurationRefCntPtr* agentConfigPtr;
-    void* agent_config;
+    void* agent_config = NULL;
     string userName(boot_info.agent_name);
     string passwd(boot_info.agent_passwd);
     const Properties& propPtr =
@@ -1065,6 +1065,9 @@ am_agent_init(boolean_t* pAgentInitialized)
         if (agentAuthenticated == AM_TRUE) {
             agentProfileService->agentLogout(propPtr);
         }
+    }
+    if(agent_config){
+        am_web_delete_agent_configuration(agent_config);
     }
     return status;
 }
