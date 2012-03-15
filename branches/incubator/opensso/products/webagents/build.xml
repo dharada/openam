@@ -202,6 +202,14 @@
              target="all" inheritRefs="true"/>
      </target>
 
+    <target name="nginx" depends="preparebuild">
+        <echo message="Dispatch to Nginx"/>
+        <property name="containername" value="nginx"/>
+        <antcall target="gmake" inheritRefs="true"/>
+        <!--ant antfile="${webagents.basedir}/build_agent.xml"
+            target="all" inheritRefs="true"/-->
+    </target>
+
     <target name="gmake">
         <echo message="Dispatch to compile of agent c code"/>
         <exec executable="gmake" failonerror="true">
@@ -267,6 +275,7 @@
         <echo message=" apache22        : builds the Apache Web Server 2.2.x agent"/>
         <echo message=" iis6            : builds the Microsoft Internet Information Services 6 agent"/>
         <echo message=" iis7            : builds the Microsoft Internet Information Services 7 agent"/>
+        <echo message=" nginx           : builds the NGINX agent"/>
         <echo message=" usage           : displays this usage message"/>
         <echo message=" "/>
         <echo message=" To run a target, issue the following command:"/>
