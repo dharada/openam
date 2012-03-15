@@ -1,6 +1,6 @@
 
-AM_INC=../../../built/include/
-AM_LIB=../../../webagents/built/Linux/lib/
+AM_INC=../../../../built/include/
+AM_LIB=../../../../built/Linux/lib/
 #AM_INC=/opt/osstech/include/openam-agent/
 #AM_LIB=/opt/osstech/lib64/openam-agent/
 
