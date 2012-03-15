@@ -211,16 +211,13 @@ $(ZIP_FILE): $(DEST_PACKAGE_SCRATCH_DIR) $(EXPORTED_HEADERS) $(EXPORTED_LIBS) $(
 all: $(ZIP_FILE)
 endif
 
-RPM := $(RPM_DIR)/$(DSAME_DROP_FILE).rpm
-
 BUILDROOT_SAMPLES_DIR := $(BUILDROOT)/$(INSTALL_DIR)/samples
 
 ifeq ($(OS_ARCH), Linux)
-all: $(RPM)
+all: $(DEST_PACKAGE_SCRATCH_DIR)/common
 endif
 
-$(RPM): 
-	$(MKDIR) $(RPM_DIR)
+$(DEST_PACKAGE_SCRATCH_DIR)/common:
 	$(RM) -r $(BUILDROOT)
 	$(MKDIR) $(BUILDROOT_LIB_DIR)
 	$(MKDIR) $(BUILDROOT_CONF_DIR)
@@ -240,12 +237,7 @@ $(RPM):
 	$(CP) $(DEST_SAMPLES_DIR)/*.c $(BUILDROOT_SAMPLES_DIR)
 	$(CP) $(DEST_SAMPLES_DIR)/samples.mk $(BUILDROOT_SAMPLES_DIR)/Makefile
 	$(CP) $(DEST_INC_DIR)/*.h $(BUILDROOT_INC_DIR)
-	if [ -f $(HOME)/.rpmmacros ] ; then mv $(HOME)/.rpmmacros $(HOME)/.rpmmacros.agent ; fi
-	echo "%_topdir $(BUILDROOT)" > $(HOME)/.rpmmacros
-	rpmbuild -bb --buildroot $(BUILDROOT) --target $(MC_ARCH) common-3.0-0.spec
-	$(RM) $(HOME)/.rpmmacros
-	if [ -f $(HOME)/.rpmmacros.agent ] ; then mv $(HOME)/.rpmmacros.agent $(HOME)/.rpmmacros ; fi
-	$(MV) $(BUILDROOT_RPM_DIR)/$(DSAME_DROP_FILE).rpm $(RPM_DIR)
+	$(MKDIR) $(DEST_PACKAGE_SCRATCH_DIR)
 	$(MV) $(BUILDROOT)/opt/agents $(DEST_PACKAGE_SCRATCH_DIR)/common
 	$(RM) -r $(BUILDROOT)
 
