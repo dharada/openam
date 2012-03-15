@@ -10,6 +10,8 @@ AutoReqProv: no
 %description
 BASE_PRODUCT_NAME OpenSSO C Development Kit
 
+%clean
+
 %files
 /opt/agents/THIRD_PARTY_LICENSE.TXT
 /opt/agents/lib/libamsdk.so.3
