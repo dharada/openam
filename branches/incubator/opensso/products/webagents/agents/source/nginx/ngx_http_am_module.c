@@ -213,7 +213,9 @@ ngx_http_am_set_header_in_request(void **args,
     }
 
     if(!val){
-        // unset header
+        // unset header if val is NULL
+        // TODO: I don't know correct way that unseting header
+        // follows code will make gaebage
         header->hash = 0;
         header->key.len = 0;
         header->key.data = NULL;
