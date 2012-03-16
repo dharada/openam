@@ -188,6 +188,20 @@ ngx_table_elt_t *ngx_http_am_lookup_header(ngx_http_request_t *r,
     return NULL;
 }
 
+/*
+ * delete header if exists
+ */
+void ngx_http_am_delete_header(ngx_http_request_t *r,
+                               u_char *key){
+
+    ngx_table_elt_t *header = ngx_http_am_lookup_header(r, key);
+    if(header){
+        header->hash = 0;
+        header->value.len = 0;
+        header->value.data = NULL;
+    }
+}
+
 am_status_t
 ngx_http_am_set_header_in_request(void **args,
                                   const char *key,
@@ -200,7 +214,13 @@ ngx_http_am_set_header_in_request(void **args,
                   "ngx_http_am_set_header_in_request() "
                   "key=%s, val=%s", key, val?val:"(null)");
 
-    // overwrite header if exists
+    // delete header if val is NULL
+    if(!val){
+        ngx_http_am_delete_header(r, (u_char *)key);
+        return AM_SUCCESS;
+    }
+
+    // overwrite header if key exist
     header = ngx_http_am_lookup_header(r, (u_char *)key);
     if(!header){
         // add header
@@ -210,18 +230,6 @@ ngx_http_am_set_header_in_request(void **args,
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "insufficient memory");
         return AM_FAILURE;
-    }
-
-    if(!val){
-        // unset header if val is NULL
-        // TODO: I don't know correct way that unseting header
-        // follows code will make gaebage
-        header->hash = 0;
-        header->key.len = 0;
-        header->key.data = NULL;
-        header->value.len = 0;
-        header->value.data = NULL;
-        return AM_SUCCESS;
     }
 
     header->hash = 0;
