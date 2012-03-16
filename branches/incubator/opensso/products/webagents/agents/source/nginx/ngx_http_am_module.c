@@ -157,30 +157,69 @@ ngx_http_am_render_result(void **args, am_web_result_t result, char *data)
     return st;
 }
 
+/*
+ * lookup header slow version
+ * TODO: quick search does not working
+ * see http://wiki.nginx.org/HeadersManagement
+ */
+ngx_table_elt_t *ngx_http_am_lookup_header(ngx_http_request_t *r,
+                                           u_char *key){
+    ngx_list_part_t *part;
+    ngx_table_elt_t *h;
+    ngx_uint_t i;
+    size_t len = strlen((char *)key);
+
+    part = &r->headers_in.headers.part;
+    h = part->elts;
+    for (i = 0; ; i++) {
+        if (i >= part->nelts) {
+            if (part->next == NULL) {
+                break;
+            }
+            part = part->next;
+            h = part->elts;
+            i = 0;
+        }
+        if (len != h[i].key.len || ngx_strcasecmp(key, h[i].key.data) != 0) {
+            continue;
+        }
+        return &h[i];
+    }
+    return NULL;
+}
+
 am_status_t
 ngx_http_am_set_header_in_request(void **args,
                                   const char *key,
                                   const char *val)
 {
     ngx_http_request_t *r = args[0];
-    ngx_table_elt_t *header;
+    ngx_table_elt_t *header = NULL;
 
     ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                   "ngx_http_am_set_header_in_request() "
                   "key=%s, val=%s", key, val?val:"(null)");
-    if(!val){
-        return AM_SUCCESS;
-    }
 
-    if(!strcasecmp(key, "cookie")){
-        // ignore cookie header
-        return AM_SUCCESS;
+    // overwrite header if exists
+    header = ngx_http_am_lookup_header(r, (u_char *)key);
+    if(!header){
+        // add header
+        header = ngx_list_push(&r->headers_in.headers);
     }
-    header = ngx_list_push(&r->headers_in.headers);
     if(!header){
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "insufficient memory");
         return AM_FAILURE;
+    }
+
+    if(!val){
+        // unset header
+        header->hash = 0;
+        header->key.len = 0;
+        header->key.data = NULL;
+        header->value.len = 0;
+        header->value.data = NULL;
+        return AM_SUCCESS;
     }
 
     header->hash = 0;
