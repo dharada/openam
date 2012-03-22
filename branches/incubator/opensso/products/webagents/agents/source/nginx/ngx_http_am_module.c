@@ -190,9 +190,9 @@ ngx_table_elt_t *ngx_http_am_lookup_header(ngx_http_request_t *r,
 }
 
 /*
- * delete header utility function
+ * delete header utility
  * The crazy utility was written because nginx have no unsetting
- * header function.
+ * header function like a apr_table_unset().
  * This will replace when correct way is available.
  */
 ngx_int_t
