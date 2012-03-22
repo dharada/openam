@@ -22,6 +22,7 @@ nginx-build: $(NGINX_SRC)
 nginx-build/Makefile: nginx-build
 	cd nginx-build && \
 	./configure --prefix=./ \
+		--sbin-path=./bin/nginx \
 		--add-module=../ \
 		--with-http_ssl_module
 

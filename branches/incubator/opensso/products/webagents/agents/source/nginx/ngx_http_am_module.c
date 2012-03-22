@@ -163,7 +163,8 @@ ngx_http_am_render_result(void **args, am_web_result_t result, char *data)
  * see http://wiki.nginx.org/HeadersManagement
  */
 ngx_table_elt_t *ngx_http_am_lookup_header(ngx_http_request_t *r,
-                                           u_char *key){
+                                           u_char *key)
+{
     ngx_list_part_t *part;
     ngx_table_elt_t *h;
     ngx_uint_t i;
@@ -189,16 +190,117 @@ ngx_table_elt_t *ngx_http_am_lookup_header(ngx_http_request_t *r,
 }
 
 /*
+ * delete header utility function
+ * The crazy utility was written because nginx have no unsetting
+ * header function.
+ * This will replace when correct way is available.
+ */
+ngx_int_t
+ngx_http_am_delete_header_part(ngx_list_t *l,
+                               ngx_list_part_t *cur,
+                               ngx_uint_t i)
+{
+    ngx_table_elt_t *elts = cur->elts;
+    ngx_list_part_t *new, *part;
+
+    if (i == 0) {
+        cur->elts = (char *) cur->elts + l->size;
+        cur->nelts--;
+
+        if (cur == l->last) {
+            if (l->nalloc > 1) {
+                l->nalloc--;
+                return NGX_OK;
+            }
+            part = &l->part;
+            while (part->next != cur) {
+                if (part->next == NULL) {
+                    return NGX_ERROR;
+                }
+                part = part->next;
+            }
+            part->next = NULL;
+            l->last = part;
+            return NGX_OK;
+        }
+
+        if (cur->nelts == 0) {
+            part = &l->part;
+            while (part->next != cur) {
+                if (part->next == NULL) {
+                    return NGX_ERROR;
+                }
+                part = part->next;
+            }
+
+            part->next = cur->next;
+            return NGX_OK;
+        }
+        return NGX_OK;
+    }
+
+    if (i == cur->nelts - 1) {
+        cur->nelts--;
+        if (cur == l->last) {
+            l->nalloc--;
+        }
+        return NGX_OK;
+    }
+
+    new = ngx_palloc(l->pool, sizeof(ngx_list_part_t));
+    if (new == NULL) {
+        return NGX_ERROR;
+    }
+
+    new->elts = &elts[i + 1];
+    new->nelts = cur->nelts - i - 1;
+    new->next = cur->next;
+
+    l->nalloc = new->nelts;
+
+    cur->nelts = i;
+    cur->next = new;
+    if (cur == l->last) {
+        l->last = new;
+    }
+
+    cur = new;
+    return NGX_OK;
+}
+
+/*
  * delete header if exists
  */
 void ngx_http_am_delete_header(ngx_http_request_t *r,
-                               u_char *key){
+                               u_char *key)
+{
+    ngx_list_part_t *part;
+    ngx_table_elt_t *h;
+    ngx_uint_t i;
+    size_t len = strlen((char *)key);
 
-    ngx_table_elt_t *header = ngx_http_am_lookup_header(r, key);
-    if(header){
-        header->hash = 0;
-        header->value.len = 0;
-        header->value.data = NULL;
+    part = &r->headers_in.headers.part;
+    h = part->elts;
+    for (i = 0; ; i++) {
+        if (i >= part->nelts) {
+            if (part->next == NULL) {
+                break;
+            }
+            part = part->next;
+            h = part->elts;
+            i = 0;
+        }
+        if (len == h[i].key.len && ngx_strcasecmp(key, h[i].key.data) == 0) {
+            /* This is incompletion. */
+            /*
+              h[i].hash = 0;
+              h[i].key.len = 0;
+              h[i].key.data = NULL;
+              h[i].value.len = 0;
+              h[i].value.data = NULL;
+            */
+            ngx_http_am_delete_header_part(&r->headers_in.headers, part, i);
+        }
     }
 }
 
@@ -466,8 +568,8 @@ static ngx_int_t
 ngx_http_am_init(ngx_conf_t *cf)
 {
     ngx_log_error(NGX_LOG_DEBUG, cf->log, 0, "ngx_http_am_init()");
-    ngx_http_handler_pt        *h;
-    ngx_http_core_main_conf_t  *cmcf;
+    ngx_http_handler_pt       *h;
+    ngx_http_core_main_conf_t *cmcf;
 
     cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
     h = ngx_array_push(&cmcf->phases[NGX_HTTP_ACCESS_PHASE].handlers);
@@ -636,7 +738,7 @@ ngx_http_am_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                   "ngx_http_am_handler()");
 
-    /* we response to 'GET' and 'HEAD' and 'POST' requests only */
+    // we response to 'GET' and 'HEAD' and 'POST' requests only
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_POST))) {
         return NGX_HTTP_NOT_ALLOWED;
     }
