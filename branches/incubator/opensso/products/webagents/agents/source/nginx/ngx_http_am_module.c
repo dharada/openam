@@ -742,10 +742,6 @@ ngx_http_am_handler(ngx_http_request_t *r)
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_POST))) {
         return NGX_HTTP_NOT_ALLOWED;
     }
-    // internal request is permitted unconditionally
-    if(r->internal){
-        return NGX_DECLINED;
-    }
 
     if(ngx_http_am_setup_request_parms(r, &req_params) != NGX_OK){
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
