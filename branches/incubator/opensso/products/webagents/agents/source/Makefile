@@ -51,7 +51,7 @@ else
 ifeq ($(OS_ARCH), AIX)
 SUBDIRS += apache apache22
 else 
-BUILD_AGENT := apache sjsws apache22 proxy40
+BUILD_AGENT := apache sjsws apache22 proxy40 nginx
 endif
 endif
 ifeq ($(OS_ARCH), WINNT)
