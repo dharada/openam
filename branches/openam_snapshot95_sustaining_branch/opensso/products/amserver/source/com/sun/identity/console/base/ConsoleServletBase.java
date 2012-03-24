@@ -26,8 +26,8 @@
  *
  */
 
-/*
- * Portions Copyrighted 2012 ForgeRock AS
+/**
+ * Portions Copyrighted 2012 ForgeRock Inc
  */
 package com.sun.identity.console.base;
 
@@ -217,6 +217,17 @@ public abstract class ConsoleServletBase
         ViewBean targetView = viewBeanManager.getViewBean(
             AMInvalidURLViewBean.class);
         targetView.forwardTo(requestContext);
+        throw new CompleteRequestException();
+    }
+
+    @Override
+    protected void onPageSessionDeserializationException(
+            RequestContext requestContext,
+            ViewBean viewBean,
+            Exception e)
+            throws ServletException, IOException {
+        //redirect, since forwardTo would carry the invalid pagesession
+        requestContext.getResponse().sendRedirect("../base/AMInvalidURL");
         throw new CompleteRequestException();
     }
 

@@ -64,6 +64,10 @@
         <param-value>../ui</param-value>
     </context-param>
     <context-param>
+        <param-name>jato:com.sun.identity.console.version.*:moduleURL</param-name>
+        <param-value>../ccversion</param-value>
+    </context-param>
+    <context-param>
         <param-name>jato:enforceStrictSessionTimeout1</param-name>
         <param-value>true</param-value>
     </context-param>
