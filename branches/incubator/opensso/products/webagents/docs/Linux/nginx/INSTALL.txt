@@ -7,6 +7,14 @@ OpenAM Policy Agent for Nginx
  - Scientific Linux 6
  - CentOS 6
 
+# Requirement library
+
+You need to install folowing library due to the nginx agent linked the
+library dynamical.
+
+ - EL6
+    # yum install nspr nss libxml2
+
 # Agent Installation
 
 ## Steps
@@ -46,6 +54,13 @@ agentadmin.sh aready added following configuration:
         ...
         am_boot_file "/path/to/OpenSSOAgentBootstrap.properties";
         am_conf_file "/path/to/OpenSSOAgentConfiguration.properties";
+
+If you want to use nginx as a reverce proxy.
+
+    location / {
+        ...
+        proxy_pass        http://example.com:80/;
+        proxy_set_header  X-Real-IP  $remote_addr;
 
 Currently I recommend one worker process because multi process mode
 does not work notification from OpenAM.
