@@ -1,0 +1,68 @@
+<!-- Portions Copyrighted 2010 ForgeRock AS -->
+
+<project name="open-source-web-agents-install-nginx" default="build">
+    <description>Open Web Single Sign-On NGINX agent install</description>
+
+    <!-- enforce invocation via top level build only -->
+    <fail message="*** NGINX Agent may be built from top level only ***">
+        <condition>
+            <or>
+                <not><isset property="containername"/></not>
+            </or>
+        </condition>
+    </fail>
+
+    <property name="webagents.am.src.dir"
+              location="${webagents.basedir}/am/source"/>
+    <property name="webagents.install.dir"
+              location="${webagents.basedir}/install"/>
+    <property name="webagents.install.nginx.dir"
+              location="${webagents.install.dir}/${containername}"/>
+    <property name="webagents.container.built.dir"
+              location="${webagents.built.dir}/${containername}"/>
+    <property name="webagents.container.scratch.dir"
+              location="${webagents.container.built.dir}/scratch"/>
+    <property name="container.web_agents.dir"
+              location="${webagents.container.scratch.dir}/web_agents"/>
+    <property name="container.web_agent.dir"
+              location="${container.web_agents.dir}/${containername}_agent"/>
+
+    <target name="build">
+
+        <!-- Copy conf files -->
+        <copy todir="${container.web_agent.dir}/conf" overwrite="true">
+          <fileset dir="${webagents.install.nginx.dir}/conf">
+            <include name="nginx.conf" />
+            <include name="*.template" />
+          </fileset>
+        </copy>
+
+        <!-- Copy bin files -->
+        <copy todir="${container.web_agent.dir}/bin" overwrite="true">
+            <fileset dir="${webagents.am.src.dir}">
+                    <include name="crypt_util"/>
+            </fileset>
+        </copy>
+        <copy todir="${container.web_agent.dir}/bin" overwrite="true">
+          <fileset dir="${webagents.install.nginx.dir}/bin">
+            <include name="agentadmin.sh" />
+            <!--include name="crypt_util" /-->
+          </fileset>
+        </copy>
+        <chmod dir="${container.web_agent.dir}/bin" perm="755"
+               includes="*" />
+
+	<!-- Generate NGINX agent install archive -->
+	<zip destfile="${webagents.dist.dir}/nginx_${build.os}${build.type.suffix}_agent_${agentversion}.zip">
+             <fileset dir="${webagents.container.scratch.dir}"
+                      excludes="**/bin/**"/>
+             <zipfileset dir="${container.web_agent.dir}/bin" filemode="755"
+                         prefix="web_agents/nginx_agent/bin"/>
+        </zip>
+        <checksum
+            file="${webagents.dist.dir}/nginx_${build.os}${build.type.suffix}_agent_${agentversion}.zip"
+            algorithm="SHA" fileext=".sha" />
+    </target>
+
+</project>
+

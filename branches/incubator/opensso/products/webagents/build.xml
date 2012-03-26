@@ -206,8 +206,8 @@
         <echo message="Dispatch to Nginx"/>
         <property name="containername" value="nginx"/>
         <antcall target="gmake" inheritRefs="true"/>
-        <!--ant antfile="${webagents.basedir}/build_agent.xml"
-            target="all" inheritRefs="true"/-->
+        <ant antfile="${webagents.basedir}/install/${containername}/build.xml"
+            inheritRefs="true"/>
     </target>
 
     <target name="gmake">
