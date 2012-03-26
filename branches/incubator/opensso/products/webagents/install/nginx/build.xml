@@ -52,6 +52,13 @@
         <chmod dir="${container.web_agent.dir}/bin" perm="755"
                includes="*" />
 
+        <!-- Copy doc files -->
+        <copy todir="${container.web_agent.dir}/" overwrite="true">
+          <fileset dir="${webagents.basedir}/docs/Linux/nginx">
+            <include name="INSTALL.txt" />
+          </fileset>
+        </copy>
+
 	<!-- Generate NGINX agent install archive -->
 	<zip destfile="${webagents.dist.dir}/nginx_${build.os}${build.type.suffix}_agent_${agentversion}.zip">
              <fileset dir="${webagents.container.scratch.dir}"

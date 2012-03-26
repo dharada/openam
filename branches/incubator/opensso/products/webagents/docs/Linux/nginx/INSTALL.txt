@@ -1,0 +1,60 @@
+OpenAM Policy Agent for Nginx
+=============================
+
+# Supported Platforms
+
+ - Red Hat Enterprise Linux 6.0
+ - Scientific Linux 6
+ - CentOS 6
+
+# Agent Installation
+
+## Steps
+
+ 1. Extract nginx_EL6_agent_rXXXX.zip installation bits.
+
+    # unzip nginx_EL6_64_agent_rXXXX.zip
+
+ 2. Goto web_agents/nginx_agent
+
+    # cd web_agents/nginx_agent/
+
+ 3. Execute agentadmin.sh
+
+    # ./bin/agentadmin.sh
+
+ 4. Follow the installation interactions and provide these details:
+
+ - OpenSSO server URL
+ - Agent URL
+ - Agent Profile name
+ - Agent Password
+
+ 5. Execute nginx
+
+    # ./bin/nginx
+
+# Agent Uninstallation
+
+stop nginx and delete web_agents/nginx_agent directory.
+
+# Nginx Configuration
+
+agentadmin.sh aready added following configuration:
+
+    http {
+        ...
+        am_boot_file "/path/to/OpenSSOAgentBootstrap.properties";
+        am_conf_file "/path/to/OpenSSOAgentConfiguration.properties";
+
+Currently I recommend one worker process because multi process mode
+does not work notification from OpenAM.
+
+Pretty soon, I'll try solving the multi process problem. However Nginx
+work very well with only one process.
+
+    worker_processes  1;
+
+If you found some problem, then please send me the debug logfile.
+
+    error_log logs/error.log debug_http;
