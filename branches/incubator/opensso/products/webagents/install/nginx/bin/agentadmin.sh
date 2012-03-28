@@ -1,10 +1,11 @@
 #!/bin/sh
 
+# Install script for nginx policy agent
 #
-# install script for nginx policy agent
+# This script is just generating property files.
 #
+# Copyright (C) 2012 Tsukasa Hamano <hamano@osstech.co.jp>
 
-set -u
 #set -x
 
 AGENT_ADMIN=`dirname "$0"`
@@ -18,28 +19,24 @@ AGENT_BOOTSTRAP_TEMPL=${AGENT_CONF_DIR}/OpenSSOAgentBootstrap.template
 AGENT_CONFIG_TEMPL=${AGENT_CONF_DIR}/OpenSSOAgentConfiguration.template
 
 #RANDOM_SOURCE=/dev/random
+# for debugging
 RANDOM_SOURCE=/dev/urandom
 
 function usage(){
-	echo "usage:"
-    echo "        $0 --install"
+    cat << EOF
+
+usage: $0 <option> [<arguments>]
+
+The available options are:
+--install: Installs a new Agent instance.
+
+EOF
 }
 
 function generate_key(){
     # EL6 have /usr/bin/base64 in coreutils
-    # but we need to work for the other platform.
+    # But the script need to working on other platform.
     head -c 24 ${RANDOM_SOURCE} | base64
-}
-
-function read_loop(){
-    while true; do
-        read -p "$1" "$2";
-        echo
-        eval "LEN=\${#$2}"
-        if [ $LEN -ne 0 ]; then
-            break
-        fi
-    done
 }
 
 function agent_install_input(){
@@ -54,18 +51,27 @@ EOF
     echo 'Enter the URL where the OpenAM server is running.'
     echo 'Please include the deployment URI also as shown below:'
     echo '(http://opensso.sample.com:58080/opensso)'
-    read_loop "OpenSSO server URL: " OPENAM_URL
+    while [ -z ${OPENAM_URL} ]; do
+        read -p "OpenSSO server URL: " OPENAM_URL
+    done
 
     echo 'Enter the Agent URL as shown below: (http://agent1.sample.com:1234)'
-    read_loop "Agent URL: " AGENT_URL
+    while [ -z ${AGENT_URL} ]; do
+        read -p "Agent URL: " AGENT_URL
+    done
 
     echo 'Enter the Agent profile name'
-    read_loop "Enter the Agent Profile name: " AGENT_PROFILE_NAME
+    while [ -z ${AGENT_PROFILE_NAME} ]; do
+        read -p "Agent Profile Name: " AGENT_PROFILE_NAME
+    done
 
     echo 'Enter the password to be used for identifying the Agent.'
     echo '*THIS IS NOT PASSWORD FILE*'
     stty -echo
-    read_loop "Enter the Agent Password: " AGENT_PASSWORD;
+    while [ -z ${AGENT_PASSWORD} ]; do
+        read -p "Agent Password: " AGENT_PASSWORD
+        echo
+    done
     stty echo
 
     cat << EOF
@@ -77,7 +83,9 @@ Agent URL : ${AGENT_URL}
 Agent Profile name : ${AGENT_PROFILE_NAME}
 EOF
     echo 'Continue with Installation?'
-    read_loop "[y/N]: " CONFIRM
+    while [ -z ${CONFIRM} ]; do
+        read -p "[y/N]: " CONFIRM
+    done
     if [ ${CONFIRM} != "y" ]; then
         exit
     fi
@@ -99,5 +107,11 @@ function agent_install(){
         ${AGENT_CONFIG_TEMPL} > ${AGENT_CONFIG}
 }
 
-agent_install_input
-agent_install
+case "$1" in
+    --install)
+        agent_install_input
+        agent_install
+        ;;
+    *)
+        usage
+esac
