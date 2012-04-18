@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.authentication.spi;
 
 import com.iplanet.am.util.Misc;
@@ -38,12 +41,7 @@ import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.idm.IdUtils;
 import com.sun.identity.shared.debug.Debug;
-import java.io.IOException;
-import java.lang.System;
-import java.security.Provider;
-import java.security.Security;
-import java.security.Signature;
-import java.security.Key;
+import com.sun.identity.shared.encode.Base64;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import java.util.Iterator;
@@ -59,8 +57,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Cookie;
-import sun.misc.BASE64Encoder;
-import sun.misc.BASE64Decoder;
 
 
 /**
@@ -136,8 +132,7 @@ public class ReplayPasswd implements AMPostAuthProcessInterface {
             SystemProperties.get(SHAREPOINT_LOGIN_ATTR_NAME);
 
         try {
-            BASE64Decoder decoder = new BASE64Decoder();
-            byte[] desKey = decoder.decodeBuffer(deskeystr);
+            byte[] desKey = Base64.decode(deskeystr);
             
             SecretKeySpec keySpec = new SecretKeySpec(desKey, "DES");
 
@@ -149,8 +144,7 @@ public class ReplayPasswd implements AMPostAuthProcessInterface {
                              userpasswd.length());
             byte[] ciphertext = cipher.doFinal(data);
 			
-            BASE64Encoder encoder = new BASE64Encoder();
-            String encodedpasswd = encoder.encodeBuffer(ciphertext);                
+            String encodedpasswd = Base64.encode(ciphertext);
             if (encodedpasswd != null) {
                ssoToken.setProperty(SUN_IDENTITY_USER_PASSWORD, encodedpasswd);
             }
@@ -193,9 +187,6 @@ public class ReplayPasswd implements AMPostAuthProcessInterface {
         } catch (IdRepoException ire) {
             debug.error("ReplayPasswd.onLoginSuccess: IOException while " +
                 "fetching user attributes: " + ire);
-        } catch (IOException ioe) {
-            debug.error("ReplayPasswd.onLoginSuccess: IOException while " +
-                "setting session password property: " + ioe);
         } catch (NoSuchAlgorithmException noe) {
             debug.error("ReplayPasswd.onLoginSuccess: NoSuchAlgorithmException"+
                 " while setting session password property: " + noe);

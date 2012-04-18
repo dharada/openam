@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2011 ForgeRock AS
+ * Portions Copyrighted 2012 ForgeRock Inc
  */
 
 package com.sun.identity.authentication.UI;
@@ -35,14 +35,12 @@ package com.sun.identity.authentication.UI;
 import com.sun.identity.shared.locale.AMResourceBundleCache;
 import com.iplanet.am.util.BrowserEncoding;
 import com.sun.identity.shared.debug.Debug;
-import com.iplanet.am.util.SystemProperties;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.ViewBeanBase;
 import com.iplanet.jato.view.html.StaticTextField;
 import com.sun.identity.authentication.client.AuthClientUtils;
 import com.sun.identity.common.ISLocaleContext;
-import com.sun.identity.shared.Constants;
-import java.io.IOException;
+import com.sun.identity.shared.encode.Base64;
 import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -52,7 +50,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URL;
 import java.net.MalformedURLException;
-import com.iplanet.services.util.Base64;
 import java.io.UnsupportedEncodingException;
 
 /**
