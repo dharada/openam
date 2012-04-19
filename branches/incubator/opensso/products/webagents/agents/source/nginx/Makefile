@@ -3,7 +3,7 @@ USERX_ROOT = ../../..
 include $(USERX_ROOT)/arch/components.mk
 
 NGINX_URI=http://nginx.org/download/
-NGINX_VER=1.0.14
+NGINX_VER=1.0.15
 NGINX_SRC=nginx-$(NGINX_VER).tar.gz
 NGINX_DESTDIR=../../../../built/nginx/scratch/web_agents/nginx_agent/
 
