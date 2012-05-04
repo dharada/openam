@@ -1,0 +1,3 @@
+version: 1
+dn: uid=#userID,#userBase,#ldapBase
+changetype: delete

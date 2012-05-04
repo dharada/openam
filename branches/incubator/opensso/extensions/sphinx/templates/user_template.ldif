@@ -1,0 +1,22 @@
+version: 1
+dn: cn=#technicalID,#userBase,#ldapBase
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalperson
+objectClass: inetorgperson
+objectClass: inetUser
+cn: #technicalID
+mail: #email
+uid: #userID
+telephonenumber: #telephoneNumber
+sn: test
+userPassword: #password
+
+dn: cn=#defaultGroup,ou=Groups,#ldapBase
+changetype: modify
+add: uniqueMember
+uniqueMember: cn=#technicalID,#userBase,#ldapBase
+-
+
+

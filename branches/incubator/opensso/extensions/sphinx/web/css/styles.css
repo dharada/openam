@@ -1,0 +1,247 @@
+/**
+ * Copyright � 2005 Sun Microsystems, Inc. All rights reserved.
+ * Use is subject to license terms.
+ */
+
+
+
+a:hover {  text-decoration: underline}
+.footerText {  font-family: Helvetica, Arial, Geneva, sans-serif; font-size: 9pt; color: #333333}
+.loginText {  font-family: Helvetica, Arial, Geneva, sans-serif}
+/* .mastheadLinks {  font-family: Helvetica, Arial, Geneva, sans-serif; font-size: 9pt; color: #4D59AB; text-decoration: none}  */
+.mastheadLinks {  font-family: Helvetica, Arial, Geneva, sans-serif; font-size: 9pt; color: #FFFFFF; text-decoration: none}
+.mastheadUsername {  font-family: Helvetica, Arial, Geneva, sans-serif; font-size: 10pt; color: #333333; font-weight: bold}
+input.buttonblue{  cursor: hand; font-family: verdana; background: #594fbf; color: #ffffff; font-weight: bold; font-size: 10pt; padding: 1px 1px; margin: 0px 0px; border: 0px}
+.doubleArrow {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #594FBF}
+.mastheadSeparators { font-family: Helvetica, Arial, Geneva, sans-serif; color: #A2A2A2; text-decoration: none; font-size: 12pt}
+
+body {
+    line-height: 1.6em;
+    background:url(../images/bodyback.jpg) repeat-x #FFF;
+    background-color:#ffffff;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    height: 100%;
+    padding: 0px 0px 0px 80px;
+    /* width: 960px; */
+    border: 0;
+    outline: 0;
+    font-size: 76%;
+    color:#464646;
+    font-family:verdana, "Times New Roman", Times, serif;
+}
+
+.BigLetters {
+		text-align: center;
+		font-family: Helvetica, Arial, Geneva, sans-serif;
+		font-size: 17pt;
+		color: #FFFFFF; }
+
+.MedLetters {   margin-left: 29px;
+		text-align: center;
+		font-family:  Georgia, "Times New Roman", Times, serif, Helvetica, Arial, Geneva, sans-serif;
+		font-size: 10pt;
+		margin-top: auto;
+  		margin-bottom:auto;
+		color: #f58220;  }
+
+.NormalLetters {
+		font-family: Helvetica, Arial, Geneva, sans-serif;
+		font-size: 9pt;
+		line-height: 0.4cm;
+		color: #000000;  }
+		/* color: #000000;  } */
+
+.smallLetters {
+		font-family: Helvetica, Arial, Geneva, sans-serif;
+		font-size: 6pt;
+		margin-right: 20px;
+		line-height: 0.4cm;
+		color: #525252;  }
+
+.BoldLetters {
+		font-family: Helvetica, Arial, Geneva, sans-serif;
+		font-size: 9pt;
+		/* font-weight: bold;  */
+		line-height: 0.4cm;
+		margin-left: 15px;
+		color: #FFFFFF;  }
+
+.BRlist {
+		font-family: Helvetica, Arial, Geneva, sans-serif;
+		font-size: 12pt;
+		line-height: 0.4cm;
+	        margin-top: 15px;
+		list-style: square outside url('../login_images/arrow.gif');
+		color: #FFFFFF;  }
+		/* color: #000000;  } */
+
+
+.image-float {
+	position: relative;
+	top: 12px;
+	left: 22px;
+	float: left;
+	}
+
+#header {
+  /* background: #FFFFFF;  */
+  background: #FFFFFF;
+  height: 85px;
+}
+
+#cloudId{
+   position: absolute;
+   top: 5px;
+   left: 30px;
+   width: 200px;
+   height: 20px;
+   font-family: Georgia,Arial,Helvetica,sans-serif;
+   font-size: 10pt;
+/*   color: #f58220;  */
+   color: #333;
+}
+
+#menubar {
+  position: relative;
+  top: 0px;
+  right: 0px;
+  height: 25px;
+  font-family: Georgia,Arial,Helvetica,sans-serif;
+}
+
+#franja {
+  position: relative;
+  top: 0px;
+  background-image: url('../images/menubackgrey.jpg');
+  height: 28px;
+  font-family: Georgia,Arial,Helvetica,sans-serif;
+
+}
+
+
+#main {
+  top: 25px;
+  left: 0px;
+  height: 90%;
+  width: 100%;
+  position: relative;
+  background: #ffffff;
+}
+
+#auth-wdw {
+  border-right: #CCC 1px solid;
+  border-top: #CCC 1px solid;
+  border-left: #CCC 1px solid;
+  border-bottom: #CCC 1px solid;
+  position: absolute;
+  font-family: Helvetica, Arial, Geneva, sans-serif;
+  font-size: 9pt;
+  color: #FFFFFF;
+  top: 65px;
+  left: 20px;
+  width: 350px;
+  height: 215px;
+}
+
+#not-member {
+ top: 10px;
+ position: relative;
+ left: 10px;
+}
+
+#not-member.a:visited {color:#F58220;text-decoration:none}
+#not-member.a:hover {color:#003399;text-decoration:underline}
+
+#title {
+  font-size:1.6em;
+  font-weight: bold;
+  /* color: #6260a9; */
+  color:#f58220;
+
+  font-family: Georgia, "Times New Roman", Times, serif;
+  position: absolute;
+  width: 300px;
+  height: 12px;
+  top: 5px;
+  left: 22px;
+}
+
+#authentication-box {
+  position: relative;
+  width: 300px;
+  height: 70px;
+  left: 20px;
+}
+
+#botones {
+  border-right: #002868 1px solid;
+  border-top: #FFFFFF 1px solid;
+  border-left: #002868 1px solid;
+  border-bottom: #002868 1px solid;
+  position: relative;
+  width: 300px;
+  height: 20px;
+  left: 20px;
+}
+
+#data-wdw {
+ /* background-image: url('../images/production-quality.png'); */
+ background-image: url('../login_images/3-pillars-small-rounded.jpg');
+background-repeat: no-repeat;
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  width: 417px;
+  height: 274px;
+}
+
+
+#bottom {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  height: 15px;
+  width: 100%;
+  font-family: Helvetica, Arial, Geneva, sans-serif;
+  font-size: 6pt;
+  margin-right: 55px;
+  background: #FFF;
+}
+
+#copyright {
+    font-family:verdana;
+    font-size:0.8em;
+    line-height:1.3em;
+    position:absolute;
+    text-align:center;
+    bottom: 0px;
+    color:#f58220;
+    background: #FFF;
+    height: 10%;
+    width: 960px;
+    clear: both;
+    padding: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#verymain {
+  position: relative;
+  top: 0;
+  left: 0;
+  padding: 0;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  height: 90%;
+  width: 960px;
+}
+
+#missing-parameter {
+    background: #ff0000;
+    color: #000000;
+    font-style: oblique;
+}

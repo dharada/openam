@@ -1,0 +1,7 @@
+version: 1
+dn: cn=#appCN,ou=groups,#ldapBase
+changetype: add
+cn: #appCN
+description: #appCN | #appURL
+objectClass: groupofuniquenames
+objectClass: top
