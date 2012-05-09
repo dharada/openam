@@ -1320,7 +1320,12 @@ public interface SAML2Constants {
      * Enable IDP Proxy
      */
     public String ENABLE_IDP_PROXY = "enableIDPProxy";
- 
+
+    /**
+     * Always proxy the Authn Request
+     */
+    public String ALWAYS_IDP_PROXY = "alwaysIdpProxy";
+
     /**
      *IDP Proxy Name List
      */
