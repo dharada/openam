@@ -24,7 +24,7 @@
  *
  * Portions Copyrighted 2011-2012 Progress Software Corporation
  *
- * $Id: SMCreateSessionPlugin.java,v 1.3 2012/02/17 13:40:34 jah Exp $
+ * $Id: SMCreateSessionPlugin.java,v 1.5 2012/05/15 09:55:28 jah Exp $
  *
  */
 
@@ -66,20 +66,20 @@ import org.apache.commons.codec.binary.Base64;
 public class SMCreateSessionPlugin implements AMPostAuthProcessInterface {
 
     private static Debug debugLog = Debug.getInstance("SiteMinder");
-    private boolean messageDebug = false;
     private String smLoginURL = null;
+    private String smCookieName = null;
 
     public SMCreateSessionPlugin() {
       try {
         ResourceBundle res = ResourceBundle.getBundle("SMCreateSessionPlugin");
         this.smLoginURL = res.getString("SMLoginURL");
-        this.messageDebug = debugLog.messageEnabled();
+        this.smCookieName = res.getString("SMCookieName");
       }
       catch (Exception ex) {
         debugLog.error("SMCreateSessionPlugin() caught Exception.", ex);
       }
-      if (messageDebug) {
-        debugLog.message("SMCreateSessionPlugin instantiation, smLoginURL=" + this.smLoginURL);
+      if (debugLog.messageEnabled()) {
+        debugLog.message("SMCreateSessionPlugin instantiation, smLoginURL=" + this.smLoginURL + ", smCookieName=" + smCookieName);
       }
     }
 
@@ -100,10 +100,13 @@ public class SMCreateSessionPlugin implements AMPostAuthProcessInterface {
         SSOToken ssoToken
     ) throws AuthenticationException {
         
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("SMCreateSessionPlugin.onLoginSuccess() begin.");
         }
 
+        if (smCookieName == null) {
+           throw new AuthenticationException("smCookieName is not set");
+        }
         if (smLoginURL == null) {
            throw new AuthenticationException("smLoginURL is not set");
         }
@@ -120,31 +123,28 @@ public class SMCreateSessionPlugin implements AMPostAuthProcessInterface {
             throw new AuthenticationException("Unable to create AMIdentity, Exception=" + e.getMessage());
         }
 
-        // If we already have SMSESSION then don't bother creating a new one
+        // If we already have SM session then don't bother creating a new one
         Cookie[] cookies = request.getCookies();
         for (int i=0; i < cookies.length; i++) {
             Cookie cookie = cookies[i];
-            // if (messageDebug) {
+            // if (debugLog.messageEnabled()) {
             //     debugLog.message("Cookie name=" + cookie.getName() + ", value=" + cookie.getValue());
             // }
-            if ((cookie.getName().equals("SMSESSION")) &&
+            if ((cookie.getName().equals(smCookieName)) &&
                 !(cookie.getValue().equals("LOGGEDOFF"))) {
-                    if (messageDebug) {
-                        debugLog.message("SMCreateSessionPlugin found existing SMSESSION, skipping session creation.");
+                    if (debugLog.messageEnabled()) {
+                        debugLog.message("SMCreateSessionPlugin found existing SM session, skipping session creation.");
                     }
                 return;
             }
         } // for cookies
 
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("Attempting SiteMinder login, user=" + amid.getName() + ", credentials=" + famSession);
         }
 
         try {
-            SMSessionUtils smSessionUtils = new SMSessionUtils(smLoginURL, null);
-            if (messageDebug) {
-                smSessionUtils.setDebug(messageDebug);
-            }
+            SMSessionUtils smSessionUtils = new SMSessionUtils(smLoginURL, null, smCookieName);
             retCode = smSessionUtils.createSmSession(request, response, amid.getName(), famSession);
         } catch (Exception e) {
             debugLog.error("createSmSession() returned Exception.", e);
@@ -153,7 +153,7 @@ public class SMCreateSessionPlugin implements AMPostAuthProcessInterface {
         if (retCode == 200) {
            // Extra logging to stdout
            System.out.println("createSmSession() succesful, user=" + amid.getName());
-           if (messageDebug) {
+           if (debugLog.messageEnabled()) {
              debugLog.message("createSmSession() succesful, user=" + amid.getName());
            }
         }
@@ -162,7 +162,7 @@ public class SMCreateSessionPlugin implements AMPostAuthProcessInterface {
             throw new AuthenticationException("createSmSession() returned code " + retCode + ", user=" + amid.getName());
         }
 
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("SMCreateSessionPlugin.onLoginSuccess() end.");
         }
 

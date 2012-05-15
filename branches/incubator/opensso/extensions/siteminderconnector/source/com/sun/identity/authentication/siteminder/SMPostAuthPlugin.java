@@ -24,7 +24,7 @@
  *
  * Portions Copyrighted 2011-2012 Progress Software Corporation
  *
- * $Id: SMPostAuthPlugin.java,v 1.4 2012/02/17 14:33:09 jah Exp $
+ * $Id: SMPostAuthPlugin.java,v 1.5 2012/05/14 11:14:31 jah Exp $
  *
  */
 
@@ -63,7 +63,6 @@ public class SMPostAuthPlugin implements AMPostAuthProcessInterface {
      */
 
     private static Debug debugLog = Debug.getInstance("SiteMinder");
-    private boolean messageDebug = false;
 
     public void onLoginSuccess(
         Map requestParamsMap,
@@ -72,8 +71,6 @@ public class SMPostAuthPlugin implements AMPostAuthProcessInterface {
         SSOToken ssoToken
     ) throws AuthenticationException {
         
-        messageDebug = debugLog.messageEnabled();
-
         Set configuredHTTPHeaders = (Set)request.getAttribute("SM-HTTPHeaders");
         if(configuredHTTPHeaders == null || configuredHTTPHeaders.isEmpty()) {
            debugLog.error("SMPostAuthPlugin HTTP headers in auth module are not configured");
@@ -85,7 +82,7 @@ public class SMPostAuthPlugin implements AMPostAuthProcessInterface {
              String configHeader = (String)iter.next();
              String headerValue = request.getHeader(configHeader);
              if(headerValue == null) {
-                if (messageDebug) {
+                if (debugLog.messageEnabled()) {
                   debugLog.message("SMPostAuthPlugin Config Header " + configHeader + " is not present");
                 }
                 continue;

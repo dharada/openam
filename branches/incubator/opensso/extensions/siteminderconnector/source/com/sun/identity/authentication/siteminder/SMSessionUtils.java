@@ -24,7 +24,7 @@
  *
  * Portions Copyrighted 2011-2012 Progress Software Corporation
  *
- * $Id: SMSessionUtils.java,v 1.3 2012/02/17 13:40:34 jah Exp $
+ * $Id: SMSessionUtils.java,v 1.6 2012/05/15 09:55:28 jah Exp $
  *
  */
 
@@ -62,19 +62,15 @@ import org.apache.commons.codec.binary.Base64;
 public class SMSessionUtils {
 
     private static Debug debugLog = Debug.getInstance("SiteMinder");
-    private boolean messageDebug = false;
     private String smLoginURL = null;
     private String smLogoutURL = null;
+    private String smCookieName = null;
 
     // Constructor with default values;
-    public SMSessionUtils(String smLoginURL, String smLogoutURL) {
+    public SMSessionUtils(String smLoginURL, String smLogoutURL, String smCookieName) {
       this.smLoginURL = smLoginURL;
       this.smLogoutURL = smLogoutURL;
-    }
-
-    // Set debug flag
-    public void setDebug (boolean messageDebug) {
-      this.messageDebug = messageDebug;
+      this.smCookieName = smCookieName;
     }
 
     // Create a SiteMinder session by accessing the login URL
@@ -84,8 +80,13 @@ public class SMSessionUtils {
       int respCode = 500;
       URL myurl = null;
 
-      if (messageDebug) {
+      if (debugLog.messageEnabled()) {
         debugLog.message("SMSessionUtils.createSmSession() begin.");
+      }
+
+      if (smCookieName == null) {
+        debugLog.error("SMSessionUtils.createSmSession() smCookieName is not set.");
+        throw new Exception("smCookieName is not set.");
       }
 
       if (smLoginURL == null) {
@@ -102,17 +103,20 @@ public class SMSessionUtils {
 
       try {
         String authorization = userName + ":FMTOKEN" + credentials;
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
           debugLog.message("Unencoded Authorization : " + authorization);
         }
         Base64 codec = new Base64();
         authorization = new String(codec.encode(authorization.getBytes()));
         authorization = "Basic " + authorization;
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
           debugLog.message("Encoded Authorization : " + authorization);
         }
 
         HttpURLConnection con = (HttpURLConnection)myurl.openConnection();
+
+        // Set connection timeout and SiteMinder request properties
+        con.setConnectTimeout(5000);
         con.setRequestProperty("Cookie", "SMCHALLENGE=YES");
         con.setRequestProperty("Authorization", authorization);
 
@@ -126,7 +130,7 @@ public class SMSessionUtils {
         // Get response code and cookie
         respCode = con.getResponseCode();
         String setCookie = con.getHeaderField("Set-Cookie");
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
           debugLog.message("ResponseCode=" + respCode);
           debugLog.message("Set-Cookie=" + setCookie);
         }
@@ -139,7 +143,7 @@ public class SMSessionUtils {
           String inputLine;
           while ((inputLine = in.readLine()) != null)
           {
-            // if (messageDebug) {
+            // if (debugLog.messageEnabled()) {
             //   debugLog.message(inputLine);
             // }
           }
@@ -150,14 +154,14 @@ public class SMSessionUtils {
         // Close the connection
         con.disconnect();
 
-        // If Siteminder authenticated succesfully, add SMSESSION cookie
+        // If Siteminder authenticated succesfully, add SM session cookie
         // to response headers.
         // Note that a redirect status could mean either success or failure
-        // so we need to check for SMSESSION cookie in the response
+        // so we need to check for SM session cookie in the response
         if ((respCode == 200) || (respCode == 302)) {
-          // Check if we got SMSESSION cookie
-          if (setCookie.startsWith("SMSESSION=")) {
-            if (messageDebug) {
+          // Check if we got SM session cookie
+          if (setCookie.startsWith(smCookieName + "=")) {
+            if (debugLog.messageEnabled()) {
               debugLog.message("Siteminder authentication succesful, user=" + userName);
             }
             response.addHeader("Set-Cookie", setCookie);
@@ -176,7 +180,7 @@ public class SMSessionUtils {
         throw new Exception("Siteminder session creation failed");
       }
 
-      if (messageDebug) {
+      if (debugLog.messageEnabled()) {
         debugLog.message("SMSessionUtils.createSmSession() end.");
       }
 

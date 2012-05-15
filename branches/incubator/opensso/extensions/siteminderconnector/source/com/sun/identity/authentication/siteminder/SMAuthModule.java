@@ -24,7 +24,7 @@
  *
  * Portions Copyrighted 2011-2012 Progress Software Corporation
  *
- * $Id: SMAuthModule.java,v 1.3 2012/02/17 13:40:34 jah Exp $
+ * $Id: SMAuthModule.java,v 1.5 2012/05/15 09:55:28 jah Exp $
  *
  */
 
@@ -84,7 +84,6 @@ public class SMAuthModule extends AMLoginModule {
                                 "RemoteUserHeaderName";
 
     private static Debug debugLog = Debug.getInstance("SiteMinder");
-    private boolean messageDebug = false;
 
     private String smCookieName = null;
     private String sharedSecret = null;    
@@ -105,8 +104,7 @@ public class SMAuthModule extends AMLoginModule {
     private Set configuredHTTPHeaders = null;
 
     public SMAuthModule() throws LoginException{
-        messageDebug = debugLog.messageEnabled();
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
           debugLog.message("SMAuthModule() instantiation.");
         }
     }
@@ -115,7 +113,7 @@ public class SMAuthModule extends AMLoginModule {
      * Initialize the authentication module with it's configuration
      */
     public void init(Subject subject, Map sharedState, Map options) {
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("SMAuthModule.init() begin options=" + options);
         }
 
@@ -165,7 +163,7 @@ public class SMAuthModule extends AMLoginModule {
         // from SmHostFile will override the ones set in module configuration.
         parseSmHostFile();
 
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("SMAuthModule.init() end");
         }
     } 
@@ -201,7 +199,7 @@ public class SMAuthModule extends AMLoginModule {
       sharedSecret = sharedSecret.substring(1,(sharedSecret.length()-1));
       hostName = hostName.substring(1,(hostName.length()-1));
 
-      if (messageDebug) {
+      if (debugLog.messageEnabled()) {
         debugLog.message("SMAuthModule: Hostname=" + hostName + ", Shared Secret=" + sharedSecret);
       }
 
@@ -212,13 +210,13 @@ public class SMAuthModule extends AMLoginModule {
      * This method process the login procedure for this authentication
      * module. In this auth module, if the user chooses to just validate
      * the HTTP headers set by the siteminder agent, this will not further
-     * validate the SMSESSION by the siteminder SDK since the same thing
+     * validate the SM session by the siteminder SDK since the same thing
      * might have already been validated by the agent.
      */
     public int process(Callback[] callbacks, int state) 
                  throws AuthLoginException {
 
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
             debugLog.message("SMAuthModule.process() start");
         }
         // Extra logging to stdout
@@ -255,14 +253,14 @@ public class SMAuthModule extends AMLoginModule {
            if (cookie.getName().equals(smCookieName)) {
               cookieFound = true;
               String value = cookie.getValue();
-              if (messageDebug) {
+              if (debugLog.messageEnabled()) {
                   debugLog.message("SiteMinder cookie " + smCookieName + "=" + value);
               }
               value = value.replaceAll(" ", "+");
               value = value.replaceAll("%3D", "=");
-              // debugLog.message("SMSESSION cookie value afer replacing=" + value);
+              // debugLog.message("SM session cookie value afer replacing=" + value);
               SMCookie = value;
-          } // if cookie == SMSESSION
+          } // if cookie == smCookieName
         } // for cookies
 
         if (!cookieFound) {
@@ -291,7 +289,7 @@ public class SMAuthModule extends AMLoginModule {
         AgentAPI agentAPI = new AgentAPI();
         int initStat = agentAPI.init(id);
         if (initStat == AgentAPI.SUCCESS) {
-           if (messageDebug) {
+           if (debugLog.messageEnabled()) {
                debugLog.message("SiteMinder AgentAPI init succesful");
            }
         }
@@ -300,7 +298,7 @@ public class SMAuthModule extends AMLoginModule {
           throw new AuthLoginException("SiteMinder AgentAPI init failed, status=" + initStat);
         }
 
-        // Decode the SMSESSION cookie with SiteMinder API
+        // Decode the SM session cookie with SiteMinder API
         int version = 0;
         boolean thirdParty = false;
         TokenDescriptor td = new TokenDescriptor(version, thirdParty);
@@ -312,12 +310,12 @@ public class SMAuthModule extends AMLoginModule {
         agentAPI.unInit();
 
         if (status == AgentAPI.SUCCESS) {
-          if (messageDebug) {
+          if (debugLog.messageEnabled()) {
             debugLog.message("SiteMinder session decoded succesfully");
           }
         }
         else {
-           debugLog.error("SMAuthModule: SMSession decode failed, status=" + status + ", SMSESSION=" + SMCookie);
+           debugLog.error("SMAuthModule: SMSession decode failed, status=" + status + ", " + smCookieName + "=" + SMCookie);
            throw new AuthLoginException("SMAuthModule: SMSession decode failed, status=" + status);
         }
 
@@ -333,7 +331,7 @@ public class SMAuthModule extends AMLoginModule {
  *          // Use SiteMinder userDN as the userid
  *          if(attrId == AgentAPI.ATTR_USERDN) {
  *              userId = attrValue;
- *              if (messageDebug) {
+ *              if (debugLog.messageEnabled()) {
  *                  debugLog.message("Setting userId=" + userId);
  *              }
  *          }
@@ -341,7 +339,7 @@ public class SMAuthModule extends AMLoginModule {
             // Use SiteMinder username as the userid
             if(attrId == AgentAPI.ATTR_USERNAME) {
                 userId = attrValue;
-                if (messageDebug) {
+                if (debugLog.messageEnabled()) {
                     debugLog.message("Setting userId=" + userId);
                 }
             }
@@ -349,11 +347,11 @@ public class SMAuthModule extends AMLoginModule {
 
         // Check that we actually got the userid
         if(userId == null) {
-           debugLog.error("SMAuthModule: Failed to extract userid from SMSESSION");
-           throw new AuthLoginException("SMAuthModule: Failed to extract userid from SMSESSION");
+           debugLog.error("SMAuthModule: Failed to extract userid from SM session");
+           throw new AuthLoginException("SMAuthModule: Failed to extract userid from SM session");
         }
 
-        if (messageDebug) {
+        if (debugLog.messageEnabled()) {
           debugLog.message("SiteMinder authentication succesful, user=" + userId);
           debugLog.message("SMAuthModule.process() end");
         }

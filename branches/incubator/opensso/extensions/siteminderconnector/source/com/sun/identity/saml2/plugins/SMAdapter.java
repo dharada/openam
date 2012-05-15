@@ -24,7 +24,7 @@
  *
  * Portions Copyrighted 2011-2012 Progress Software Corporation
  *
- * $Id: SMAdapter.java,v 1.3 2012/02/17 13:40:34 jah Exp $
+ * $Id: SMAdapter.java,v 1.5 2012/05/15 09:55:28 jah Exp $
  *
  */
 
@@ -70,7 +70,7 @@ public class SMAdapter extends SAML2ServiceProviderAdapter {
 
     private static Debug debugLog = Debug.getInstance("SiteMinder");
     private String smLoginURL = null;
-    private Boolean messageDebug = false;
+    private String smCookieName = null;
     SMSessionUtils smSessionUtils = null;
 
     /**
@@ -85,14 +85,19 @@ public class SMAdapter extends SAML2ServiceProviderAdapter {
     public void initialize(Map initParams) {
 
         smLoginURL = (String)initParams.get("SMLoginURL");
-        messageDebug = debugLog.messageEnabled();
-        smSessionUtils = new SMSessionUtils(smLoginURL, null);
-        if (messageDebug) {
-            smSessionUtils.setDebug(messageDebug);
+        smCookieName = (String)initParams.get("SMCookieName");
+
+        if(smLoginURL == null) {
+            debugLog.error("SMAdapter.initialize() SMLoginURL is null");
+        }
+        if(smCookieName == null) {
+            smCookieName = "SMSESSION";
         }
 
-        if (messageDebug) {
-            debugLog.message("SMAdapter.initialize() SMLoginURL=" + smLoginURL);
+        smSessionUtils = new SMSessionUtils(smLoginURL, null, smCookieName);
+
+        if (debugLog.messageEnabled()) {
+            debugLog.message("SMAdapter.initialize() SMLoginURL=" + smLoginURL + ", SMCookieName=" + smCookieName);
         }
     }
  
@@ -200,7 +205,7 @@ public class SMAdapter extends SAML2ServiceProviderAdapter {
             }
 
             if (retCode == 200) {
-              if (messageDebug) {
+              if (debugLog.messageEnabled()) {
                 debugLog.message("createSmSession() succesful, user=" + amid.getName());
               }
             }

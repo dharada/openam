@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.2 2012/02/22 15:37:01 jah Exp $
+$Id: README.txt,v 1.4 2012/03/13 09:31:39 jah Exp $
 
 This is the README for OpenAM connector for Computer Associates (CA) SiteMinder.
 
@@ -121,6 +121,32 @@ The connector requires configuration in both SiteMinder and OpenAM.
   their SiteMinder session) requires the SMAuthModule to be configured
   in OpenAM and a working SiteMinder web agent installation on the OpenAM
   server host.
+
+SiteMinder configuration
+
+1) Create OpenAM custom authentication scheme. The parameters should be:
+   Name: OpenAM
+   Authentication Scheme Type: Custom Template
+   Library: smjavaapi
+   Parameter: com.sun.identity.authentication.siteminder.OpenAMAuthScheme debug
+   (The "debug" parameter enables debug logging and should be removed for
+   production installations.)
+
+2) Create OpenAM domain, realm, rule and policy for session management:
+   * Create domain OpenAM and add the user directory.
+   * Create realm OpenAM SiteMinder and add the configuration for a resource
+     on a SiteMinder protected web server. The server and URL don't really
+     matter, the important thing is that the resource is configured to use
+     OpenAM custom authentication scheme.
+   * Create rule getOpenAMLogin and assign the resource to a file/URL on the
+     SiteMinder protected web server, for example "/login.html*". Note that
+     you need to add wildcard "*" at the end of the filename because
+     SiteMinder adds session query string to the URL when accessing it. Assign
+     web agent action GET to this rule.
+   * Create policy OpenAM Login Policy and assign users from the directory and
+     rule "getOpenAMLogin".
+
+OpenAM configuration
 
 TODO
 
