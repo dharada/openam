@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2010-2012 ForgeRock AS
+ * Portions Copyrighted 2010-2012 ForgeRock Inc.
  */
 
 package com.sun.identity.saml2.common;
@@ -1580,6 +1580,20 @@ public class SAML2Utils extends SAML2SDKUtils {
     }
     
     /**
+     * Extracts serverID from the specified id.
+     * @param id an id.
+     * @return the extracted id, or null if the given string is too short or null.
+     */
+    public static String extractServerId(String id) {
+        if (id == null || id.length() < 2) {
+            return null;
+        }
+        String serverID = id.substring(id.length() - 2);
+
+        return serverID;
+    }
+
+    /**
      * Gets remote service URL according to server id embedded in specified id.
      * @param id an id.
      * @return remote service URL or null if it is local or an error occurred.
@@ -1589,11 +1603,7 @@ public class SAML2Utils extends SAML2SDKUtils {
             debug.message("SAML2Utils.getRemoteServiceURL: id = " + id);
         }
         
-        if (id == null || id.length() < 2) {
-            return null;
-        }
-        
-        String serverID = id.substring(id.length() - 2);
+        String serverID = extractServerId(id);
         
         try {
             String localServerID = SystemConfigurationUtil.getServerID(
@@ -1602,6 +1612,13 @@ public class SAML2Utils extends SAML2SDKUtils {
                 return null;
             }
             
+            if (SystemConfigurationUtil.isSiteId(serverID)) {
+                if (debug.warningEnabled()) {
+                    debug.warning("SAML2Utils.getRemoteServiceURL: the given id refers to a site and not a server: " + serverID);
+                }
+                return null;
+            }
+
             return SystemConfigurationUtil.getServerFromID(serverID);
         } catch (Exception ex) {
             if (debug.messageEnabled()) {
@@ -1670,24 +1687,24 @@ public class SAML2Utils extends SAML2SDKUtils {
         return id;
     }
 
-	/**
-	 * Returns the server id of the local server
-	 */
-	public static String getLocalServerID() {
-		String serverId = null;
-		
-        try {
-            serverId = SystemConfigurationUtil.getServerID(
-                server_protocol, server_host, int_server_port, server_uri);
-		} catch (Exception ex) {
-	    	if (debug.messageEnabled()) {
-	        	debug.message("SAML2Utils.getLocalServerID:", ex);
-	        }
-	    }
+    /**
+     * Returns the server id of the local server
+     */
+    public static String getLocalServerID() {
+        String serverId = null;
 
-	    return serverId;
-	}
-    
+        try {
+            serverId = SystemConfigurationUtil.getServerID(server_protocol,
+                    server_host, int_server_port, server_uri);
+        } catch (Exception ex) {
+            if (debug.messageEnabled()) {
+                debug.message("SAML2Utils.getLocalServerID:", ex);
+            }
+        }
+
+        return serverId;
+    }
+
     /**
      * Creates <code>SOAPMessage</code> with the input XML String
      * as message body.
@@ -2779,21 +2796,15 @@ public class SAML2Utils extends SAML2SDKUtils {
         try {
             byte[] handleBytes = new byte[21];
             randomGenerator.nextBytes(handleBytes);
-            if(handleBytes == null){
-                debug.error("NameIdentifierImpl.createNameIdentifier:"
-                        + "Could not generate random handle");
-            } else {
-                Base64 encoder = new Base64();
-                handle = encoder.encode(handleBytes);
-                if (debug.messageEnabled()) {
-                    debug.message("createNameIdentifier String: " + handle);
-                }
+            handle = Base64.encode(handleBytes);
+            if (debug.messageEnabled()) {
+                debug.message("createNameIdentifier String: " + handle);
             }
         } catch (Exception e) {
             debug.message("createNameIdentifier:"
                     + " Exception during proccessing request" + e.getMessage());
         }
-        
+
         return handle;
     }
     
@@ -4160,7 +4171,7 @@ public class SAML2Utils extends SAML2SDKUtils {
                 HttpURLConnectionManager.getConnection(url);
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
-            conn.setFollowRedirects(false);
+            HttpURLConnection.setFollowRedirects(false);
             conn.setInstanceFollowRedirects(false);
 
             // replay cookies
@@ -4241,15 +4252,16 @@ public class SAML2Utils extends SAML2SDKUtils {
                 } else {
                     cookieStr.append(SEMI_COLON).append(SAMLConstants.SPACE);
                 }
-				
-				if (cookies[nCookie].getName().equals(sessionCookieName)) {
-                	cookieStr.append(cookies[nCookie].getName())
-	                    .append(EQUALS).append(DOUBLE_QUOTE)
-						.append(cookies[nCookie].getValue()).append(DOUBLE_QUOTE);
-				} else {
-					cookieStr.append(cookies[nCookie].getName())
-	                    .append(EQUALS).append(cookies[nCookie].getValue());	
-				}
+
+                if (cookies[nCookie].getName().equals(sessionCookieName)) {
+                    cookieStr.append(cookies[nCookie].getName()).append(EQUALS)
+                            .append(DOUBLE_QUOTE)
+                            .append(cookies[nCookie].getValue())
+                            .append(DOUBLE_QUOTE);
+                } else {
+                    cookieStr.append(cookies[nCookie].getName()).append(EQUALS)
+                            .append(cookies[nCookie].getValue());
+                }
             }
         }
         if (cookieStr != null) {
@@ -4432,7 +4444,7 @@ public class SAML2Utils extends SAML2SDKUtils {
             List values = (List) attrs.get(SAML2Constants.RELAY_STATE_URL_LIST);
             if (values != null && values.size() != 0) {
                 return values;
-	    }
+            }
         } catch (SAML2MetaException e) {
             debug.message("get SSOConfig failed:", e);
         }
