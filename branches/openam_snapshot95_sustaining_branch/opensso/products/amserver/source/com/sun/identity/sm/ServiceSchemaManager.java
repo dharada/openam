@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.sm;
 
 import com.iplanet.services.util.AMEncryption;
@@ -615,7 +618,8 @@ public class ServiceSchemaManager {
      * @supported.api
      */
     public String toString() {
-        return (ssm.toString());
+    	validate();
+    	return (ssm.toString());
     }
     
     /**
@@ -630,7 +634,8 @@ public class ServiceSchemaManager {
      * @supported.api
      */
     public String addListener(ServiceListener listener) {
-        return (ssm.addListener(listener));
+    	validate();
+    	return (ssm.addListener(listener));
     }
     
     /**
@@ -643,7 +648,9 @@ public class ServiceSchemaManager {
      * @supported.api
      */
     public void removeListener(String listenerID) {
-        ssm.removeListener(listenerID);
+        if (ssm !=null ) {
+    	    ssm.removeListener(listenerID);
+        }
     }
     
     /**
@@ -810,12 +817,14 @@ public class ServiceSchemaManager {
     }
     
     protected Document getDocumentCopy() throws SMSException {
-        return (ssm.getDocumentCopy());
+    	validate();
+    	return (ssm.getDocumentCopy());
     }
     
     protected synchronized void replaceSchema(Document document)
     throws SSOException, SMSException {
-        CachedSMSEntry smsEntry = ssm.getCachedSMSEntry();
+    	validate();
+    	CachedSMSEntry smsEntry = ssm.getCachedSMSEntry();
         SMSSchema smsSchema = new SMSSchema(document);
         smsEntry.writeXMLSchema(token, smsSchema.getSchema());
     }
@@ -838,7 +847,7 @@ public class ServiceSchemaManager {
     
     private void validateServiceSchemaManagerImpl()
         throws SMSException, SSOException {
-        if (!ssm.isValid()) {
+        if (ssm == null || !ssm.isValid()) {
             // Recreate the SSM
             ssm = ServiceSchemaManagerImpl.getInstance(token,
                 serviceName, version);
@@ -896,7 +905,8 @@ public class ServiceSchemaManager {
     
     public String toXML(AMEncryption encryptObj)
         throws SMSException {
-        String xml = ssm.toXML(encryptObj);
+    	validate();
+    	String xml = ssm.toXML(encryptObj);
         int idx = xml.lastIndexOf("</" + SMSUtils.SERVICE + ">");
         StringBuffer buff = new StringBuffer();
         buff.append(xml.substring(0, idx));

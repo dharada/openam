@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2012 ForgeRock Inc
  */
 
 package com.sun.identity.sm;
@@ -799,7 +799,7 @@ public class ServiceManager {
         // Call respective Impl classes
         CachedSMSEntry.clearCache();
         CachedSubEntries.clearCache();
-        ServiceSchemaManagerImpl.clearCache();
+        // ServiceSchemaManagerImpl.clearCache();
         PluginSchemaImpl.clearCache();
         ServiceInstanceImpl.clearCache();
         ServiceConfigImpl.clearCache();

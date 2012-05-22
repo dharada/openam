@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.idm.plugins.internal;
 
 import java.net.MalformedURLException;
@@ -912,7 +915,12 @@ public class AgentsRepo extends IdRepo implements ServiceListener {
      * @see com.sun.identity.idm.IdRepo#removeListener()
      */
     public void removeListener() {
-
+        if (scm != null) {
+            scm.removeListener(scmListenerId);
+        }
+        if (ssm != null) {
+            ssm.removeListener(ssmListenerId);
+        }
     }
 
     /*
