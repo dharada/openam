@@ -1,15 +1,30 @@
+/**
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ * Copyright (c) Janua 2011
+ * Copyright (c) 2010 ForgeRock AS. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms
+ * of the Common Development and Distribution License
+ * (the License). You may not use this file except in
+ * compliance with the License.
+ *
+ * You can obtain a copy of the License at
+ * http://forgerock.org/license/CDDLv1.0.html
+ * See the License for the specific language governing
+ * permission and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL
+ * Header Notice in each file and include the License file
+ * at http://forgerock.org/license/CDDLv1.0.html
+ * If applicable, add the following below the CDDL Header,
+ * with the fields enclosed by brackets [] replaced by
+ * your own identifying information:
+ * "Portions Copyrighted [year] [name of copyright owner]"
+ *
+ */
+
 //<!--
-// Ultimate client-side JavaScript client sniff. Version 3.03
-// (C) Netscape Communications 1999.  Permission granted to reuse and distribute.
-// Revised 17 May 99 to add is_nav5up and is_ie5up (see below).
-// Revised 20 Dec 00 to add is_gecko and change is_nav5up to is_nav6up
-//                      also added support for IE5.5 Opera4&5 HotJava3 AOLTV
-// Revised 22 Feb 01 to correct Javascript Detection for IE 5.x, Opera 4, 
-//                      correct Opera 5 detection
-//                      add support for winME and win2k
-//                      synch with browser-type-oo.js
-// Revised 26 Mar 01 to correct Opera detection
-// Revised 02 Oct 01 to add IE6 detection
 
 // Everything you always wanted to know about your JavaScript client
 // but were afraid to ask. Creates "is_" variables indicating:
