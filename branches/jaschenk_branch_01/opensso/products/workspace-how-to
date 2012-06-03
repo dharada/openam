@@ -47,7 +47,7 @@
 
 2. Keep ant build XML file clean
    a. Try not to duplicate resources
-      Please keep on copy of the resourcs required and not copying them in 
+      Please keep one copy of the resourcs required and not copying them in
       different places in the workspace.
    b. define property in properties file like products.properties and not in
       build XML
