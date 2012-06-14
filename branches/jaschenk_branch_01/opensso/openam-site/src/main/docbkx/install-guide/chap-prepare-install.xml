@@ -93,17 +93,23 @@
    <listitem>
     <para>A supported identity repository for user identity data</para>
 
-    <para>See the <link xlink:href="release-notes#chap-before-you-install"
-    xlink:role="http://docbook.org/xlink/role/olink"><citetitle>Release
-    Notes</citetitle></link> for a list. If you plan to use OpenAM for
-    evaluation or testing, definitely use the embedded LDAP server as a
-    configuration store and identity repository. ForgeRock also recommends
-    using the embedded LDAP server as the configuration store when you have
-    four or fewer instances of OpenAM in production.</para>
+    <para>For evaluation you can use the embedded OpenDJ LDAP directory server,
+    which ships as part of OpenAM and that you can install as part of the OpenAM
+    configuration process. Evaluation does not therefore require a separate user
+    data or configuration store.</para>
 
-    <para>Examples use OpenDJ as the identity repository. OpenDJ is installed
-    on <literal>openam.example.com</literal>, and listens on the following
-    ports.</para>
+    <para>When moving to put OpenAM in production use a separate user data
+    store in most cases. Also if you have more than four OpenAM servers in your
+    production deployment, then use a separate LDAP directory server for the
+    configuration store as well. See the <link
+    xlink:href="release-notes#chap-before-you-install"
+    xlink:role="http://docbook.org/xlink/role/olink"><citetitle>Release
+    Notes</citetitle></link> for a list of supported external stores.</para>
+
+    <para>Examples in the documentation that show a separate user data
+    repository use OpenDJ unless otherwise indicated. In such examples OpenDJ
+    is installed on <literal>openam.example.com</literal>, and listens on the
+    following ports.</para>
 
     <itemizedlist>
      <listitem><para>Port 1389 for LDAP requests and StartTLS</para></listitem>
@@ -163,9 +169,9 @@ esac
   <indexterm>
    <primary>Downloading OpenAM</primary>
   </indexterm>
-  <para>Download OpenAM releases from <link
-  xlink:href='http://forgerock.com/downloads.html'
-  >http://forgerock.com/downloads.html</link>. At the download location you
+  <para>Download OpenAM releases from <link xlink:show="new"
+  xlink:href="http://forgerock.org/openam.html"
+  >http://forgerock.org/openam.html</link>. At the download location you
   find links to stable releases, nightly builds for testing, previous
   releases, and also OpenAM policy agent releases.</para>
   
@@ -173,11 +179,15 @@ esac
   entire package as a .zip archive, only the OpenAM .war file, only the
   administrative tools as a .zip archive, or only the OpenAM source code
   used to build the release.</para>
-  
+
+  <para>After you download the .zip archive, unzip it to access the
+  content:</para>
+  <screen>$ cd ~/Downloads ; unzip openam_<?eval ${serverDocTargetVersion}?>.zip</screen>
+
   <variablelist>
-   <para>After you unzip the archive of the entire package, you get an
-   <filename>opensso</filename> directory including a README, a set of license
-   files, and the following directories. See the <link
+   <para>When you unzip the archive of the entire package, you get a
+   <filename>~/Downloads/opensso/</filename> directory including a README, a
+   set of license files, and the following directories. See the <link
    xlink:href="reference#chap-file-layout"
     xlink:role="http://docbook.org/xlink/role/olink"><citetitle>File
     Layout</citetitle> reference</link> for details.</para>
@@ -234,26 +244,20 @@ esac
   </variablelist>
  </section>
 
- <section xml:id="prepare-web-container">
-  <title>Preparing To Deploy on the Web Container</title>
+ <section xml:id="prepare-apache-tomcat">
+  <title>Preparing Apache Tomcat</title>
 
-  <para>This section covers how to prepare web containers for OpenAM
-  installation.</para>
+  <para>OpenAM examples often use Apache Tomcat as the deployment container.
+  Tomcat is installed on <literal>openam.example.com</literal>, and listens
+  on the default ports, with no Java Security Manager enabled. The script
+  <filename>/etc/init.d/tomcat</filename> manages the service at system
+  startup and shutdown. This script assumes you run OpenAM as the user
+  <literal>openam</literal>.</para>
 
-  <para>OpenAM core services require a minimum JVM heap size of 1 GB,
-  and a permanent generation size of 256 MB.</para>
+  <para>OpenAM core services require a minimum JVM heap size of 1 GB, and a
+  permanent generation size of 256 MB.</para>
 
-  <section xml:id="prepare-apache-tomcat">
-   <title>Preparing Apache Tomcat</title>
-
-    <para>OpenAM examples often use Apache Tomcat as the deployment container.
-    Tomcat is installed on <literal>openam.example.com</literal>, and listens
-    on the default ports, with no Java Security Manager enabled. The script
-    <filename>/etc/init.d/tomcat</filename> manages the service at system
-    startup and shutdown. This script assumes you run OpenAM as the user
-    <literal>openam</literal>.</para>
-
-    <programlisting language="shell">#!/bin/sh
+  <programlisting language="shell">#!/bin/sh
 #
 # tomcat
 #
@@ -281,63 +285,63 @@ stop)
   ;;
 esac
 </programlisting>
-  </section>
+ </section>
 
-  <section xml:id="prepare-glassfish-v2">
-   <title>Preparing GlassFish v2</title>
+ <section xml:id="prepare-glassfish-v2">
+  <title>Preparing GlassFish v2</title>
 
-   <para>Before you deploy OpenAM, update these JVM options. These settings
-   are accessible in the administration console under Application Server &gt;
-   JVM Settings &gt; JVM Options.</para>
+  <para>Before you deploy OpenAM, update these JVM options. These settings
+  are accessible in the administration console under Application Server &gt;
+  JVM Settings &gt; JVM Options.</para>
 
-   <variablelist>
-    <varlistentry>
-     <term><literal>-server</literal></term>
-     <listitem>
-      <para>Use <literal>-server</literal> rather than
-      <literal>-client</literal>.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-XX:MaxPermSize=256m</literal></term>
-     <listitem>
-      <para>Set the permanent generation size to 256 MB.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-Xmx1024m</literal></term>
-     <listitem>
-      <para>Make sure OpenAM has at least 1 GB heap.</para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </section>
+  <variablelist>
+   <varlistentry>
+    <term><literal>-server</literal></term>
+    <listitem>
+     <para>Use <literal>-server</literal> rather than
+     <literal>-client</literal>.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-XX:MaxPermSize=256m</literal></term>
+    <listitem>
+     <para>Set the permanent generation size to 256 MB.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-Xmx1024m</literal></term>
+    <listitem>
+     <para>Make sure OpenAM has at least 1 GB heap.</para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </section>
 
-  <section xml:id="prepare-jboss-5">
-   <title>Preparing OpenAM &amp; JBoss 4 or 5</title>
+ <section xml:id="prepare-jboss-5">
+  <title>Preparing OpenAM &amp; JBoss 4 or 5</title>
 
-   <para>OpenAM must be able to store its configuration between restarts. If
-   you plan to deploy OpenAM as a single archive file, then unpack the .war,
-   edit <filename>WEB-INF/classes/bootstrap.properties</filename> to set the
-   <literal>configuration.dir</literal> property to the location where OpenAM
-   has write access to store its configuration.</para>
+  <para>OpenAM must be able to store its configuration between restarts. If
+  you plan to deploy OpenAM as a single archive file, then unpack the .war,
+  edit <filename>WEB-INF/classes/bootstrap.properties</filename> to set the
+  <literal>configuration.dir</literal> property to the location where OpenAM
+  has write access to store its configuration.</para>
 
-   <screen>$ mkdir openam
+  <screen>$ mkdir openam
 $ cd openam
-$ jar -xf /path/to/OpenAM/deployable-war/opensso.war
+$ jar -xf ~/Downloads/opensso/deployable-war/opensso.war
 $ vi WEB-INF/classes/bootstrap.properties
 $ grep ^config WEB-INF/classes/bootstrap.properties
 configuration.dir=/home/jboss-user/openam</screen>
 
-   <para>Also, OpenAM .jar libraries that conflict with JBoss libraries must
-   be loaded first. Add a <filename>WEB-INF/jboss-web.xml</filename> to ensure
-   this happens. (If you deploy the exploded .war, you also need to add this
-   file.)</para>
+  <para>Also, OpenAM .jar libraries that conflict with JBoss libraries must
+  be loaded first. Add a <filename>WEB-INF/jboss-web.xml</filename> to ensure
+  this happens. (If you deploy the exploded .war, you also need to add this
+  file.)</para>
 
-   <screen>$ vi WEB-INF/jboss-web.xml
+  <screen>$ vi WEB-INF/jboss-web.xml
 $ cat WEB-INF/jboss-web.xml</screen>
 
-   <programlisting language="xml">&lt;!DOCTYPE jboss-web PUBLIC
+  <programlisting language="xml">&lt;!DOCTYPE jboss-web PUBLIC
   &quot;-//JBoss//DTD Web Application 5.0//EN&quot;
   &quot;http://www.jboss.org/j2ee/dtd/jboss-web_5_0.dtd&quot;&gt;
 &lt;jboss-web&gt;
@@ -349,64 +353,64 @@ $ cat WEB-INF/jboss-web.xml</screen>
   &lt;/class-loading&gt;
 &lt;/jboss-web&gt;</programlisting>
 
-   <para>Repack the .war file that you can then deploy.</para>
+  <para>Repack the .war file that you can then deploy.</para>
 
-   <screen>$ jar -cf ../openam.war *</screen>
+  <screen>$ jar -cf ../openam.war *</screen>
 
-   <para>Before you deploy OpenAM, update these JVM options.</para>
+  <para>Before you deploy OpenAM, update these JVM options.</para>
 
-   <variablelist>
-    <varlistentry>
-     <term><literal>-server</literal></term>
-     <listitem>
-      <para>Use <literal>-server</literal> rather than
-      <literal>-client</literal>.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-XX:MaxPermSize=256m</literal></term>
-     <listitem>
-      <para>Set the permanent generation size to 256 MB.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-Xmx1024m</literal></term>
-     <listitem>
-      <para>Make sure OpenAM has at least 1 GB heap.</para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </section>
+  <variablelist>
+   <varlistentry>
+    <term><literal>-server</literal></term>
+    <listitem>
+     <para>Use <literal>-server</literal> rather than
+     <literal>-client</literal>.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-XX:MaxPermSize=256m</literal></term>
+    <listitem>
+     <para>Set the permanent generation size to 256 MB.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-Xmx1024m</literal></term>
+    <listitem>
+     <para>Make sure OpenAM has at least 1 GB heap.</para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </section>
 
-  <section xml:id="prepare-jboss-7">
-   <title>Preparing OpenAM &amp; JBoss 7</title>
+ <section xml:id="prepare-jboss-7">
+  <title>Preparing OpenAM &amp; JBoss 7</title>
 
-   <para>OpenAM must be able to store its configuration between restarts. If
-   you plan to deploy OpenAM as a single archive file, then unpack the .war,
-   edit <filename>WEB-INF/classes/bootstrap.properties</filename> to set the
-   <literal>configuration.dir</literal> property to the location where OpenAM
-   has write access to store its configuration, and then repack the .war.</para>
+  <para>OpenAM must be able to store its configuration between restarts. If
+  you plan to deploy OpenAM as a single archive file, then unpack the .war,
+  edit <filename>WEB-INF/classes/bootstrap.properties</filename> to set the
+  <literal>configuration.dir</literal> property to the location where OpenAM
+  has write access to store its configuration, and then repack the .war.</para>
 
-   <screen>$ mkdir openam
+  <screen>$ mkdir openam
 $ cd openam
-$ jar -xf /path/to/OpenAM/deployable-war/opensso.war
+$ jar -xf ~/Downloads/opensso/deployable-war/opensso.war
 $ vi WEB-INF/classes/bootstrap.properties
 $ grep ^config WEB-INF/classes/bootstrap.properties
 configuration.dir=/home/jboss-user/openam
 $ jar -cf ../openam.war *</screen>
 
-   <procedure>
-    <title>Preparing JBoss 7</title>
+  <procedure>
+   <title>Preparing JBoss 7</title>
 
-    <step>
-     <para>Stop JBoss.</para>
-    </step>
+   <step>
+    <para>Stop JBoss.</para>
+   </step>
 
-    <step>
-     <para>Add the Sun x509 security module path to the JBoss 7
-     configuration.</para>
-     <para>The following example uses JBoss 7.1.1.</para>
-     <screen>$ cp /path/to/jboss7/modules/sun/jdk/main/module.xml
+   <step>
+    <para>Add the Sun x509 security module path to the JBoss 7
+    configuration.</para>
+    <para>The following example uses JBoss 7.1.1.</para>
+    <screen>$ cp /path/to/jboss7/modules/sun/jdk/main/module.xml
  /path/to/jboss7/modules/sun/jdk/main/module.orig
 $ vi /path/to/jboss7/modules/sun/jdk/main/module.xml
 $ diff -c /path/to/jboss7/modules/sun/jdk/main/module.orig
@@ -423,14 +427,14 @@ $ diff -c /path/to/jboss7/modules/sun/jdk/main/module.orig
 &lt;path name=&quot;sun/misc&quot;/&gt;
 &lt;path name=&quot;sun/io&quot;/&gt;
 &lt;path name=&quot;sun/nio&quot;/&gt;</screen>
-    </step>
+   </step>
 
-    <step>
-     <para>Disable modules that conflict with OpenAM.</para>
-     <stepalternatives>
-      <step>
-       <para>The following example uses JBoss 7.1.1 standalone.</para>
-       <screen>$ cp /path/to/jboss7/standalone/configuration/standalone.xml
+   <step>
+    <para>Disable modules that conflict with OpenAM.</para>
+    <stepalternatives>
+     <step>
+      <para>The following example uses JBoss 7.1.1 standalone.</para>
+      <screen>$ cp /path/to/jboss7/standalone/configuration/standalone.xml
  /path/to/jboss7/standalone/configuration/standalone.orig
 $ vi /path/to/jboss7/standalone/configuration/standalone.xml
 $ diff -c /path/to/jboss7/standalone/configuration/standalone.orig
@@ -489,10 +493,10 @@ $ diff -c /path/to/jboss7/standalone/configuration/standalone.orig
 &lt;/profile&gt;
 
 --- 259,264 ----</screen>
-      </step>
-      <step>
-       <para>The following example uses JBoss 7.1.1 for a managed domain.</para>
-       <screen>$ cp /path/to/jboss7/domain/configuration/domain.xml
+     </step>
+     <step>
+      <para>The following example uses JBoss 7.1.1 for a managed domain.</para>
+      <screen>$ cp /path/to/jboss7/domain/configuration/domain.xml
  /path/to/jboss7/domain/configuration/domain.orig
 $ vi /path/to/jboss7/domain/configuration/domain.xml
 $ diff -c /path/to/jboss7/domain/configuration/domain.orig
@@ -614,73 +618,81 @@ $ diff -c /path/to/jboss7/domain/configuration/domain.orig
 &lt;/profile&gt;
 &lt;/profiles&gt;
 --- 1242,1247 ----</screen>
-      </step>
-     </stepalternatives>
-    </step>
-    <step>
-     <para>Before you deploy OpenAM, update these JVM options.</para>
+     </step>
+    </stepalternatives>
+   </step>
+   <step>
+    <para>Before you deploy OpenAM, update these JVM options.</para>
 
-     <variablelist>
-      <varlistentry>
-       <term><literal>-server</literal></term>
-       <listitem>
-        <para>Use <literal>-server</literal> rather than
-        <literal>-client</literal>.</para>
-       </listitem>
-      </varlistentry>
-      <varlistentry>
-       <term><literal>-XX:MaxPermSize=256m</literal></term>
-       <listitem>
-        <para>Set the permanent generation size to 256 MB.</para>
-       </listitem>
-      </varlistentry>
-      <varlistentry>
-       <term><literal>-Xmx1024m</literal></term>
-       <listitem>
-        <para>Make sure OpenAM has at least 1 GB heap.</para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </step>
-   </procedure>
-  </section>
+    <variablelist>
+     <varlistentry>
+      <term><literal>-Dorg.apache.tomcat.util.http.ServerCookie.ALWAYS_ADD_EXPIRES=true</literal></term>
+      <listitem>
+       <para>Make sure that headers include the <literal>Expires</literal>
+       attribute rather than only <literal>Max-Age</literal>, as some versions
+       of Internet Explorer do not support <literal>Max-Age</literal>.</para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>-server</literal></term>
+      <listitem>
+       <para>Use <literal>-server</literal> rather than
+       <literal>-client</literal>.</para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>-XX:MaxPermSize=256m</literal></term>
+      <listitem>
+       <para>Set the permanent generation size to 256 MB.</para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>-Xmx1024m</literal></term>
+      <listitem>
+       <para>Make sure OpenAM has at least 1 GB heap.</para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </step>
+  </procedure>
+ </section>
 
-  <section xml:id="prepare-jetty-7">
-   <title>Preparing Jetty 7</title>
+ <section xml:id="prepare-jetty-7">
+  <title>Preparing Jetty 7</title>
 
-   <para>When you deploy OpenAM, make sure you start Jetty with enough
-   memory.</para>
+  <para>When you deploy OpenAM, make sure you start Jetty with enough memory.
+  OpenAM core services require a minimum JVM heap size of 1 GB, and a
+  permanent generation size of 256 MB.</para>
 
-   <screen>$ cd /path/to/jetty
+  <screen>$ cd /path/to/jetty
 $ java -server -Xmx1024m -XX:MaxPermSize=256m -jar start.jar</screen>
-  </section>
+ </section>
 
-  <section xml:id="prepare-oracle-weblogic">
-   <title>Preparing Oracle WebLogic</title>
+ <section xml:id="prepare-oracle-weblogic">
+  <title>Preparing Oracle WebLogic</title>
 
-   <para>Before you deploy OpenAM, update these JVM options.</para>
+  <para>Before you deploy OpenAM, update these JVM options.</para>
 
-   <variablelist>
-    <varlistentry>
-     <term><literal>-server</literal></term>
-     <listitem>
-      <para>Use <literal>-server</literal> rather than
-      <literal>-client</literal>.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-XX:MaxPermSize=256m</literal></term>
-     <listitem>
-      <para>Set the permanent generation size to 256 MB.</para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><literal>-Xmx1024m</literal></term>
-     <listitem>
-      <para>Make sure OpenAM has at least 1 GB heap.</para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </section>
+  <variablelist>
+   <varlistentry>
+    <term><literal>-server</literal></term>
+    <listitem>
+     <para>Use <literal>-server</literal> rather than
+     <literal>-client</literal>.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-XX:MaxPermSize=256m</literal></term>
+    <listitem>
+     <para>Set the permanent generation size to 256 MB.</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>-Xmx1024m</literal></term>
+    <listitem>
+     <para>Make sure OpenAM has at least 1 GB heap.</para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </section>
 </chapter>
