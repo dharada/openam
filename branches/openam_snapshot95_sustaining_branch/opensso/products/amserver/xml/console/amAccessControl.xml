@@ -25,7 +25,9 @@
    $Id: amAccessControl.xml,v 1.22 2010/01/08 00:27:01 babysunil Exp $
 
 -->
-
+<!--
+   Portions Copyrighted 2011-2012 ForgeRock Inc
+-->
 <accesscontrols>
     <!-- REALM -->
     <viewbean classname="com.sun.identity.console.realm.RMRealmViewBean"
@@ -437,7 +439,6 @@
 
     <neednodealwith classname="com.sun.identity.console.federation.CreateCOTViewBean" />
     <neednodealwith classname="com.sun.identity.console.federation.FSAuthDomainsEditViewBean" />
-    <neednodealwith classname="com.sun.identity.console.federation.FileChooserViewBean" />
     <neednodealwith classname="com.sun.identity.console.federation.FederationViewBean" />
     <neednodealwith classname="com.sun.identity.console.federation.ImportEntityViewBean" />
     <neednodealwith classname="com.sun.identity.console.federation.IDFFIDPViewBean" />
