@@ -26,6 +26,9 @@
  *
  */
 
+/*
+ * Portions Copyrighted 2011 ForgeRock AS
+ */
 package com.sun.identity.console.service;
 
 import com.iplanet.jato.RequestManager;
@@ -195,7 +198,7 @@ public class SCServiceProfileViewBean extends AMServiceProfileViewBeanBase {
                 if (realmName != null) {
                     List moduleList = 
                         AMAuthUtils.getModuleInstancesForHttpBasic(realmName);                 
-                if(moduleList.size()!=0){
+                if (!moduleList.isEmpty()){
                     defaultModule =  (String) moduleList.get(0);                   
                     radio.setValue(defaultModule);
                 }
@@ -366,16 +369,6 @@ public class SCServiceProfileViewBean extends AMServiceProfileViewBeanBase {
         return false;
     }
 
-    protected String getHelpID() {
-        String serviceName = (String)getPageSessionAttribute(
-            AMServiceProfile.SERVICE_NAME);
-        if (serviceName != null) {
-            return super.getHelpID()+"."+serviceName;
-        } else {
-            return super.getHelpID();
-        }
-    }
-     
     // button1 (Save) request done in AMServiceProfileViewBean
     // button2 (Reset) request done in AMServiceProfileViewBean
 
