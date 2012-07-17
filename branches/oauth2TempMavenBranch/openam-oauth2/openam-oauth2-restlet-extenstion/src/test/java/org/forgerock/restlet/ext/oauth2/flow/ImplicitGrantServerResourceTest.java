@@ -52,8 +52,7 @@ public class ImplicitGrantServerResourceTest extends AbstractFlowTest {
     @Test
     public void testValidRequest() throws Exception {
         Reference reference = new Reference("riap://component/test/oauth2/authorize");
-        reference
-                .addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
         reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
         reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
         reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
@@ -66,24 +65,6 @@ public class ImplicitGrantServerResourceTest extends AbstractFlowTest {
 
         // handle
         getClient().handle(request, response);
-
-        // reference = new Reference("riap://component/test/oauth2/authorize");
-        // request = new Request(Method.POST, reference);
-        // request.setChallengeResponse(cr);
-        // response = new Response(request);
-        //
-        // Form parameters = new Form();
-        // parameters.add(OAuth2.Params.RESPONSE_TYPE,
-        // OAuth2.AuthorizationEndpoint.TOKEN);
-        // parameters.add(OAuth2.Params.CLIENT_ID, "cid");
-        // parameters.add(OAuth2.Params.REDIRECT_URI, "");
-        // parameters.add(OAuth2.Params.SCOPE, "read write");
-        // parameters.add(OAuth2.Params.STATE, "random");
-        // parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
-        // request.setEntity(parameters.getWebRepresentation());
-        //
-        // //handle
-        // getClient().handle(request, response);
         assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
         Form fragment = new Form(response.getLocationRef().getFragment());
 
@@ -100,8 +81,7 @@ public class ImplicitGrantServerResourceTest extends AbstractFlowTest {
 
         // Increase the scope
         reference = new Reference("riap://component/test/oauth2/authorize");
-        reference
-                .addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
         reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
         reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
         reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
@@ -138,8 +118,7 @@ public class ImplicitGrantServerResourceTest extends AbstractFlowTest {
         Request request = new Request(Method.GET, reference);
         request.setChallengeResponse(cr);
         Response response = new Response(request);
-        reference
-                .addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
         reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "invalid_cid");
         reference.addQueryParameter(OAuth2.Params.STATE, "random");
 
@@ -172,5 +151,331 @@ public class ImplicitGrantServerResourceTest extends AbstractFlowTest {
             }
         });
 
+    }
+    /*
+    The authorization server MUST support the use of the HTTP "GET"
+    method [RFC2616] for the authorization endpoint, and MAY support the
+    use of the "POST" method as well.
+    */
+    @Test
+    public void testImplicitPostRequest() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.POST, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        Form fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER),
+                MapAssert.entry(OAuth2.Params.EXPIRES_IN, "3600")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ACCESS_TOKEN)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+
+        // Increase the scope
+        reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        request = new Request(Method.POST, reference);
+        request.setChallengeResponse(cr);
+        response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER),
+                MapAssert.entry(OAuth2.Params.SCOPE, "read write"),
+                MapAssert.entry(OAuth2.Params.EXPIRES_IN, "3600")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ACCESS_TOKEN)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+    }
+
+    /*
+    Parameters sent without a value MUST be treated as if they were
+    omitted from the request.
+    */
+    @Test
+    public void testImplicitParametersWithoutValue() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        //leave client_ID blank
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        Form fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.ERROR, OAuth2.Error.INVALID_CLIENT),
+                MapAssert.entry(OAuth2.Params.STATE, "random")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ERROR_DESCRIPTION)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+    }
+
+    /*
+    The authorization server MUST ignore
+    unrecognized request parameters.
+     */
+    @Test
+    public void testUnrecognizedParametersInRequest() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        //add an unrecognized parameter
+        reference.addQueryParameter("UNRECOGNIZED_PARAM", "VALUE");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        Form fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER),
+                MapAssert.entry(OAuth2.Params.EXPIRES_IN, "3600")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ACCESS_TOKEN)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+
+        // Increase the scope
+        reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        //add an unrecognized parameter
+        reference.addQueryParameter("UNRECOGNIZED_PARAM", "VALUE");
+
+        request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER),
+                MapAssert.entry(OAuth2.Params.SCOPE, "read write"),
+                MapAssert.entry(OAuth2.Params.EXPIRES_IN, "3600")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ACCESS_TOKEN)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+    }
+
+    /*
+    Request and response parameters
+    MUST NOT be included more than once.
+     */
+    @Test
+    public void testMultipleParametersWithSameNameInRequest() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        //add multiple client ids (the server will use the first id)
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid2");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        Form fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.ERROR, OAuth2.Error.INVALID_CLIENT),
+                MapAssert.entry(OAuth2.Params.STATE, "random")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ERROR_DESCRIPTION)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+
+        // Increase the scope
+        reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        //add multiple client ids (the server will use the first id)
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid2");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        fragment = new Form(response.getLocationRef().getFragment());
+
+        // assert
+        assertThat(fragment.getValuesMap()).includes(
+                MapAssert.entry(OAuth2.Params.ERROR, OAuth2.Error.INVALID_CLIENT),
+                MapAssert.entry(OAuth2.Params.STATE, "random")).is(new Condition<Map<?, ?>>() {
+            @Override
+            public boolean matches(Map<?, ?> value) {
+                return value.containsKey(OAuth2.Params.ERROR_DESCRIPTION)
+                        && value.containsKey(OAuth2.Params.STATE);
+            }
+        });
+    }
+
+    /*
+    If an authorization request is missing the "response_type" parameter,
+    or if the response type is not understood, the authorization server
+    MUST return an error response as described in Section 4.1.2.1.
+     */
+    @Test
+    public void testMissingResponseTypeParameterInRequest() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        //reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_NOT_FOUND);
+
+        // Increase the scope
+        reference = new Reference("riap://component/test/oauth2/authorize");
+        //reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.TOKEN);
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_NOT_FOUND);
+    }
+
+    /*
+    if the response type is not understood, the authorization server
+    MUST return an error response as described in Section 4.1.2.1
+     */
+    @Test
+    public void testMisunderstoodResponseTypeParameterInRequest() throws Exception {
+        Reference reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, "Misunderstood");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+
+        ChallengeResponse cr = new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        Request request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
+
+        // Increase the scope
+        reference = new Reference("riap://component/test/oauth2/authorize");
+        reference.addQueryParameter(OAuth2.Params.RESPONSE_TYPE, "Misunderstood");
+        reference.addQueryParameter(OAuth2.Params.CLIENT_ID, "cid");
+        reference.addQueryParameter(OAuth2.Params.REDIRECT_URI, "");
+        reference.addQueryParameter(OAuth2.Params.SCOPE, "read write execute");
+        reference.addQueryParameter(OAuth2.Params.STATE, "random");
+        request = new Request(Method.GET, reference);
+        request.setChallengeResponse(cr);
+        response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+
+        // Redirect Error message - Unknown Client
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
     }
 }
