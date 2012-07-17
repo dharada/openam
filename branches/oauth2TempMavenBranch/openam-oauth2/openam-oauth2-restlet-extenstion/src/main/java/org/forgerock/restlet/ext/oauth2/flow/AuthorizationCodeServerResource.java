@@ -72,8 +72,10 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
         String approval_prompt =
                 OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.APPROVAL_PROMPT,
                         String.class);
+        String decision = OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.DECISION,
+                String.class);
 
-        if (true) {
+        if (!OAuth2.Custom.ALLOW.equalsIgnoreCase(decision)) {
             /*
              * APPROVAL_PROMPT = true AND NOT (CLIENT.AUTO_GRANT)
              */
