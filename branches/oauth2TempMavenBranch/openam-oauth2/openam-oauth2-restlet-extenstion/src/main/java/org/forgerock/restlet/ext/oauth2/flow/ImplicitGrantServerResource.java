@@ -36,6 +36,7 @@ import org.restlet.data.Method;
 import org.restlet.data.Reference;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
+import org.restlet.resource.Post;
 import org.restlet.routing.Redirector;
 
 /**
@@ -60,6 +61,7 @@ public class ImplicitGrantServerResource extends AbstractFlow {
      * @return
      */
     @Get("html")
+    @Post("html")
     public Representation represent() {
         resourceOwner = getAuthenticatedResourceOwner();
 
@@ -121,14 +123,6 @@ public class ImplicitGrantServerResource extends AbstractFlow {
         } else {
             // Build approval page data
             return getPage("authorize.ftl", getDataModel());
-        }
-    }
-
-    @Override
-    protected void validateMethod() throws OAuthProblemException {
-        if (!Method.GET.equals(getMethod())) {
-            throw OAuthProblemException
-                    .handleOAuthProblemException("Implicit grand type supports only GET method");
         }
     }
 
