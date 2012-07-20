@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted 2010-2012 ForgeRock Inc
  */
 
 package com.sun.identity.authentication;
@@ -742,6 +742,9 @@ public class AuthContext extends Object implements java.io.Serializable {
                     acLocal = com.sun.identity.authentication.service.AuthUtils.
                         getAuthContext(organizationName, ssoTokenID, false, 
                             null, null, null, forceAuth);
+                }
+                if (hostName != null) {
+                    acLocal.getLoginState().setClient(hostName);
                 }
                 acLocal.login(indexType, indexName, pCookie, envMap, locale);
             } catch (AuthException e) {
