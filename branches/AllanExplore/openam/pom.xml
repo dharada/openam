@@ -166,6 +166,9 @@
         <!-- Final Packaging Distribution Kit -->
         <module>openam-distribution</module>
 
+        <!-- Final Packaging Distribution Kit -->
+        <module>openam-console</module>
+
     </modules>
 
     <!-- Developers -->
