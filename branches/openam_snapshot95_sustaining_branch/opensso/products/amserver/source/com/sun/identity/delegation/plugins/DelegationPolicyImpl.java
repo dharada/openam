@@ -25,6 +25,10 @@
  * $Id: DelegationPolicyImpl.java,v 1.12 2010/01/16 06:35:25 dillidorai Exp $
  *
  */
+
+/*
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.delegation.plugins;
 
 import java.util.Set;
@@ -69,6 +73,7 @@ import com.sun.identity.policy.PolicyDecision;
 import com.sun.identity.policy.ActionDecision;
 import com.sun.identity.policy.PolicyException;
 import com.sun.identity.policy.Rule;
+import com.sun.identity.policy.SubjectEvaluationCache;
 import com.sun.identity.policy.interfaces.Subject;
 import com.sun.identity.policy.interfaces.PolicyListener;
 
@@ -679,6 +684,14 @@ public class DelegationPolicyImpl implements DelegationInterface,
             }
         }
 
+        // Clear the SubjectEvaluationCache on any identity changes if active and not empty.
+        if (SubjectEvaluationCache.subjectEvalCacheTTL > 0 && !SubjectEvaluationCache.subjectEvaluationCache.isEmpty()) {
+            SubjectEvaluationCache.subjectEvaluationCache.clear();
+            if (DelegationManager.debug.messageEnabled()) {
+               DelegationManager.debug.message(
+                "DelegationPolicyImpl.cleanupCache(): subjectEvaluationCache cleared");
+            }
+        }
     }
 
  
@@ -860,7 +873,7 @@ public class DelegationPolicyImpl implements DelegationInterface,
     private DelegationPrivilege policyToPrivilege(Policy policy) 
         throws DelegationException {
 
-        String pname = null;;
+        String pname = null;
         Set permissions = new HashSet();
         Set svalues = new HashSet();
 

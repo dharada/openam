@@ -26,9 +26,9 @@
  *
  */
 
-
-
-
+/*
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.policy.plugins;
 
 import java.util.*;
@@ -56,7 +56,7 @@ import com.sun.identity.policy.InvalidNameException;
 import com.sun.identity.policy.interfaces.Subject;
 
 /**
- * This class respresents a group of LDAP roles
+ * This class represents a group of LDAP roles
  */
 public class LDAPRoles implements Subject {
 
@@ -661,19 +661,22 @@ public class LDAPRoles implements Subject {
                         toRFCString().toLowerCase());
                 }
             }
-            Object[] elem = new Object[2];
-            elem[0] = new Long(System.currentTimeMillis() 
-                               + SubjectEvaluationCache.getSubjectEvalTTL());
-            elem[1] = roles;
-            serverRoleMap = null;
-            if ((serverRoleMap = (Map)userLDAPRoleCache.get(tokenIDStr)) 
-                == null) 
-            {
-                serverRoleMap = Collections.synchronizedMap(new HashMap());
-                serverRoleMap.put(ldapServer,elem);
-                userLDAPRoleCache.put(tokenIDStr, serverRoleMap);
-            } else {
-                serverRoleMap.put(ldapServer,elem);
+            // If the cache is enabled
+            if (SubjectEvaluationCache.getSubjectEvalTTL() > 0) {
+                Object[] elem = new Object[2];
+                elem[0] = new Long(System.currentTimeMillis()
+                                + SubjectEvaluationCache.getSubjectEvalTTL());
+                elem[1] = roles;
+                serverRoleMap = null;
+                if ((serverRoleMap = (Map)userLDAPRoleCache.get(tokenIDStr))
+                    == null)
+                {
+                    serverRoleMap = Collections.synchronizedMap(new HashMap());
+                    serverRoleMap.put(ldapServer,elem);
+                    userLDAPRoleCache.put(tokenIDStr, serverRoleMap);
+                } else {
+                    serverRoleMap.put(ldapServer,elem);
+                }
             }
         }
         return roles;
