@@ -72,6 +72,7 @@ typedef enum {
 static pthread_mutex_t s_module_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 static boolean_t agentInitialized = B_FALSE;
+static boolean_t agentBootInitialized = B_FALSE;
 static apr_pool_t* s_module_pool = NULL;
 static apr_hash_t* s_module_storage = NULL;
 
@@ -83,12 +84,18 @@ static int iterate_func(void *v, const char *key, const char *value) {
 }
 
 static void fill_http(sess_record *sp, int done) {
+    int status;
     itd d;
     d.r = sp;
     d.hdr = (done == 1 ? HDR_OBJ : HDR_RESP);
     apr_table_do(iterate_func, &d, sp->response.headers_out, NULL);
-    if (done == 1 && sp->response.status != 0) {
-        http_PutStatus(sp->s->obj->http, sp->response.status);
+    if (done == 1 && (status = sp->response.status) != 0) {
+        if (status < 100 || status > 999) {
+            status = 503;
+        }
+        http_PutStatus(sp->s->obj->http, status);
+        http_PutResponse(sp->s->wrk, sp->s->fd,
+                sp->s->obj->http, http_StatusMessage(status));
     }
     if (done == 1 && sp->response.body != NULL && sp->response.body[0] != '\0') {
         VRT_synth_page(sp->s, 0, sp->response.body, vrt_magic_string_end);
@@ -163,49 +170,45 @@ static am_status_t content_read(void **args, char **rbuf) {
     sess_record *r;
     char *ptr, *endp;
     unsigned long content_length;
-    am_status_t sts = AM_SUCCESS;
+    am_status_t sts = AM_FAILURE;
 
     int total_read = 0;
     int bytes_read;
-    int bytes_to_read;
 
     const int buf_length = 8192;
     char buf[buf_length];
 
     if (args == NULL || (r = args[0]) == NULL) {
-        am_web_log_error("%s: invalid arguments passed.", thisfunc);
+        am_web_log_error("%s: invalid arguments passed", thisfunc);
         sts = AM_INVALID_ARGUMENT;
     } else if (ptr = VRT_GetHdr(r->s, HDR_REQ, cl)) {
         content_length = strtoul(ptr, &endp, 10);
-        ptr = 0;
-        while (content_length > 0) {
-            bytes_to_read = content_length > buf_length ? buf_length : content_length;
-            bytes_read = HTC_Read(r->s->htc, buf, bytes_to_read);
+        *rbuf = apr_pcalloc(r->pool, content_length + 1);
+        if (*rbuf == NULL) {
+            am_web_log_error("%s: memory failure", thisfunc);
+            return AM_FAILURE;
+        }
+        while (content_length) {
+            bytes_read = content_length > buf_length ? buf_length : content_length;
+            bytes_read = HTC_Read(r->s->htc, buf, bytes_read);
             if (bytes_read <= 0) {
                 sts = AM_FAILURE;
                 break;
             }
-            *rbuf = apr_pcalloc(r->pool, total_read + bytes_read);
-            if (*rbuf == 0) {
-                sts = AM_FAILURE;
-                break;
-            }
-            if (ptr) {
-                memcpy(*rbuf, ptr, total_read);
-            }
-            memcpy(*rbuf + total_read, buf, bytes_read);
-            total_read += bytes_read;
-            ptr = *rbuf;
             content_length -= bytes_read;
+            memcpy((*rbuf) + total_read, buf, bytes_read);
+            total_read += bytes_read;
         }
-    } else
-        sts = AM_FAILURE;
+        sts = AM_SUCCESS;
+    }
 
-    if (AM_SUCCESS == sts)
+    if (AM_SUCCESS == sts) {
         VRT_SetHdr(r->s, HDR_REQ, cl, NULL, vrt_magic_string_end);
+        (*rbuf)[total_read] = 0;
+        am_web_log_max_debug("%s:\n%s\n", thisfunc, *rbuf);
+    }
 
-    am_web_log_debug("%s: %d bytes read", thisfunc, total_read);
-    am_web_log_max_debug("\n%s\n", *rbuf);
+    am_web_log_debug("%s: %d bytes", thisfunc, total_read);
     return sts;
 }
 
@@ -287,6 +290,7 @@ static am_status_t render_result(void **args, am_web_result_t http_result, char 
                 break;
             case AM_WEB_RESULT_REDIRECT:
                 apr_table_add(rec->response.headers_out, "Location", data);
+                apr_table_addn(rec->response.headers_out, "Content-Type", "text/html");
                 ap_custom_response(rec, 302, apr_psprintf(rec->pool, "<head><title>Document Moved</title></head>\n"
                         "<body><h1>Object Moved</h1>This document may be found "
                         "<a HREF=\"%s\">here</a></body>", data));
@@ -466,42 +470,21 @@ static am_status_t check_for_post_data(void **args, const char *requestURL, char
 }
 
 void vmod_init(struct sess* s, const char *agent_bootstrap_file, const char *agent_config_file) {
-    am_status_t amstatus = AM_SUCCESS;
     apr_status_t status = apr_initialize();
-    if (APR_SUCCESS != status) {
-        LOG("am_vmod_init apr_initialize failed\n");
-        return;
-    }
-    status = apr_pool_create(&s_module_pool, NULL);
-    if (APR_SUCCESS != status) {
-        LOG("am_vmod_init apr_pool_create failed\n");
-        apr_terminate();
-        return;
-    }
-    s_module_storage = apr_hash_make(s_module_pool);
-    if (s_module_storage == NULL) {
-        LOG("am_vmod_init apr_hash_make failed\n");
-        apr_pool_destroy(s_module_pool);
-        apr_terminate();
-        return;
-    }
-
-    pthread_mutex_lock(&init_mutex);
-    if ((amstatus = am_web_init(agent_bootstrap_file, agent_config_file)) != AM_SUCCESS) {
-        LOG("am_vmod_init am_web_init failed: %s (%d)\n", am_status_to_string(amstatus), amstatus);
-        status = APR_EINIT;
-    }
-    if (APR_SUCCESS == status) {
-        if ((amstatus = am_agent_init(&agentInitialized)) != AM_SUCCESS) {
-            LOG("am_vmod_init am_agent_init failed: %s (%d)\n", am_status_to_string(amstatus), amstatus);
-            status = APR_EINIT;
+    if (status == APR_SUCCESS) {
+        status = apr_pool_create(&s_module_pool, NULL);
+        if (status == APR_SUCCESS) {
+            s_module_storage = apr_hash_make(s_module_pool);
+            if (s_module_storage != NULL) {
+                pthread_mutex_lock(&init_mutex);
+                if (am_web_init(agent_bootstrap_file, agent_config_file) != AM_SUCCESS) {
+                    agentBootInitialized = B_FALSE;
+                } else {
+                    agentBootInitialized = B_TRUE;
+                }
+                pthread_mutex_unlock(&init_mutex);
+            }
         }
-    }
-    pthread_mutex_unlock(&init_mutex);
-
-    if (APR_SUCCESS != status) {
-        apr_pool_destroy(s_module_pool);
-        apr_terminate();
     }
 }
 
@@ -550,7 +533,31 @@ unsigned vmod_authenticate(struct sess *s, const char *req_method, const char *p
     memset((void *) & req_params, 0, sizeof (req_params));
     memset((void *) & req_func, 0, sizeof (req_func));
 
-    if (agentInitialized != B_TRUE || (r = on_request_init(s)) == NULL) {
+    if ((r = on_request_init(s)) == NULL) {
+        LOG("vmod_authenticate() on_request_init failed\n");
+        am_web_log_error("%s: on_request_init failed", thisfunc);
+        send_deny(r);
+        return 0;
+    }
+
+    if (agentBootInitialized != B_TRUE) {
+        LOG("vmod_authenticate() am_web_init failed\n");
+        am_web_log_error("%s: am_web_init failed", thisfunc);
+        send_deny(r);
+        return 0;
+    }
+
+    if (agentInitialized != B_TRUE) {
+        pthread_mutex_lock(&init_mutex);
+        if (agentInitialized != B_TRUE) {
+            if ((status = am_agent_init(&agentInitialized)) != AM_SUCCESS) {
+                am_web_log_error("%s: am_agent_init failed: %s (%d)", thisfunc, am_status_to_string(status), status);
+            }
+        }
+        pthread_mutex_unlock(&init_mutex);
+    }
+
+    if (agentInitialized != B_TRUE) {
         send_deny(r);
         return 0;
     }
@@ -586,6 +593,7 @@ unsigned vmod_authenticate(struct sess *s, const char *req_method, const char *p
             if (status == AM_SUCCESS && data != NULL && strlen(data) > 0) {
                 am_web_handle_notification(data, strlen(data), agent_config);
                 am_web_delete_agent_configuration(agent_config);
+                am_web_log_debug("%s: received notification message, sending HTTP-200 response", thisfunc);
                 send_ok(r);
                 return 0;
             } else {
@@ -607,7 +615,7 @@ unsigned vmod_authenticate(struct sess *s, const char *req_method, const char *p
         }
         if ((req_params.client_ip == NULL) || (strlen(req_params.client_ip) == 0)
                 || (req_params.client_hostname == NULL) || (strlen(req_params.client_hostname) == 0)) {
-            am_web_log_error("%s: Could not get the remote host/ip (error: %d)", thisfunc, errno);
+            am_web_log_error("%s: Could not get the remote host/ip (error: %d)", thisfunc, err);
             status = AM_FAILURE;
         }
     }
@@ -657,12 +665,16 @@ unsigned vmod_authenticate(struct sess *s, const char *req_method, const char *p
 
 void vmod_done(struct sess * s) {
     char thisfunc[] = "vmod_done()";
+    const char* ct = "\015Content-Type:";
     sess_record* r = get_sess_rec(s);
     if (r != NULL) {
         fill_http(r, 1);
     } else {
-        am_web_log_error("%s: invalid argument", thisfunc);
+        am_web_log_error("%s: sending HTTP-403 response", thisfunc);
         http_PutStatus(s->obj->http, 403);
+        http_PutResponse(s->wrk, s->fd, s->obj->http, http_StatusMessage(403));
+        VRT_synth_page(s, 0, "403 Forbidden", vrt_magic_string_end);
+        VRT_SetHdr(s, HDR_OBJ, ct, "text/plain", vrt_magic_string_end);
     }
     on_request_cleanup(s);
 }
