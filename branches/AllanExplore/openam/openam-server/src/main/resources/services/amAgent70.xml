@@ -37,7 +37,8 @@
     <Service name="sunIdentityAgentService" version="1.0">
         <Schema
             i18nFileName="amAgent"
-	    revisionNumber="10">
+	        revisionNumber="10"
+            serviceHierarchy="/Config/Agent">
             <Generic type="Agent">
 	        <AttributeSchema name="userpassword"
                     type="single"

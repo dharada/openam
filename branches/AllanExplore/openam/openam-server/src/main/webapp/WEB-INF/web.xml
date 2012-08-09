@@ -1066,7 +1066,30 @@
 
     <!-- servlet mapping -->
 
-	<!-- Servlet to Restlet adapter declaration (Mandatory) -->
+    <!-- Servlet to Restlet adapter declaration (Mandatory) -->
+    <servlet>
+        <servlet-name>ConsoleAdapter</servlet-name>
+        <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>
+
+        <!-- Your application class name (Optional - For mode 3) -->
+        <init-param>
+            <param-name>org.restlet.application</param-name>
+            <param-value>org.forgerock.openam.console.consoleRESTApp</param-value>
+        </init-param>
+
+        <!-- List of supported client protocols (Optional - Only in mode 3) -->
+        <init-param>
+            <param-name>org.restlet.clients</param-name>
+            <param-value>RIAP CLAP FILE</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ConsoleAdapter</servlet-name>
+        <url-pattern>/restconsole/*</url-pattern>
+    </servlet-mapping>
+
+
+    <!-- Servlet to Restlet adapter declaration (Mandatory) -->
 	    <servlet>
 	        <servlet-name>RestletAdapter</servlet-name>
 	        <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>

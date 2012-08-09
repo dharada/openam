@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -713,11 +714,21 @@ public class AttributeSchema {
     /**
      * Returns a string representation of this <code> AttributeSchema </code>
      * object.
-     * 
+     *
      * @return String representation of this object
      */
     public String toString() {
         return (as.toString());
+    }
+
+    /**
+     * Returns a JSON representation of this <code> AttributeSchema </code>
+     * object.
+     *
+     * @return JSONObject representation of this object
+     */
+    public JSONObject toJSON() {
+        return (as.toJSON());
     }
 
     /**

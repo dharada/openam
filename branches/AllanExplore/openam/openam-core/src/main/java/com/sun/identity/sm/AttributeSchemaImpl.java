@@ -41,6 +41,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -453,7 +456,34 @@ public class AttributeSchemaImpl {
         buf.append("\n");
         return buf.toString();
     }
-    
+    public JSONObject toJSON() {
+        JSONObject buf = new JSONObject();
+        try {
+            buf.accumulate("Attr Name", name);
+            buf.accumulate("Type", type);
+            buf.accumulate("UIType", uitype);
+            buf.accumulate("Syntax", syntax);
+            buf.accumulate("I18n Key", key);
+            buf.accumulate("Default values", defaultValues);
+            buf.accumulate("Choice Values", choiceValues);
+            buf.accumulate("RangeStart", rangeStart);
+            buf.accumulate("RangeEnd", rangeEnd);
+            buf.accumulate("MinValue", minValue);
+            buf.accumulate("MaxValue", maxValue);
+            buf.accumulate("CoS Qualifier", cosQualifier);
+            buf.accumulate("Any", any);
+            buf.accumulate("View Bean URL", attributeViewBeanURL);
+            buf.accumulate("isOptional", isOptional);
+            buf.accumulate("isServiceIdentifier", isServiceIdentifier);
+            buf.accumulate("isResourceNameAllowed", isResourceNameAllowed);
+            buf.accumulate("isStatusAttribute", isStatusAttribute);
+            buf.accumulate("isSearchable", isSearchable);
+        } catch (JSONException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return buf;
+    }
+
     public Node getAttributeSchemaNode() {
         return attrSchemaNode;
     }

@@ -39,7 +39,7 @@
 <ServicesConfiguration>
     <Service name="iPlanetAMAuthService" version="1.0">
         <Schema
-            serviceHierarchy="/DSAMEConfig/authentication/iPlanetAMAuthService"
+            serviceHierarchy="/Config/authentication/"
             i18nFileName="amAuth"
             revisionNumber="60"
             i18nKey="iplanet-am-auth-service-description">

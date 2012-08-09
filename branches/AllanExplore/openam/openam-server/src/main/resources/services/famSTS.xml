@@ -35,7 +35,7 @@
 <ServicesConfiguration>
     <Service name="sunFAMSTSService" version="1.0">
         <Schema 
-            serviceHierarchy=""
+            serviceHierarchy="/Config/Federation/"
             i18nFileName="famSTS"
             revisionNumber="10"
             i18nKey="sunSTS"

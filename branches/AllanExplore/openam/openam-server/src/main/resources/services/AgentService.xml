@@ -36,7 +36,9 @@
 
 <ServicesConfiguration>
     <Service name="AgentService" version="1.0">
-        <Schema i18nFileName="agentService" revisionNumber="10">
+        <Schema i18nFileName="agentService"
+                serviceHierarchy="/Config/Agent"
+                revisionNumber="10">
             <Organization>
                 <SubSchema name="WebAgent" inheritance="multiple">
                     <AttributeSchema

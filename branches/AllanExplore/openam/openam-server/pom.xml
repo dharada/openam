@@ -464,7 +464,13 @@
             <version>10.1.0-SNAPSHOT</version>
         </dependency>
 
-		<!-- Oauth2 dependencies -->
+        <dependency>
+            <artifactId>openam-console</artifactId>
+            <groupId>org.forgerock</groupId>
+            <version>10.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Oauth2 dependencies -->
 
         <dependency>
             <groupId>org.forgerock</groupId>

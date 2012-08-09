@@ -608,7 +608,7 @@ public class ServiceSchemaManager {
         }
         return (false);
     }
-    
+
     /**
      * Returns the string representation of the Service
      * Schema.
@@ -618,10 +618,10 @@ public class ServiceSchemaManager {
      * @supported.api
      */
     public String toString() {
-    	validate();
-    	return (ssm.toString());
+        validate();
+        return (ssm.toString());
     }
-    
+
     /**
      * Registers for changes to service's schema. The
      * object will be called when schema for this service and version is
