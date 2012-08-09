@@ -17,6 +17,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
 import org.restlet.resource.ServerResource;
+import org.restlet.resource.Get;
 
 /**
  * Utility Resource to view the various strings
