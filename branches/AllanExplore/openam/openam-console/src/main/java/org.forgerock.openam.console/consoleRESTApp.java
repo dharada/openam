@@ -59,7 +59,7 @@ public class consoleRESTApp extends Application {
         router.attach("/services/{service}",ConsoleServices.class) ;
         router.attach("/services/{service}/schema",ConsoleServiceSchema.class) ;
         router.attach("/services/{service}/config",ConsoleServiceConfig.class) ;
-        router.attach("/services/{service}/config/{instance}",ConsoleServiceConfig.class) ;
+        router.attach("/services/{service}/globalSchema",ConsoleServiceGlobalSchema.class) ;
 
         return router;
     }

@@ -50,6 +50,8 @@ public class ConsoleServices extends ServerResource {
                 result.accumulate("serviceName",jo);
             }
 
+            ResourceBundle
+
         } catch (Exception e)       {
 
         }
