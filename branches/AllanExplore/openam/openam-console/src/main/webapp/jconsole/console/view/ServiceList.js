@@ -8,17 +8,19 @@
 
 
 
-Ext.define('OpenAM.view.ServiceList', {
-    extends: 'Ext.grid.Panel',
+Ext.define('AM.view.ServiceList', {
+    extend: 'Ext.grid.Panel',
     alias:   'widget.servicelist',
+
+
     title:   'Services',
+    autoScroll: true,
 
     initComponent: function() {
-        this.margins        = '0 5 5 5';
-        this.bodyPadding    = 5;
         this.columns        = [
             { text: 'Service',  dataIndex: 'name', flex: 1}
         ];
+        console.log('Initializing Servicelist');
         this.callParent(arguments);
     }
 });

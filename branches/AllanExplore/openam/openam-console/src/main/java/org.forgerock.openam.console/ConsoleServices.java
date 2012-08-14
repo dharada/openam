@@ -38,6 +38,7 @@ public class ConsoleServices extends ServerResource {
             SSOToken adminToken = (SSOToken) AccessController
                     .doPrivileged(AdminTokenAction.getInstance());
             String service = (String) getRequest().getAttributes().get("service");
+            String scope =  (String) getRequest().getAttributes().get("scope");
 
             ServiceManager sm = new ServiceManager(adminToken);
 
@@ -49,8 +50,6 @@ public class ConsoleServices extends ServerResource {
                 jo.accumulate("name",svcName);
                 result.accumulate("serviceName",jo);
             }
-
-            ResourceBundle
 
         } catch (Exception e)       {
 

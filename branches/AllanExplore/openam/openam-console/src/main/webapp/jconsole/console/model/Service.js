@@ -8,7 +8,7 @@
 
 
 
-Ext.define('Service', {
+Ext.define('AM.model.Service', {
     extend: 'Ext.data.Model',
     fields: [
         {name: 'name', type: 'string'}

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
-    <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/target" />
+      <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/.svn" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target/.svn" />
+      <excludeFolder url="file://$MODULE_DIR$/target/classes" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -128,6 +130,21 @@
     <orderEntry type="library" name="Maven: external:webservices-extra:2008-03-12" level="project" />
     <orderEntry type="library" name="Maven: external:webservices-extra-api:2003-09-04" level="project" />
     <orderEntry type="library" name="Maven: external:webservices-rt:2009-29-07" level="project" />
+    <orderEntry type="library" name="Maven: org.forgerock.commons:org.forgerock.json.resource:1.2.2" level="project" />
+    <orderEntry type="library" name="Maven: org.forgerock.commons:json-fluent:1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.forgerock.commons:org.forgerock.util:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.forgerock.commons:json-patch:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet:2.1-RC4" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.ext.jackson:2.1-RC4" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.7" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.9.7" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.ext.simple:2.1-RC4" level="project" />
+    <orderEntry type="library" name="Maven: org.simpleframework:simple:4.1.21" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.ext.ssl:2.1-RC4" level="project" />
+    <orderEntry type="library" name="Maven: org.jsslutils:jsslutils:1.0.5" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.ext.json:2.1-RC4" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.lib.org.json:2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.restlet.jse:org.restlet.ext.crypto:2.1-RC4" level="project" />
   </component>
 </module>
 

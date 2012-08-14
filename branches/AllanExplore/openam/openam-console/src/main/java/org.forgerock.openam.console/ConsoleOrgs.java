@@ -42,7 +42,12 @@ public class ConsoleOrgs extends ServerResource {
 
             Set sNames = om.getSubOrganizationNames("*",true);
 
-            result.accumulate("Organizations",sNames);
+            for (Iterator items = sNames.iterator(); items.hasNext();) {
+                String svcName = (String) items.next();
+                JSONObject jo = new JSONObject();
+                jo.accumulate("name",svcName);
+                result.accumulate("organization",jo);
+            }
 
         } catch (Exception e)       {
 

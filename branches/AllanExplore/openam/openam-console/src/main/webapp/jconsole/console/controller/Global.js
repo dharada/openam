@@ -6,23 +6,54 @@
  * To change this template use File | Settings | File Templates.
  */
 
-Ext.define('OpenAM.controller.Global', {
-    extend: 'Ext.app.controller',
+Ext.define('AM.controller.Global', {
+    extend: 'Ext.app.Controller',
 
-    views: []
-        'serviceList',
-        'serviceEditor'
+    models: ['Service'] ,
+    stores: [
+        'ServiceStore',
+        'ConfigStore',
+        'RealmStore'
     ],
+    views: [
+        'ServiceList',
+        'ServiceEditor',
+        'GlobalEditor'
+    ],
+    serviceName: '',
+    serviceScope:'global',
 
     init: function() {
-        this.control({
-            'servicelist': {
-                itemdblclick: this.editService
-            }
-        });
         console.log('initialized Global Controller');
+        this.control({
+            'panel' : {
+                 render: this.onPanelRendered
+            },
+            'servicelist': {
+                itemdblclick: this.loadConfigEditor
+            }
+        })
     },
-    editService: function(grid,record)) {
-        console.log('DoubleClick on ' + record.get('name')) ;
+    loadConfigEditor: function(list, record){
+        var cEditor = Ext.widget('serviceeditor');
+        var x = list.store['storeName'];
+        if (x == 'service')  {
+            this.serviceName = record.get('name') ;
+        }   else {
+            var y = record.get('name');
+            if (y == 'GLOBAL') y = 'global';
+            if (y == 'TopLevel')   y = 'org';
+            this.serviceScope = y;
+        };
+
+        cEditor.initServiceEditor(this.serviceName,this.serviceScope);
+    } ,
+    onPanelRendered: function() {
+          console.log("Rendered panel")
     }
 })
+
+
+
+
+

@@ -56,12 +56,13 @@ public class consoleRESTApp extends Application {
 
         router.attach("/services/",ConsoleServices.class);  // returns a list of services
         router.attach("/orgs/",ConsoleOrgs.class);
-        router.attach("/services/{service}",ConsoleServices.class) ;
-        router.attach("/services/{service}/schema",ConsoleServiceSchema.class) ;
-        router.attach("/services/{service}/config",ConsoleServiceConfig.class) ;
-        router.attach("/services/{service}/globalSchema",ConsoleServiceGlobalSchema.class) ;
+        router.attach("/servicesSchema/{service}",          ConsoleServiceSchema.class) ;
+        router.attach("/servicesSchema/{service}/",         ConsoleServiceSchema.class) ;
+        router.attach("/servicesSchema/{service}/{realm}",  ConsoleServiceSchema.class) ;
+        router.attach("/servicesConfig/{service}",          ConsoleServiceConfig.class) ;
+        router.attach("/servicesConfig/{service}/",         ConsoleServiceSchema.class) ;
+        router.attach("/servicesConfig/{service}/{realm}",  ConsoleServiceConfig.class) ;
 
         return router;
     }
 }
-

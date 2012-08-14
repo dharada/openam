@@ -1,26 +1,13 @@
 
 
 
-var globalPage = Ext.create('Ext.panel.Panel', {
-	title: 'Global',
-    layout:  'border',
-	items: [ {
-        xtype: 'servicelist',
-        region: 'west',
-        width: '25%',
-        store: svcStore
-        },{
-        xtype: 'serviceEditor',
-        region: 'west',
-        width: '25%',
-        html: 'This is the editor text'
-        }
-	]
-});
-
 Ext.application({
-    name: 'Openam',
+    name: 'AM',
     appFolder: 'console',
+
+    requires: [
+        'Ext.container.Viewport'
+    ] ,
 
     controllers: [
          'Global'
@@ -30,27 +17,12 @@ Ext.application({
             layout: 'fit',
             items: [
                 {
-                    xtype: tabpanel,
-                    activeTab: 0,
-                    bodyPadding: 10,
-                    tabPosition: 'top',
-                    layout: 'fit',
-                    items: [
-                        globalPage,
-                        {
-                            // xtype: 'panel' implied by default
-                            title: 'Realms',
-                            region:'west',
-                            xtype: 'panel',
-                            margins: '5 0 0 5',
-                            collapsible: true,   // make collapsible
-                            id: 'west-region-container',
-                            layout: 'fit'
-                        }
-                    ]
+                    xtype: 'globaleditor',
+                    title: 'Global',
+                    width: '100%'
                 }
             ]
-        })
+        });
     }
-})
+});
 

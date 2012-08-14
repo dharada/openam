@@ -39,12 +39,14 @@ public class ConsoleServiceConfig extends ServerResource {
             SSOToken adminToken = (SSOToken) AccessController
                     .doPrivileged(AdminTokenAction.getInstance());
             String service = (String) getRequest().getAttributes().get("service");
+            String scope = (String) getRequest().getAttributes().get("scope");
+            if (scope == null) scope = "all";
 
             if (service != null)  {
                 ServiceManager sm = new ServiceManager(adminToken);
                 ServiceConfigManager scm = new ServiceConfigManager( service, adminToken) ;
 
-                result.accumulate(scm.getName(),scmAsJSON(scm)) ;
+                result = scmAsJSON(scm,scope) ;
             }
 
         } catch (Exception e)       {
@@ -54,22 +56,29 @@ public class ConsoleServiceConfig extends ServerResource {
     }
 
 
-    JSONObject scmAsJSON(ServiceConfigManager scm)    {
+    JSONObject scmAsJSON(ServiceConfigManager scm,String scope)    {
         ServiceConfig sc;
         JSONObject   jo = new JSONObject();
-        String instance = (String) getRequest().getAttributes().get("instance");
 
         try {
-            jo.accumulate("version",scm.getVersion());
-            jo.accumulate("Instances",new JSONArray(scm.getInstanceNames()));
-            jo.accumulate("GroupName",new JSONArray(scm.getGroupNames()));
+            if (scope.equals("all"))  {
+                jo.accumulate("version",scm.getVersion());
+                jo.accumulate("Instances",new JSONArray(scm.getInstanceNames()));
+                jo.accumulate("GroupName",new JSONArray(scm.getGroupNames()));
 
-            ServiceConfig gc = scm.getGlobalConfig(instance);
-            if (gc != null)
-                jo.accumulate("GlobalConfig",scAsJSON(gc)) ;
-            ServiceConfig oc = scm.getOrganizationConfig("/",instance);
-            if (oc != null)
-                jo.accumulate("OrgConfig",scAsJSON(oc)) ;
+                ServiceConfig gc = scm.getGlobalConfig(null);
+                if (gc != null) jo.accumulate("GlobalConfig",scAsJSON(gc));
+                ServiceConfig oc = scm.getOrganizationConfig("/",null);
+                if (oc != null) jo.accumulate("GlobalConfig",scAsJSON(oc)) ;
+            };
+            if (scope.equals("global") )  {
+                ServiceConfig gc = scm.getGlobalConfig(null);
+                if (gc != null)  jo.accumulate("config",scAsJSON(gc));
+            };
+            if (scope.equals("org" )) {
+                ServiceConfig oc = scm.getOrganizationConfig("/",null);
+                if (oc != null) jo.accumulate("config",scAsJSON(oc)) ;
+            }
 
 
         } catch (SMSException e) {
@@ -87,9 +96,6 @@ public class ConsoleServiceConfig extends ServerResource {
         JSONObject jsub = new JSONObject();
 
         try {
-            if (sc.getComponentName() != null) {
-                jo.accumulate("ComponentName", sc.getComponentName());
-            }
             jo.accumulate("Attributes",new JSONObject(sc.getAttributes()));
 
             for (Iterator items = sc.getSubConfigNames().iterator(); items.hasNext();) {

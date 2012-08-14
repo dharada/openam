@@ -38,12 +38,15 @@ public class ConsoleServiceSchema extends ServerResource {
             SSOToken adminToken = (SSOToken) AccessController
                     .doPrivileged(AdminTokenAction.getInstance());
             String service = (String) getRequest().getAttributes().get("service");
+            String scope = (String) getRequest().getAttributes().get("scope");
+
+            if (scope == null) scope = "all";
 
             if (service != null)  {
                 ServiceManager sm = new ServiceManager(adminToken);
                 ServiceSchemaManager ssm = new ServiceSchemaManager( service, adminToken) ;
 
-                result.accumulate(ssm.getName(),ssmAsJSON(ssm)) ;
+                result= ssmAsJSON(ssm,scope) ;
             }
 
         } catch (Exception e)       {
@@ -53,33 +56,44 @@ public class ConsoleServiceSchema extends ServerResource {
     }
 
 
-    JSONObject ssmAsJSON(ServiceSchemaManager ssm)    {
+    JSONObject ssmAsJSON(ServiceSchemaManager ssm,String scope)    {
         ServiceSchema ss;
         JSONObject   jo = new JSONObject();
 
 
         try {
-            jo.accumulate("version",ssm.getVersion());
-            jo.accumulate("I18NFile",ssm.getI18NFileName());
-            jo.accumulate("I18NJar",ssm.getI18NJarURL());
-            jo.accumulate("I18NKey",ssm.getI18NKey());
-            jo.accumulate("ServiceHierarchy",ssm.getServiceHierarchy());
-            jo.accumulate("PropViewBean",ssm.getPropertiesViewBeanURL());
-
-            if ((ss = ssm.getSchema(SchemaType.GLOBAL)) != null) {
-                jo.accumulate("GlobalSchema", ssAsJSON(ss)) ;
+            if (scope.equals("all"))  {
+                jo.accumulate("version",ssm.getVersion());
+                jo.accumulate("I18NFile",ssm.getI18NFileName());
+                jo.accumulate("I18NJar",ssm.getI18NJarURL());
+                jo.accumulate("I18NKey",ssm.getI18NKey());
+                jo.accumulate("ServiceHierarchy",ssm.getServiceHierarchy());
+                jo.accumulate("PropViewBean",ssm.getPropertiesViewBeanURL());
+            };
+            if ((scope.equals("global")) || (scope.equals("all")))  {
+                if ((ss = ssm.getSchema(SchemaType.GLOBAL)) != null) {
+                    jo.accumulate("Schema", ssAsJSON(ss)) ;
+                }
             }
-            if ((ss = ssm.getSchema(SchemaType.ORGANIZATION)) != null) {
-                jo.accumulate("OrgSchema", ssAsJSON(ss)) ;
+            if ((scope.equals("org")) || (scope.equals("all")))  {
+                if ((ss = ssm.getSchema(SchemaType.ORGANIZATION)) != null) {
+                    jo.accumulate("Schema", ssAsJSON(ss)) ;
+                }
             }
-            if ((ss = ssm.getSchema(SchemaType.DYNAMIC)) != null) {
-                jo.accumulate("DynamicSchema", ssAsJSON(ss)) ;
+            if ((scope.equals("dynamic")) || (scope.equals("all")))  {
+                if ((ss = ssm.getSchema(SchemaType.DYNAMIC)) != null) {
+                    jo.accumulate("Schema", ssAsJSON(ss)) ;
+                }
             }
-            if ((ss = ssm.getSchema(SchemaType.USER)) != null) {
-                jo.accumulate("UserSchema", ssAsJSON(ss)) ;
+            if ((scope.equals("user")) || (scope.equals("all")))  {
+                if ((ss = ssm.getSchema(SchemaType.USER)) != null) {
+                    jo.accumulate("Schema", ssAsJSON(ss)) ;
+                }
             }
-            if ((ss = ssm.getSchema(SchemaType.POLICY)) != null) {
-                jo.accumulate("PolicySchema", ssAsJSON(ss)) ;
+            if ((scope.equals("policy")) || (scope.equals("all")))  {
+                if ((ss = ssm.getSchema(SchemaType.POLICY)) != null) {
+                    jo.accumulate("Schema", ssAsJSON(ss)) ;
+                }
             }
         } catch (SMSException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
