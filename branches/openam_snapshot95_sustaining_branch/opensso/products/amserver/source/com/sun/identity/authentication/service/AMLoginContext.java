@@ -267,7 +267,7 @@ public class AMLoginContext {
                 ISAuthConstants.APPLICATION_MODULE)) {
             try {
                 AMAuthenticationManager authManager = new AMAuthenticationManager(
-                        AccessController.doPrivileged(AdminTokenAction.getInstance()), orgDN);
+                        (SSOToken) AccessController.doPrivileged(AdminTokenAction.getInstance()), orgDN);
                 AMAuthenticationInstance authInstance =
                         authManager.getAuthenticationInstance(indexName);
                 moduleClassName = authInstance.getType();
