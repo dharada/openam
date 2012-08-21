@@ -27,9 +27,8 @@
  */
 
 /*
- * Portions Copyrighted 2010-2011 ForgeRock AS
+ * Portions Copyrighted 2010-2012 ForgeRock Inc
  */
-
 package com.iplanet.dpro.session;
 
 import com.iplanet.am.util.SystemProperties;
@@ -61,7 +60,6 @@ import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.security.AdminTokenAction;
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
-import com.iplanet.sso.SSOTokenManager;
 
 import java.net.URL;
 import java.util.Date;
@@ -226,6 +224,8 @@ public class Session extends GeneralTaskRunnable {
     public static final String TOKEN_RESTRICTION_PROP = "TokenRestriction";
 
     public static final String SESSION_SERVICE = "session";
+    
+    private static final int DEFAULT_REMOTE_SESSION_CACHE_DURATION = 3;
 
     private static String cookieName = 
 	SystemProperties.get("com.iplanet.am.cookie.name");
@@ -313,6 +313,8 @@ public class Session extends GeneralTaskRunnable {
 
     private static long appSSOTokenRefreshTime;
     
+    private static int remoteSessionCacheDuration;
+    
     private SessionPollerSender sender = null;    
 
     static {
@@ -331,6 +333,16 @@ public class Session extends GeneralTaskRunnable {
         } catch (Exception le) {
             appSSOTokenRefreshTime = 3;
         }
+        
+        String remoteSessionCacheDurationValue = SystemProperties.get(
+            Constants.REMOTE_SESSION_CACHE_DURATION, "3");
+        
+        try {
+            remoteSessionCacheDuration = Integer.parseInt(remoteSessionCacheDurationValue);
+        } catch (Exception ex) {
+            remoteSessionCacheDuration = DEFAULT_REMOTE_SESSION_CACHE_DURATION;
+        }
+        
         if (pollingEnabled || sessionCleanupEnabled){
             timerPool = SystemTimerPool.getTimerPool();
         }        
@@ -465,7 +477,7 @@ public class Session extends GeneralTaskRunnable {
         return -1;
     }
     
-    public void run() {
+        public void run() {
         if (isPollingEnabled()) {
             final SessionID sid = getID();
             try {
@@ -515,29 +527,56 @@ public class Session extends GeneralTaskRunnable {
         } else {
             if (sessionCleanupEnabled) {
                 if (sessionDebug.messageEnabled()) {
-                    sessionDebug.message("Session Cache Cleaner started");
-                }
-                long expectedTime = -1;
-                if (maxSessionTime < (Long.MAX_VALUE / 60)) {
-                    expectedTime = (latestRefreshTime + (maxSessionTime * 60))
-                        * 1000;
-                }
-                if (expectedTime > scheduledExecutionTime()) {
-                    timerPool.schedule(this, new Date(expectedTime));
-                    return;
-                }
-                try {                        
-                    Session.removeSID(getID());
-                    if (sessionDebug.messageEnabled()) {
-                        sessionDebug.message("Session Destroyed, Caching "
-                            + "time exceeded the Max Session Time");
+                        sessionDebug.message("Session Cache Cleaner started");
                     }
-                } catch (Exception ex) {
-                    sessionDebug.error("Exception occured while cleaning "
-                        + "up Session Cache", ex);
+                if (isLocal()) {
+                    // schedule at the max session time
+                    long expectedTime = -1;
+                    if (maxSessionTime < (Long.MAX_VALUE / 60)) {
+                        expectedTime = (latestRefreshTime + (maxSessionTime * 60))
+                            * 1000;
+                    }
+                    if (expectedTime > scheduledExecutionTime()) {
+                        timerPool.schedule(this, new Date(expectedTime));
+                        return;
+                    }
+                    try {                        
+                        Session.removeSID(getID());
+                        if (sessionDebug.messageEnabled()) {
+                            sessionDebug.message("Session Destroyed, Caching "
+                                + "time exceeded the Max Session Time");
+                        }
+                    } catch (Exception ex) {
+                        sessionDebug.error("Exception occured while cleaning "
+                            + "up Session Cache", ex);
+                    }
+                } else {
+                    // schedule at the remote session cache duration interval
+                    long expectedTime;
+                    expectedTime = (latestRefreshTime + (remoteSessionCacheDuration * 60)) * 1000;
+                    if (expectedTime > scheduledExecutionTime()) {
+                        timerPool.schedule(this, new Date(expectedTime));
+                        return;
+                    }
+                    
+                    clearRemoteSession(this);
                 }
             }
         }
+    }
+    
+    public static void clearRemoteSession(Session session) {
+        if (session == null) {
+            return;
+        }
+        
+        if (session.isLocal()) {
+            return;
+        }
+        
+        session.cancel();
+        session.setState(Session.DESTROYED);
+        session = (Session) sessionTable.remove(session.getID());
     }
     
     /**
@@ -799,7 +838,7 @@ public class Session extends GeneralTaskRunnable {
      *            service.
      */
     public String getProperty(String name) throws SessionException {
-        if (name != lbCookieName) {
+        if (name == null ? lbCookieName != null : !name.equals(lbCookieName)) {
             if ((!cacheBasedPolling && maxCachingTimeReached()) || 
                 !sessionProperties.containsKey(name)) {
                 refresh(false);
@@ -865,13 +904,9 @@ public class Session extends GeneralTaskRunnable {
      * @param value The property value.
      * @exception SessionException if the session reached its maximum session
      *            time, or the session was destroyed, or there was an error
-     *            during communication with session service, or if the property
-     *            name or value was null.
+     *            during communication with session service.
      */
     public void setProperty(String name, String value) throws SessionException {
-        if (name == null || value == null) {
-            throw new SessionException("Session property name/value cannot be null");
-        }
         try {
             if (isLocal()) {
                 sessionService.setProperty(sessionID, name, value);
@@ -1116,10 +1151,15 @@ public class Session extends GeneralTaskRunnable {
                 timerPool.schedule(this, new Date(timeoutTime));
             }
         } else {
-            if ((sessionCleanupEnabled) && (maxSessionTime < (Long.MAX_VALUE /
-                60))) {
-                long timeoutTime = (latestRefreshTime + (maxSessionTime * 60))
-                    * 1000;
+            if ((sessionCleanupEnabled) && (maxSessionTime < (Long.MAX_VALUE / 60))) {
+                long timeoutTime;
+                
+                if (isLocal()) {
+                    timeoutTime = (latestRefreshTime + (maxSessionTime * 60)) * 1000;
+                } else {
+                    timeoutTime = (latestRefreshTime + (remoteSessionCacheDuration * 60)) * 1000;
+                }
+                
                 if (scheduledExecutionTime() > timeoutTime) {
                     cancel();
                 }
