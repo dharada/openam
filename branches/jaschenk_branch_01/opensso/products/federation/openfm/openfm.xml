@@ -1,4 +1,0 @@
-<project name="openfm">
-    <dirname property="openfm.basedir" file="${ant.file.openfm}"/>
-    <property file="${openfm.basedir}/openfm.properties"/>
-</project>
