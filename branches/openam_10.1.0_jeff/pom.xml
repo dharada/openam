@@ -59,7 +59,7 @@
     <name>OpenAM</name>
     <groupId>org.forgerock</groupId>
     <artifactId>openam</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <description>OpenAM</description>
@@ -181,7 +181,7 @@
         <module>openam-core</module>
 
         <!-- OpenAM Common Test Suite -->
-        <!-- module>openam-test</module -->
+        <module>openam-test</module>
 
         <!-- OpenAM Session High-Availability FailOver Module -->
         <module>openam-session-ha</module>
@@ -193,7 +193,7 @@
         <module>openam-oauth</module>
 
         <!-- OpenAM OAuth2 Token Service -->
-        <!--<module>openam-oauth2</module>-->
+        <module>openam-oauth2</module>
 
         <!-- OpenAM Server -->
         <module>openam-server</module>
@@ -212,6 +212,10 @@
 
         <!-- Final Packaging Distribution Kit -->
         <module>openam-distribution</module>
+
+        <!-- Temp Modules -->
+        <module>openam-schema</module>
+        <module>openam-authentication</module>
 
     </modules>
 

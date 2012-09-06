@@ -32,7 +32,7 @@
     <parent>
         <groupId>org.forgerock</groupId>
         <artifactId>openam-authentication</artifactId>
-        <version>10.1.0-SNAPSHOT</version>
+        <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <!-- Component Definition -->
@@ -40,7 +40,7 @@
     <description>OpenAM Authentication OAUTH2
     </description>
     <artifactId>openam-auth-oauth2</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>jar</packaging>
     <organization>
         <name>ForgeRock</name>
@@ -143,12 +143,12 @@
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-shared</artifactId>
-            <version>10.1.0-SNAPSHOT</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-core</artifactId>
-            <version>10.1.0-SNAPSHOT</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

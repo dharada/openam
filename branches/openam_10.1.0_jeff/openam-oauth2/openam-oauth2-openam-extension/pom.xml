@@ -30,12 +30,12 @@
     <parent>
         <groupId>org.forgerock</groupId>
         <artifactId>openam-oauth2</artifactId>
-        <version>10.1.0-SNAPSHOT</version>
+        <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <groupId>org.forgerock</groupId>
     <artifactId>openam-oauth2-openam-extension</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>OpenAM OAuth2 OpenAM Extensions</name>
@@ -89,7 +89,7 @@
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-oauth2-restlet-extension</artifactId>
-            <version>10.1.0-SNAPSHOT</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
         <!-- OpenAM -->
         <dependency>
