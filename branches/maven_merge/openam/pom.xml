@@ -193,8 +193,10 @@
         <module>openam-oauth</module>
 
         <!-- OpenAM OAuth2 Token Service -->
-        <module>openam-oauth2</module>
-
+        <!-- Currently being built in branch no reason to build it in the trunk right now.
+		<module>openam-oauth2</module>
+	-->
+		
         <!-- OpenAM Server -->
         <module>openam-server</module>
 
