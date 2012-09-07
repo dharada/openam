@@ -226,7 +226,7 @@
                             <Value>com.iplanet.dpro.session.jdbc.HADBConnectionImpl</Value>
                         </DefaultValues>
                     </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-jdbc-url"
+                    <AttributeSchema name="iplanet-am-session-repository-url"
                                      type="single"
                                      syntax="string"
                                      i18nKey="a113">
@@ -262,34 +262,33 @@
                             <Value>true</Value>
                         </DefaultValues>
                     </AttributeSchema>
-
-                    <AttributeSchema name="org.forgerock.openam.session.ha.amsessionrepository.type"
+                    <AttributeSchema name="iplanet-am-session-sfo-store-type"
                                      type="single_choice"
                                      syntax="string"
-                                     i18nKey="">
+                                     i18nKey="sfha124">
                         <ChoiceValues>
-                            <ChoiceValue i18nKey="None"/>
-                            <ChoiceValue i18nKey="OpenDJ">org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore
+                            <ChoiceValue i18nKey="sfha124.embedded">org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore.embedded
                             </ChoiceValue>
-                            <ChoiceValue i18nKey="Plug-In">org.forgerock.openam.session.ha.amsessionstore.store.plugin.PluginSessionRepository
+                            <ChoiceValue i18nKey="sfha124.external">org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore.external
                             </ChoiceValue>
+                            <ChoiceValue i18nKey="sfha124.plugin">org.forgerock.openam.session.ha.amsessionstore.store.plugin.PluginSessionRepository
+                            </ChoiceValue>none
+                            <ChoiceValue i18nKey="sfha124.none"/>
                         </ChoiceValues>
                         <DefaultValues>
-                            <Value>org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore</Value>
+                            <Value>org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore.embedded</Value>
                         </DefaultValues>
                     </AttributeSchema>
-
-                    <AttributeSchema name="org.forgerock.openam.session.ha.amsessionrepository.rootdn"
+                    <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
                                      type="single"
-                                     syntax="string">
+                                     syntax="string"
+                                     i18nKey="sfha125">
                         <DefaultValues>
-                            <Value>dc=internal,dc=openam,dc=java,dc=net</Value>
+                            <Value>o=OpenAM-Session</Value>
                         </DefaultValues>
                     </AttributeSchema>
-
                 </SubSchema>
             </Global>
-
             <Dynamic>
                 <AttributeSchema name="iplanet-am-session-max-session-time"
                                  type="single"
