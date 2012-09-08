@@ -1189,19 +1189,14 @@ public interface Constants {
     static final String DEFAULT_ROOT_SUFFIX = "dc=openam,dc=java,dc=net";
 
     /**
-     * Internal Root Context
-     */
-    static final String DEFAULT_INTERNAL_CONTAINER = "dc=internal";
-
-    /**
      * Default Session SFO/HA Root DN
      */
-    static final String DEFAULT_SESSION_HA_ROOT_DN = DEFAULT_INTERNAL_CONTAINER+","+DEFAULT_ROOT_SUFFIX;
+    static final String DEFAULT_SESSION_HA_ROOT_DN = "o=OpenAM-Session";
 
     /**
      * Default Session SFO/HA Store Type.
      */
-    static final String DEFAULT_SESSION_HA_STORE_TYPE = "OpenDJ";
+    static final String DEFAULT_SESSION_HA_STORE_TYPE = "embedded";
 
     /**
      * Additional AMSessionDB Constants

@@ -213,10 +213,6 @@
         <!-- Final Packaging Distribution Kit -->
         <module>openam-distribution</module>
 
-        <!-- Temp Modules -->
-        <module>openam-schema</module>
-        <module>openam-authentication</module>
-
     </modules>
 
     <!-- Developers -->

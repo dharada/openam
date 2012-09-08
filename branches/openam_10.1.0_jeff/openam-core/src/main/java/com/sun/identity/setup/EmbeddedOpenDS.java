@@ -1463,7 +1463,13 @@ public class EmbeddedOpenDS {
             "--index",
             "iplanet-am-user-federation-info-key",
             "--index",
-            "sun-fm-saml2-nameid-infokey"};
+            "sun-fm-saml2-nameid-infokey",
+            "--index",
+            "pkey",
+            "--index",
+            "skey",
+            "--index",
+            "expirationDate"};
         OutputStream bos = new ByteArrayOutputStream();
         OutputStream boe = new ByteArrayOutputStream();
         TimeThread.start();

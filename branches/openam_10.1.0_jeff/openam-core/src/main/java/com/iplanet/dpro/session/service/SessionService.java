@@ -80,7 +80,6 @@ import com.sun.identity.security.DecodeAction;
 import com.sun.identity.security.EncodeAction;
 import com.sun.identity.session.util.RestrictedTokenContext;
 import com.sun.identity.shared.Constants;
-import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.datastruct.CollectionHelper;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.encode.Base64;
@@ -236,7 +235,7 @@ public class SessionService {
     private static final String JDBC_DRIVER_CLASS = 
         "iplanet-am-session-JDBC-driver-Impl-classname";
 
-    private static final String JDBC_URL = "iplanet-am-session-jdbc-url";
+    private static final String IPLANET_AM_SESSION_REPOSITORY_URL = "iplanet-am-session-repository-url";
 
     private static final String MIN_POOL_SIZE = 
         "iplanet-am-session-min-pool-size";
@@ -259,7 +258,7 @@ public class SessionService {
 
     static String jdbcDriverClass = null;
 
-    static String jdbcURL = null;
+    static String sessionRepositoryURL = null; // Can be Null, if using Internal Embedded OpenDJ Instance.
 
     static int minPoolSize = 8;
 
@@ -387,14 +386,6 @@ public class SessionService {
 
     public static String deploymentURI = SystemProperties
             .get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
-
-    /*
-     * the following group of members is used only in session failover mode
-     */
-
-    private static boolean isSessionFailoverEnabled = false;
-
-    private static boolean isSiteEnabled = false;
     
     // used for session trimming    
     private static boolean isSessionTrimmingEnabled = false;            
@@ -425,15 +416,26 @@ public class SessionService {
 
     private URL thisSessionServiceURL;
 
+    // Must be True to permit Session Failover HA to be available.
     private static boolean useRemoteSaveMethod = Boolean.valueOf(
             SystemProperties
-                    .get(Constants.AM_SESSION_FAILOVER_USE_REMOTE_SAVE_METHOD))
-            .booleanValue();
+                    .get(Constants.AM_SESSION_FAILOVER_USE_REMOTE_SAVE_METHOD,
+                    "true")).booleanValue();
 
+    // Must be True to permit Session Failover HA to be available.
     private static boolean useInternalRequestRouting = Boolean.valueOf(
             SystemProperties.get(
                     Constants.AM_SESSION_FAILOVER_USE_INTERNAL_REQUEST_ROUTING,
                     "true")).booleanValue();
+
+    // Must be True to permit Session Failover HA to be available.
+    private static boolean isSessionFailoverEnabled = Boolean.valueOf(
+            SystemProperties.get(
+                    AMSessionRepository.IS_SFO_ENABLED,
+                     "true")).booleanValue();
+
+    // Must be True to permit Session Failover HA to be available.
+    private static boolean isSiteEnabled = false;
 
     /**
      * The following InternalSession is for the Authentication Service to use
@@ -1832,7 +1834,7 @@ public class SessionService {
             }
 
             /*
-             * In session failover mode we need to distinguiush between server
+             * In session failover mode we need to distinguish between server
              * instance own address and the cluster address We will use new set
              * of properties
              * 
@@ -2207,8 +2209,8 @@ public class SessionService {
                         sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
                     jdbcDriverClass = CollectionHelper.getMapAttr(
                         sessionAttrs, JDBC_DRIVER_CLASS, "");
-                    jdbcURL = CollectionHelper.getMapAttr(
-                        sessionAttrs, JDBC_URL, "");
+                    sessionRepositoryURL = CollectionHelper.getMapAttr(
+                        sessionAttrs, IPLANET_AM_SESSION_REPOSITORY_URL, "");
                     minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
                         sessionAttrs, MIN_POOL_SIZE, "8"));
                     maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
@@ -2220,7 +2222,7 @@ public class SessionService {
                             + getClusterServerList() + ": "
                             + "connectionMaxWaitTime=" + connectionMaxWaitTime
                             + " :" + "jdbcDriverClass=" + jdbcDriverClass
-                            + " : " + "jdcbURL=" + jdbcURL + " : "
+                            + " : " + "Session Repository URL=" + sessionRepositoryURL + " : "
                             + "minPoolSize=" + minPoolSize + " : "
                             + "maxPoolSize=" + maxPoolSize);
                     }
@@ -3579,10 +3581,10 @@ public class SessionService {
     }
 
     /**
-     * @return Returns the jdbcURL.
+     * @return Returns the sessionRepositoryURL.
      */
-    public static String getJdbcURL() {
-        return jdbcURL;
+    public static String getSessionRepositoryURL() {
+        return sessionRepositoryURL;
     }
 
     /**
