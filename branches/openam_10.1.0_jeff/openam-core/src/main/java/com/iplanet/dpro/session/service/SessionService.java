@@ -435,7 +435,7 @@ public class SessionService {
                      "true")).booleanValue();
 
     // Must be True to permit Session Failover HA to be available.
-    private static boolean isSiteEnabled = false;
+    private static boolean isSiteEnabled = isSessionFailoverEnabled;    // Did Default to False.
 
     /**
      * The following InternalSession is for the Authentication Service to use
@@ -1889,47 +1889,56 @@ public class SessionService {
                 thisSessionServiceURL = Session.getSessionServiceURL(
                         thisSessionServerProtocol, thisSessionServer,
                         thisSessionServerPortAsString, thisSessionURI);
+
                 if (isSessionFailoverEnabled) {
-
-                    int timeout = ClusterStateService.DEFAULT_TIMEOUT;
-                    try {
-                        timeout = Integer.parseInt(SystemProperties.get(
-                           Constants.
-                               AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_TIMEOUT,
-                               String.valueOf(
-                                       ClusterStateService.DEFAULT_TIMEOUT)));
-                    } catch (Exception e) {
-                        sessionDebug.error("Invalid value for "+
-                             Constants.
-                                 AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_TIMEOUT
-                                        + ", using default");
-                    }
-
-                    long period = ClusterStateService.DEFAULT_PERIOD;
-                    try {
-                        period = Integer.parseInt(SystemProperties.get(
-                                Constants.
-                                 AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_PERIOD,
-                                 String.valueOf(
-                                         ClusterStateService.DEFAULT_PERIOD)));
-                    } catch (Exception e) {
-                        sessionDebug.error("Invalid value for "
-                                + Constants.
-                                AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_PERIOD
-                                        + ", using default");
-                    }
-
-                    clusterStateService = new ClusterStateService(this,
-                            thisSessionServerID, timeout, period,
-                            clusterMemberMap);
-                    getRepository();
+                    initializationClusterService();
                 }
-            }
+            } // End of isSiteEnabled.
         } catch (Exception ex) {
             sessionDebug.error(
                     "SessionService.SessionService(): Initialization Failed",
                     ex);
         }
+    }
+
+    /**
+     * Initializqation Helper Class.
+     *
+     * @throws Exception
+     */
+    private void initializationClusterService() throws Exception {
+        int timeout = ClusterStateService.DEFAULT_TIMEOUT;
+        try {
+            timeout = Integer.parseInt(SystemProperties.get(
+                    Constants.
+                            AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_TIMEOUT,
+                    String.valueOf(
+                            ClusterStateService.DEFAULT_TIMEOUT)));
+        } catch (Exception e) {
+            sessionDebug.error("Invalid value for "+
+                    Constants.
+                            AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_TIMEOUT
+                    + ", using default");
+        }
+
+        long period = ClusterStateService.DEFAULT_PERIOD;
+        try {
+            period = Integer.parseInt(SystemProperties.get(
+                    Constants.
+                            AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_PERIOD,
+                    String.valueOf(
+                            ClusterStateService.DEFAULT_PERIOD)));
+        } catch (Exception e) {
+            sessionDebug.error("Invalid value for "
+                    + Constants.
+                    AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_PERIOD
+                    + ", using default");
+        }
+
+        clusterStateService = new ClusterStateService(this,
+                thisSessionServerID, timeout, period,
+                clusterMemberMap);
+        getRepository();
     }
 
     /**
@@ -1985,6 +1994,18 @@ public class SessionService {
             return serverID;
         }
 
+        // Ensure we have a Cluster State Service Available.
+        if (clusterStateService == null)
+        {
+            try {
+                initializationClusterService();
+            } catch (Exception e) {
+                sessionDebug.error("Unable to Initialize the Cluster Service, please review Configuration settings.",e);
+                throw new SessionException(e);
+            }
+        }
+
+        // Check for Service Available.
         if (clusterStateService.isUp(primaryID)) {
             return primaryID;
         } else {
