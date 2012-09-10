@@ -784,7 +784,7 @@ public class SessionService {
             }
         }        
 
-        if (isSessionFailoverEnabled() && isSessionStored) {
+        if (isSessionFailoverEnabled && isSessionStored) {
             if (getUseInternalRequestRouting()) {
                 try {
                     getRepository().delete(sid);
@@ -801,7 +801,7 @@ public class SessionService {
     }
 
     void deleteFromRepository(SessionID sid) {
-        if (isSessionFailoverEnabled()) {
+        if (isSessionFailoverEnabled) {
             try {
                 getRepository().delete(sid);
             } catch (Exception e) {
@@ -865,7 +865,7 @@ public class SessionService {
         if (isSessionPresent(sid)) {
             return true;
         } else {
-            if (isSessionFailoverEnabled()) {
+            if (isSessionFailoverEnabled) {
                 String hostServerID = getCurrentHostServer(sid);
                 if (isLocalServer(hostServerID)) {
                     if (recoverSession(sid) == null) {
@@ -1946,7 +1946,7 @@ public class SessionService {
      * @throws SessionException
      */
     public String getCurrentHostServer(SessionID sid) throws SessionException {
-        if (!isSessionFailoverEnabled()) {
+        if (!isSessionFailoverEnabled) {
             return sid.getSessionServerID();
         } else {
             if (getUseInternalRequestRouting()) {
@@ -2197,6 +2197,11 @@ public class SessionService {
                 
                 if(sfoEnabled) {
                     isSessionFailoverEnabled = true;
+
+                    useRemoteSaveMethod = true;
+
+                    useInternalRequestRouting = true;
+
                     sessionStoreUserName = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
                     sessionStorePassword = CollectionHelper.getMapAttr(

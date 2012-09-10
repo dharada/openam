@@ -363,7 +363,6 @@
         <dependency>
             <artifactId>openam-auth-windowsdesktopsso</artifactId>
             <groupId>org.forgerock</groupId>
-            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -372,6 +371,7 @@
         </dependency>
 
         <!-- Oauth2 dependencies -->
+        <!--
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-oauth2-restlet-extension</artifactId>
@@ -396,6 +396,7 @@
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
         </dependency>
+        -->
 
     </dependencies>
 </project>

@@ -84,6 +84,8 @@ public interface ServiceConstants extends Constants {
         "iplanet-am-session-min-pool-size";
     static final String MAX_POOL_SIZE =
         "iplanet-am-session-max-pool-size";
+    static final String IS_SFO_ENABLED =
+            "iplanet-am-session-sfo-enabled";
 
     /**
      * General Server  related properties

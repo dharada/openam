@@ -86,7 +86,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Single Instance
      */
-    private static OpenDJPersistentStore instance;
+    private static volatile OpenDJPersistentStore instance;
 
     /**
      * Debug Logging
@@ -96,10 +96,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Service Globals
      */
-    private static boolean initialized = false;
-    private static boolean shutdown = false;
+    private static volatile boolean shutdown = false;
     private static Thread storeThread;
-    private int sleepInterval = 60 * 1000;
+
+    private static final int SLEEP_INTERVAL = 60 * 1000;
     private final static String ID = "OpenDJPersistentStore";
 
     /**
@@ -119,6 +119,30 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      */
     private static boolean icConnAvailable = false;
     private static InternalClientConnection icConn;
+    /**
+     * Define Session DN Constants
+     */
+    private static final String SM_CONFIG_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX, Constants.DEFAULT_ROOT_SUFFIX);
+
+    private static final String SESSION_FAILOVER_HA_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX,
+                    Constants.DEFAULT_SESSION_HA_ROOT_SUFFIX);
+
+    private static final String SESSION_FAILOVER_HA_BASE_DN =
+            SESSION_FAILOVER_HA_ROOT_SUFFIX+
+            Constants.COMMA + SM_CONFIG_ROOT_SUFFIX;
+
+    private static final String FAM_RECORDS_BASE_DN =
+            Constants.OU_FAMRECORDS + Constants.COMMA + SESSION_FAILOVER_HA_BASE_DN;
+
+    private static final String SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE =
+            Constants.AMRECORD_NAMING_ATTR+Constants.EQUALS+"%"+Constants.COMMA +
+            FAM_RECORDS_BASE_DN;
+
+    private static final String SERVER_RECORDS_BASE_DN =
+            Constants.OU_AMSESSIONDB + Constants.COMMA + SESSION_FAILOVER_HA_BASE_DN;
+
     /**
      * Search Constructs
      */
@@ -202,44 +226,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         runPeriod = (cleanUpPeriod <= healthCheckPeriod) ? cleanUpPeriod
                 : healthCheckPeriod;
         cleanUpValue = cleanUpPeriod;
-    }
 
-    /**
-     * Protected Singleton from being Instantiated.
-     */
-    private OpenDJPersistentStore() {
-    }
-
-    /**
-     * Provide Service Instance Access to our Singleton
-     *
-     * @return OpenDJPersistentStore Singleton Instance.
-     * @throws StoreException
-     */
-    public static AMSessionRepository getInstance() throws StoreException {
-        try {
-            if ((initialized) && (instance != null)) {
-                return instance;
-            }
-            // Initialize the Initial Singleton Service Instance.
-            initialize();
-            return instance;
-        } catch (StoreException se) {
-            debug.error("Unable to Initialize the AMSessionRepository Singleton Service Component!");
-            return null;
-        }
-    }
-
-    /**
-     * Perform Initialization
-     */
-    private synchronized static void initialize() throws StoreException {
-        initialized = false;
-        // Establish our instance.
-        instance = new OpenDJPersistentStore();
-        // Initialize this Service
-        debug.warning("Initializing Configuration for the OpenAM Session Repository using Implementation Class: " +
-                OpenDJPersistentStore.class.getSimpleName());
         // Create and Initialize all Necessary Attribute Linked Sets.
         returnAttrs = new LinkedHashSet<String>();
         returnAttrs.add("dn");
@@ -271,6 +258,43 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         serverAttrs.add("ldapPort");
         serverAttrs.add("replPort");
 
+    }
+
+    /**
+     * Protected Singleton from being Instantiated.
+     */
+    private OpenDJPersistentStore() {
+    }
+
+    /**
+     * Provide Service Instance Access to our Singleton
+     *
+     * @return OpenDJPersistentStore Singleton Instance.
+     * @throws StoreException
+     */
+    public static AMSessionRepository getInstance() throws StoreException {
+        try {
+            if (instance == null) {
+                // Initialize the Initial Singleton Service Instance.
+                initialize();
+            }
+            return instance;
+        } catch (StoreException se) {
+            debug.error("Unable to Initialize the AMSessionRepository Singleton Service Component!");
+            return null;
+        }
+    }
+
+    /**
+     * Perform Initialization
+     */
+    private synchronized static void initialize() throws StoreException {
+        // Establish our instance.
+        instance = new OpenDJPersistentStore();
+        // Initialize this Service
+        debug.warning("Initializing Configuration for the OpenAM Session Repository using Implementation Class: " +
+                OpenDJPersistentStore.class.getSimpleName());
+
         // Set up Shutdown Thread Hook.
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -284,13 +308,24 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // This really needs to come from a connection pool.
         try {
             icConn = InternalClientConnection.getRootConnection();
-            String sfhaDN = getSessionRepositoryDN();
-            InternalSearchOperation iso = icConn.processSearch(sfhaDN,
+            InternalSearchOperation iso = icConn.processSearch(SESSION_FAILOVER_HA_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, Constants.FAMRECORD_FILTER, returnAttrs_DN_ONLY);
-            debug.warning("Search for base container: " + sfhaDN +
+            debug.warning("Search for base container: " + SESSION_FAILOVER_HA_BASE_DN +
                     ", yielded Result Code:[" + iso.getResultCode().toString() + "]");
             icConnAvailable = true;
+
+            if (iso.getResultCode() == ResultCode.SUCCESS) {
+                final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+                debug.message(message.toString());
+            } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+                debug.warning(message.toString());
+            } else {
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
+                debug.warning(message.toString());
+                throw new StoreException(message.toString());
+            }
         } catch (DirectoryException directoryException) {
             debug.error("Unable to obtain the Internal Root Container for Session Persistence!",
                     directoryException);
@@ -306,8 +341,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // Finish Initialization
         debug.warning("Successful Configuration Initialization for the OpenAM Session Repository using Implementation Class: " +
                 OpenDJPersistentStore.class.getSimpleName());
-        // Indicate our service has been initialized.
-        initialized = true;
     }
 
     /**
@@ -339,7 +372,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                 processDeferredAMSessionRepositoryOperations();
                 // Delete any expired Sessions up to now.
                 deleteExpired(TimeUtils.nowInSeconds());
-                Thread.sleep(sleepInterval);
+                Thread.sleep(SLEEP_INTERVAL);
             } catch (InterruptedException ie) {
                 debug.warning(DB_THD_INT.get().toString(), ie);
             } catch (StoreException se) {
@@ -441,11 +474,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private void writeImmediate(AMRootEntity record)
             throws StoreException {
         boolean found = false;
-        StringBuilder baseDN = new StringBuilder();
-        baseDN.append(Constants.AMRECORD_NAMING_ATTR).append(Constants.EQUALS);
-        baseDN.append((record).getPrimaryKey()).append(Constants.COMMA);
-        baseDN.append(Constants.OU_FAMRECORDS).append(Constants.COMMA).append(
-                getSessionRepositoryDN());
+        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%",(record).getPrimaryKey());
 
         logAMRootEntity(record, "OpenDJPersistenceStore.writeImmediate: \nBaseDN:[" + baseDN.toString() + "] ");
         // Perform a search to determine if the record exists already
@@ -498,25 +527,22 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             { return ; }
         AMRecordDataEntry entry = new AMRecordDataEntry(record);
         List<RawAttribute> attrList = entry.getAttrList();
-        StringBuilder dn = new StringBuilder();
-        dn.append(AMRecordDataEntry.PRI_KEY).append(Constants.EQUALS).append(record.getPrimaryKey());
-        dn.append(Constants.COMMA).append(Constants.OU_FAMRECORDS);
-        dn.append(Constants.COMMA).append( getSessionRepositoryDN());
+        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%",(record).getPrimaryKey());
         attrList.addAll(AMRecordDataEntry.getObjectClasses());
         if (!icConnAvailable) {
             icConn = InternalClientConnection.getRootConnection();
         }
-        AddOperation ao = icConn.processAdd(dn.toString(), attrList);
+        AddOperation ao = icConn.processAdd(baseDN, attrList);
         ResultCode resultCode = ao.getResultCode();
 
         if (resultCode == ResultCode.SUCCESS) {
-            final LocalizableMessage message = DB_SVR_CREATE.get(dn);
+            final LocalizableMessage message = DB_SVR_CREATE.get(baseDN);
             debug.message(message.toString());
         } else if (resultCode == ResultCode.ENTRY_ALREADY_EXISTS) {
-            final LocalizableMessage message = DB_SVR_CRE_FAIL.get(dn);
+            final LocalizableMessage message = DB_SVR_CRE_FAIL.get(baseDN);
             debug.warning(message.toString());
         } else {
-            final LocalizableMessage message = DB_SVR_CRE_FAIL2.get(dn, resultCode.toString());
+            final LocalizableMessage message = DB_SVR_CRE_FAIL2.get(baseDN, resultCode.toString());
             debug.warning(message.toString());
             throw new StoreException(message.toString());
         }
@@ -532,22 +558,18 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private void updateImmediate(AMRootEntity record)
             throws StoreException {
         List<RawModification> modList = createModificationList(record);
-        StringBuilder dn = new StringBuilder();
-        dn.append(AMRecordDataEntry.PRI_KEY).append(Constants.EQUALS).append(record.getPrimaryKey());
-        dn.append(Constants.COMMA).append(Constants.OU_FAMRECORDS);
-        dn.append(Constants.COMMA).append( getSessionRepositoryDN());
-
+        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%",(record).getPrimaryKey());
         if (!icConnAvailable) {
             icConn = InternalClientConnection.getRootConnection();
         }
-        ModifyOperation mo = icConn.processModify(dn.toString(), modList);
+        ModifyOperation mo = icConn.processModify(baseDN, modList);
         ResultCode resultCode = mo.getResultCode();
 
         if (resultCode == ResultCode.SUCCESS) {
-            final LocalizableMessage message = DB_SVR_MOD.get(dn);
+            final LocalizableMessage message = DB_SVR_MOD.get(baseDN);
             debug.message("OpenDJPersistence.updateImmediate: [" + message + "]");
         } else {
-            final LocalizableMessage message = DB_SVR_MOD_FAIL.get(dn, resultCode.toString());
+            final LocalizableMessage message = DB_SVR_MOD_FAIL.get(baseDN, resultCode.toString());
             debug.warning(message.toString());
             throw new StoreException(message.toString());
         }
@@ -621,18 +643,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         if ((id == null) || (id.isEmpty())) {
             return;
         }
-        StringBuilder dn = new StringBuilder();
-        dn.append(AMRecordDataEntry.PRI_KEY).append(Constants.EQUALS).append(id);
-        dn.append(Constants.COMMA).append(Constants.OU_FAMRECORDS);
-        dn.append(Constants.COMMA).append( getSessionRepositoryDN());
+        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%",id);
+
         if (!icConnAvailable) {
             icConn = InternalClientConnection.getRootConnection();
         }
-        DeleteOperation dop = icConn.processDelete(dn.toString());
+        DeleteOperation dop = icConn.processDelete(baseDN.toString());
         ResultCode resultCode = dop.getResultCode();
 
         if (resultCode != ResultCode.SUCCESS) {
-            final LocalizableMessage message = DB_ENT_DEL_FAIL.get(dn);
+            final LocalizableMessage message = DB_ENT_DEL_FAIL.get(baseDN);
             debug.warning(message.toString() +
                     ", Result Code: " + resultCode.getResultCodeName().toString());
         }
@@ -663,17 +683,14 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                 debug.message("OpenDJPersistence:deleteExpired Polling for any Expired Sessions older than: "
                         + TimeUtils.getDate(expDate * 1000));
             }
-            // Initialize Iteration.
-            StringBuilder baseDN = new StringBuilder();
+            // Initialize Filter.
             StringBuilder filter = new StringBuilder();
             filter.append(EXPDATE_FILTER_PRE).append(expDate).append(EXPDATE_FILTER_POST);
-            baseDN.append(Constants.OU_FAMRECORDS).append(Constants.COMMA).append(
-                    getSessionRepositoryDN());
 
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
             }
-            InternalSearchOperation iso = icConn.processSearch(baseDN.toString(),
+            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, filter.toString(), returnAttrs_PKEY_ONLY);
             ResultCode resultCode = iso.getResultCode();
@@ -699,15 +716,15 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     } // End of Inner For Loop of searchResults.
                 } // End of Null Empty Result.
             } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get( getSessionRepositoryDN());
+                final LocalizableMessage message = DB_ENT_NOT_P.get(FAM_RECORDS_BASE_DN);
                 debug.error(message.toString());
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( getSessionRepositoryDN(), resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(FAM_RECORDS_BASE_DN, resultCode.toString());
                 debug.error(message.toString());
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( getSessionRepositoryDN());
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(FAM_RECORDS_BASE_DN);
             debug.error(message.toString(), dex);
             throw new StoreException(message.toString(), dex);
         } catch (Exception ex) {
@@ -784,11 +801,8 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         if ((id == null) || (id.isEmpty())) {
             return null;
         }
-        StringBuilder baseDN = new StringBuilder();
+        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%",id);
         try {
-            baseDN.append(Constants.AMRECORD_NAMING_ATTR).append(Constants.EQUALS);
-            baseDN.append(id).append(Constants.COMMA).append(Constants.OU_FAMRECORDS);
-            baseDN.append(Constants.COMMA).append( getSessionRepositoryDN());
 
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
@@ -844,18 +858,17 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     public Set<String> readWithSecKey(String id)
             throws StoreException, NotFoundException {
         try {
-            StringBuilder baseDN = new StringBuilder();
+
             StringBuilder filter = new StringBuilder();
             filter.append(SKEY_FILTER_PRE).append(id).append(SKEY_FILTER_POST);
-            baseDN.append(Constants.OU_FAMRECORDS).append(Constants.COMMA).append(SystemPropertiesManager.get(SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_DN));
 
             if (debug.messageEnabled()) {
-                debug.message("OpenDJPersistence.readWithSecKey: Attempting Read of BaseDN:[" + baseDN.toString() + "]");
+                debug.message("OpenDJPersistence.readWithSecKey: Attempting Read of BaseDN:[" + FAM_RECORDS_BASE_DN + "]");
             }
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
             }
-            InternalSearchOperation iso = icConn.processSearch(baseDN.toString(),
+            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, filter.toString(), returnAttrs);
             ResultCode resultCode = iso.getResultCode();
@@ -887,16 +900,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     return null;
                 }
             } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get( getSessionRepositoryDN());
+                final LocalizableMessage message = DB_ENT_NOT_P.get( FAM_RECORDS_BASE_DN );
                 debug.message(message.toString());
                 return null;
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( getSessionRepositoryDN(), resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( FAM_RECORDS_BASE_DN, resultCode.toString());
                 debug.error(message.toString());
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( getSessionRepositoryDN());
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( FAM_RECORDS_BASE_DN );
             debug.error(message.toString(), dex);
             throw new StoreException(message.toString(), dex);
         }
@@ -913,15 +926,13 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     public Map<String, Long> getRecordCount(String id)
             throws StoreException {
         try {
-            StringBuilder baseDN = new StringBuilder();
             StringBuilder filter = new StringBuilder();
             filter.append(SKEY_FILTER_PRE).append(id).append(SKEY_FILTER_POST);
-            baseDN.append(Constants.OU_FAMRECORDS).append(Constants.COMMA).append( getSessionRepositoryDN());
 
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
             }
-            InternalSearchOperation iso = icConn.processSearch(baseDN.toString(),
+            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, filter.toString(), returnAttrs);
             ResultCode resultCode = iso.getResultCode();
@@ -966,16 +977,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     return null;
                 }
             } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get( getSessionRepositoryDN());
+                final LocalizableMessage message = DB_ENT_NOT_P.get( FAM_RECORDS_BASE_DN );
                 debug.message(message.toString());
                 return null;
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( getSessionRepositoryDN(), resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( FAM_RECORDS_BASE_DN, resultCode.toString());
                 debug.warning(message.toString());
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(getSessionRepositoryDN());
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( FAM_RECORDS_BASE_DN );
             debug.warning(message.toString(), dex);
             throw new StoreException(message.toString(), dex);
         }
@@ -1010,15 +1021,12 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     protected int getNumSubordinates()
             throws StoreException {
         int recordCount = -1;
-        StringBuilder baseDN = new StringBuilder();
-        baseDN.append(Constants.OU_FAMRECORDS).append(Constants.COMMA).
-               append( getSessionRepositoryDN());
 
         try {
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
             }
-            InternalSearchOperation iso = icConn.processSearch(baseDN.toString(),
+            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
                     SearchScope.BASE_OBJECT, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, ALL_ATTRS, numSubOrgAttrs);
             ResultCode resultCode = iso.getResultCode();
@@ -1050,16 +1058,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     }
                 }
             } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get( getSessionRepositoryDN());
+                final LocalizableMessage message = DB_ENT_NOT_P.get( FAM_RECORDS_BASE_DN );
                 debug.warning(message.toString());
                 throw new StoreException(message.toString());
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( getSessionRepositoryDN(), resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get( FAM_RECORDS_BASE_DN, resultCode.toString());
                 debug.warning(message.toString());
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( getSessionRepositoryDN());
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get( FAM_RECORDS_BASE_DN );
             debug.error(message.toString(), dex);
             throw new StoreException(message.toString(), dex);
         }
@@ -1086,14 +1094,11 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     public Set<AMSessionDBOpenDJServer> getServers()
             throws StoreException {
         Set<AMSessionDBOpenDJServer> serverList = new HashSet<AMSessionDBOpenDJServer>();
-        StringBuilder baseDn = new StringBuilder();
-        baseDn.append(com.sun.identity.shared.Constants.DEFAULT_SESSION_HA_ROOT_DN);
-
         try {
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
             }
-            InternalSearchOperation iso = icConn.processSearch(baseDn.toString(),
+            InternalSearchOperation iso = icConn.processSearch(SERVER_RECORDS_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
                     0, 0, false, "objectclass=*", serverAttrs);
             ResultCode resultCode = iso.getResultCode();
@@ -1126,16 +1131,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     }
                 }
             } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get(baseDn);
+                final LocalizableMessage message = DB_ENT_NOT_P.get(SERVER_RECORDS_BASE_DN);
                 debug.warning(message.toString());
                 return null;
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(baseDn, resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SERVER_RECORDS_BASE_DN, resultCode.toString());
                 debug.warning(message.toString());
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(baseDn);
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(SERVER_RECORDS_BASE_DN);
             debug.error(message.toString(),dex);
             throw new StoreException(message.toString(), dex);
         }
@@ -1182,15 +1187,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         if (count > 0) {
             debug.warning("Performed " + count + " Deferred Operations.");
         }
-    }
-
-    /**
-     * Helper method to acquire the proper Session Repository DN Container.
-     * @return String of Specified Session Repository DN or System Default.
-     */
-    private static String getSessionRepositoryDN() {
-        return SystemPropertiesManager.get(SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_DN,
-                Constants.DEFAULT_SESSION_HA_ROOT_DN);
     }
 
     /**

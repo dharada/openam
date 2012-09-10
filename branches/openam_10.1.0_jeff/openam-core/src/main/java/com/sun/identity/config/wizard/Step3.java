@@ -188,11 +188,26 @@ public class Step3 extends LDAPStoreWizardPage {
 
     public boolean validateRootSuffix() {
         String rootsuffix = toString("rootSuffix");
-        
         if ((rootsuffix == null) || (rootsuffix.trim().length() == 0)) {
             writeToResponse(getLocalizedString("missing.required.field"));
+        }
+        // Determine if we have the minimal number of high order naming attributes.
+        String[] containers = rootsuffix.split(Constants.COMMA);
+        int namedDomainContainers = 0;
+        int namedOrganizationContainers = 0;
+        for(String container : containers)
+        {
+            if (container.startsWith(Constants.DEFAULT_ROOT_NAMING_ATTRIBUTE+Constants.EQUALS))
+                { namedDomainContainers++; }
+            else if (container.startsWith(Constants.ORGANIZATION_NAMING_ATTRIBUTE+Constants.EQUALS))
+                { namedOrganizationContainers++; }
+        }
+        if ((namedDomainContainers+namedOrganizationContainers) <= 1) {
+            writeToResponse(getLocalizedString("invalid.naming.suffix"));
         } else if (!DN.isDN(rootsuffix)) {
             writeToResponse(getLocalizedString("invalid.dn"));
+        } else if (!rootsuffix.startsWith(Constants.DEFAULT_ROOT_NAMING_ATTRIBUTE+Constants.EQUALS)) {
+                writeToResponse(getLocalizedString("invalid.naming.attribute"));
         } else {
             writeToResponse("true");
             getContext().setSessionAttribute(
@@ -519,9 +534,10 @@ public class Step3 extends LDAPStoreWizardPage {
                     addObject(sb, "existingPort", existing);
 
                     // set the configuration store port
+                    String ds_existingStorePort = (String)data.get(BootstrapData.DS_PORT);
                     getContext().setSessionAttribute(
-                        SessionAttributeNames.EXISTING_STORE_PORT, existing);   
-                    addObject(sb, "existingStorePort", existing);
+                            SessionAttributeNames.EXISTING_STORE_PORT, ds_existingStorePort);
+                    addObject(sb, "existingStorePort", ds_existingStorePort);
                     
                     getContext().setSessionAttribute(
                         SessionAttributeNames.EXISTING_HOST, host);

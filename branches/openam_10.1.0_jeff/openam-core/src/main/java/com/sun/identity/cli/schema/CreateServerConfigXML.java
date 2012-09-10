@@ -192,6 +192,7 @@ public class CreateServerConfigXML extends AuthenticatedCommand implements Const
         xml = xml.replaceAll("@ENCADMINPASSWD@", dsPassword);
         xml = xml.replaceAll("@ENCADADMINPASSWD@", amadminPwds);
         xml = xml.replaceAll("@SM_CONFIG_BASEDN@", canRootSuffix);
+        xml = xml.replaceAll("@ROOT_SUFFIX@", canRootSuffix);
         xml = xml.replaceAll("@ORG_BASE@", canRootSuffix);
 
         return xml;

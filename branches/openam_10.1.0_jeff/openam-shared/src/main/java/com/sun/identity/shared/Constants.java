@@ -1184,14 +1184,24 @@ public interface Constants {
             "openam.session.useLocalSessionsInMultiServerMode";
 
     /**
+     * Default Domain Attribute
+     */
+    static final String DEFAULT_ROOT_NAMING_ATTRIBUTE = "dc";
+
+    /**
+     * Default Domain Attribute
+     */
+    static final String ORGANIZATION_NAMING_ATTRIBUTE = "o";
+
+    /**
      * Default Root Context
      */
-    static final String DEFAULT_ROOT_SUFFIX = "dc=openam,dc=java,dc=net";
+    static final String DEFAULT_ROOT_SUFFIX = "dc=openam,dc=forgerock,dc=org";
 
     /**
      * Default Session SFO/HA Root DN
      */
-    static final String DEFAULT_SESSION_HA_ROOT_DN = "o=OpenAM-Session";
+    static final String DEFAULT_SESSION_HA_ROOT_SUFFIX = "o=openam-session";
 
     /**
      * Default Session SFO/HA Store Type.
@@ -1207,6 +1217,8 @@ public interface Constants {
     static final String URI = "amsessiondb.uri";
 
     static final String OU_FAMRECORDS = "ou=famrecords";
+
+    static final String OU_AMSESSIONDB = "ou=amsessiondb";
 
     static final String AMRECORD_NAMING_ATTR = "pKey";
 

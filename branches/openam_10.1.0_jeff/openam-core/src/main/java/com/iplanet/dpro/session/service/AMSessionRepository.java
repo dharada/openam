@@ -59,8 +59,11 @@ public interface AMSessionRepository {
     static final String IS_SFO_ENABLED =
                 "iplanet-am-session-sfo-enabled";
 
-    static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_DN =
-            "iplanet-am-session-sfo-store-rootdn";
+    static final String SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX =
+            "iplanet-am-config-root-suffix";
+
+    static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX =
+            "iplanet-am-session-sfo-store-root-suffix";
 
     static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";

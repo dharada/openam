@@ -63,8 +63,8 @@
               filtering="false"/>
 
         <mkdir dir="${openam.temp.target}/WEB-INF/template/ldif/sfha"/>
-        <copy file="${project.basedir}/../openam-session-ha/openam-session-ha-core/src/main/resources/ldif/amsessiondb_container.ldif.template"
-              tofile="${openam.temp.target}/WEB-INF/template/ldif/sfha//ldif/opendj_amsessiondb_index.ldif"
+        <copy file="${project.basedir}/../openam-session-ha/openam-session-ha-core/src/main/resources/ldif/opendj_amsessiondb_index.ldif"
+              tofile="${openam.temp.target}/WEB-INF/template/ldif/sfha/opendj_amsessiondb_index.ldif"
               filtering="false"/>
 
         <copy todir="${openam.temp.target}/WEB-INF/template/opendj" filtering="false">

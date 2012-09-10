@@ -233,7 +233,6 @@
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-sfo-store-type"
                                      type="single_choice"
-                                     uitype="orderedlist"
                                      syntax="string"
                                      i18nKey="a124">
                         <ChoiceValues>
