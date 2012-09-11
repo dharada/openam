@@ -2019,6 +2019,8 @@ public class SessionService {
             for (int i = 0; i < selectionListSize; ++i) {
                 selectedServerId = clusterStateService.getServerSelection(perm
                         .itemAt(i));
+                if (selectedServerId == null)
+                    { continue; }
                 if (clusterStateService.isUp(selectedServerId)) {
                     break;
                 }

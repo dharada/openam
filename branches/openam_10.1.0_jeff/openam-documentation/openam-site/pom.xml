@@ -125,7 +125,7 @@
         -->
         <releaseDate />
         <softwareReleaseDate>${releaseDate}</softwareReleaseDate>
-        <defaultRootSuffix>dc=openam,dc=java,dc=net</defaultRootSuffix>
+        <defaultRootSuffix>dc=openam,dc=forgerock.dc=org</defaultRootSuffix>
     </properties>
     <distributionManagement>
         <site>

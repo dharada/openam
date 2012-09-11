@@ -304,7 +304,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         });
 
         // Obtain our Directory Connection and ensure we can access our
-        // Internal Session container, whose default if o=OpenAM-Session
+        // Internal Session container, whose default if o=openam-session
         // This really needs to come from a connection pool.
         try {
             icConn = InternalClientConnection.getRootConnection();
