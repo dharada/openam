@@ -1934,10 +1934,11 @@ public class SessionService {
                     AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_PERIOD
                     + ", using default");
         }
-
+        // Initialize Our Cluster State Service
         clusterStateService = new ClusterStateService(this,
                 thisSessionServerID, timeout, period,
                 clusterMemberMap);
+        // Poke the Backend Session Repository to initialize.
         getRepository();
     }
 
@@ -2121,7 +2122,7 @@ public class SessionService {
      * @return true if server is up, false otherwise
      */
     public boolean checkServerUp(String serverID) {
-        return clusterStateService.checkServerUp(serverID);
+      return ((serverID == null)||(serverID.isEmpty())) ? false : clusterStateService.checkServerUp(serverID);
     }
 
     private void postInit() {

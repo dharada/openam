@@ -229,7 +229,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
      * @return size of the server list
      */
     int getServerSelectionListSize() {
-        return serverSelectionList.length;
+        return (serverSelectionList==null) ? 0 : serverSelectionList.length;
     }
 
     /**
