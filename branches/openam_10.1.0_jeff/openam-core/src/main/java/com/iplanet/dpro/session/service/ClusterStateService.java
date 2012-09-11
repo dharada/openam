@@ -203,7 +203,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
      * @return true if server is up, false otherwise
      */
     boolean isUp(String serverId) {
-        return (servers.get(serverId)).isUp;
+        return ((serverId == null)||(serverId.isEmpty())||(servers==null)) ? false : (servers.get(serverId)).isUp;
     }
 
     /**
@@ -216,6 +216,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
      */
 
     boolean checkServerUp(String serverId) {
+        if ((serverId == null)||(serverId.isEmpty())||(servers==null))
+            { return false; }
         ServerInfo info = servers.get(serverId);
         info.isUp = checkServerUp(info);
         return info.isUp;
