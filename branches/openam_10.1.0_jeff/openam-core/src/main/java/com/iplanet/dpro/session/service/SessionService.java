@@ -1902,7 +1902,7 @@ public class SessionService {
     }
 
     /**
-     * Initializqation Helper Class.
+     * Initialization Helper Class.
      *
      * @throws Exception
      */

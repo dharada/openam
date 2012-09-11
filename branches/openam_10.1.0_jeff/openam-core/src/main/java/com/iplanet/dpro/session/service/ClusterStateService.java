@@ -152,7 +152,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
      *            map if server id - > url for all cluster members
      * @throws Exception
      */
-    public ClusterStateService(SessionService ss, String localServerId,
+    protected ClusterStateService(SessionService ss, String localServerId,
             int timeout, long period, Map<String, String> members) throws Exception {
         this.ss = ss;
         this.localServerId = localServerId;
