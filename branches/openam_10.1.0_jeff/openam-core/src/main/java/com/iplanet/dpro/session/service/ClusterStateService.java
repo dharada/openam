@@ -167,7 +167,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
             info.url = url;
             info.protocol = url.getProtocol();
             info.address = new InetSocketAddress(url.getHost(), url.getPort());
-            info.isUp = localServerId.equals(info.id) ? true : false;  // Fix for Deadlock.
+            // Fix for Deadlock. If this is our server, set to true, else false.
+            info.isUp = localServerId.equals(info.id) ? true : false;
             
             if (!info.isUp) {
                 downServers.add(info.id);

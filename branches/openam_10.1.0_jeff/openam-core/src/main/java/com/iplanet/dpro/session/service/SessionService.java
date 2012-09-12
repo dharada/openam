@@ -1961,6 +1961,8 @@ public class SessionService {
         } else {
             if (getUseInternalRequestRouting()) {
                 String serverID = locateCurrentHostServer(sid);
+                if (serverID == null)
+                    { return sid.getSessionServerID(); }
                 // if we happen to have local session replica
                 // get rid of it, as hosting server instance
                 // is not supposed to be local
