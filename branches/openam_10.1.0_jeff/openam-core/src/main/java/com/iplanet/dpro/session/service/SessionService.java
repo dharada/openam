@@ -1934,9 +1934,6 @@ public class SessionService {
         clusterStateService = new ClusterStateService(this,
                 thisSessionServerID, timeout, period,
                 clusterMemberMap);
-        // Poke the Backend Session Repository to initialize.
-        getRepository();
-
     }
 
     /**
