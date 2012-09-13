@@ -258,7 +258,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         serverAttrs.add("ldapPort");
         serverAttrs.add("replPort");
 
-    }
+    } // End of Static Initialization Stanza.
 
     /**
      * Protected Singleton from being Instantiated.
@@ -402,7 +402,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     }
 
     /**
-     * Servie Method
+     * Service Method
      *
      * @return
      */

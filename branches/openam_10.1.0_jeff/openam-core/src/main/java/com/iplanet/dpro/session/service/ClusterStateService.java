@@ -49,7 +49,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
@@ -62,9 +61,10 @@ import javax.net.ssl.SSLSession;
  * used in making routing decisions in "internal request routing" mode
  * 
  */
-
 public class ClusterStateService extends GeneralTaskRunnable {
 
+    // Inner Class definition of ServerInfo Object.
+    // Contains information about each Server.
     private class ServerInfo implements Comparable {
         String id;
         
@@ -80,9 +80,9 @@ public class ClusterStateService extends GeneralTaskRunnable {
         public int compareTo(Object o) {
             return id.compareTo(((ServerInfo) o).id);
         }
-    }
+    } //. End of Inner Class Definition.
 
-    /** Servers in the cluster environment*/
+    /** Servers in the cluster environment */
     private final Map<String, ServerInfo> servers = 
             new HashMap<String, ServerInfo>();
     
@@ -121,8 +121,9 @@ public class ClusterStateService extends GeneralTaskRunnable {
     private String localServerId = null;
     
     // SessionService
-    private SessionService ss = null;
+    private static volatile SessionService sessionService = null;
 
+    // Static Initialization Stanza.
     static {
         if (doRequestFlag != null) {
             if (doRequestFlag.equals("false"))
@@ -152,9 +153,9 @@ public class ClusterStateService extends GeneralTaskRunnable {
      *            map if server id - > url for all cluster members
      * @throws Exception
      */
-    protected ClusterStateService(SessionService ss, String localServerId,
+    protected ClusterStateService(SessionService sessionService, String localServerId,
             int timeout, long period, Map<String, String> members) throws Exception {
-        this.ss = ss;
+        this.sessionService = sessionService;
         this.localServerId = localServerId;
         this.timeout = timeout;
         this.period = period;
@@ -176,6 +177,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
             
             servers.put(info.id, info);
             serverSelectionList[getNextSelected()] = info;
+
+            // TODO - Persist the Server to the Directory.
         }
 
         // to ensure that ordering in different server instances is identical
@@ -309,7 +312,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
                 }
             }
             if (cleanRemoteSessions) {
-                ss.cleanUpRemoteSessions();
+                sessionService.cleanUpRemoteSessions();
             }
         } catch (Exception ex) {
         }
@@ -317,7 +320,9 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
     /**
      * Internal method for checking health status using sock.connect()
-     * 
+     *
+     * TODO -- Use a better mechanism for alive status. 10.1+.
+     *
      * @param info
      *            server info instance
      * @return true if server is up, false otherwise
@@ -421,4 +426,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
         }
         return result;
     }
+
+    // TODO -- Develop Method to write our Server State to the Session Persistence Store.
+
 }

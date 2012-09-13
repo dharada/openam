@@ -228,6 +228,7 @@
             <roles>
                 <role>VP Community</role>
                 <role>Support Staff</role>
+                <role>OpenAM Guru</role>
             </roles>
         </developer>
 
@@ -493,8 +494,8 @@
 
     <!-- Source Control -->
     <scm>
-        <connection>scm:svn:https://svn.forgerock.org/openam/branches/maven_merge/</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openam/branches/maven_merge/</developerConnection>
+        <connection>scm:svn:https://svn.forgerock.org/openam/trunk/openam/</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openam/trunk/openam/</developerConnection>
     </scm>
 
     <!-- Dependency Management -->

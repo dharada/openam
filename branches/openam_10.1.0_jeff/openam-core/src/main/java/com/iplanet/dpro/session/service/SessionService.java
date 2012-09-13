@@ -140,7 +140,7 @@ public class SessionService {
 
     static SSOTokenManager ssoManager = null;
 
-    private static AMSessionRepository amSessionRepository = null;
+    private static volatile AMSessionRepository amSessionRepository = null;
 
     public static Debug sessionDebug = null;
 
@@ -235,7 +235,8 @@ public class SessionService {
     private static final String JDBC_DRIVER_CLASS = 
         "iplanet-am-session-JDBC-driver-Impl-classname";
 
-    private static final String IPLANET_AM_SESSION_REPOSITORY_URL = "iplanet-am-session-repository-url";
+    private static final String IPLANET_AM_SESSION_REPOSITORY_URL =
+         "iplanet-am-session-repository-url";
 
     private static final String MIN_POOL_SIZE = 
         "iplanet-am-session-min-pool-size";
@@ -382,7 +383,7 @@ public class SessionService {
 
     private Set secondaryServerIDs;
 
-    private static SessionService sessionService = null;
+    private static volatile SessionService sessionService = null;
 
     public static String deploymentURI = SystemProperties
             .get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
@@ -451,11 +452,8 @@ public class SessionService {
 
     private URL sessionServiceID = null;
 
-    private ClusterStateService clusterStateService = null;
+    private static ClusterStateService clusterStateService = null;
 
-    private static AMSessionRepository sessionRepository = null;
-
-    private static boolean initialized = false;
     
     /**
      * Returns Session Service. If a Session Service already exists then it
@@ -463,17 +461,15 @@ public class SessionService {
      * 
      */
     public static SessionService getSessionService() {
-        if (!initialized) {
+        if (sessionService == null) {
             if (SystemProperties.isServerMode()) {
                 synchronized (SessionService.class) {
                     if (sessionService == null) {
                         sessionService = new SessionService();
-                        initialized = true;
                     }
-                }
+                } // End of synchronized Block.
             }
         }
-
         return sessionService;
     }
 
@@ -1940,10 +1936,11 @@ public class SessionService {
                 clusterMemberMap);
         // Poke the Backend Session Repository to initialize.
         getRepository();
+
     }
 
     /**
-     * THis is a key method for "internal request routing" mode It determines
+     * This is a key method for "internal request routing" mode It determines
      * the server id which is currently hosting session identified by sid. In
      * "internal request routing" mode, this method also has a side effect of
      * releasing a session which no longer "belongs locally" (e.g., due to
@@ -2102,18 +2099,18 @@ public class SessionService {
             return null;
         }
 
-        if (sessionRepository == null) {
+        if (amSessionRepository == null) {
             try {
-                sessionRepository = SessionRepository.getInstance();
+                amSessionRepository = SessionRepository.getInstance();
                 String message =
-                        "Obtained Session Repository Implementation: "+sessionRepository.getClass().getSimpleName();
+                        "Obtained Session Repository Implementation: "+amSessionRepository.getClass().getSimpleName();
                 sessionDebug.message(message);
             } catch (Exception e) {
                 sessionDebug
                         .error("Failed to initialize session repository", e);
             }
         }
-        return sessionRepository;
+        return amSessionRepository;
     }
 
     /**
