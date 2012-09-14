@@ -98,6 +98,7 @@ public class AuthSSOToken implements SSOToken {
         random.nextBytes(keyRandom);
         String key = Base64.encode(keyRandom);
         try {
+            InetAddress.getLocalHost().getAddress();
             key += Base64.encode((InetAddress.getLocalHost()).getAddress());
         } catch (Exception e) {
             e.printStackTrace();
