@@ -436,7 +436,8 @@ public class SessionService {
                      "true")).booleanValue();
 
     // Must be True to permit Session Failover HA to be available.
-    private static boolean isSiteEnabled = isSessionFailoverEnabled;    // Did Default to False.
+    private static boolean isSiteEnabled = false;  // If this is set to True and no Site is found, issues will arise
+    // Trying to resolve the serverID and will hang install and subsequent login attempts.
 
     /**
      * The following InternalSession is for the Authentication Service to use
@@ -1934,6 +1935,12 @@ public class SessionService {
         clusterStateService = new ClusterStateService(this,
                 thisSessionServerID, timeout, period,
                 clusterMemberMap);
+        // Verify Functionality
+        if (!clusterStateService.isLocalServerId(thisSessionServerID))
+        {
+            sessionDebug.error("Initialized ClusterStateService, but it did not recognize this server correctly as our Local Server!");
+            // TODO We Should Fail Here, if this ever happens, this indicates a corrupted State Service.
+        }
     }
 
     /**
@@ -2221,6 +2228,8 @@ public class SessionService {
                     useRemoteSaveMethod = true;
 
                     useInternalRequestRouting = true;
+
+                    // TODO: Check for Type of backend Store.
 
                     sessionStoreUserName = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");

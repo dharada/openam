@@ -303,11 +303,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.kohsuke</groupId>
-            <artifactId>geoip</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.sun.messaging.mq</groupId>
             <artifactId>imq</artifactId>
         </dependency>

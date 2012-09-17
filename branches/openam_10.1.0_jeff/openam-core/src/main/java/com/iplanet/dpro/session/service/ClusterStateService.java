@@ -36,6 +36,8 @@ import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.common.SystemTimer;
 import com.iplanet.am.util.SystemProperties;
 import com.sun.identity.shared.Constants;
+import com.sun.identity.shared.debug.Debug;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,11 +78,31 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
         boolean isUp;
 
+        boolean isLocal;
+
         @Override
         public int compareTo(Object o) {
             return id.compareTo(((ServerInfo) o).id);
         }
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ServerInfo ID:["+this.id+"], ");
+            sb.append("Protocol:["+this.protocol+"], ");
+            sb.append("URL:["+((this.url==null)?"null], ":this.url.toString())+"], ");
+            sb.append("Address:["+((this.address==null)?"null], ":this.address.toString()+"], Resolved:["+
+                    (!this.address.isUnresolved()?"true":"false"))+"], \n");
+            sb.append("Local:["+this.isLocal+"\n");
+            sb.append("Up:["+this.isUp+"].\n");
+            return sb.toString();
+        }
     } //. End of Inner Class Definition.
+
+    /**
+     * Service Globals
+     */
+    public static Debug sessionDebug = null;
+
 
     /** Servers in the cluster environment */
     private final Map<String, ServerInfo> servers = 
@@ -125,6 +147,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
     // Static Initialization Stanza.
     static {
+        sessionDebug = Debug.getInstance("amSession");
+
         if (doRequestFlag != null) {
             if (doRequestFlag.equals("false"))
                 doRequest = false;
@@ -139,6 +163,48 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
             GET_REQUEST = "GET " + hcPath + " HTTP/1.0";
         }
+    }  // End of Static Initialization Stanza
+
+    /**
+     * Get Servers within Cluster
+     * @return Map<String, ServerInfo>
+     */
+    protected Map<String, ServerInfo> getServers() {
+        return servers;
+    }
+
+    /**
+     * Get Server IDs which are in a Down State.
+     * @return Set<String>
+     */
+    protected Set<String> getDownServers() {
+        return downServers;
+    }
+    /**
+     * Get the Server Selection List, common to all Servers
+     * in Cluster.
+     * @return ServerInfo[] Array of Servers in Selection list in
+     * proper order.
+     */
+    protected ServerInfo[] getServerSelectionList() {
+        return serverSelectionList;
+    }
+
+    /**
+     * Get our Local Server Id
+     * @return String of Local Server Id.
+     */
+    protected String getLocalServerId() {
+        return localServerId;
+    }
+
+    /**
+     * Is Specified ServerId our Local Server Id?
+     * @param serverId
+     * @return boolean indicating true if specified server id is our local Server Id or false ir not.
+     */
+    protected boolean isLocalServerId(String serverId) {
+        return ((serverId==null)||(!serverId.equalsIgnoreCase(this.localServerId)))?false:true;
     }
 
     /**
@@ -169,7 +235,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
             info.protocol = url.getProtocol();
             info.address = new InetSocketAddress(url.getHost(), url.getPort());
             // Fix for Deadlock. If this is our server, set to true, else false.
-            info.isUp = localServerId.equals(info.id) ? true : false;
+            info.isUp = localServerId.equalsIgnoreCase(info.id) ? true : false;
+            info.isLocal = info.isUp; // Set our Local Server Indicator.
             
             if (!info.isUp) {
                 downServers.add(info.id);
@@ -177,8 +244,10 @@ public class ClusterStateService extends GeneralTaskRunnable {
             
             servers.put(info.id, info);
             serverSelectionList[getNextSelected()] = info;
+            sessionDebug.error("Adding Server to ClusterStateService: "+info.toString());
 
-            // TODO - Persist the Server to the Directory.
+            // TODO - Persist the Server to the Directory in ou=amsessiondb container.
+
         }
 
         // to ensure that ordering in different server instances is identical
@@ -207,7 +276,11 @@ public class ClusterStateService extends GeneralTaskRunnable {
      * @return true if server is up, false otherwise
      */
     boolean isUp(String serverId) {
-        return ((serverId == null)||(serverId.isEmpty())||(servers==null)) ? false : (servers.get(serverId)).isUp;
+        if ((serverId == null)||(serverId.isEmpty())||(servers==null))
+            { return false; }
+        if (serverId.equalsIgnoreCase(this.localServerId))
+            { return true; }
+        return servers.get(serverId).isUp;
     }
 
     /**
@@ -222,6 +295,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
     boolean checkServerUp(String serverId) {
         if ((serverId == null)||(serverId.isEmpty())||(servers==null))
             { return false; }
+        if (serverId.equalsIgnoreCase(this.localServerId))
+            { return true; }
         ServerInfo info = servers.get(serverId);
         info.isUp = checkServerUp(info);
         return info.isUp;
@@ -315,6 +390,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
                 sessionService.cleanUpRemoteSessions();
             }
         } catch (Exception ex) {
+            sessionDebug.error("cleanRemoteSessions Background thread has encountered an Exceptin: "+ex.getMessage(),ex);
         }
     }
 
@@ -428,5 +504,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
     }
 
     // TODO -- Develop Method to write our Server State to the Session Persistence Store.
+
+
 
 }
