@@ -124,7 +124,7 @@ public class ImportServiceConfiguration extends AuthenticatedCommand {
                 DirectoryServerVendor.getInstance().query(ldConnection);
             if (!vendor.name.equals(DirectoryServerVendor.OPENDJ)
                     && !vendor.name.equals(DirectoryServerVendor.OPENDS)
-                    && !vendor.name.equals(DirectoryServerVendor.SUNDS)
+                    && !vendor.name.equals(DirectoryServerVendor.ODSEE)
                     ) {
                 throw new CLIException(getResourceString(
                         "import-service-configuration-unknown-ds"),
@@ -362,7 +362,7 @@ public class ImportServiceConfiguration extends AuthenticatedCommand {
 
         try {
             String vendorName = vendor.name;
-            if (vendorName.equals(DirectoryServerVendor.SUNDS)) {
+            if (vendorName.equals(DirectoryServerVendor.ODSEE)) {
                 ldif = new DataInputStream(
                     getClass().getClassLoader().getResourceAsStream(DS_LDIF));
                 index = new DataInputStream(
