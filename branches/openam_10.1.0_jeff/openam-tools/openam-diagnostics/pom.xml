@@ -51,12 +51,12 @@
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-shared</artifactId>
-            <version>${project.version}</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.forgerock</groupId>
             <artifactId>openam-diagnostics-schema</artifactId>
-            <version>${project.version}</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <modules>

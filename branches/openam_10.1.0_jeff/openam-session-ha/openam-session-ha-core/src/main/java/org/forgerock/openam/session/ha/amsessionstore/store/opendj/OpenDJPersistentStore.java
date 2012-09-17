@@ -194,7 +194,8 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private static long runPeriod = 1 * 60 * 1000; // 1 min in milliseconds
 
     /**
-     * Initialize all Timing Periods.
+     * Static Initialization Stanza
+     * - Set all Timing Periods.
      */
     static {
         try {

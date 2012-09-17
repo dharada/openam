@@ -80,8 +80,8 @@ import java.io.FileReader;
  * Import service configuration data.
  */
 public class ImportServiceConfiguration extends AuthenticatedCommand {
-    private static final String DS_LDIF = "sunds_config_schema.ldif";
-    private static final String DS_IDX = "sunds_config_index.ldif";
+    private static final String DS_LDIF = "odsee_config_schema.ldif";
+    private static final String DS_IDX = "odsee_config_index.ldif";
 
     /**
      * Services a Commandline Request.

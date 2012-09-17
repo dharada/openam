@@ -31,14 +31,14 @@
     <parent>
         <groupId>org.forgerock</groupId>
         <artifactId>openam-schema</artifactId>
-        <version>10.1.0-SNAPSHOT</version>
+        <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <!-- Component Definition -->
     <name>OpenAM Diagnostics Schema</name>
     <description>OpenAM Schemata Components</description>
     <artifactId>openam-diagnostics-schema</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>jar</packaging>
     <organization>
         <name>ForgeRock</name>

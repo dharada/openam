@@ -1330,7 +1330,7 @@
                             <docletArtifact>
                                 <groupId>org.forgerock</groupId>
                                 <artifactId>openam-shared</artifactId>
-                                <version>10.1.0-SNAPSHOT</version>
+                                <version>10.1.JEFF-SNAPSHOT</version>
                             </docletArtifact>
                         </configuration>
                     </execution>
