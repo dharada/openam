@@ -103,16 +103,15 @@ public class ClusterStateService extends GeneralTaskRunnable {
      */
     public static Debug sessionDebug = null;
 
-
     /** Servers in the cluster environment */
-    private final Map<String, ServerInfo> servers = 
+    private static final Map<String, ServerInfo> servers =
             new HashMap<String, ServerInfo>();
     
     /** Servers are down in the cluster environment*/
-    private Set<String> downServers = new HashSet<String>();
+    private static Set<String> downServers = new HashSet<String>();
 
     /** Server Information */
-    private ServerInfo[] serverSelectionList = new ServerInfo[0];
+    private static ServerInfo[] serverSelectionList = new ServerInfo[0];
 
     /** Last selected Server*/
     private int lastSelected = -1;
@@ -137,10 +136,10 @@ public class ClusterStateService extends GeneralTaskRunnable {
     /** default ServerInfo check time 10 milliseconds */
     public static final long DEFAULT_PERIOD = 1000;
 
-    private long period = DEFAULT_PERIOD; // in milliseconds
+    private static long period = DEFAULT_PERIOD; // in milliseconds
 
     // server instance id 
-    private String localServerId = null;
+    private static String localServerId = null;
     
     // SessionService
     private static volatile SessionService sessionService = null;
@@ -291,7 +290,6 @@ public class ClusterStateService extends GeneralTaskRunnable {
      *            server instance id
      * @return true if server is up, false otherwise
      */
-
     boolean checkServerUp(String serverId) {
         if ((serverId == null)||(serverId.isEmpty())||(servers==null))
             { return false; }
@@ -505,6 +503,21 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
     // TODO -- Develop Method to write our Server State to the Session Persistence Store.
 
-
-
+    /**
+     * Override toString
+     *
+     * @return
+     */
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append("ClusterStateService: ");
+        sb.append("{ lastSelected=").append(lastSelected);
+        sb.append(", timeout=").append(timeout).append("\n");
+        sb.append(" Current Server Selection List:").append("\n");
+        for(ServerInfo serverInfo : getServerSelectionList())
+            { sb.append(serverInfo.toString()); }
+        sb.append('}');
+        return sb.toString();
+    }
 }

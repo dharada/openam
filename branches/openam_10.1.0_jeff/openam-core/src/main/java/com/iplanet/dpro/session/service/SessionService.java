@@ -1759,6 +1759,9 @@ public class SessionService {
         return adminToken;
     }
 
+    /**
+     * Private Singleton Session Service.
+     */
     private SessionService() {
         try {
             dsameAdminDN = (String) AccessController
@@ -1903,7 +1906,7 @@ public class SessionService {
      *
      * @throws Exception
      */
-    private void initializationClusterService() throws Exception {
+    private synchronized void initializationClusterService() throws Exception {
         int timeout = ClusterStateService.DEFAULT_TIMEOUT;
         try {
             timeout = Integer.parseInt(SystemProperties.get(
@@ -1932,9 +1935,16 @@ public class SessionService {
                     + ", using default");
         }
         // Initialize Our Cluster State Service
-        clusterStateService = new ClusterStateService(this,
+        if (clusterStateService == null)
+        {
+            clusterStateService = new ClusterStateService(this,
                 thisSessionServerID, timeout, period,
                 clusterMemberMap);
+        }
+
+        // Show our State Server Info Map
+        sessionDebug.error(this.toString());
+
         // Verify Functionality
         if (!clusterStateService.isLocalServerId(thisSessionServerID))
         {
@@ -1992,7 +2002,11 @@ public class SessionService {
             throws SessionException {
         String primaryID = sid.getExtension(SessionID.PRIMARY_ID);
         String serverID = sid.getSessionServerID();
-
+        // if this is our local Server
+        if (serverID.equalsIgnoreCase(this.getLocalServerID()))
+        {
+            return serverID;
+        }
         // if session is from remote site
         if (!serverID.equals(sessionServerID)) {
             return serverID;
@@ -2128,6 +2142,9 @@ public class SessionService {
       return ((serverID == null)||(serverID.isEmpty())) ? false : clusterStateService.checkServerUp(serverID);
     }
 
+    /**
+     * Post Initialization
+     */
     private void postInit() {
         try {
             ServiceSchemaManager ssm = new ServiceSchemaManager(
@@ -2277,7 +2294,7 @@ public class SessionService {
     }
 
     /**
-     * This method will execute all the globally setted session timeout handlers
+     * This method will execute all the globally set session timeout handlers
      * with the corresponding timeout event simultaniously.
      *
      * @param sessionId The timed out sessions ID
