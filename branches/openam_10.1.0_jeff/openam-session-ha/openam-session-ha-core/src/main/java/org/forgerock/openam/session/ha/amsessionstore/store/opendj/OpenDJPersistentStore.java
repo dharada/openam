@@ -432,7 +432,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             SessionID sid = is.getID();
             String key = SessionUtils.getEncryptedStorageKey(sid);
             if (key == null)
-                { return; }
+            {   debug.error("OpenDJPersistenceStore.save(): Primary Encrypted Key "
+                    + "null, not persisting Session.");
+                return;
+            }
             byte[] serializedInternalSession = SessionUtils.encode(is);
             long expirationTime = is.getExpirationTime() + gracePeriod;
             String uuid = caseSensitiveUUID ? is.getUUID() : is.getUUID().toLowerCase();

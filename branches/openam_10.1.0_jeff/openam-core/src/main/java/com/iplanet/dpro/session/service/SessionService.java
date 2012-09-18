@@ -736,13 +736,13 @@ public class SessionService {
             Map ext = new HashMap();
             ext.put(SessionID.SITE_ID, sessionServerID);
 
-            if (isSiteEnabled) {
-                ext.put(SessionID.PRIMARY_ID, thisSessionServerID);
-                if (isSessionFailoverEnabled) {
-                    ext.put(SessionID.STORAGE_KEY, String.valueOf(secureRandom
-                            .nextInt()));
-                }
-            }
+            // AME-129 Required for Automatic Session Failover Persistence
+            if ( (isSiteEnabled)&&(thisSessionServerID != null)&&(!thisSessionServerID.isEmpty()) )
+                { ext.put(SessionID.PRIMARY_ID, thisSessionServerID); }
+
+            // AME-129, always set a Storage Key regardless of persisting or not.
+            // TODO -- Review if this Storage Key is unique across OpenAM Instances!
+            ext.put(SessionID.STORAGE_KEY, String.valueOf(secureRandom.nextInt()));
 
             String sessionID = SessionID.makeSessionID(encryptedID, ext,
                     httpSessionId);
