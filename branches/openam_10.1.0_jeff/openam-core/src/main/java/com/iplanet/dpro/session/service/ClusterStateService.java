@@ -114,7 +114,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
     private static ServerInfo[] serverSelectionList = new ServerInfo[0];
 
     /** Last selected Server*/
-    private int lastSelected = -1;
+    private static final int lastSelectedNone = -1;
+    private int lastSelected = lastSelectedNone;
 
     /** individual server wait default time out 10 milliseconds */
     public static final int DEFAULT_TIMEOUT = 1000;
@@ -260,11 +261,14 @@ public class ClusterStateService extends GeneralTaskRunnable {
      * 
      * @return updated lastSelected index value
      */
-
     private int getNextSelected() {
-        lastSelected = (lastSelected + 1) % serverSelectionList.length;
+        if (lastSelected == lastSelectedNone)
+            { return 0;}
+        else {
+                lastSelected = (lastSelected + 1) % serverSelectionList.length;
+            }
         return lastSelected;
-    }
+     }
 
     /**
      * Returns currently known status of the server instance identified by

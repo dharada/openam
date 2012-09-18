@@ -136,11 +136,24 @@ import org.forgerock.openam.session.service.SessionTimeoutHandler;
 public class SessionService {
 
     private static String LOG_PROVIDER = "Session";
+
+    /**
+     * Session Service Thread Pool for Session
+     * Handler Tasks.
+     */
     static private ThreadPool threadPool = null;
 
-    static SSOTokenManager ssoManager = null;
+    /**
+     * Our Session Service Singleton Service Implementation
+     */
+    private static volatile SessionService sessionService = null;
 
+    /**
+     * AM Session Repository for Session Persistence.
+     */
     private static volatile AMSessionRepository amSessionRepository = null;
+
+    static SSOTokenManager ssoManager = null;
 
     public static Debug sessionDebug = null;
 
@@ -361,29 +374,27 @@ public class SessionService {
 
     public static final String SESSION_SERVICE = "session";
 
-    private SecureRandom secureRandom = null;
+    private static SecureRandom secureRandom = null;
 
-    private Hashtable sessionTable = null;
+    private static Hashtable sessionTable = null;
     
-    private Set remoteSessionSet = null;
+    private static Set remoteSessionSet = null;
 
-    private Hashtable sessionHandleTable = new Hashtable();
+    private static Hashtable sessionHandleTable = new Hashtable();
 
-    private Map restrictedTokenMap = Collections.synchronizedMap(new HashMap());
+    private static Map restrictedTokenMap = Collections.synchronizedMap(new HashMap());
 
-    private String sessionServer;
+    private static String sessionServer;
 
-    private String sessionServerPort;
+    private static String sessionServerPort;
 
-    private String sessionServerProtocol;
+    private static String sessionServerProtocol;
     
-    private String sessionServerURI;
+    private static String sessionServerURI;
 
-    private String sessionServerID;
+    private static String sessionServerID;
 
-    private Set secondaryServerIDs;
-
-    private static volatile SessionService sessionService = null;
+    private static Set secondaryServerIDs;
 
     public static String deploymentURI = SystemProperties
             .get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
@@ -401,21 +412,21 @@ public class SessionService {
     private static String constraintHandler =
             SessionConstraint.DESTROY_OLDEST_SESSION_CLASS;
 
-    private String thisSessionServer;
+    private static String thisSessionServer;
 
-    private String thisSessionServerPortAsString;
+    private static String thisSessionServerPortAsString;
 
-    private int thisSessionServerPort;
+    private static int thisSessionServerPort;
     
-    private String thisSessionURI;
+    private static String thisSessionURI;
 
-    private String thisSessionServerProtocol;
+    private static String thisSessionServerProtocol;
 
-    private String thisSessionServerID;
+    private static String thisSessionServerID;
 
-    private String thisSessionServerURL;
+    private static String thisSessionServerURL;
 
-    private URL thisSessionServiceURL;
+    private static URL thisSessionServiceURL;
 
     // Must be True to permit Session Failover HA to be available.
     private static boolean useRemoteSaveMethod = Boolean.valueOf(
@@ -443,15 +454,15 @@ public class SessionService {
      * The following InternalSession is for the Authentication Service to use
      * Profile API to fetch user profile.
      */
-    private InternalSession authSession = null;
+    private static InternalSession authSession = null;
 
     /**
      * The URL Vector for ALL session events : SESSION_CREATION, IDLE_TIMEOUT,
      * MAX_TIMEOUT, LOGOUT, REACTIVATION, DESTROY.
      */
-    private Vector sessionEventURLs = new Vector();
+    private static Vector sessionEventURLs = new Vector();
 
-    private URL sessionServiceID = null;
+    private static URL sessionServiceID = null;
 
     private static ClusterStateService clusterStateService = null;
 
@@ -1889,10 +1900,6 @@ public class SessionService {
                 thisSessionServiceURL = Session.getSessionServiceURL(
                         thisSessionServerProtocol, thisSessionServer,
                         thisSessionServerPortAsString, thisSessionURI);
-
-                if (isSessionFailoverEnabled) {
-                    initializationClusterService();
-                }
             } // End of isSiteEnabled.
         } catch (Exception ex) {
             sessionDebug.error(
@@ -2236,10 +2243,12 @@ public class SessionService {
                 Map sessionAttrs = subConfig.getAttributes();
                 boolean sfoEnabled = Boolean.valueOf(
                         CollectionHelper.getMapAttr(
-                        sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "false")
+                        sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "true")
                         ).booleanValue();
-                
+                // We Allow to default to Session Failover HA,
+                // even with a single server to enable session persistence.
                 if(sfoEnabled) {
+
                     isSessionFailoverEnabled = true;
 
                     useRemoteSaveMethod = true;
@@ -2252,7 +2261,14 @@ public class SessionService {
                         sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
                     sessionStorePassword = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_PASSWORD, "password");
-                    Set serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
+
+                    Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
+                    if ( (serverIDs==null)||(serverIDs.isEmpty()) )
+                    {
+                        serverIDs = new HashSet<String>();
+                        serverIDs.add(this.getLocalServerID());
+                    }
+                    initializationClusterService();
                     initClusterMemberMap(serverIDs);
 
                     connectionMaxWaitTime = Integer.parseInt(
