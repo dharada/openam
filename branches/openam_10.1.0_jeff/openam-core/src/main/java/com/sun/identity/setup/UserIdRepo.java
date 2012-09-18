@@ -108,7 +108,7 @@ class UserIdRepo {
         ResourceBundle rb = ResourceBundle.getBundle(
             SetupConstants.SCHEMA_PROPERTY_FILENAME);
         String configName = "";
-        String strFiles = rb.getString(SetupConstants.SUNDS_LDIF);
+        String strFiles = rb.getString(SetupConstants.ODSEE_LDIF);
         if (type.equals(SetupConstants.UM_LDAPv3ForOpenDS)) {
             strFiles = rb.getString(SetupConstants.OpenDS_LDIF);
             configName = "OpenDJ";
