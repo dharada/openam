@@ -129,6 +129,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.forgerock.openam.session.service.SessionTimeoutHandler;
+import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 
 /**  
  * This class represents a Session Service
@@ -152,7 +153,16 @@ public class SessionService {
      * AM Session Repository for Session Persistence.
      */
     private static volatile AMSessionRepository amSessionRepository = null;
+    /**
+     * AM Session Repository Type, always
+     * Default to Embedded until we initialize.
+     */
+    private static AMSessionRepositoryType amSessionRepositoryType =
+            AMSessionRepositoryType.embedded;
 
+    /**
+     * SSO Token Manager Instance Reference.
+     */
     static SSOTokenManager ssoManager = null;
 
     public static Debug sessionDebug = null;
@@ -440,11 +450,12 @@ public class SessionService {
                     Constants.AM_SESSION_FAILOVER_USE_INTERNAL_REQUEST_ROUTING,
                     "true")).booleanValue();
 
-    // Must be True to permit Session Failover HA to be available.
+    // Must be True to permit Session Failover HA to be available,
+    // but we default this to Disabled or Off for Now.
     private static boolean isSessionFailoverEnabled = Boolean.valueOf(
             SystemProperties.get(
                     AMSessionRepository.IS_SFO_ENABLED,
-                     "true")).booleanValue();
+                     "false")).booleanValue();
 
     // Must be True to permit Session Failover HA to be available.
     private static boolean isSiteEnabled = false;  // If this is set to True and no Site is found, issues will arise
@@ -2243,10 +2254,11 @@ public class SessionService {
                 Map sessionAttrs = subConfig.getAttributes();
                 boolean sfoEnabled = Boolean.valueOf(
                         CollectionHelper.getMapAttr(
-                        sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "true")
+                        sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "false")
                         ).booleanValue();
-                // We Allow to default to Session Failover HA,
+                // Currently, we are not allowing to default to Session Failover HA,
                 // even with a single server to enable session persistence.
+                // But can easily be turned on in the Session SubConfig.
                 if(sfoEnabled) {
 
                     isSessionFailoverEnabled = true;
@@ -2255,7 +2267,10 @@ public class SessionService {
 
                     useInternalRequestRouting = true;
 
+                    // *********************************************************
                     // TODO: Check for Type of backend Store.
+                    // *********************************************************
+                    AMSessionRepositoryType amSessionRepositoryType = AMSessionRepositoryType.valueOf("");
 
                     sessionStoreUserName = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
