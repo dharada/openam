@@ -320,7 +320,7 @@ public class EmbeddedOpenDS {
         File toDelete = new File(odsRoot + "/opendj.zip");
         if (!toDelete.delete()) {
             Debug.getInstance(SetupConstants.DEBUG_NAME).error(
-                    "EmbeddedOpenDS.setup(): Unable to delete zip file");
+                    "EmbeddedOpenDS.setup(): Unable to delete zip file:" +toDelete.getAbsolutePath());
         }
 
         SetupProgress.reportEnd("emb.opends.stop", null);
