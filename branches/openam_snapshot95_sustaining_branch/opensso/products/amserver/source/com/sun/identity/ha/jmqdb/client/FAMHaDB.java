@@ -1115,7 +1115,8 @@ public class FAMHaDB implements Runnable {
    
    private void printStats() { 
        statsWriter.println(bundle.getString("printingstats"));
-       statsWriter.println(System.currentTimeMillis());
+       statsWriter.println("Start time: " + localStartTime);
+       statsWriter.println("Current time " + System.currentTimeMillis());
        statsWriter.println(bundle.getString("totalreq") + " " + totalTrans + "(" + cumTotalTrans + ")");
        statsWriter.println(bundle.getString("totalread") + " " + readCount + "(" + cumReadCount + ")");
        statsWriter.println(bundle.getString("totalwrite") + " " + writeCount + "(" + cumWriteCount + ")");
@@ -1137,6 +1138,8 @@ public class FAMHaDB implements Runnable {
        statsWriter.print("Avg process time "+ " " + averageProcessRequestTime + " ");
        statsWriter.println("Max process time "+ " " + maxProcessRequestTime); 
        statsWriter.println("DB Size " + da.getPrimaryIndex("session").getDatabase().count());
+       statsWriter.println("Master Node: " + (isMasterNode ? "true" : "false"));
+       statsWriter.println("Node table: " + serverStatusMap);
        statsWriter.flush();
    }
     
@@ -1410,7 +1413,11 @@ public class FAMHaDB implements Runnable {
                     break;
                 }
             }
-            isMasterNode = masterDB;        
+            isMasterNode = masterDB;    
+            
+            if (isMasterNode) {
+                System.out.println("we are now the master node");
+            }
         }
     }    
 
@@ -1519,6 +1526,10 @@ public class FAMHaDB implements Runnable {
                          nodeUpdateInterval + 
                          nodeUpdateGraceperiod)) {
                         iter.remove();
+                        
+                        if (verbose) {
+                            statsWriter.println("node removed: " + info.nodeID + " time exceeded");
+                        }
                     }
                 }        
             }
@@ -1552,6 +1563,11 @@ public class FAMHaDB implements Runnable {
                         info.lastUpdateTime = System.currentTimeMillis();
                         synchronized (serverStatusMap) {
                             serverStatusMap.put(String.valueOf(nodeID), info);
+                        }
+                        
+                        if (verbose) {
+                            statsWriter.println("added new node " + nodeID + " : " + info);
+                            statsWriter.flush();
                         }
                     } else {
                         Thread.sleep(nodeUpdateInterval);

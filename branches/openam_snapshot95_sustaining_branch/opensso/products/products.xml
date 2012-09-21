@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project name="products">
     <dirname property="products.basedir" file="${ant.file.products}"/>
     <property file="${products.basedir}/products.properties"/>
