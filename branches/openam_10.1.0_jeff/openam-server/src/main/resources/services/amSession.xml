@@ -250,7 +250,7 @@
                                      syntax="dn"
                                      i18nKey="a129">
                         <DefaultValues>
-                            <Value>o=openam-Session</Value>
+                            <Value>o=openam-session</Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-repository-url"

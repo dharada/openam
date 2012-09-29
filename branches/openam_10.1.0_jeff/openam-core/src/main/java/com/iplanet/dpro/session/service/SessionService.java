@@ -258,8 +258,11 @@ public class SessionService {
     private static final String JDBC_DRIVER_CLASS = 
         "iplanet-am-session-JDBC-driver-Impl-classname";
 
-    private static final String IPLANET_AM_SESSION_REPOSITORY_URL =
+    private static final String SESSION_REPOSITORY_URL=
          "iplanet-am-session-repository-url";
+
+    private static final String SESSION_REPOSITORY_TYPE =
+         "iplanet-am-session-sfo-store-type";
 
     private static final String MIN_POOL_SIZE = 
         "iplanet-am-session-min-pool-size";
@@ -283,6 +286,8 @@ public class SessionService {
     static String jdbcDriverClass = null;
 
     static String sessionRepositoryURL = null; // Can be Null, if using Internal Embedded OpenDJ Instance.
+
+    static String amSessionRepositoryStringType;
 
     static int minPoolSize = 8;
 
@@ -540,7 +545,7 @@ public class SessionService {
             TokenRestriction restriction) throws SessionException {
         SessionID sid = new SessionID(masterSid);
 
-        // we need to accomodate session failover situation
+        // we need to accommodate session failover situation
         if (SessionService.getUseInternalRequestRouting()) {
             // first try
             String hostServerID = getCurrentHostServer(sid);
@@ -2267,16 +2272,20 @@ public class SessionService {
 
                     useInternalRequestRouting = true;
 
-                    // *********************************************************
-                    // TODO: Check for Type of backend Store.
-                    // *********************************************************
-                    AMSessionRepositoryType amSessionRepositoryType = AMSessionRepositoryType.valueOf("");
-
                     sessionStoreUserName = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
                     sessionStorePassword = CollectionHelper.getMapAttr(
                         sessionAttrs, SESSION_STORE_PASSWORD, "password");
 
+                    // *********************************************************
+                    // Check for Type of backend Store.
+                    // *********************************************************
+                    amSessionRepositoryStringType = CollectionHelper.getMapAttr(
+                            sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
+                    amSessionRepositoryType
+                                = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
+
+                    // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
                     if ( (serverIDs==null)||(serverIDs.isEmpty()) )
                     {
@@ -2292,7 +2301,7 @@ public class SessionService {
                     jdbcDriverClass = CollectionHelper.getMapAttr(
                         sessionAttrs, JDBC_DRIVER_CLASS, "");
                     sessionRepositoryURL = CollectionHelper.getMapAttr(
-                        sessionAttrs, IPLANET_AM_SESSION_REPOSITORY_URL, "");
+                        sessionAttrs, SESSION_REPOSITORY_URL, "");
                     minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
                         sessionAttrs, MIN_POOL_SIZE, "8"));
                     maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(

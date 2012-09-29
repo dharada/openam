@@ -101,5 +101,25 @@ public class AMSessionRepositoryTypeTest {
                 PlugInPersistentStore.class.getName());
     }
 
+    /**
+     * Method: getAMSessionRepositoryTypeImplementationClass(String type)
+     */
+    @Test
+    public void testAMSessionRepositoryTypeValueOf() throws Exception {
+
+        assertEquals(AMSessionRepositoryType.embedded,
+                AMSessionRepositoryType.valueOf("embedded"));
+
+        assertEquals(AMSessionRepositoryType.external,
+                AMSessionRepositoryType.valueOf("external"));
+
+        assertEquals(AMSessionRepositoryType.plugin,
+                AMSessionRepositoryType.valueOf("plugin"));
+
+        assertEquals(AMSessionRepositoryType.none,
+                AMSessionRepositoryType.valueOf("none"));
+
+    }
+
 
 } 
