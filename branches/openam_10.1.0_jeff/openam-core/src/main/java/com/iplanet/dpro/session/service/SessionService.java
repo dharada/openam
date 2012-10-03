@@ -2409,10 +2409,9 @@ public class SessionService {
             }
             initClusterMemberMap(serverIDs);
         }
-
-        //if (sessionDebug.messageEnabled()) {
-        sessionDebug.error("Re-Initialized ClusterServerList=" + getClusterServerList());
-        //}
+        if (sessionDebug.messageEnabled()) {
+            sessionDebug.message("Re-Initialized ClusterServerList=" + getClusterServerList());
+        }
     }
 
     /**

@@ -1396,25 +1396,27 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      */
     private void logAMRootEntity(AMRootEntity amRootEntity, String message) {
         // Set to Message to Error to see messages.
-        debug.error(
-                        ((message != null)&&(!message.isEmpty()) ?  message : "") +
-                        "\nService:[" + amRootEntity.getService() + "]," +
-                        "\n     Op:[" + amRootEntity.getOperation() + "]," +
-                        "\n     PK:[" + amRootEntity.getPrimaryKey() + "]," +
-                        "\n     SK:[" + amRootEntity.getSecondaryKey() + "]," +
-                        "\n  State:[" + amRootEntity.getState() + "]," +
-                        "\nExpTime:[" + amRootEntity.getExpDate() + " = "
-                        + getDate(amRootEntity.getExpDate() * 1000) + "]," +
-                        "\n     IS:[" + (
-                        (amRootEntity.getSerializedInternalSessionBlob() != null) ?
-                                amRootEntity.getSerializedInternalSessionBlob().length + " bytes]" : "null]") +
-                        "\n   Data:[" + (
-                        (amRootEntity.getData() != null) ?
-                                amRootEntity.getData().length() + " bytes]" : "null]") +
-                        "\nAuxData:[" + (
-                        (amRootEntity.getAuxData() != null) ?
-                                amRootEntity.getAuxData().length() + " bytes]" : "null].")
-        );
+        if (debug.messageEnabled()) {
+            debug.message(
+                    ((message != null) && (!message.isEmpty()) ? message : "") +
+                            "\nService:[" + amRootEntity.getService() + "]," +
+                            "\n     Op:[" + amRootEntity.getOperation() + "]," +
+                            "\n     PK:[" + amRootEntity.getPrimaryKey() + "]," +
+                            "\n     SK:[" + amRootEntity.getSecondaryKey() + "]," +
+                            "\n  State:[" + amRootEntity.getState() + "]," +
+                            "\nExpTime:[" + amRootEntity.getExpDate() + " = "
+                            + getDate(amRootEntity.getExpDate() * 1000) + "]," +
+                            "\n     IS:[" + (
+                            (amRootEntity.getSerializedInternalSessionBlob() != null) ?
+                                    amRootEntity.getSerializedInternalSessionBlob().length + " bytes]" : "null]") +
+                            "\n   Data:[" + (
+                            (amRootEntity.getData() != null) ?
+                                    amRootEntity.getData().length() + " bytes]" : "null]") +
+                            "\nAuxData:[" + (
+                            (amRootEntity.getAuxData() != null) ?
+                                    amRootEntity.getAuxData().length() + " bytes]" : "null].")
+            );
+        }
     }
     /**
     * Return current Time in Seconds.

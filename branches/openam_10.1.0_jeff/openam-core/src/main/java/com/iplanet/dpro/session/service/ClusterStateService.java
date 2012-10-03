@@ -261,8 +261,8 @@ public class ClusterStateService extends GeneralTaskRunnable {
                 servers.put(info.id, info);
                 // Associate to a Server Selection Bucket.
                 serverSelectionList[getNextSelected()] = info;
-
-                sessionDebug.error("Added Server to ClusterStateService: " + info.toString());
+                if (sessionDebug.messageEnabled())
+                    { sessionDebug.error("Added Server to ClusterStateService: " + info.toString()); }
 
                 // TODO Register the Server to our Directory.
 
