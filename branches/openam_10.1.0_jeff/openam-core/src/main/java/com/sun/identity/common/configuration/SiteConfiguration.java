@@ -143,9 +143,10 @@ public class SiteConfiguration extends ConfigurationBase {
         Map map = accessPoint.getAttributes();
         Set setId = (Set)map.get(ATTR_PRIMARY_SITE_ID);
         Set setURL = (Set)map.get(ATTR_PRIMARY_SITE_URL);
-        info.add(NormalizedURL.normalize((String)setURL.iterator().next()) + 
-            "|" + (String)setId.iterator().next());
-                
+        if ((setId != null) && (!setId.isEmpty()) && (setURL != null) && (!setURL.isEmpty())) {
+            info.add(NormalizedURL.normalize((String) setURL.iterator().next()) +
+                    "|" + (String) setId.iterator().next());
+        }
         Set secURLs = accessPoint.getSubConfigNames("*");
         if ((secURLs != null) && !secURLs.isEmpty()) {
             for (Iterator i = secURLs.iterator(); i.hasNext(); ) {

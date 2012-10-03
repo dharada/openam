@@ -1273,8 +1273,8 @@ public class Session extends GeneralTaskRunnable {
      * @param server Session Server host name.
      * @param port Session Server port.
      * @param uri Session Server URI.
-     * @return Session Service URL.
-     * @exception SessionException.
+     * @return URL Session Service URL.
+     * @exception SessionException
      */
     static public URL getSessionServiceURL(
         String protocol, 
@@ -1302,7 +1302,7 @@ public class Session extends GeneralTaskRunnable {
      * 
      * @param serverID server ID from the platform server list.
      * @return Session Service URL.
-     * @exception SessionException.
+     * @exception SessionException
      */
     static public URL getSessionServiceURL(String serverID)
             throws SessionException {
@@ -1325,7 +1325,7 @@ public class Session extends GeneralTaskRunnable {
      * it will return null.
      * 
      * @param svcurl Session Service URL.
-     * @exception SessionException.
+     * @exception SessionException
      */
     private SearchResults getValidSessions(URL svcurl, String pattern)
             throws SessionException {
@@ -1559,7 +1559,7 @@ public class Session extends GeneralTaskRunnable {
      * 
      * @param svcurl Session Service URL.
      * @param sreq Session Request object.
-     * @exception SessionException.
+     * @exception SessionException
      */
     private SessionResponse getSessionResponseWithoutRetry(URL svcurl,
             SessionRequest sreq) throws SessionException {

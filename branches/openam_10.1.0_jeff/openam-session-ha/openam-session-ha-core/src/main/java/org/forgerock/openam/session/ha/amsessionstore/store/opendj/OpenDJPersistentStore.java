@@ -29,6 +29,7 @@
 
 package org.forgerock.openam.session.ha.amsessionstore.store.opendj;
 
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -142,6 +143,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private static final String SERVER_RECORDS_BASE_DN =
             Constants.OU_AMSESSIONDB + Constants.COMMA + SESSION_FAILOVER_HA_BASE_DN;
 
+    private static final String SERVER_ELEMENT_DN_TEMPLATE =
+            "cn"+Constants.EQUALS+"%"+Constants.COMMA +
+                    SERVER_RECORDS_BASE_DN;
+
     /**
      * Search Constructs
      */
@@ -253,10 +258,17 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
 
         serverAttrs = new LinkedHashSet<String>();
         serverAttrs.add("cn");
-        serverAttrs.add("jmxPort");
-        serverAttrs.add("adminPort");
-        serverAttrs.add("ldapPort");
-        serverAttrs.add("replPort");
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_JMX_PORT);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_ADMIN_PORT);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_LDAP_PORT);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_REPL_PORT);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_ID);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_PROTOCOL);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_URL);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_ADDRESS);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_IS_UP);
+        serverAttrs.add(AMSessionDBServer.ATTRIBUTE_NAME_TIMESTAMP);
+
 
     } // End of Static Initialization Stanza.
 
@@ -304,7 +316,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         });
 
         // Obtain our Directory Connection and ensure we can access our
-        // Internal Session container, whose default if o=openam-session
+        // Internal Session container, whose default is o=openam-session
         // This really needs to come from a connection pool.
         try {
             icConn = InternalClientConnection.getRootConnection();
@@ -368,10 +380,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     public void run() {
         while (!shutdown) {
             try {
-                // Process any Deferred Operations
-                processDeferredAMSessionRepositoryOperations();
                 // Delete any expired Sessions up to now.
                 deleteExpired(nowInSeconds());
+                // Process any Deferred Operations
+                processDeferredAMSessionRepositoryOperations();
                 Thread.sleep(SLEEP_INTERVAL);
             } catch (InterruptedException ie) {
                 debug.warning(DB_THD_INT.get().toString(), ie);
@@ -1091,12 +1103,12 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Obtain a List of Configured Servers
      *
-     * @return Set<AMSessionDBOpenDJServer>
+     * @return Set<AMSessionDBServer>
      * @throws StoreException
      */
-    public Set<AMSessionDBOpenDJServer> getServers()
+    public Set<AMSessionDBServer> getServers()
             throws StoreException {
-        Set<AMSessionDBOpenDJServer> serverList = new HashSet<AMSessionDBOpenDJServer>();
+        Set<AMSessionDBServer> serverList = new HashSet<AMSessionDBServer>();
         try {
             if (!icConnAvailable) {
                 icConn = InternalClientConnection.getRootConnection();
@@ -1112,12 +1124,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                 if (!searchResult.isEmpty()) {
                     for (SearchResultEntry entry : searchResult) {
                         List<Attribute> attributes = entry.getAttributes();
-                        AMSessionDBOpenDJServer server = new AMSessionDBOpenDJServer();
+                        AMSessionDBServer server = new AMSessionDBServer();
 
                         for (Attribute attribute : attributes) {
-                            if (attribute.getName().equals("cn")) {
-                                server.setHostName(getFQDN(attribute.iterator().next().getValue().toString()));
-                            } else if (attribute.getName().equals("adminPort")) {
+                            if (attribute.getName().equals("adminPort")) {
                                 server.setAdminPort(attribute.iterator().next().getValue().toString());
                             } else if (attribute.getName().equals("jmxPort")) {
                                 server.setJmxPort(attribute.iterator().next().getValue().toString());
@@ -1125,6 +1135,13 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                                 server.setLdapPort(attribute.iterator().next().getValue().toString());
                             } else if (attribute.getName().equals("replPort")) {
                                 server.setReplPort(attribute.iterator().next().getValue().toString());
+                            } else if (attribute.getName().equals("replPort")) {
+                                    server.setReplPort(attribute.iterator().next().getValue().toString());
+
+
+
+
+
                             } else {
                                 final LocalizableMessage message = DB_UNK_ATTR.get(attribute.getName());
                                 debug.warning(message.toString());
@@ -1150,6 +1167,185 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
 
         return serverList;
     }
+
+    /**
+     * Register Server Entry
+     *
+     * @param id
+     * @param protocol
+     * @param url
+     * @param address
+     * @param isUp
+     * @param isLocal
+     */
+    public synchronized void registerServerEntry(String id, String protocol, URL url, InetSocketAddress address,
+                                                 boolean isUp, boolean isLocal) throws StoreException
+    {
+        // Validate.
+        if ( (id == null) || (id.isEmpty()) ) {
+            debug.error("Unable to Register Server Entry, since no ID Provided!");
+            return;
+        }
+        if ( (protocol == null) || (protocol.isEmpty()) ) {
+            debug.error("Unable to Register Server Entry, since no Protocol Provided!");
+            return;
+        }
+        if ( (url == null) || (url.toString().isEmpty()) ) {
+            debug.error("Unable to Register Server Entry, since no URL Provided!");
+            return;
+        }
+        if (address == null) {
+            debug.error("Unable to Register Server Entry, since no Network Socket Address Provided!");
+            return;
+        }
+        if (!icConnAvailable) {
+            icConn = InternalClientConnection.getRootConnection();
+        }
+
+        // Formulate the DN for the Server.
+        boolean found = false;
+        String serverDN =  SERVER_ELEMENT_DN_TEMPLATE.replace("%",url.toExternalForm());
+
+        debug.message("OpenDJPersistenceStore.registerServerEntry: \nServerDN:[" + serverDN.toString() + "] ");
+        // Perform a search to determine if the record exists already
+        // so we know whether to Update the Record or Add.
+        try {
+            if (!icConnAvailable) {
+                icConn = InternalClientConnection.getRootConnection();
+            }
+            // Only return the Primary Key Attributes if any.
+            InternalSearchOperation iso = icConn.processSearch(serverDN.toString(),
+                    SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
+                    0, 0, false, Constants.FAMRECORD_FILTER, returnAttrs_DN_ONLY);
+            ResultCode resultCode = iso.getResultCode();
+
+            if (resultCode == ResultCode.SUCCESS) {
+                final LocalizableMessage message = DB_ENT_P.get(serverDN);
+                debug.message(message.toString());
+                found = true;
+            } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
+                final LocalizableMessage message = DB_ENT_NOT_P.get(serverDN);
+                debug.warning(message.toString());
+            } else {
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(serverDN, resultCode.toString());
+                debug.warning(message.toString());
+                throw new StoreException(message.toString());
+            }
+        } catch (DirectoryException dex) {
+            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(serverDN);
+            debug.error(message.toString(), dex);
+            throw new StoreException(message.toString(), dex);
+        }
+
+        // Update or store/add/bind if Server DN not found.
+        if (found) {
+            updateServer(serverDN, id, protocol, url, address, isUp);
+        } else {
+            storeServer(serverDN, id, protocol, url, address, isUp);
+        }
+    }
+
+    /**
+     * Store a New Server to the AM Session DB.
+     *
+     * @param serverDN
+     * @param id
+     * @param protocol
+     * @param url
+     * @param address
+     * @param isUp
+     * @throws StoreException
+     */
+    private void storeServer(String serverDN, String id, String protocol, URL url, InetSocketAddress address,
+                             boolean isUp) throws StoreException{
+        AMSessionDBServer entry = new AMSessionDBServer(serverDN, id, protocol, url, address, isUp);
+        List<RawAttribute> attrList = entry.getAttrList();
+        attrList.addAll(AMSessionDBServer.getObjectClasses());
+        if (!icConnAvailable) {
+            icConn = InternalClientConnection.getRootConnection();
+        }
+        AddOperation ao = icConn.processAdd(serverDN, attrList);
+        ResultCode resultCode = ao.getResultCode();
+
+        if (resultCode == ResultCode.SUCCESS) {
+            final LocalizableMessage message = DB_SVR_CREATE.get(serverDN);
+            debug.message(message.toString());
+        } else if (resultCode == ResultCode.ENTRY_ALREADY_EXISTS) {
+            final LocalizableMessage message = DB_SVR_CRE_FAIL.get(serverDN);
+            debug.warning(message.toString());
+        } else {
+            final LocalizableMessage message = DB_SVR_CRE_FAIL2.get(serverDN, resultCode.toString());
+            debug.warning(message.toString());
+            throw new StoreException(message.toString());
+        }
+    }
+
+    /**
+     * Update the Server on the AM Session DB.
+     *
+     * @param serverDN
+     * @param id
+     * @param protocol
+     * @param url
+     * @param address
+     * @param isUp
+     * @throws StoreException
+     */
+    private void updateServer(String serverDN, String id, String protocol, URL url, InetSocketAddress address,
+                              boolean isUp) throws StoreException {
+        AMSessionDBServer entry = new AMSessionDBServer(serverDN, id, protocol, url, address, isUp);
+        List<RawModification> modList = new ArrayList<RawModification>();
+        List<RawAttribute> attrList = entry.getAttrList();
+
+        for (RawAttribute attr : attrList) {
+            RawModification mod = new LDAPModification(ModificationType.REPLACE, attr);
+            modList.add(mod);
+        }
+
+        if (!icConnAvailable) {
+            icConn = InternalClientConnection.getRootConnection();
+        }
+        ModifyOperation mo = icConn.processModify(serverDN, modList);
+        ResultCode resultCode = mo.getResultCode();
+
+        if (resultCode == ResultCode.SUCCESS) {
+            final LocalizableMessage message = DB_SVR_MOD.get(serverDN);
+            debug.message("OpenDJPersistence.updateServer: [" + message + "]");
+        } else {
+            final LocalizableMessage message = DB_SVR_MOD_FAIL.get(serverDN, resultCode.toString());
+            debug.warning(message.toString());
+            throw new StoreException(message.toString());
+        }
+    }
+
+
+    /**
+     * De-Register a Server based upon the specified URL.
+     * @param serverUrl
+     */
+    public synchronized void deRegisterServer(String serverUrl) {
+        if ( (serverUrl == null) || (serverUrl.isEmpty()) )
+            { return; }
+        if (!icConnAvailable) {
+            icConn = InternalClientConnection.getRootConnection();
+        }
+
+        // TODO -- DeRegister a Server.
+
+        StringBuilder dn = new StringBuilder();
+        //dn.append(Constants.HOST_NAMING_ATTR).append(Constants.EQUALS).append(serverUrl);
+        //dn.append(Constants.COMMA).append(Constants.HOSTS_BASE_DN);
+        //dn.append(Constants.COMMA).append(OpenDJConfig.getSessionDBSuffix());
+
+        DeleteOperation dop = icConn.processDelete(dn.toString());
+        ResultCode resultCode = dop.getResultCode();
+
+        if (resultCode != ResultCode.SUCCESS) {
+            final LocalizableMessage message = DB_DEL_FAIL.get(dn);
+            //Log.logger.log(Level.WARNING, message.toString());
+        }
+    }
+
 
     /**
      * Private Helper Method to Obtain a DN from a Host URL.
@@ -1199,7 +1395,8 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @param message
      */
     private void logAMRootEntity(AMRootEntity amRootEntity, String message) {
-        debug.message(
+        // Set to Message to Error to see messages.
+        debug.error(
                         ((message != null)&&(!message.isEmpty()) ?  message : "") +
                         "\nService:[" + amRootEntity.getService() + "]," +
                         "\n     Op:[" + amRootEntity.getOperation() + "]," +

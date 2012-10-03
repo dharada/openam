@@ -89,6 +89,7 @@ import com.sun.identity.sm.ServiceConfig;
 import com.sun.identity.sm.ServiceConfigManager;
 import com.sun.identity.sm.ServiceSchema;
 import com.sun.identity.sm.ServiceSchemaManager;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -121,6 +122,7 @@ import javax.servlet.http.HttpSession;
 import com.sun.identity.monitoring.Agent;
 import com.sun.identity.monitoring.MonitoringUtil;
 import com.sun.identity.monitoring.SsoServerSessSvcImpl;
+
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,10 +130,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import org.forgerock.openam.session.service.SessionTimeoutHandler;
 import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 
-/**  
+/**
  * This class represents a Session Service
  */
 public class SessionService {
@@ -145,10 +148,9 @@ public class SessionService {
     static private ThreadPool threadPool = null;
 
     /**
-     * Our Session Service Singleton Service Implementation
+     * Our Session Service Singleton Service Implementation Instance.
      */
     private static volatile SessionService sessionService = null;
-
     /**
      * AM Session Repository for Session Persistence.
      */
@@ -185,33 +187,33 @@ public class SessionService {
     private static Logger errorLogger = null;
     private static final String amSSOErrorLogFile = "amSSO.error";
     private static final String amSSOLogFile = "amSSO.access";
-    
+
     private static LogMessageProvider logProvider = null;
-    
+
     public static final String SHANDLE_SCHEME_PREFIX = "shandle:";
 
     private static final String amSessionService = "iPlanetAMSessionService";
 
-    private static final String httpSessionTrackingCookieName = 
-        SystemProperties.get(
-                Constants.AM_SESSION_HTTP_SESSION_TRACKING_COOKIE_NAME,
+    private static final String httpSessionTrackingCookieName =
+            SystemProperties.get(
+                    Constants.AM_SESSION_HTTP_SESSION_TRACKING_COOKIE_NAME,
                     "JSESSIONID");
 
     private static boolean cookieEncoding =
-        (SystemProperties.get(Constants.AM_COOKIE_ENCODE) != null) &&
-        (SystemProperties.get(Constants.AM_COOKIE_ENCODE)
-            .equalsIgnoreCase("true"));
+            (SystemProperties.get(Constants.AM_COOKIE_ENCODE) != null) &&
+                    (SystemProperties.get(Constants.AM_COOKIE_ENCODE)
+                            .equalsIgnoreCase("true"));
 
-    private static final String sunAppServerLBRoutingCookieName = 
-        SystemProperties.get(
-             "com.iplanet.am.session.failover.sunAppServerLBRoutingCookieName",
+    private static final String sunAppServerLBRoutingCookieName =
+            SystemProperties.get(
+                    "com.iplanet.am.session.failover.sunAppServerLBRoutingCookieName",
                     "JROUTE");
 
-    private static final String httpSessionPropertyName = 
-        "DSAMEInternalSession";
+    private static final String httpSessionPropertyName =
+            "DSAMEInternalSession";
 
-    private static final String httpSessionOwnerListPropertyName = 
-        "DSAMEInternalSession.ownerList";
+    private static final String httpSessionOwnerListPropertyName =
+            "DSAMEInternalSession.ownerList";
 
     private static final int DEFAULT_POOL_SIZE = 10;
 
@@ -228,47 +230,47 @@ public class SessionService {
                     defaultApplicationMaxCachingTime)).longValue();
 
     // Session Constraints specific properties
-    private static final String SESSION_CONSTRAINT = 
-        "iplanet-am-session-enable-session-constraint";
-    
+    private static final String SESSION_CONSTRAINT =
+            "iplanet-am-session-enable-session-constraint";
+
     private static final String DENY_LOGIN_IF_DB_IS_DOWN =
-        "iplanet-am-session-deny-login-if-db-is-down";
+            "iplanet-am-session-deny-login-if-db-is-down";
 
-    private static final String MAX_WAIT_TIME_FOR_CONSTARINT = 
-        "iplanet-am-session-constraint-max-wait-time";
+    private static final String MAX_WAIT_TIME_FOR_CONSTARINT =
+            "iplanet-am-session-constraint-max-wait-time";
 
-    private static final String BYPASS_CONSTRAINT_ON_TOPLEVEL_ADMINS = 
-        "iplanet-am-session-enable-session-constraint-bypass-topleveladmin";
+    private static final String BYPASS_CONSTRAINT_ON_TOPLEVEL_ADMINS =
+            "iplanet-am-session-enable-session-constraint-bypass-topleveladmin";
 
     private static final String CONSTRAINT_HANDLER =
-        "iplanet-am-session-constraint-handler";
+            "iplanet-am-session-constraint-handler";
 
-    private static final String TOP_LEVEL_ADMIN_ROLE = 
-        "Top-level Admin Role";
+    private static final String TOP_LEVEL_ADMIN_ROLE =
+            "Top-level Admin Role";
 
     private static final String SESSION_STORE_USERNAME =
-        "iplanet-am-session-store-username";
+            "iplanet-am-session-store-username";
 
-    private static final String SESSION_STORE_PASSWORD = 
-        "iplanet-am-session-store-password";
+    private static final String SESSION_STORE_PASSWORD =
+            "iplanet-am-session-store-password";
 
-    private static final String CONNECT_MAX_WAIT_TIME = 
-        "iplanet-am-session-store-cpl-max-wait-time";
+    private static final String CONNECT_MAX_WAIT_TIME =
+            "iplanet-am-session-store-cpl-max-wait-time";
 
-    private static final String JDBC_DRIVER_CLASS = 
-        "iplanet-am-session-JDBC-driver-Impl-classname";
+    private static final String JDBC_DRIVER_CLASS =
+            "iplanet-am-session-JDBC-driver-Impl-classname";
 
-    private static final String SESSION_REPOSITORY_URL=
-         "iplanet-am-session-repository-url";
+    private static final String SESSION_REPOSITORY_URL =
+            "iplanet-am-session-repository-url";
 
     private static final String SESSION_REPOSITORY_TYPE =
-         "iplanet-am-session-sfo-store-type";
+            "iplanet-am-session-sfo-store-type";
 
-    private static final String MIN_POOL_SIZE = 
-        "iplanet-am-session-min-pool-size";
+    private static final String MIN_POOL_SIZE =
+            "iplanet-am-session-min-pool-size";
 
-    private static final String MAX_POOL_SIZE = 
-        "iplanet-am-session-max-pool-size";
+    private static final String MAX_POOL_SIZE =
+            "iplanet-am-session-max-pool-size";
 
     // constants for permissions
     private static final String PERMISSION_READ = "READ";
@@ -292,7 +294,7 @@ public class SessionService {
     static int minPoolSize = 8;
 
     static int maxPoolSize = 32;
-    
+
     static int maxWaitTimeForConstraint = 6000; // in milli-second
 
     private static boolean isPropertyNotificationEnabled = false;
@@ -314,38 +316,37 @@ public class SessionService {
 
         // Notification Thread Pool Size
         String size = SystemProperties.get(
-            Constants.NOTIFICATION_THREADPOOL_SIZE);
+                Constants.NOTIFICATION_THREADPOOL_SIZE);
         if (size != null) {
             try {
                 poolSize = Integer.parseInt(size);
             } catch (NumberFormatException e) {
                 sessionDebug.error(
-                    "SessionService.<init>: incorrect thread pool size" + size +
-                    "defaulting to " + DEFAULT_POOL_SIZE);
+                        "SessionService.<init>: incorrect thread pool size" + size +
+                                "defaulting to " + DEFAULT_POOL_SIZE);
             }
         }
 
         // Notification Thread Pool Threshold
         String thres = SystemProperties.get(
-            Constants.NOTIFICATION_THREADPOOL_THRESHOLD);
+                Constants.NOTIFICATION_THREADPOOL_THRESHOLD);
         if (thres != null) {
             try {
                 threshold = Integer.parseInt(thres);
             } catch (Exception e) {
                 sessionDebug.error(
-                    "SessionService.<init>: incorrect thread threshold" + thres
-                    + "defaulting to " + DEFAULT_THRESHOLD);
+                        "SessionService.<init>: incorrect thread threshold" + thres
+                                + "defaulting to " + DEFAULT_THRESHOLD);
             }
         }
 
         // *******************************************************************
         // Bootstrap AMSessionRepository Implementation if one was specified.
-        if (amSessionRepository == null)
-        {
-                // Instantiate our Session Repository Implementation.
-                // Allows Static Elements to Initialize.
-                amSessionRepository = getRepository();
-                sessionDebug.message("amSessionRepository Implementation: "+
+        if (amSessionRepository == null) {
+            // Instantiate our Session Repository Implementation.
+            // Allows Static Elements to Initialize.
+            amSessionRepository = getRepository();
+            sessionDebug.message("amSessionRepository Implementation: " +
                     ((amSessionRepository == null) ? "None" : amSessionRepository.getClass().getSimpleName()));
         }
 
@@ -354,13 +355,13 @@ public class SessionService {
         if (shutdownMan.acquireValidLock()) {
             try {
                 threadPool = new ThreadPool("amSession", poolSize, threshold, true,
-                    sessionDebug);
+                        sessionDebug);
                 shutdownMan.addShutdownListener(
-                    new ShutdownListener() {
-                        public void shutdown() {
-                            threadPool.shutdown();
+                        new ShutdownListener() {
+                            public void shutdown() {
+                                threadPool.shutdown();
+                            }
                         }
-                    }
                 );
             } finally {
                 shutdownMan.releaseLockAndNotify();
@@ -369,7 +370,7 @@ public class SessionService {
         if (threadPool != null) {
             try {
                 maxSessions = Integer.parseInt(SystemProperties
-                    .get(Constants.AM_SESSION_MAX_SESSIONS));
+                        .get(Constants.AM_SESSION_MAX_SESSIONS));
             } catch (Exception ex) {
                 maxSessions = 10000;
             }
@@ -392,7 +393,7 @@ public class SessionService {
     private static SecureRandom secureRandom = null;
 
     private static Hashtable sessionTable = null;
-    
+
     private static Set remoteSessionSet = null;
 
     private static Hashtable sessionHandleTable = new Hashtable();
@@ -404,7 +405,7 @@ public class SessionService {
     private static String sessionServerPort;
 
     private static String sessionServerProtocol;
-    
+
     private static String sessionServerURI;
 
     private static String sessionServerID;
@@ -413,16 +414,16 @@ public class SessionService {
 
     public static String deploymentURI = SystemProperties
             .get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
-    
+
     // used for session trimming    
-    private static boolean isSessionTrimmingEnabled = false;            
-    
+    private static boolean isSessionTrimmingEnabled = false;
+
     /* the following group of members are for session constraints */
     private static boolean isSessionConstraintEnabled = false;
 
     private static boolean denyLoginIfDBIsDown = false;
-    
-    private static boolean bypassConstratintForToplevelAdmin = false;
+
+    private static boolean bypassConstraintForToplevelAdmin = false;
 
     private static String constraintHandler =
             SessionConstraint.DESTROY_OLDEST_SESSION_CLASS;
@@ -432,7 +433,7 @@ public class SessionService {
     private static String thisSessionServerPortAsString;
 
     private static int thisSessionServerPort;
-    
+
     private static String thisSessionURI;
 
     private static String thisSessionServerProtocol;
@@ -447,7 +448,7 @@ public class SessionService {
     private static boolean useRemoteSaveMethod = Boolean.valueOf(
             SystemProperties
                     .get(Constants.AM_SESSION_FAILOVER_USE_REMOTE_SAVE_METHOD,
-                    "true")).booleanValue();
+                            "true")).booleanValue();
 
     // Must be True to permit Session Failover HA to be available.
     private static boolean useInternalRequestRouting = Boolean.valueOf(
@@ -460,7 +461,7 @@ public class SessionService {
     private static boolean isSessionFailoverEnabled = Boolean.valueOf(
             SystemProperties.get(
                     AMSessionRepository.IS_SFO_ENABLED,
-                     "false")).booleanValue();
+                    "false")).booleanValue();
 
     // Must be True to permit Session Failover HA to be available.
     private static boolean isSiteEnabled = false;  // If this is set to True and no Site is found, issues will arise
@@ -482,11 +483,10 @@ public class SessionService {
 
     private static ClusterStateService clusterStateService = null;
 
-    
+
     /**
      * Returns Session Service. If a Session Service already exists then it
      * returns the existing one. Else it creates a new one and returns.
-     * 
      */
     public static SessionService getSessionService() {
         if (sessionService == null) {
@@ -511,14 +511,12 @@ public class SessionService {
 
     /**
      * Returns the Internal Session used by the Auth Services.
-     * 
-     * @param domain
-     *            Authentication Domain
-     * @param httpSession
-     *            HttpSession
+     *
+     * @param domain      Authentication Domain
+     * @param httpSession HttpSession
      */
     public Session getAuthenticationSession(String domain,
-            HttpSession httpSession) {
+                                            HttpSession httpSession) {
         try {
             if (authSession == null) {
                 // Create a special InternalSession for Authentication Service
@@ -533,16 +531,17 @@ public class SessionService {
         }
     }
 
-   /**
-    * Returns the restricted token
-    * @param masterSid master session id
-    * @param restriction TokenRestriction Object
-    * @return restricted token id
-    * @throws SessionException
-    */
+    /**
+     * Returns the restricted token
+     *
+     * @param masterSid   master session id
+     * @param restriction TokenRestriction Object
+     * @return restricted token id
+     * @throws SessionException
+     */
 
     public String getRestrictedTokenId(String masterSid,
-            TokenRestriction restriction) throws SessionException {
+                                       TokenRestriction restriction) throws SessionException {
         SessionID sid = new SessionID(masterSid);
 
         // we need to accommodate session failover situation
@@ -577,7 +576,7 @@ public class SessionService {
      */
 
     String doGetRestrictedTokenId(SessionID masterSid,
-            TokenRestriction restriction) throws SessionException {
+                                  TokenRestriction restriction) throws SessionException {
 
         // locate master session
         InternalSession session = (InternalSession) sessionTable.get(masterSid);
@@ -605,14 +604,12 @@ public class SessionService {
 
     /**
      * Returns the Internal Session which can be used by services
-     * 
-     * @param domain
-     *            Authentication Domain
-     * @param httpSession
-     *            HttpSession
+     *
+     * @param domain      Authentication Domain
+     * @param httpSession HttpSession
      */
     private InternalSession getServiceSession(String domain,
-            HttpSession httpSession) {
+                                              HttpSession httpSession) {
         try {
             InternalSession session = null;
             // Create a special InternalSession which can be used as
@@ -640,14 +637,12 @@ public class SessionService {
 
     /**
      * Creates a new Internal Session
-     * 
-     * @param domain
-     *            Authentication Domain
-     * @param httpSession
-     *            Http Session
+     *
+     * @param domain      Authentication Domain
+     * @param httpSession Http Session
      */
     public InternalSession newInternalSession(String domain,
-            HttpSession httpSession) {
+                                              HttpSession httpSession) {
         try {
             return newInternalSession(domain, httpSession, true);
         } catch (SessionException e) {
@@ -658,18 +653,15 @@ public class SessionService {
 
     /**
      * Creates a new Internal Session
-     * 
-     * @param domain
-     *            Authentication Domain
-     * @param httpSession
-     *            Http Session
-     * @param forceHttpSessionCreation
-     *            in session failover mode if this parameter is true and
-     *            httpSession is null, it will cause SessionService to create a
-     *            new Http session for failover purposes
+     *
+     * @param domain                   Authentication Domain
+     * @param httpSession              Http Session
+     * @param forceHttpSessionCreation in session failover mode if this parameter is true and
+     *                                 httpSession is null, it will cause SessionService to create a
+     *                                 new Http session for failover purposes
      */
     private InternalSession newInternalSession(String domain,
-            HttpSession httpSession, boolean forceHttpSessionCreation)
+                                               HttpSession httpSession, boolean forceHttpSessionCreation)
             throws SessionException {
 
         if (isSessionFailoverEnabled && !getUseInternalRequestRouting()
@@ -698,7 +690,7 @@ public class SessionService {
         if (SystemProperties.isServerMode()) {
             if (MonitoringUtil.isRunning()) {
                 SsoServerSessSvcImpl sessImpl =
-                    Agent.getSessSvcMBean();
+                        Agent.getSessSvcMBean();
                 sessImpl.incCreatedSessionCount();
             }
         }
@@ -709,15 +701,15 @@ public class SessionService {
         String amCtxId = Long.toHexString(secureRandom.nextLong())
                 + (isSiteEnabled ? thisSessionServerID : sessionServerID);
         session.putProperty(Constants.AM_CTX_ID, amCtxId);
-        session.putProperty(Session.lbCookieName, 
-                    WebtopNaming.getLBCookieValue(getLocalServerID()));
+        session.putProperty(Session.lbCookieName,
+                WebtopNaming.getLBCookieValue(getLocalServerID()));
         session.reschedule();
         return session;
     }
 
     /**
      * Generates new encrypted ID string to be used as part of session id
-     * 
+     *
      * @return emcrypted ID string
      */
     private String generateEncryptedID() {
@@ -733,11 +725,9 @@ public class SessionService {
 
     /**
      * Generates new SessionID
-     * 
-     * @param domain
-     *            session domain
-     * @param httpSession
-     *            http session for failover purposes
+     *
+     * @param domain      session domain
+     * @param httpSession http session for failover purposes
      * @return newly generated session id
      * @throws SessionException
      */
@@ -753,12 +743,12 @@ public class SessionService {
             ext.put(SessionID.SITE_ID, sessionServerID);
 
             // AME-129 Required for Automatic Session Failover Persistence
-            if ( (isSiteEnabled)&&(thisSessionServerID != null)&&(!thisSessionServerID.isEmpty()) )
-                { ext.put(SessionID.PRIMARY_ID, thisSessionServerID); }
+            if ((isSiteEnabled) && (thisSessionServerID != null) && (!thisSessionServerID.isEmpty())) {
+                ext.put(SessionID.PRIMARY_ID, thisSessionServerID);
+            }
 
             // AME-129, always set a Storage Key regardless of persisting or not.
-            // TODO -- Review if this Storage Key is unique across OpenAM Instances!
-            ext.put(SessionID.STORAGE_KEY, String.valueOf(secureRandom.nextInt()));
+            ext.put(SessionID.STORAGE_KEY, String.valueOf(secureRandom.nextLong()));
 
             String sessionID = SessionID.makeSessionID(encryptedID, ext,
                     httpSessionId);
@@ -774,9 +764,8 @@ public class SessionService {
 
     /**
      * extract http session id useable as http session cookie
-     * 
-     * @param httpSession
-     *            http session
+     *
+     * @param httpSession http session
      * @return http session id
      */
     private static String extractHttpSessionId(HttpSession httpSession) {
@@ -785,9 +774,8 @@ public class SessionService {
 
     /**
      * Removes the Internal Session from the Internal Session table.
-     * 
-     * @param sid
-     *            Session ID
+     *
+     * @param sid Session ID
      */
     InternalSession removeInternalSession(SessionID sid) {
         boolean isSessionStored = true;
@@ -806,7 +794,7 @@ public class SessionService {
                 decrementActiveSessions();
                 SessionCount.decrementSessionCount(session);
             }
-        }        
+        }
 
         if (isSessionFailoverEnabled && isSessionStored) {
             if (getUseInternalRequestRouting()) {
@@ -857,7 +845,6 @@ public class SessionService {
 
     /**
      * Returns true if session failover is enabled
-     * 
      */
     public boolean isSessionFailoverEnabled() {
         return isSessionFailoverEnabled;
@@ -865,16 +852,16 @@ public class SessionService {
 
     /**
      * This method checks if Internal session is already present locally
-     * 
+     *
      * @param sid
      * @return a boolean
      */
     public boolean isSessionPresent(SessionID sid) {
-        boolean isPresent  = sessionTable.get(sid) != null
+        boolean isPresent = sessionTable.get(sid) != null
                 || restrictedTokenMap.get(sid) != null
                 || sessionHandleTable.get(sid) != null;
 
-	return isPresent;
+        return isPresent;
     }
 
     /**
@@ -882,7 +869,7 @@ public class SessionService {
      * invocations of SessionService methods are to be used) and if local and
      * Session Failover is enabled will recover the Session if the Session is
      * not found locally.
-     * 
+     *
      * @return a boolean
      */
     public boolean checkSessionLocal(SessionID sid) throws SessionException {
@@ -908,7 +895,7 @@ public class SessionService {
 
     /**
      * Returns true if URL is a URL of the local service local to this instance
-     * 
+     *
      * @param url
      */
     public boolean isLocalSessionService(URL url) {
@@ -918,15 +905,14 @@ public class SessionService {
                 && localURL.getProtocol().equalsIgnoreCase(url.getProtocol())
                 && localURL.getHost().equalsIgnoreCase(url.getHost())
                 && localURL.getPort() == url.getPort()
-		&& url.getPath().startsWith(localURL.getPath());
+                && url.getPath().startsWith(localURL.getPath());
     }
 
     /**
      * Checks if server instance identified by serverID is the same as local
      * instance
-     * 
-     * @param serverID
-     *            server id
+     *
+     * @param serverID server id
      * @return true if serverID is the same as local instance, false otherwise
      */
     public boolean isLocalServer(String serverID) {
@@ -944,7 +930,7 @@ public class SessionService {
     /**
      * Checks if server instance identified by serverID is the same as local
      * instance
-     * 
+     *
      * @param sid server id
      * @return true if serverID is the same as local instance, false otherwise
      */
@@ -960,7 +946,7 @@ public class SessionService {
 
     /**
      * Returns the local server ID
-     * 
+     *
      * @return The local server ID
      */
     public String getLocalServerID() {
@@ -973,9 +959,8 @@ public class SessionService {
 
     /**
      * Returns the Internal Session corresponding to a Session ID.
-     * 
-     * @param sid
-     *            Session Id
+     *
+     * @param sid Session Id
      */
     public InternalSession getInternalSession(SessionID sid) {
 
@@ -993,9 +978,8 @@ public class SessionService {
 
     /**
      * Returns the Internal Session corresponding to a session handle.
-     * 
-     * @param shandle
-     *            Session Id
+     *
+     * @param shandle Session Id
      * @return Internal Session corresponding to a session handle
      */
     public InternalSession getInternalSessionByHandle(String shandle) {
@@ -1005,7 +989,7 @@ public class SessionService {
     /**
      * As opposed to locateSession() this one accepts normal or restricted token
      * This is expected to be only called once the session is detected as local
-     * 
+     *
      * @param token
      * @return
      */
@@ -1025,7 +1009,7 @@ public class SessionService {
     }
 
     private InternalSession resolveRestrictedToken(SessionID token,
-            boolean checkRestriction) throws SessionException {
+                                                   boolean checkRestriction) throws SessionException {
         SessionID sid = (SessionID) restrictedTokenMap.get(token);
         if (sid == null)
             return null;
@@ -1041,7 +1025,7 @@ public class SessionService {
                         .getRestrictionForToken(token);
                 if (restriction != null
                         && !restriction.isSatisfied(RestrictedTokenContext
-                                .getCurrent())) {
+                        .getCurrent())) {
                     throw new SessionException(SessionBundle.rbName,
                             "restrictionViolation", null);
                 }
@@ -1056,7 +1040,6 @@ public class SessionService {
 
     /**
      * Get all valid Internal Sessions.
-     * 
      */
     private List<InternalSession> getValidInternalSessions() {
         List<InternalSession> sessions = new ArrayList<InternalSession>();
@@ -1077,10 +1060,9 @@ public class SessionService {
 
     /**
      * Get all valid Internal Sessions matched with pattern.
-     * 
      */
     private List<InternalSession> getValidInternalSessions(String pattern, int[] status)
-    throws SessionException {
+            throws SessionException {
         List<InternalSession> sessions = new ArrayList<InternalSession>();
 
         if (pattern == null) {
@@ -1098,9 +1080,9 @@ public class SessionService {
                 if (!matchAll) {
                     // For application sessions, the client ID
                     // will not be in the DN format but just uid.
-                    String clientID = (!sess.isAppSession()) ? 
-                        DNUtils.DNtoName(sess.getClientID()) :
-                        sess.getClientID();
+                    String clientID = (!sess.isAppSession()) ?
+                            DNUtils.DNtoName(sess.getClientID()) :
+                            sess.getClientID();
 
                     if (clientID == null) {
                         continue;
@@ -1119,8 +1101,8 @@ public class SessionService {
                 }
                 sessions.add(sess);
 
-                if ((System.currentTimeMillis() - startTime) >= 
-                    SessionConfigListener.getTimeout()) {
+                if ((System.currentTimeMillis() - startTime) >=
+                        SessionConfigListener.getTimeout()) {
                     status[0] = IdSearchResults.TIME_LIMIT_EXCEEDED;
                     break;
                 }
@@ -1135,32 +1117,32 @@ public class SessionService {
 
     /**
      * Destroy a Internal Session, whose session id has been specified.
-     * 
+     *
      * @param sid
      */
     public void destroyInternalSession(SessionID sid) {
         InternalSession sess = removeInternalSession(sid);
-        if(sess != null){
+        if (sess != null) {
             sess.setIsISStored(false);
-        }    
+        }
         if (sess != null && sess.getState() != Session.INVALID) {
             logEvent(sess, SessionEvent.DESTROY);
             sess.setState(Session.DESTROYED);
             sendEvent(sess, SessionEvent.DESTROY);
         }
-	Session.removeSID(sid);
+        Session.removeSID(sid);
     }
 
     /**
      * Logout a Internal Session, whose session id has been specified.
-     * 
+     *
      * @param sid
      */
     public void logoutInternalSession(SessionID sid) {
         InternalSession sess = removeInternalSession(sid);
-        if(sess != null){
+        if (sess != null) {
             sess.setIsISStored(false);
-        }    
+        }
         if (sess != null && sess.getState() != Session.INVALID) {
             logEvent(sess, SessionEvent.LOGOUT);
             sess.setState(Session.DESTROYED);
@@ -1173,12 +1155,12 @@ public class SessionService {
      */
     public static synchronized void decrementActiveSessions() {
         // Fix for OPENAM-486: this is a sanity-check for sessioncount, so it
-        // can't go below zero any more in case of erroneus behavior..
+        // can't go below zero any more in case of erroneous behavior..
         if (numberOfActiveSessions > 0) {
             numberOfActiveSessions--;
             if (SystemProperties.isServerMode() && MonitoringUtil.isRunning()) {
                 SsoServerSessSvcImpl sessImpl =
-                    Agent.getSessSvcMBean();
+                        Agent.getSessSvcMBean();
                 sessImpl.decSessionActiveCount();
             }
         }
@@ -1192,7 +1174,7 @@ public class SessionService {
         if (SystemProperties.isServerMode()) {
             if (MonitoringUtil.isRunning()) {
                 SsoServerSessSvcImpl sessImpl =
-                    Agent.getSessSvcMBean();
+                        Agent.getSessSvcMBean();
                 sessImpl.incSessionActiveCount();
             }
         }
@@ -1212,17 +1194,16 @@ public class SessionService {
         return threadPool.getCurrentSize();
     }
 
-    
+
     /**
      * Add a listener to a Internal Session.
-     * 
+     *
      * @param session - InternalSession Object
      * @param url
-     * @param sid
-     *            sid to be used with notification (master or restricted)
+     * @param sid     sid to be used with notification (master or restricted)
      */
     private void addInternalSessionListener(InternalSession session, String url,
-            SessionID sid) {
+                                            SessionID sid) {
 
         if (session != null) {
             if (!sid.equals(session.getID())
@@ -1238,7 +1219,7 @@ public class SessionService {
 
     /**
      * Add a listener to all Internal Sessions.
-     * 
+     *
      * @param url
      */
     private void addListenerOnAllInternalSessions(String url) {
@@ -1253,10 +1234,10 @@ public class SessionService {
 
     /**
      * Returns the Session information.
-     * 
+     *
      * @param sid
      * @param reset
-     * @exception SessionException
+     * @throws SessionException
      */
     public SessionInfo getSessionInfo(SessionID sid, boolean reset)
             throws SessionException {
@@ -1313,39 +1294,39 @@ public class SessionService {
     /**
      * Gets all valid Internal Sessions, depending on the value of the user's
      * preferences.
-     * 
+     *
      * @param s
-     * @exception SessionException
+     * @throws SessionException
      */
-    public List<SessionInfo> getValidSessions(Session s) 
-    throws SessionException {
-        int status[] = { 0 };
+    public List<SessionInfo> getValidSessions(Session s)
+            throws SessionException {
+        int status[] = {0};
         return getValidSessions(s, null, status);
     }
 
     /**
      * Gets all valid Internal Sessions, depending on the value of the user's
      * preferences.
-     * 
+     *
      * @param s
-     * @exception SessionException
+     * @throws SessionException
      */
     public List<SessionInfo> getValidSessions(Session s, String pattern, int[] status)
-    throws SessionException {
+            throws SessionException {
         if (s.getState(false) != Session.VALID) {
             throw new SessionException(SessionBundle
                     .getString("invalidSessionState")
                     + s.getID().toString());
         }
-        
+
         try {
             AMIdentity user = getUser(s);
             Set orgList = user.getAttribute(
-                "iplanet-am-session-get-valid-sessions");
+                    "iplanet-am-session-get-valid-sessions");
             if (orgList == null) {
                 orgList = Collections.EMPTY_SET;
             }
-            
+
             List<InternalSession> sessions = sessionService.getValidInternalSessions(pattern, status);
             List<SessionInfo> infos = new ArrayList<SessionInfo>(sessions.size());
 
@@ -1370,10 +1351,10 @@ public class SessionService {
     /**
      * Destroy a Internal Session, depending on the value of the user's
      * preferences.
-     * 
+     *
      * @param s
      * @param sid
-     * @exception SessionException
+     * @throws SessionException
      */
     public void destroySession(Session s, SessionID sid)
             throws SessionException {
@@ -1417,9 +1398,9 @@ public class SessionService {
 
     /**
      * Logout the user.
-     * 
-     * @exception SessionException
+     *
      * @param sid
+     * @throws SessionException
      */
     public void logout(SessionID sid) throws SessionException {
         locateSession(sid);
@@ -1428,12 +1409,10 @@ public class SessionService {
 
     /**
      * Adds listener to a Internal Sessions.
-     * 
-     * @exception SessionException
-     *                Session is null OR the Session is invalid
-     * @param sid
-     *            Session ID
+     *
+     * @param sid Session ID
      * @param url
+     * @throws SessionException Session is null OR the Session is invalid
      */
     public void addSessionListener(SessionID sid, String url)
             throws SessionException {
@@ -1448,10 +1427,10 @@ public class SessionService {
 
     /**
      * Add a listener to all Internal Sessions.
-     * 
-     * @exception SessionException
+     *
      * @param s
      * @param url
+     * @throws SessionException
      */
     public void addSessionListenerOnAllSessions(Session s, String url)
             throws SessionException {
@@ -1467,10 +1446,10 @@ public class SessionService {
         try {
             AMIdentity user = getUser(s);
             Set values = user.getAttribute(
-                "iplanet-am-session-add-session-listener-on-all-sessions");
+                    "iplanet-am-session-add-session-listener-on-all-sessions");
             String value = ((values != null) && !values.isEmpty()) ?
-                (String)values.iterator().next() : null;
-            
+                    (String) values.iterator().next() : null;
+
             if ((value == null) || value.equals("false")) {
                 throw new SessionException(SessionBundle.rbName, "noPrivilege",
                         null);
@@ -1483,11 +1462,11 @@ public class SessionService {
 
     /**
      * Sets internal property to the Internal Session.
-     * 
-     * @exception SessionException
+     *
      * @param sid
      * @param name
      * @param value
+     * @throws SessionException
      */
     public void setProperty(SessionID sid, String name, String value)
             throws SessionException {
@@ -1498,13 +1477,13 @@ public class SessionService {
      * Given a restricted token, returns the SSOTokenID of the master token
      * can only be used if the requester is an app token
      *
-     * @param s Must be an app token
+     * @param s            Must be an app token
      * @param restrictedID The SSOTokenID of the restricted token
      * @return The SSOTokenID string of the master token
      * @throws SSOException If the master token cannot be dereferenced
      */
     public String deferenceRestrictedID(Session s, String restrictedID)
-    throws SessionException {
+            throws SessionException {
         SessionID rid = new SessionID(restrictedID);
 
         // we need to accomodate session failover situation
@@ -1512,12 +1491,12 @@ public class SessionService {
             //first try
             String hostServerID = getCurrentHostServer(rid);
 
-            if(!isLocalServer(hostServerID)) {
+            if (!isLocalServer(hostServerID)) {
                 if (!sessionService.checkServerUp(hostServerID)) {
                     hostServerID = getCurrentHostServer(rid);
                 }
 
-                if(!isLocalServer(hostServerID)) {
+                if (!isLocalServer(hostServerID)) {
                     String masterID = deferenceRestrictedIDRemotely(
                             s, Session.getSessionServiceURL(hostServerID), rid);
 
@@ -1544,30 +1523,32 @@ public class SessionService {
                     "?" + GetHttpSession.OP + "=" + GetHttpSession.DEREFERENCE_RESTRICTED_TOKEN_ID;
 
             URL url = new URL(hostServerID.getProtocol(),
-                                              hostServerID.getHost(),
-                                              hostServerID.getPort(),
-                                              deploymentURI + "/GetHttpSession" + query);
+                    hostServerID.getHost(),
+                    hostServerID.getPort(),
+                    deploymentURI + "/GetHttpSession" + query);
 
-            HttpURLConnection conn = invokeRemote(url,s.getID(),null);
+            HttpURLConnection conn = invokeRemote(url, s.getID(), null);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.setRequestProperty ("Content-Type", "application/octet-stream");
+            conn.setRequestProperty("Content-Type", "application/octet-stream");
 
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             DataOutputStream ds = new DataOutputStream(bs);
 
             ds.writeUTF(sessionID.toString());
-            ds.flush(); ds.close();
+            ds.flush();
+            ds.close();
 
             byte[] getRemotePropertyString = bs.toByteArray();
 
-            conn.setRequestProperty ("Content-Length",
+            conn.setRequestProperty("Content-Length",
                     Integer.toString(getRemotePropertyString.length));
 
             out = new DataOutputStream(conn.getOutputStream());
 
             out.write(getRemotePropertyString);
-            out.close(); out = null;
+            out.close();
+            out = null;
 
             in = new DataInputStream(conn.getInputStream());
 
@@ -1589,9 +1570,9 @@ public class SessionService {
 
     /**
      * Locate InternalSession by session id
-     * 
-     * @exception SessionException
+     *
      * @param sid
+     * @throws SessionException
      */
     protected InternalSession locateSession(SessionID sid)
             throws SessionException {
@@ -1608,160 +1589,161 @@ public class SessionService {
      * Sets external property in the Internal Session as long as it is not
      * protected
      *
-     * @exception SessionException
      * @param clientToken - Token of the client setting external property.
      * @param sid
      * @param name
      * @param value
+     * @throws SessionException
      */
     public void setExternalProperty(SSOToken clientToken, SessionID sid,
-            String name, String value)
+                                    String name, String value)
             throws SessionException {
         resolveToken(sid).putExternalProperty(clientToken, name, value);
     }
-    
+
     /**
      * Sends the Internal Session event to the SessionNotificationSender.
-     * 
-     * @param sess Internal Session.
+     *
+     * @param sess    Internal Session.
      * @param evttype Event Type.
      */
     public void sendEvent(InternalSession sess, int evttype) {
         sessionDebug.message("Running sendEvent, type = " + evttype);
         try {
-            SessionNotificationSender sns = 
-                new SessionNotificationSender(this, sess, evttype);
+            SessionNotificationSender sns =
+                    new SessionNotificationSender(this, sess, evttype);
             // First send local notification. sendToLocal will return
             // true if remote URL's exists than add the notification 
             // to the thread pool to process remote notifications.
-            if (sns.sendToLocal()) { 
+            if (sns.sendToLocal()) {
                 threadPool.run(sns);
             }
-            
+
         } catch (ThreadPoolException e) {
             sessionDebug.error("Sending Notification Error: ", e);
         }
     }
 
-   /**
-    * Logs the Internal Session Events.
-    * @param sess Internal Session
-    * @param eventType event type.
-    */
+    /**
+     * Logs the Internal Session Events.
+     *
+     * @param sess      Internal Session
+     * @param eventType event type.
+     */
     public void logEvent(InternalSession sess, int eventType) {
         switch (eventType) {
-        case 0:
-            logIt(sess, "SESSION_CREATED");
-            break;
-        case 1:
-            logIt(sess, "SESSION_IDLE_TIMED_OUT");
-            break;
-        case 2:
-            logIt(sess, "SESSION_MAX_TIMEOUT");
-            break;
-        case 3:
-            logIt(sess, "SESSION_LOGOUT");
-            break;
-        case 4:
-            logIt(sess, "SESSION_REACTIVATION");
-            break;
-        case 5:
-            logIt(sess, "SESSION_DESTROYED");
-            break;
-        case 6:
-            logIt(sess, "SESSION_PROPERTY_CHANGED");
-            break;
-        case 7:
-            logIt(sess, "SESSION_QUOTA_EXHAUSTED");
-            break;
-        default:
-            logIt(sess, "SESSION_UNKNOWN_EVENT");
-            break;
+            case 0:
+                logIt(sess, "SESSION_CREATED");
+                break;
+            case 1:
+                logIt(sess, "SESSION_IDLE_TIMED_OUT");
+                break;
+            case 2:
+                logIt(sess, "SESSION_MAX_TIMEOUT");
+                break;
+            case 3:
+                logIt(sess, "SESSION_LOGOUT");
+                break;
+            case 4:
+                logIt(sess, "SESSION_REACTIVATION");
+                break;
+            case 5:
+                logIt(sess, "SESSION_DESTROYED");
+                break;
+            case 6:
+                logIt(sess, "SESSION_PROPERTY_CHANGED");
+                break;
+            case 7:
+                logIt(sess, "SESSION_QUOTA_EXHAUSTED");
+                break;
+            default:
+                logIt(sess, "SESSION_UNKNOWN_EVENT");
+                break;
         }
     }
 
     private Logger getLogger() {
-       if (logger == null) {
-           logger = (Logger) Logger.getLogger(amSSOLogFile);
-       }
-       return logger;
+        if (logger == null) {
+            logger = (Logger) Logger.getLogger(amSSOLogFile);
+        }
+        return logger;
     }
-    
-    private LogMessageProvider getLogMessageProvider() 
-        throws Exception {
-        
+
+    private LogMessageProvider getLogMessageProvider()
+            throws Exception {
+
         if (logProvider == null) {
             logProvider =
-                MessageProviderFactory.getProvider(LOG_PROVIDER);
+                    MessageProviderFactory.getProvider(LOG_PROVIDER);
         }
         return logProvider;
     }
 
     public void logIt(InternalSession sess, String id) {
-        if(!logStatus) {
+        if (!logStatus) {
             return;
         }
-        try {            
-             String sidString = sess.getID().toString();
-             String clientID = sess.getClientID();
-             String uidData = null;
-             if ((clientID == null) || (clientID.length() < 1)) {
+        try {
+            String sidString = sess.getID().toString();
+            String clientID = sess.getClientID();
+            String uidData = null;
+            if ((clientID == null) || (clientID.length() < 1)) {
                 uidData = "N/A";
-             } else {
+            } else {
                 StringTokenizer st = new StringTokenizer(clientID, ",");
-                uidData = (st.hasMoreTokens()) ? st.nextToken() : clientID;  
-             }
-             String[] data = {uidData};
-             LogRecord lr = 
-                 getLogMessageProvider().createLogRecord(id, data, null);
+                uidData = (st.hasMoreTokens()) ? st.nextToken() : clientID;
+            }
+            String[] data = {uidData};
+            LogRecord lr =
+                    getLogMessageProvider().createLogRecord(id, data, null);
 
-             lr.addLogInfo(LogConstants.LOGIN_ID_SID, sidString);
+            lr.addLogInfo(LogConstants.LOGIN_ID_SID, sidString);
 
-             String amCtxID = sess.getProperty(Constants.AM_CTX_ID);
-             String clientDomain = sess.getClientDomain();
-             String ipAddress = sess.getProperty("Host");
-             String hostName = sess.getProperty("HostName");
+            String amCtxID = sess.getProperty(Constants.AM_CTX_ID);
+            String clientDomain = sess.getClientDomain();
+            String ipAddress = sess.getProperty("Host");
+            String hostName = sess.getProperty("HostName");
 
-             lr.addLogInfo(LogConstants.CONTEXT_ID, amCtxID);
-             lr.addLogInfo(LogConstants.LOGIN_ID, clientID);
-             lr.addLogInfo(LogConstants.LOG_LEVEL, lr.getLevel().toString());
-             lr.addLogInfo(LogConstants.DOMAIN, clientDomain);
-             lr.addLogInfo(LogConstants.IP_ADDR, ipAddress);
-             lr.addLogInfo(LogConstants.HOST_NAME, hostName);
-             getLogger().log(lr, getSessionServiceToken());
-        } catch(Exception ex) {
-             sessionDebug.error("SessionService.logIt(): " +
-                  "Cannot write to the session log file: ", ex);
+            lr.addLogInfo(LogConstants.CONTEXT_ID, amCtxID);
+            lr.addLogInfo(LogConstants.LOGIN_ID, clientID);
+            lr.addLogInfo(LogConstants.LOG_LEVEL, lr.getLevel().toString());
+            lr.addLogInfo(LogConstants.DOMAIN, clientDomain);
+            lr.addLogInfo(LogConstants.IP_ADDR, ipAddress);
+            lr.addLogInfo(LogConstants.HOST_NAME, hostName);
+            getLogger().log(lr, getSessionServiceToken());
+        } catch (Exception ex) {
+            sessionDebug.error("SessionService.logIt(): " +
+                    "Cannot write to the session log file: ", ex);
         }
     }
 
     public void logSystemMessage(String msgID, Level level) {
-        
-        if(!logStatus) {
+
+        if (!logStatus) {
             return;
-        }        
-        if (errorLogger == null) {
-            errorLogger = 
-                (Logger) Logger.getLogger(amSSOErrorLogFile);
         }
-        try {           
+        if (errorLogger == null) {
+            errorLogger =
+                    (Logger) Logger.getLogger(amSSOErrorLogFile);
+        }
+        try {
             String[] data = {msgID};
-            LogRecord lr = 
-                getLogMessageProvider().createLogRecord(msgID, 
-                                                        data, 
-                                                        null);
-            SSOToken serviceToken = getSessionServiceToken();         
-            lr.addLogInfo(LogConstants.LOGIN_ID_SID, 
-                          serviceToken.getTokenID().toString());      
-            lr.addLogInfo(LogConstants.LOGIN_ID, 
-                          serviceToken.getPrincipal().getName());           
+            LogRecord lr =
+                    getLogMessageProvider().createLogRecord(msgID,
+                            data,
+                            null);
+            SSOToken serviceToken = getSessionServiceToken();
+            lr.addLogInfo(LogConstants.LOGIN_ID_SID,
+                    serviceToken.getTokenID().toString());
+            lr.addLogInfo(LogConstants.LOGIN_ID,
+                    serviceToken.getPrincipal().getName());
             errorLogger.log(lr, serviceToken);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             sessionDebug.error("SessionService.logSystemMessage(): " +
-                               "Cannot write to the session error " +
-                               "log file: ", ex);
-        }        
-    }    
+                    "Cannot write to the session error " +
+                    "log file: ", ex);
+        }
+    }
 
     private SSOTokenManager getSSOTokenManager() throws SSOException {
         if (ssoManager == null) {
@@ -1772,7 +1754,7 @@ public class SessionService {
 
     SSOToken getSessionServiceToken() throws Exception {
         return ((SSOToken) AccessController.doPrivileged(
-            AdminTokenAction.getInstance()));
+                AdminTokenAction.getInstance()));
     }
 
     private SSOToken getAdminToken() throws SSOException {
@@ -1801,7 +1783,7 @@ public class SessionService {
             sessionServer = SystemProperties.get(Constants.AM_SERVER_HOST);
             sessionServerPort = SystemProperties.get(Constants.AM_SERVER_PORT);
             sessionServerURI = SystemProperties.get(
-                Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
+                    Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
 
             /*
              * We need to get the session server unique id from the platform
@@ -1819,8 +1801,8 @@ public class SessionService {
                 sessionServerID = WebtopNaming.getSiteID(sessionServerProtocol,
                         sessionServer, sessionServerPort, sessionServerURI);
                 String secondaryIDs =
-                    WebtopNaming.getSecondarySites(sessionServerProtocol,
-                        sessionServer, sessionServerPort, sessionServerURI);
+                        WebtopNaming.getSecondarySites(sessionServerProtocol,
+                                sessionServer, sessionServerPort, sessionServerURI);
                 secondaryServerIDs = new HashSet();
 
                 if (secondaryIDs != null) {
@@ -1834,16 +1816,16 @@ public class SessionService {
                         secondaryServerIDs.add(secondaryIDs);
                     }
                 }
-                
+
                 sessionServiceID = new URL(WebtopNaming.getServerFromID(
-                    sessionServerID));
+                        sessionServerID));
                 sessionServerProtocol = sessionServiceID.getProtocol();
                 sessionServer = sessionServiceID.getHost();
                 sessionServerPort = Integer.toString(
-                    sessionServiceID.getPort());
+                        sessionServiceID.getPort());
             } else {
                 sessionServiceID = new URL(WebtopNaming.getServerFromID(
-                    sessionServerID));
+                        sessionServerID));
             }
 
             // Obtain the secureRandom instance
@@ -1881,10 +1863,10 @@ public class SessionService {
 
             postInit();
 
-            if (isSiteEnabled) {
-                // TODO we can have thisSession... members defined
-                // for both failover and non-failover modes
-
+            /**
+             * Provide "this" Instance Variables available for either
+             * single instance or a site enabled instance.
+             */
                 thisSessionServerProtocol = SystemProperties
                         .get(Constants.AM_SERVER_PROTOCOL);
                 thisSessionServer = SystemProperties
@@ -1894,11 +1876,11 @@ public class SessionService {
                 thisSessionURI = SystemProperties
                         .get(Constants.AM_SERVICES_DEPLOYMENT_DESCRIPTOR);
 
-                if ((thisSessionServerProtocol == null) || 
-                    (thisSessionServerPortAsString == null) ||
-                    (thisSessionServer == null) ||
-                    (thisSessionURI == null)
-                ) {
+                if ((thisSessionServerProtocol == null) ||
+                        (thisSessionServerPortAsString == null) ||
+                        (thisSessionServer == null) ||
+                        (thisSessionURI == null)
+                        ) {
                     throw new SessionException(SessionBundle.rbName,
                             "propertyMustBeSet", null);
                 }
@@ -1910,13 +1892,13 @@ public class SessionService {
                         thisSessionServerPortAsString, thisSessionURI);
 
                 thisSessionServerURL = thisSessionServerProtocol + "://" +
-                    thisSessionServer + ":" + thisSessionServerPortAsString +
-                    thisSessionURI;
+                        thisSessionServer + ":" + thisSessionServerPortAsString +
+                        thisSessionURI;
 
                 thisSessionServiceURL = Session.getSessionServiceURL(
                         thisSessionServerProtocol, thisSessionServer,
                         thisSessionServerPortAsString, thisSessionURI);
-            } // End of isSiteEnabled.
+           // } // End of isSiteEnabled.
         } catch (Exception ex) {
             sessionDebug.error(
                     "SessionService.SessionService(): Initialization Failed",
@@ -1938,7 +1920,7 @@ public class SessionService {
                     String.valueOf(
                             ClusterStateService.DEFAULT_TIMEOUT)));
         } catch (Exception e) {
-            sessionDebug.error("Invalid value for "+
+            sessionDebug.error("Invalid value for " +
                     Constants.
                             AM_SESSION_FAILOVER_CLUSTER_STATE_CHECK_TIMEOUT
                     + ", using default");
@@ -1958,22 +1940,13 @@ public class SessionService {
                     + ", using default");
         }
         // Initialize Our Cluster State Service
-        if (clusterStateService == null)
-        {
-            clusterStateService = new ClusterStateService(this,
-                thisSessionServerID, timeout, period,
-                clusterMemberMap);
-        }
-
+        // Ensure we place our Server in Member Map.
+        clusterMemberMap.put(sessionServerID, sessionServiceID.toExternalForm());
+        // Instantiate the State Service.
+        clusterStateService = new ClusterStateService(this,sessionServerID, timeout, period, clusterMemberMap);
         // Show our State Server Info Map
-        sessionDebug.error(this.toString());
-
-        // Verify Functionality
-        if (!clusterStateService.isLocalServerId(thisSessionServerID))
-        {
-            sessionDebug.error("Initialized ClusterStateService, but it did not recognize this server correctly as our Local Server!");
-            // TODO We Should Fail Here, if this ever happens, this indicates a corrupted State Service.
-        }
+        // TODO set error to message.
+        sessionDebug.error("SessionService's ClusterStateService Initialized Successfully, "+clusterStateService.toString());
     }
 
     /**
@@ -1982,9 +1955,8 @@ public class SessionService {
      * "internal request routing" mode, this method also has a side effect of
      * releasing a session which no longer "belongs locally" (e.g., due to
      * primary server instance restart)
-     * 
-     * @param sid
-     *            session id
+     *
+     * @param sid session id
      * @return server id for the server instance determined to be the current
      *         host
      * @throws SessionException
@@ -1995,8 +1967,9 @@ public class SessionService {
         } else {
             if (getUseInternalRequestRouting()) {
                 String serverID = locateCurrentHostServer(sid);
-                if (serverID == null)
-                    { return sid.getSessionServerID(); }
+                if (serverID == null) {
+                    return sid.getSessionServerID();
+                }
                 // if we happen to have local session replica
                 // get rid of it, as hosting server instance
                 // is not supposed to be local
@@ -2014,9 +1987,8 @@ public class SessionService {
     /**
      * Determines current hosting server instance for internal request routing
      * mode.
-     * 
-     * @param sid
-     *            session id
+     *
+     * @param sid session id
      * @return server id for the server instance determined to be the current
      *         host
      * @throws SessionException
@@ -2026,8 +1998,7 @@ public class SessionService {
         String primaryID = sid.getExtension(SessionID.PRIMARY_ID);
         String serverID = sid.getSessionServerID();
         // if this is our local Server
-        if (serverID.equalsIgnoreCase(this.getLocalServerID()))
-        {
+        if (serverID.equalsIgnoreCase(this.getLocalServerID())) {
             return serverID;
         }
         // if session is from remote site
@@ -2036,13 +2007,14 @@ public class SessionService {
         }
 
         // Ensure we have a Cluster State Service Available.
-        if (clusterStateService == null)
-        {
-            try {
-                initializationClusterService();
-            } catch (Exception e) {
-                sessionDebug.error("Unable to Initialize the Cluster Service, please review Configuration settings.",e);
-                throw new SessionException(e);
+        synchronized (this) {
+            if (clusterStateService == null) {
+                try {
+                    initializationClusterService();
+                } catch (Exception e) {
+                    sessionDebug.error("Unable to Initialize the Cluster Service, please review Configuration settings.", e);
+                    throw new SessionException(e);
+                }
             }
         }
 
@@ -2060,8 +2032,9 @@ public class SessionService {
             for (int i = 0; i < selectionListSize; ++i) {
                 selectedServerId = clusterStateService.getServerSelection(perm
                         .itemAt(i));
-                if (selectedServerId == null)
-                    { continue; }
+                if (selectedServerId == null) {
+                    continue;
+                }
                 if (clusterStateService.isUp(selectedServerId)) {
                     break;
                 }
@@ -2075,7 +2048,7 @@ public class SessionService {
 
     /**
      * Indicates whether server is running in "internal request routing" mode
-     * 
+     *
      * @return true if internal request routing is enabled, false otherwise
      */
     static public boolean getUseInternalRequestRouting() {
@@ -2090,13 +2063,13 @@ public class SessionService {
         if (sessionDebug.messageEnabled()) {
             sessionDebug.message("SessionService.setSessionTrimmingEnabled()="
                     + isSessionTrimmingEnabled);
-        }           
+        }
     }
 
     static public boolean isSessionTrimmingEnabled() {
         return isSessionTrimmingEnabled;
     }
-    
+
     static public void setSessionConstraintEnabled(boolean value) {
         isSessionConstraintEnabled = value;
     }
@@ -2108,17 +2081,17 @@ public class SessionService {
     static public void setDenyLoginIfDBIsDown(boolean value) {
         denyLoginIfDBIsDown = value;
     }
-    
+
     static public boolean denyLoginIfDBIsDown() {
         return denyLoginIfDBIsDown;
     }
 
     static public void setBypassConstraintForToplevelAdmin(boolean value) {
-        bypassConstratintForToplevelAdmin = value;
+        bypassConstraintForToplevelAdmin = value;
     }
 
-    static public boolean bypassConstratintForToplevelAdmin() {
-        return bypassConstratintForToplevelAdmin;
+    static public boolean bypassConstraintForToplevelAdmin() {
+        return bypassConstraintForToplevelAdmin;
     }
 
     public static String getConstraintHandler() {
@@ -2128,9 +2101,10 @@ public class SessionService {
     public static void setConstraintHandler(String val) {
         constraintHandler = val;
     }
+
     /**
      * Utility method to obtain session repository reference
-     * 
+     *
      * @return reference to session repository
      */
     protected static AMSessionRepository getRepository() {
@@ -2144,7 +2118,7 @@ public class SessionService {
             try {
                 amSessionRepository = SessionRepository.getInstance();
                 String message =
-                        "Obtained Session Repository Implementation: "+amSessionRepository.getClass().getSimpleName();
+                        "Obtained Session Repository Implementation: " + amSessionRepository.getClass().getSimpleName();
                 sessionDebug.message(message);
             } catch (Exception e) {
                 sessionDebug
@@ -2156,13 +2130,12 @@ public class SessionService {
 
     /**
      * Actively check if server identified by serverID is up
-     * 
-     * @param serverID
-     *            server id
+     *
+     * @param serverID server id
      * @return true if server is up, false otherwise
      */
     public boolean checkServerUp(String serverID) {
-      return ((serverID == null)||(serverID.isEmpty())) ? false : clusterStateService.checkServerUp(serverID);
+        return ((serverID == null) || (serverID.isEmpty())) ? false : clusterStateService.checkServerUp(serverID);
     }
 
     /**
@@ -2171,13 +2144,13 @@ public class SessionService {
     private void postInit() {
         try {
             ServiceSchemaManager ssm = new ServiceSchemaManager(
-                amSessionService, getAdminToken());
+                    amSessionService, getAdminToken());
 
             ServiceSchema schema = ssm.getGlobalSchema();
             Map attrs = schema.getAttributeDefaults();
 
             String notificationStr = CollectionHelper.getMapAttr(
-                attrs, Constants.PROPERTY_CHANGE_NOTIFICATION, "OFF");
+                    attrs, Constants.PROPERTY_CHANGE_NOTIFICATION, "OFF");
             if (notificationStr.equalsIgnoreCase("ON")) {
                 isPropertyNotificationEnabled = true;
                 notificationProperties = (Set) attrs
@@ -2185,19 +2158,19 @@ public class SessionService {
             }
 
             timeoutHandlers = (Set<String>) attrs.get(Constants.TIMEOUT_HANDLER_LIST);
-            
+
             String trimSessionStr = CollectionHelper.getMapAttr(
-                attrs, Constants.ENABLE_TRIM_SESSION, "NO");
+                    attrs, Constants.ENABLE_TRIM_SESSION, "NO");
             if (trimSessionStr.equalsIgnoreCase("YES")) {
                 isSessionTrimmingEnabled = true;
             }
             if (sessionDebug.messageEnabled()) {
                 sessionDebug.message("SessionService.postInit():" +
-                " isSessionTrimmingEnabled=" + isSessionTrimmingEnabled);
-            }            
-            
+                        " isSessionTrimmingEnabled=" + isSessionTrimmingEnabled);
+            }
+
             String constraintStr = CollectionHelper.getMapAttr(
-                attrs, SESSION_CONSTRAINT, "OFF");
+                    attrs, SESSION_CONSTRAINT, "OFF");
             if (constraintStr.equalsIgnoreCase("ON")) {
                 isSessionConstraintEnabled = true;
             }
@@ -2207,24 +2180,24 @@ public class SessionService {
             }
 
             String denyLoginStr = CollectionHelper.getMapAttr(attrs,
-                DENY_LOGIN_IF_DB_IS_DOWN, "NO");
+                    DENY_LOGIN_IF_DB_IS_DOWN, "NO");
             if (denyLoginStr.equalsIgnoreCase("YES")) {
                 denyLoginIfDBIsDown = true;
             }
             if (sessionDebug.messageEnabled()) {
-                sessionDebug.message("SessionService.postInit: "+
-                    "denyLoginIfDBIsDown="+ denyLoginIfDBIsDown);
+                sessionDebug.message("SessionService.postInit: " +
+                        "denyLoginIfDBIsDown=" + denyLoginIfDBIsDown);
             }
-            
+
             String bypassConstratintStr = CollectionHelper.getMapAttr(
-                attrs, BYPASS_CONSTRAINT_ON_TOPLEVEL_ADMINS, "NO");
+                    attrs, BYPASS_CONSTRAINT_ON_TOPLEVEL_ADMINS, "NO");
             if (bypassConstratintStr.equalsIgnoreCase("YES")) {
-                bypassConstratintForToplevelAdmin = true;
+                bypassConstraintForToplevelAdmin = true;
             }
 
             if (sessionDebug.messageEnabled()) {
-                sessionDebug.message("bypassConstratintForToplevelAdmin="
-                        + bypassConstratintForToplevelAdmin);
+                sessionDebug.message("bypassConstraintForToplevelAdmin="
+                        + bypassConstraintForToplevelAdmin);
             }
 
             constraintHandler = CollectionHelper.getMapAttr(attrs,
@@ -2237,34 +2210,34 @@ public class SessionService {
             }
 
             maxWaitTimeForConstraint = Integer.parseInt(
-                CollectionHelper.getMapAttr(attrs,
-                    MAX_WAIT_TIME_FOR_CONSTARINT, "6000"));
+                    CollectionHelper.getMapAttr(attrs,
+                            MAX_WAIT_TIME_FOR_CONSTARINT, "6000"));
 
             ServiceConfigManager scm = new ServiceConfigManager(
-                amSessionService, getAdminToken());
+                    amSessionService, getAdminToken());
             ServiceConfig serviceConfig = scm.getGlobalConfig(null);
-            
+
             /* in OpenSSO 8.0, we have switched to create sub
-             * configuration with
-             * site name. hence we need to lookup the site name based on the URL
-             */
+            * configuration with
+            * site name. hence we need to lookup the site name based on the URL
+            */
             String subCfgName = (ServerConfiguration.isLegacy(adminToken)) ?
-                sessionServiceID.toString() :
-                SiteConfiguration.getSiteIdByURL(adminToken, 
-                    sessionServiceID.toString());
+                    sessionServiceID.toString() :
+                    SiteConfiguration.getSiteIdByURL(adminToken,
+                            sessionServiceID.toString());
             ServiceConfig subConfig = serviceConfig.getSubConfig(subCfgName);
 
-            if  ((subConfig != null) && subConfig.exists()) {
-                
+            if ((subConfig != null) && subConfig.exists()) {
+
                 Map sessionAttrs = subConfig.getAttributes();
                 boolean sfoEnabled = Boolean.valueOf(
                         CollectionHelper.getMapAttr(
-                        sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "false")
-                        ).booleanValue();
+                                sessionAttrs, AMSessionRepository.IS_SFO_ENABLED, "false")
+                ).booleanValue();
                 // Currently, we are not allowing to default to Session Failover HA,
                 // even with a single server to enable session persistence.
                 // But can easily be turned on in the Session SubConfig.
-                if(sfoEnabled) {
+                if (sfoEnabled) {
 
                     isSessionFailoverEnabled = true;
 
@@ -2273,52 +2246,56 @@ public class SessionService {
                     useInternalRequestRouting = true;
 
                     sessionStoreUserName = CollectionHelper.getMapAttr(
-                        sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
+                            sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
                     sessionStorePassword = CollectionHelper.getMapAttr(
-                        sessionAttrs, SESSION_STORE_PASSWORD, "password");
+                            sessionAttrs, SESSION_STORE_PASSWORD, "password");
 
                     // *********************************************************
-                    // Check for Type of backend Store.
+                    // Check for Type of Backend Persistent Store.
                     // *********************************************************
                     amSessionRepositoryStringType = CollectionHelper.getMapAttr(
                             sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
                     amSessionRepositoryType
-                                = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
+                            = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
 
                     // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
-                    if ( (serverIDs==null)||(serverIDs.isEmpty()) )
-                    {
+                    if ((serverIDs == null) || (serverIDs.isEmpty())) {
                         serverIDs = new HashSet<String>();
                         serverIDs.add(this.getLocalServerID());
                     }
-                    initializationClusterService();
+                    // Next, must be in this Order!
+                    // Initialize our Cluster Member Map, first!
                     initClusterMemberMap(serverIDs);
+                    // Initialize the Cluster State Service, second!
+                    // (As Cluster Service uses Cluster Member Map).
+                    initializationClusterService();
 
+                    // Initialize the instance bootstrap paramaters.
                     connectionMaxWaitTime = Integer.parseInt(
-                                          CollectionHelper.getMapAttr(
-                        sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
+                            CollectionHelper.getMapAttr(
+                                    sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
                     jdbcDriverClass = CollectionHelper.getMapAttr(
-                        sessionAttrs, JDBC_DRIVER_CLASS, "");
+                            sessionAttrs, JDBC_DRIVER_CLASS, "");
                     sessionRepositoryURL = CollectionHelper.getMapAttr(
-                        sessionAttrs, SESSION_REPOSITORY_URL, "");
+                            sessionAttrs, SESSION_REPOSITORY_URL, "");
                     minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                        sessionAttrs, MIN_POOL_SIZE, "8"));
+                            sessionAttrs, MIN_POOL_SIZE, "8"));
                     maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                        sessionAttrs, MAX_POOL_SIZE, "32"));
+                            sessionAttrs, MAX_POOL_SIZE, "32"));
 
                     if (sessionDebug.messageEnabled()) {
                         sessionDebug.message("UserName=" + sessionStoreUserName
-                            + " : " + "clusterServerList="
-                            + getClusterServerList() + ": "
-                            + "connectionMaxWaitTime=" + connectionMaxWaitTime
-                            + " :" + "jdbcDriverClass=" + jdbcDriverClass
-                            + " : " + "Session Repository URL=" + sessionRepositoryURL + " : "
-                            + "minPoolSize=" + minPoolSize + " : "
-                            + "maxPoolSize=" + maxPoolSize);
+                                + " : " + "clusterServerList="
+                                + getClusterServerList() + ": "
+                                + "connectionMaxWaitTime=" + connectionMaxWaitTime
+                                + " :" + "jdbcDriverClass=" + jdbcDriverClass
+                                + " : " + "Session Repository URL=" + sessionRepositoryURL + " : "
+                                + "minPoolSize=" + minPoolSize + " : "
+                                + "maxPoolSize=" + maxPoolSize);
                     }
-                }
-            }
+                } // End of sfoEnabled check.
+            } // End of Sub-Configuration Existence check.
 
             if (sessionDebug.messageEnabled()) {
                 sessionDebug.message("Session Failover Enabled = "
@@ -2337,7 +2314,7 @@ public class SessionService {
      * This method will execute all the globally set session timeout handlers
      * with the corresponding timeout event simultaniously.
      *
-     * @param sessionId The timed out sessions ID
+     * @param sessionId  The timed out sessions ID
      * @param changeType Type of the timeout event: IDLE_TIMEOUT (1) or MAX_TIMEOUT (2)
      */
     static void execSessionTimeoutHandlers(final SessionID sessionId, final int changeType) {
@@ -2357,7 +2334,7 @@ public class SessionService {
                             try {
                                 SessionTimeoutHandler handler =
                                         Class.forName(clazz).asSubclass(
-                                        SessionTimeoutHandler.class).newInstance();
+                                                SessionTimeoutHandler.class).newInstance();
                                 switch (changeType) {
                                     case SessionEvent.IDLE_TIMEOUT:
                                         handler.onIdleTimeout(token);
@@ -2406,30 +2383,38 @@ public class SessionService {
      * Initialize the cluster server map given the server IDs in Set (AM70).
      */
     private void initClusterMemberMap(Set serverIDs) throws Exception {
-        for (Iterator m = serverIDs.iterator(); m.hasNext();) {
+        for (Iterator m = serverIDs.iterator(); m.hasNext(); ) {
             String serverID = (String) m.next();
             String serverURL = WebtopNaming.getServerFromID(serverID);
-            clusterMemberMap.put(serverID, serverURL);
+            if ((serverID == null) || (serverURL == null)) {
+                continue;
+            }
+            // Only Associate one Server URL to a Single ServerID.
+            if (!clusterMemberMap.containsValue(serverURL))
+                { clusterMemberMap.put(serverID, serverURL); }
         }
     }
 
     /**
      * Initialize the cluster server map given the server IDs in Set.
-     * Invoked by NamingService whenever any global confg changes happen.
+     * Invoked by NamingService whenever any global configuration changes occur.
      */
     public void ReInitClusterMemberMap() throws Exception {
         Set serverIDs = null;
 
         if (isSessionFailoverEnabled()) {
-            serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
+            serverIDs = WebtopNaming.getSiteNodes(this.getLocalServerID());
+            if ((serverIDs == null) || (serverIDs.isEmpty())) {
+                serverIDs = WebtopNaming.getSiteNodes(thisSessionServerID);
+            }
             initClusterMemberMap(serverIDs);
         }
-        
-        if (sessionDebug.messageEnabled()) {
-            sessionDebug.message("clusterServerList=" + getClusterServerList());
-        }
+
+        //if (sessionDebug.messageEnabled()) {
+        sessionDebug.error("Re-Initialized ClusterServerList=" + getClusterServerList());
+        //}
     }
-    
+
     /**
      * A convenience method to get the cluster server list in delimiter
      * separated String format. This is currently used in message debug log.
@@ -2438,13 +2423,16 @@ public class SessionService {
 
         StringBuilder clusterServerList = new StringBuilder();
         Set serverIDs = clusterMemberMap.keySet();
-        for (Iterator m = serverIDs.iterator(); m.hasNext();) {
+        for (Iterator m = serverIDs.iterator(); m.hasNext(); ) {
             String serverID = (String) m.next();
             clusterServerList.append(serverID).append(" ");
         }
         return clusterServerList.toString();
     }
 
+    /**
+     * Inner Session Notification Publisher Class Thread.
+     */
     class SessionNotificationSender implements Runnable {
 
         private SessionService sessionService;
@@ -2454,7 +2442,7 @@ public class SessionService {
         private int eventType;
 
         SessionNotificationSender(SessionService ss, InternalSession sess,
-                int evttype) {
+                                  int evttype) {
             sessionService = ss;
             session = sess;
             eventType = evttype;
@@ -2487,7 +2475,7 @@ public class SessionService {
                         }
                         // If the Global notification is processed successfully
                         // than no need to send individual notification.
-                        
+
                     } catch (Exception e) {
                         sessionService.sessionDebug.error(
                                 "Local Global notification to " + url, e);
@@ -2511,16 +2499,16 @@ public class SessionService {
                                 SessionInfo info = makeSessionInfo(session, sid);
                                 SessionNotification sn = new SessionNotification(
                                         info, eventType, System
-                                                .currentTimeMillis());
-                                  SessionNotificationHandler.handler
+                                        .currentTimeMillis());
+                                SessionNotificationHandler.handler
                                         .processNotification(sn);
                             } else {
                                 remoteURLExists = true;
                             }
-                            
+
                         } catch (Exception e) {
                             sessionService.sessionDebug.error(
-                                "Local Individual notification to " + url, e);
+                                    "Local Individual notification to " + url, e);
                         }
 
                     }
@@ -2528,10 +2516,9 @@ public class SessionService {
             }
             return remoteURLExists;
         }
-        
+
         /**
          * Thread which sends the Session Notification.
-         * 
          */
         public void run() {
             Map urls = session.getSessionEventURLs();
@@ -2559,12 +2546,12 @@ public class SessionService {
                         }
                     } catch (Exception e) {
                         sessionService.sessionDebug.error(
-                            "Remote Global notification to " + url, e);
+                                "Remote Global notification to " + url, e);
                     }
                 }
-            }    
-                // CHECK THE INDIVIDUAL URLS LIST
-            if(!urls.isEmpty()) {
+            }
+            // CHECK THE INDIVIDUAL URLS LIST
+            if (!urls.isEmpty()) {
                 synchronized (urls) {
                     Iterator iter = urls.entrySet().iterator();
                     while (iter.hasNext()) {
@@ -2573,11 +2560,11 @@ public class SessionService {
                         // ONLY SEND ONCE TO ONE LOCATION
                         try {
                             URL parsedUrl = new URL(url);
-                            if(!sessionService.isLocalSessionService(parsedUrl)) {
+                            if (!sessionService.isLocalSessionService(parsedUrl)) {
                                 SessionID sid = (SessionID) entry.getValue();
                                 SessionInfo info = makeSessionInfo(session, sid);
                                 SessionNotification sn = new SessionNotification(
-                                       info, eventType, System.currentTimeMillis());
+                                        info, eventType, System.currentTimeMillis());
                                 Notification not = new Notification(sn
                                         .toXMLString());
                                 NotificationSet set = new NotificationSet(
@@ -2587,23 +2574,23 @@ public class SessionService {
                             }
                         } catch (Exception e) {
                             sessionService.sessionDebug.error(
-                                "Remote Individual notification to " + url, e);
+                                    "Remote Individual notification to " + url, e);
                         }
                     }
                 }
             }
         }
-    }
+    } // End of SessionNotificationSender Inner Class.
 
     /**
      * Returns the User of the Session
-     * 
+     *
      * @param s Session
-     * @exception SessionException
-     * @exception SSOException
+     * @throws SessionException
+     * @throws SSOException
      */
     private AMIdentity getUser(Session s)
-        throws SessionException, SSOException {
+            throws SessionException, SSOException {
         SSOToken ssoSession = getSSOTokenManager().createSSOToken(
                 s.getID().toString());
         AMIdentity user = null;
@@ -2611,21 +2598,20 @@ public class SessionService {
             user = IdUtils.getIdentity(ssoSession);
         } catch (IdRepoException e) {
             sessionDebug.error(
-                "SessionService: failed to get the user's identity object", e);
+                    "SessionService: failed to get the user's identity object", e);
         }
         return user;
     }
 
     /**
      * Returns true if the user has top level admin role
-     * 
-     * @exception SessionException
-     * @exception SSOException
+     *
      * @param s Session.
+     * @throws SessionException
+     * @throws SSOException
      */
     private boolean hasTopLevelAdminRole(Session s)
-        throws SessionException, SSOException
-    {
+            throws SessionException, SSOException {
         SSOToken ssoSession = getSSOTokenManager().createSSOToken(
                 s.getID().toString());
         return hasTopLevelAdminRole(ssoSession, s.getClientID());
@@ -2633,23 +2619,23 @@ public class SessionService {
 
     /**
      * Returns true if the user has top level admin role
-     * 
+     *
      * @param uuid the uuid of the login user
      */
     protected boolean hasTopLevelAdminRole(String uuid) {
         boolean isTopLevelAdmin = false;
         try {
             AMIdentity topAdminRole = new AMIdentity(getAdminToken(),
-                TOP_LEVEL_ADMIN_ROLE, IdType.ROLE, "/", null);
+                    TOP_LEVEL_ADMIN_ROLE, IdType.ROLE, "/", null);
             AMIdentity user =
-                IdUtils.getIdentity(getAdminToken(), uuid);
+                    IdUtils.getIdentity(getAdminToken(), uuid);
             isTopLevelAdmin = user.isMember(topAdminRole);
         } catch (SSOException ssoe) {
-            sessionDebug.error("SessionService.hasTopLevelAdminRole:"+
-                "Cannot get the admin token for this operation.");
+            sessionDebug.error("SessionService.hasTopLevelAdminRole:" +
+                    "Cannot get the admin token for this operation.");
         } catch (IdRepoException idme) {
-            sessionDebug.error("SessionService.hasTopLevelAdminRole:"+
-                "Cannot get the user identity or role.");
+            sessionDebug.error("SessionService.hasTopLevelAdminRole:" +
+                    "Cannot get the user identity or role.");
         }
 
         if (sessionDebug.messageEnabled()) {
@@ -2661,17 +2647,16 @@ public class SessionService {
 
     /**
      * Returns true if the user has top level admin role
-     * 
+     *
      * @param tokenUsedForSearch Single Sign on token used to do the search.
-     * @param clientID Client ID of the login user.
-     * @exception SessionException
-     * @exception SSOException
+     * @param clientID           Client ID of the login user.
+     * @throws SessionException
+     * @throws SSOException
      */
     private boolean hasTopLevelAdminRole(
-        SSOToken tokenUsedForSearch,
-        String clientID
-    ) throws SessionException, SSOException
-    {
+            SSOToken tokenUsedForSearch,
+            String clientID
+    ) throws SessionException, SSOException {
         boolean topLevelAdmin = false;
         Set actions = new HashSet();
         actions.add(PERMISSION_READ);
@@ -2679,64 +2664,63 @@ public class SessionService {
         actions.add(PERMISSION_DELEGATE);
         try {
             DelegationPermission perm = new DelegationPermission(
-                "/", "*", "*", "*", "*", actions, Collections.EMPTY_MAP);
+                    "/", "*", "*", "*", "*", actions, Collections.EMPTY_MAP);
             DelegationEvaluator evaluator = new DelegationEvaluator();
             topLevelAdmin = evaluator.isAllowed(
-                tokenUsedForSearch, perm, Collections.EMPTY_MAP);
+                    tokenUsedForSearch, perm, Collections.EMPTY_MAP);
         } catch (DelegationException de) {
             sessionDebug.error("SessionService.hasTopLevelAdminRole: " +
-                "failed to check the delegation permission.", de);
+                    "failed to check the delegation permission.", de);
         }
         return topLevelAdmin;
     }
-    
+
     /**
      * Returns true if the user is super user
-     * 
+     *
      * @param uuid the uuid of the login user
-     */    
+     */
     boolean isSuperUser(String uuid) {
         boolean isSuperUser = false;
         try {
             // Get the AMIdentity Object for super user 
             AMIdentity adminUserId = null;
             String adminUser = SystemProperties.get(
-                Constants.AUTHENTICATION_SUPER_USER);
+                    Constants.AUTHENTICATION_SUPER_USER);
             if (adminUser != null) {
-                adminUserId = new AMIdentity(getAdminToken(), 
-                    adminUser, IdType.USER, "/", null);
+                adminUserId = new AMIdentity(getAdminToken(),
+                        adminUser, IdType.USER, "/", null);
             }
-		    
+
             //Get the AMIdentity Object for login user
             AMIdentity user =
-                IdUtils.getIdentity(getAdminToken(), uuid);
-            
+                    IdUtils.getIdentity(getAdminToken(), uuid);
+
             //Check for the equality
             isSuperUser = user.equals(adminUserId);
-            
+
         } catch (SSOException ssoe) {
-            sessionDebug.error("SessionService.isSuperUser:"+
-                "Cannot get the admin token for this operation.");
+            sessionDebug.error("SessionService.isSuperUser:" +
+                    "Cannot get the admin token for this operation.");
         } catch (IdRepoException idme) {
-            sessionDebug.error("SessionService.isSuperUser:"+
-                "Cannot get the user identity.");
+            sessionDebug.error("SessionService.isSuperUser:" +
+                    "Cannot get the user identity.");
         }
-        
+
         if (sessionDebug.messageEnabled()) {
             sessionDebug.message("SessionService.isSuperUser: "
                     + isSuperUser);
         }
 
         return isSuperUser;
-    }    
+    }
 
     /**
      * Creates InternalSession which is always coupled with Http session This is
      * only used in session failover mode to ensure that every internal session
      * is associated with Http session used as fail-over store
-     * 
-     * @param domain
-     *            authentication domain passed to newInternalSession
+     *
+     * @param domain authentication domain passed to newInternalSession
      */
 
     private InternalSession createSession(String domain) {
@@ -2755,8 +2739,8 @@ public class SessionService {
             String routingCookie = null;
 
             URL url = new URL(thisSessionServerProtocol, thisSessionServer,
-                thisSessionServerPort, deploymentURI
-                + "/GetHttpSession" + query);
+                    thisSessionServerPort, deploymentURI
+                    + "/GetHttpSession" + query);
             HttpURLConnection conn = invokeRemote(url, null, routingCookie);
             in = new DataInputStream(conn.getInputStream());
 
@@ -2779,7 +2763,7 @@ public class SessionService {
     /**
      * This functions invalidates the http session associated with identity
      * session specified by sid
-     * 
+     *
      * @param sid
      * @return
      */
@@ -2799,7 +2783,7 @@ public class SessionService {
 
             url = new URL(thisSessionServerProtocol, thisSessionServer,
                     thisSessionServerPort, deploymentURI + "/GetHttpSession"
-                            + query);
+                    + query);
 
             HttpURLConnection conn = invokeRemote(url, sid, null);
             in = new DataInputStream(conn.getInputStream());
@@ -2857,11 +2841,9 @@ public class SessionService {
      * helps to deal with the case a session is migrated while the current owner
      * is still alive to avoid having redundant copies of the session. This is
      * the client side of distributed invocation
-     * 
-     * @param owner
-     *            url of the server instance who previously owned the session
-     * @param sid
-     *            session id of the session migrated
+     *
+     * @param owner url of the server instance who previously owned the session
+     * @param sid   session id of the session migrated
      */
     private boolean releaseSession(URL owner, SessionID sid) {
         if (sessionDebug.messageEnabled()) {
@@ -2902,9 +2884,8 @@ public class SessionService {
      * Removes InternalSession from the session table so that another server
      * instance can be an owner This is the server side of distributed
      * invocation initiated by calling releaseSession()
-     * 
-     * @param sid
-     *            session id of the session migrated
+     *
+     * @param sid session id of the session migrated
      */
     int handleReleaseSession(SessionID sid) {
         if (!isSessionFailoverEnabled) {
@@ -2936,15 +2917,14 @@ public class SessionService {
      * GetHttpSession Servlet on the SAME server instance this code is invoked.
      * This should trigger the Web container to perform recovery of the
      * associated Http session
-     * 
+     * <p/>
      * We also pass the SessionID to the servlet to double check the match
      * between the session id and Http session
-     * 
+     * <p/>
      * This is the "client side" of the remote invocation. The servlet will call
      * retrieveSession() to complete the work
-     * 
-     * @param sid
-     *            Session ID
+     *
+     * @param sid Session ID
      */
     InternalSession recoverSession(SessionID sid) {
         if (!isSessionFailoverEnabled) {
@@ -2978,7 +2958,7 @@ public class SessionService {
 
                 URL url = new URL(thisSessionServerProtocol, thisSessionServer,
                         thisSessionServerPort, deploymentURI
-                                + "/GetHttpSession" + query);
+                        + "/GetHttpSession" + query);
 
                 HttpURLConnection conn = invokeRemote(url, sid, null);
                 in = new DataInputStream(conn.getInputStream());
@@ -3001,13 +2981,12 @@ public class SessionService {
     /**
      * This is the "server side" of the remote invocation for recoverSession()
      * It is being called by GetHttpSession servlet to complete the work
-     * 
+     * <p/>
      * If recovery is possible we need to first notify existing server instance
      * "owning" the session (if any) to release the session instance otherwise
      * we end up with duplicates
-     * 
-     * @param sid
-     *            Session ID
+     *
+     * @param sid Session ID
      */
 
     InternalSession retrieveSession(SessionID sid, HttpSession httpSession) {
@@ -3023,7 +3002,7 @@ public class SessionService {
 
                 if (sess == null
                         || (sess.getRestrictionForToken(sid) == null && !sess
-                                .getID().equals(sid))) {
+                        .getID().equals(sid))) {
                     return null;
                 }
 
@@ -3039,7 +3018,7 @@ public class SessionService {
                     httpSession.setAttribute(httpSessionOwnerListPropertyName,
                             ownerList);
                 }
-                for (Iterator iter = ownerList.iterator(); iter.hasNext();) {
+                for (Iterator iter = ownerList.iterator(); iter.hasNext(); ) {
                     URL formerOwner = (URL) iter.next();
                     if (isLocalSessionService(formerOwner))
                         continue;
@@ -3066,9 +3045,8 @@ public class SessionService {
      * Utility used to updated various cross-reference mapping data structures
      * associated with sessions up-to-date when sessions are being recovered
      * after server instance failure
-     * 
-     * @param sess
-     *            session object
+     *
+     * @param sess session object
      */
     private void updateSessionMaps(InternalSession sess) {
         if (sess == null)
@@ -3077,7 +3055,7 @@ public class SessionService {
         if (checkIfShouldDestroy(sess))
             return;
 
-        sess.putProperty(Session.lbCookieName, 
+        sess.putProperty(Session.lbCookieName,
                 WebtopNaming.getLBCookieValue(getLocalServerID()));
         if (getUseInternalRequestRouting()) {
             SessionID sid = sess.getID();
@@ -3105,7 +3083,7 @@ public class SessionService {
         if (getUseInternalRequestRouting()) {
             synchronized (remoteSessionSet) {
                 for (Iterator iter = remoteSessionSet.iterator();
-                    iter.hasNext();) {
+                     iter.hasNext(); ) {
                     SessionID sid = (SessionID) iter.next();
                     // getCurrentHostServer automatically releases local
                     // session replica if it does not belong locally
@@ -3122,14 +3100,13 @@ public class SessionService {
             }
         }
     }
-    
+
     /**
      * Utility method to check if session has to be destroyed and to remove it
      * if so Note that contrary to the name sess.shouldDestroy() has non-trivial
      * side effects of changing session state and sending notification messages!
-     * 
-     * @param sess
-     *            session object
+     *
+     * @param sess session object
      * @return true if session should (and has !) been destroyed
      */
     boolean checkIfShouldDestroy(InternalSession sess) {
@@ -3160,12 +3137,11 @@ public class SessionService {
      * Servlet on the SAME server instance this code is invoked. This should
      * trigger the Web container to provide a valid instance of the associated
      * Http session and then use it to save the session
-     * 
+     * <p/>
      * This is the "client side" of the remote invocation. The servlet will call
      * handleSaveSession() to complete the work
-     * 
-     * @param sid
-     *            Session ID
+     *
+     * @param sid Session ID
      */
     boolean saveSession(SessionID sid) {
         if (!isSessionFailoverEnabled) {
@@ -3184,7 +3160,7 @@ public class SessionService {
 
             URL url = new URL(thisSessionServerProtocol, thisSessionServer,
                     thisSessionServerPort, deploymentURI + "/GetHttpSession"
-                            + query);
+                    + query);
 
             HttpURLConnection conn = invokeRemote(url, sid, null);
             in = conn.getInputStream();
@@ -3202,11 +3178,9 @@ public class SessionService {
     /**
      * This is the "server side" of the remote invocation for saveSession() It
      * is being called by GetHttpSession servlet to complete the work
-     * 
-     * @param sid
-     *            master Session ID
-     * @param httpSession
-     *            http session
+     *
+     * @param sid         master Session ID
+     * @param httpSession http session
      */
 
     int handleSaveSession(SessionID sid, HttpSession httpSession) {
@@ -3232,17 +3206,14 @@ public class SessionService {
 
     /**
      * This method is used to create restricted token
-     * 
-     * @param owner
-     *            server instance URL
-     * @param masterSid
-     *            SessionID
-     * @param restriction
-     *            restriction
+     *
+     * @param owner       server instance URL
+     * @param masterSid   SessionID
+     * @param restriction restriction
      */
 
     private String getRestrictedTokenIdRemotely(URL owner, SessionID masterSid,
-            TokenRestriction restriction) {
+                                                TokenRestriction restriction) {
 
         DataInputStream in = null;
         DataOutputStream out = null;
@@ -3299,14 +3270,12 @@ public class SessionService {
     /**
      * This method is the "server side" of the getRestrictedTokenIdRemotely()
      *
-     * @param masterSid
-     *            SessionID
-     * @param restriction
-     *            restriction
+     * @param masterSid   SessionID
+     * @param restriction restriction
      */
 
     String handleGetRestrictedTokenIdRemotely(SessionID masterSid,
-            TokenRestriction restriction) {
+                                              TokenRestriction restriction) {
         try {
             return doGetRestrictedTokenId(masterSid, restriction);
         } catch (Exception ex) {
@@ -3319,9 +3288,8 @@ public class SessionService {
     /**
      * This method is used to update the HttpSession when InternalSession
      * property changes.
-     * 
-     * @param session
-     *            Session Object
+     *
+     * @param session Session Object
      */
     void saveForFailover(InternalSession session) {
 
@@ -3354,12 +3322,11 @@ public class SessionService {
 
     /**
      * Save identity session state in associated http session
-     * 
+     *
      * @param session
      * @param httpSession
      */
-    private void doSaveSession(InternalSession session, HttpSession httpSession)
-    {
+    private void doSaveSession(InternalSession session, HttpSession httpSession) {
         try {
             httpSession.setAttribute(httpSessionPropertyName, SessionService
                     .encrypt(session));
@@ -3374,14 +3341,12 @@ public class SessionService {
      * HttpURLConnection using url and adding cookies based on sid and returns
      * it to the caller. In order to complete the invocation caller is supposed
      * to open input stream
-     * 
-     * @param url
-     *            url
-     * @param sid
-     *            SessionID
+     *
+     * @param url url
+     * @param sid SessionID
      */
     private HttpURLConnection invokeRemote(URL url, SessionID sid,
-            String extraCookies) throws Exception {
+                                           String extraCookies) throws Exception {
         if (!isSessionFailoverEnabled) {
             return null;
         }
@@ -3415,7 +3380,7 @@ public class SessionService {
                 cookie.append(cookieEncoding ? URLEncDec.encode(sid.toString()) : sid.toString());
 
                 String httpId = sid.getTail();
-                
+
                 if (httpId != null) {
                     cookie.append(Constants.SEMI_COLON);
                     cookie.append(getHttpSessionTrackingCookieName());
@@ -3443,10 +3408,8 @@ public class SessionService {
     /**
      * This method is used to encrypt the InternalSession object before storing
      * into HttpSession.
-     * 
-     * @param obj
-     *            Object to be encrypted
-     * 
+     *
+     * @param obj Object to be encrypted
      */
     public static String encrypt(Object obj) {
         String strUnEncrypted, strEncrypted;
@@ -3477,9 +3440,8 @@ public class SessionService {
     /**
      * This method is used to decrypt the InternalSession object, after
      * obtaining from HttpSession.
-     * 
+     *
      * @param strEncrypted Object to be decrypted
-     * 
      */
     public static InternalSession decrypt(String strEncrypted) {
 
@@ -3515,9 +3477,8 @@ public class SessionService {
 
     /**
      * This method is used to encode the SessionID.
-     * 
-     * @param decodedStr
-     *            Decoded String
+     *
+     * @param decodedStr Decoded String
      */
     public static String encodeID(String decodedStr) {
 
@@ -3535,16 +3496,16 @@ public class SessionService {
         encoded = new char[finalLength];
         for (int i = 0, j = 0; i < decoded.length; i++) {
             switch (decoded[i]) {
-            case '%':
-                encoded[j] = '%';
-                encoded[j + 1] = '2';
-                encoded[j + 2] = '5';
-                j = j + 3;
-                break;
-            default:
-                encoded[j] = decoded[i];
-                j++;
-                break;
+                case '%':
+                    encoded[j] = '%';
+                    encoded[j + 1] = '2';
+                    encoded[j + 2] = '5';
+                    j = j + 3;
+                    break;
+                default:
+                    encoded[j] = decoded[i];
+                    j++;
+                    break;
             }
         }
         return (String.valueOf(encoded));
@@ -3596,11 +3557,9 @@ public class SessionService {
 
     /**
      * Returns true if the given pattern is contained in the string.
-     * 
-     * @param string
-     *            to examine
-     * @param pattern
-     *            to match
+     *
+     * @param string  to examine
+     * @param pattern to match
      * @return true if string matches <code>filter</code>
      */
     public static boolean matchFilter(String string, String pattern) {
@@ -3652,10 +3611,10 @@ public class SessionService {
     public static int getConnectionMaxWaitTime() {
         return connectionMaxWaitTime;
     }
-    
+
     public static void setMaxWaitTimeForConstraint(int value) {
         maxWaitTimeForConstraint = value;
-    }    
+    }
 
     /**
      * @return Returns the maxWaitTimeForConstraint.
@@ -3711,7 +3670,6 @@ public class SessionService {
     }
 
     /**
-     * 
      * @return Returns true if Property change notifications are enabled.
      */
     public static boolean isPropertyNotificationEnabled() {

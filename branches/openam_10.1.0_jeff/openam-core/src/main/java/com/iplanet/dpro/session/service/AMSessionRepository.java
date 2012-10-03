@@ -31,6 +31,8 @@
  */
 package com.iplanet.dpro.session.service;
 
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -199,4 +201,33 @@ public interface AMSessionRepository {
      * @return DBStatistics
      */
     public DBStatistics getDBStatistics();
+
+    /**
+     * Obtain a List of Registered Servers
+     *
+     * @return
+     * @throws StoreException
+     */
+    Set getServers()
+            throws StoreException;
+
+    /**
+     * Register Server Entry
+     *
+     * @param id
+     * @param protocol
+     * @param url
+     * @param address
+     * @param isUp
+     * @param isLocal
+     */
+    void registerServerEntry(String id, String protocol, URL url, InetSocketAddress address,
+                        boolean isUp, boolean isLocal) throws StoreException;
+
+    /**
+     * De-Register a Server based upon the specified URL.
+     * @param serverUrl
+     */
+    void deRegisterServer(String serverUrl) throws StoreException;
+
 }

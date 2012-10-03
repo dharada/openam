@@ -43,13 +43,14 @@ import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.shared.debug.Debug;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.*;
 import javax.jms.IllegalStateException;
 
 import org.forgerock.openam.session.model.AMRootEntity;
+import org.forgerock.openam.session.model.AMSessionDBServer;
 import org.forgerock.openam.session.model.DBStatistics;
 import org.forgerock.openam.session.model.FAMRecord;
 import com.sun.identity.ha.FAMRecordPersister;
@@ -536,4 +537,44 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
     public Map<String, Long> getRecordCount(String id) throws StoreException {
         return null;  // TODO
     }
+
+    /**
+     * Obtain a List of Configured Servers
+     *
+     * @return Set<AMSessionDBServer>
+     * @throws StoreException
+     */
+    @Override
+    public Set<AMSessionDBServer> getServers()
+            throws StoreException {
+        // TODO
+        return new HashSet<AMSessionDBServer>();
+    }
+
+    /**
+     * Register Server Entry
+     *
+     * @param id
+     * @param protocol
+     * @param url
+     * @param address
+     * @param isUp
+     * @param isLocal
+     */
+    @Override
+    public synchronized void registerServerEntry(String id, String protocol, URL url, InetSocketAddress address,
+                             boolean isUp, boolean isLocal) throws StoreException {
+            // TODO
+    }
+
+    /**
+     * De-Register a Server based upon the specified URL.
+     * @param serverUrl
+     */
+    @Override
+    public synchronized void deRegisterServer(String serverUrl) throws StoreException {
+        // TODO
+    }
+
+
 }
