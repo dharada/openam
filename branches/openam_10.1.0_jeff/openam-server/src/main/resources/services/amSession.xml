@@ -193,7 +193,50 @@
                                  syntax="string"
                                  i18nKey="a123">
                 </AttributeSchema>
+
+
                 <SubSchema name="Site" inheritance="multiple" i18nKey="site">
+                    <AttributeSchema name="iplanet-am-session-sfo-enabled"
+                                     type="single"
+                                     syntax="boolean"
+                                     i18nKey="a121">
+                        <BooleanValues>
+                            <BooleanTrueValue i18nKey="i18nTrue">true</BooleanTrueValue>
+                            <BooleanFalseValue i18nKey="i18nFalse">false</BooleanFalseValue>
+                        </BooleanValues>
+                        <DefaultValues>
+                            <Value>true</Value>
+                        </DefaultValues>
+                    </AttributeSchema>
+                    <AttributeSchema name="iplanet-am-session-sfo-store-type"
+                                     type="single_choice"
+                                     syntax="string"
+                                     i18nKey="a124">
+                        <ChoiceValues>
+                            <ChoiceValue i18nKey="a125">embedded</ChoiceValue>
+                            <ChoiceValue i18nKey="a126">external</ChoiceValue>
+                            <ChoiceValue i18nKey="a128">none</ChoiceValue>
+                        </ChoiceValues>
+                        <DefaultValues>
+                            <Value>embedded</Value>
+                        </DefaultValues>
+                    </AttributeSchema>
+                    <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
+                                     type="single"
+                                     syntax="dn"
+                                     i18nKey="a129">
+                        <DefaultValues>
+                            <Value>o=openam-session</Value>
+                        </DefaultValues>
+                    </AttributeSchema>
+                    <AttributeSchema name="iplanet-am-session-repository-url"
+                                     type="single"
+                                     syntax="url"
+                                     i18nKey="a113">
+                        <DefaultValues>
+                            <Value></Value>
+                        </DefaultValues>
+                    </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-store-username"
                                      type="single"
                                      syntax="string"
@@ -217,48 +260,6 @@
                                      i18nKey="a111">
                         <DefaultValues>
                             <Value>5000</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-enabled"
-                                     type="single"
-                                     syntax="boolean"
-                                     i18nKey="a121">
-                        <BooleanValues>
-                            <BooleanTrueValue i18nKey="i18nTrue">true</BooleanTrueValue>
-                            <BooleanFalseValue i18nKey="i18nFalse">false</BooleanFalseValue>
-                        </BooleanValues>
-                        <DefaultValues>
-                            <Value>true</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-store-type"
-                                     type="single_choice"
-                                     syntax="string"
-                                     i18nKey="a124">
-                        <ChoiceValues>
-                            <ChoiceValue i18nKey="a125">embedded</ChoiceValue>
-                            <ChoiceValue i18nKey="a126">external</ChoiceValue>
-                            <ChoiceValue i18nKey="a127">plugin</ChoiceValue>
-                            <ChoiceValue i18nKey="a128">none</ChoiceValue>
-                        </ChoiceValues>
-                        <DefaultValues>
-                            <Value>embedded</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
-                                     type="single"
-                                     syntax="dn"
-                                     i18nKey="a129">
-                        <DefaultValues>
-                            <Value>o=openam-session</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-repository-url"
-                                     type="single"
-                                     syntax="url"
-                                     i18nKey="a113">
-                        <DefaultValues>
-                            <Value></Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-JDBC-driver-Impl-classname"

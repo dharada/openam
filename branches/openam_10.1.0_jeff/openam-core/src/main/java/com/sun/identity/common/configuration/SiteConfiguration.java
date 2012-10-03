@@ -423,6 +423,11 @@ public class SiteConfiguration extends ConfigurationBase {
 
         Map map = accessPoint.getAttributes();
         Set set = (Set)map.get(ATTR_PRIMARY_SITE_ID);
+        if ( (set==null) || (set.isEmpty()) )
+        {
+            throw new SMSException("Unable to determine Site ID for SiteName:["+siteName+
+                    "], SSOToken ID:["+ssoToken.getTokenID()+"]");
+        }
         return (String)set.iterator().next();
     }
 
