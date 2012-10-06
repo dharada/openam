@@ -277,25 +277,27 @@ public class SessionService {
     private static final String PERMISSION_MODIFY = "MODIFY";
     private static final String PERMISSION_DELEGATE = "DELEGATE";
 
-    static String sessionStoreUserName = null;
+    private static String sessionStoreUserName = null;
 
-    static String sessionStorePassword = null;
+    private static String sessionStorePassword = null;
 
-    static HashMap clusterMemberMap = new HashMap();
+    private static HashMap clusterMemberMap = new HashMap();
 
-    static int connectionMaxWaitTime = 5000; // in milli-second
+    private static int connectionMaxWaitTime = 5000; // in milli-second
 
-    static String jdbcDriverClass = null;
+    @Deprecated
+    private static String jdbcDriverClass = null;
 
-    static String sessionRepositoryURL = null; // Can be Null, if using Internal Embedded OpenDJ Instance.
+    // Can be Null, if using Internal Embedded OpenDJ Instance or OpenAM Configuration Directory.
+    private static String sessionRepositoryURL = null;
 
-    static String amSessionRepositoryStringType;
+    private static String amSessionRepositoryStringType;
 
-    static int minPoolSize = 8;
+    private static int minPoolSize = 8;
 
-    static int maxPoolSize = 32;
+    private static int maxPoolSize = 32;
 
-    static int maxWaitTimeForConstraint = 6000; // in milli-second
+    private static int maxWaitTimeForConstraint = 6000; // in milli-second
 
     private static boolean isPropertyNotificationEnabled = false;
 
@@ -306,82 +308,6 @@ public class SessionService {
      * This token is used to satisfy the admin interfaces
      */
     private static SSOToken adminToken = null;
-
-    static {
-        sessionDebug = Debug.getInstance("amSession");
-        stats = Stats.getInstance("amMasterSessionTableStats");
-
-        int poolSize = DEFAULT_POOL_SIZE;
-        int threshold = DEFAULT_THRESHOLD;
-
-        // Notification Thread Pool Size
-        String size = SystemProperties.get(
-                Constants.NOTIFICATION_THREADPOOL_SIZE);
-        if (size != null) {
-            try {
-                poolSize = Integer.parseInt(size);
-            } catch (NumberFormatException e) {
-                sessionDebug.error(
-                        "SessionService.<init>: incorrect thread pool size" + size +
-                                "defaulting to " + DEFAULT_POOL_SIZE);
-            }
-        }
-
-        // Notification Thread Pool Threshold
-        String thres = SystemProperties.get(
-                Constants.NOTIFICATION_THREADPOOL_THRESHOLD);
-        if (thres != null) {
-            try {
-                threshold = Integer.parseInt(thres);
-            } catch (Exception e) {
-                sessionDebug.error(
-                        "SessionService.<init>: incorrect thread threshold" + thres
-                                + "defaulting to " + DEFAULT_THRESHOLD);
-            }
-        }
-
-        // *******************************************************************
-        // Bootstrap AMSessionRepository Implementation if one was specified.
-        if (amSessionRepository == null) {
-            // Instantiate our Session Repository Implementation.
-            // Allows Static Elements to Initialize.
-            amSessionRepository = getRepository();
-            sessionDebug.message("amSessionRepository Implementation: " +
-                    ((amSessionRepository == null) ? "None" : amSessionRepository.getClass().getSimpleName()));
-        }
-
-        // Establish Shutdown Manager.
-        ShutdownManager shutdownMan = ShutdownManager.getInstance();
-        if (shutdownMan.acquireValidLock()) {
-            try {
-                threadPool = new ThreadPool("amSession", poolSize, threshold, true,
-                        sessionDebug);
-                shutdownMan.addShutdownListener(
-                        new ShutdownListener() {
-                            public void shutdown() {
-                                threadPool.shutdown();
-                            }
-                        }
-                );
-            } finally {
-                shutdownMan.releaseLockAndNotify();
-            }
-        }
-        if (threadPool != null) {
-            try {
-                maxSessions = Integer.parseInt(SystemProperties
-                        .get(Constants.AM_SESSION_MAX_SESSIONS));
-            } catch (Exception ex) {
-                maxSessions = 10000;
-            }
-        }
-
-        String status = SystemProperties.get(Constants.AM_LOGSTATUS);
-        if (status == null) {
-            status = "INACTIVE";
-        }
-        logStatus = status.equalsIgnoreCase("ACTIVE");
-    }
 
     private static boolean returnAppSession = Boolean
             .valueOf(
@@ -483,6 +409,74 @@ public class SessionService {
 
     private static ClusterStateService clusterStateService = null;
 
+    /**
+     * Static initialization Stanza
+     */
+    static {
+        sessionDebug = Debug.getInstance("amSession");
+        stats = Stats.getInstance("amMasterSessionTableStats");
+
+        int poolSize = DEFAULT_POOL_SIZE;
+        int threshold = DEFAULT_THRESHOLD;
+
+        // Notification Thread Pool Size
+        String size = SystemProperties.get(
+                Constants.NOTIFICATION_THREADPOOL_SIZE);
+        if (size != null) {
+            try {
+                poolSize = Integer.parseInt(size);
+            } catch (NumberFormatException e) {
+                sessionDebug.error(
+                        "SessionService.<init>: incorrect thread pool size" + size +
+                                "defaulting to " + DEFAULT_POOL_SIZE);
+            }
+        }
+
+        // Notification Thread Pool Threshold
+        String thres = SystemProperties.get(
+                Constants.NOTIFICATION_THREADPOOL_THRESHOLD);
+        if (thres != null) {
+            try {
+                threshold = Integer.parseInt(thres);
+            } catch (Exception e) {
+                sessionDebug.error(
+                        "SessionService.<init>: incorrect thread threshold" + thres
+                                + "defaulting to " + DEFAULT_THRESHOLD);
+            }
+        }
+
+        // Establish Shutdown Manager.
+        ShutdownManager shutdownMan = ShutdownManager.getInstance();
+        if (shutdownMan.acquireValidLock()) {
+            try {
+                threadPool = new ThreadPool("amSession", poolSize, threshold, true,
+                        sessionDebug);
+                shutdownMan.addShutdownListener(
+                        new ShutdownListener() {
+                            public void shutdown() {
+                                threadPool.shutdown();
+                            }
+                        }
+                );
+            } finally {
+                shutdownMan.releaseLockAndNotify();
+            }
+        }
+        if (threadPool != null) {
+            try {
+                maxSessions = Integer.parseInt(SystemProperties
+                        .get(Constants.AM_SESSION_MAX_SESSIONS));
+            } catch (Exception ex) {
+                maxSessions = 10000;
+            }
+        }
+
+        String status = SystemProperties.get(Constants.AM_LOGSTATUS);
+        if (status == null) {
+            status = "INACTIVE";
+        }
+        logStatus = status.equalsIgnoreCase("ACTIVE");
+    } // End of static stanza.
 
     /**
      * Returns Session Service. If a Session Service already exists then it
@@ -2116,9 +2110,11 @@ public class SessionService {
 
         if (amSessionRepository == null) {
             try {
-                amSessionRepository = SessionRepository.getInstance();
+                amSessionRepository = SessionRepository.getInstance(new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
+                        sessionStoreUserName, sessionStorePassword, sessionRepositoryURL));
                 String message =
-                        "Obtained Session Repository Implementation: " + amSessionRepository.getClass().getSimpleName();
+                        "Obtained Session Repository Implementation: " +
+                                amSessionRepository.getClass().getSimpleName();
                 sessionDebug.message(message);
             } catch (Exception e) {
                 sessionDebug
@@ -2246,7 +2242,7 @@ public class SessionService {
                     useInternalRequestRouting = true;
 
                     sessionStoreUserName = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_STORE_USERNAME, "amsvrusr");
+                            sessionAttrs, SESSION_STORE_USERNAME, "cn=Directory Manager");
                     sessionStorePassword = CollectionHelper.getMapAttr(
                             sessionAttrs, SESSION_STORE_PASSWORD, "password");
 
@@ -2257,6 +2253,7 @@ public class SessionService {
                             sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
                     amSessionRepositoryType
                             = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
+
 
                     // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
@@ -2293,6 +2290,15 @@ public class SessionService {
                                 + " : " + "Session Repository URL=" + sessionRepositoryURL + " : "
                                 + "minPoolSize=" + minPoolSize + " : "
                                 + "maxPoolSize=" + maxPoolSize);
+                    }
+                    // ************************************************************************
+                    // Now Bootstrap AMSessionRepository Implementation, if one was specified.
+                    if (amSessionRepository == null) {
+                        // Instantiate our Session Repository Implementation.
+                        // Allows Static Elements to Initialize.
+                        amSessionRepository = getRepository();
+                        sessionDebug.message("amSessionRepository Implementation: " +
+                                ((amSessionRepository == null) ? "None" : amSessionRepository.getClass().getSimpleName()));
                     }
                 } // End of sfoEnabled check.
             } // End of Sub-Configuration Existence check.
@@ -3712,4 +3718,7 @@ public class SessionService {
         }
 
     }
+
+
+
 }

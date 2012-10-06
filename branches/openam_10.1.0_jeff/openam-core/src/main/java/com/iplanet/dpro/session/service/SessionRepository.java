@@ -70,4 +70,24 @@ public class SessionRepository {
         }
         return sessionRepository;
     }
+
+    /**
+     * Common Get Instance method to obtain access to
+     * Service Methods.
+     *
+     * @return AMSessionRepository Singleton Instance.
+     * @throws Exception
+     */
+    public static synchronized AMSessionRepository getInstance(
+            SessionServiceConfigurationReferenceObject
+                    sessionServiceConfigurationReferenceObject)
+            throws Exception {
+        if (sessionRepository == null) {
+            Class c = Class.forName(REPOSITORY_CLASS);
+            Method factoryMethod = c.getDeclaredMethod("getInstance");
+            sessionRepository = (AMSessionRepository) factoryMethod.invoke(null,
+                    new Object[]{sessionServiceConfigurationReferenceObject});
+        }
+        return sessionRepository;
+    }
 }

@@ -48,10 +48,7 @@ public enum AMSessionRepositoryType {
             "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore"),
 
     external(2, 2, "external", "External", "OpenAM External OpenDJ Directory", "session.store.type.external",
-            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore"),
-
-    plugin(3, 3, "plugin", "Plug-In", "External Plug-In", "session.store.type.plugin",
-            "org.forgerock.openam.session.ha.amsessionstore.store.plugin.PlugInPersistentStore");
+            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore");
 
     /**
      * Index

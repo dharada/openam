@@ -40,6 +40,7 @@ import com.iplanet.dpro.session.SessionID;
 import com.iplanet.dpro.session.service.AMSessionRepository;
 import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
+import com.iplanet.dpro.session.service.SessionServiceConfigurationReferenceObject;
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.shared.Constants;
@@ -87,6 +88,20 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * Single Instance
      */
     private static volatile OpenDJPersistentStore instance;
+
+    /**
+     * Session Service Configuration Reference Object
+     * Provides additional information to use an external Directory outside
+     * of the configured Configuration data store which is the default.
+     */
+    private static volatile SessionServiceConfigurationReferenceObject
+            sessionServiceConfigurationReferenceObject;
+
+    /**
+     * Back reference to the resource which uses this service to
+     * obtain access to session methods.
+     */
+    private static volatile SessionService sessionService;
 
     /**
      * Debug Logging
@@ -275,7 +290,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Protected Singleton from being Instantiated.
      */
-    private OpenDJPersistentStore() {
+    private OpenDJPersistentStore(SessionServiceConfigurationReferenceObject
+                                          sessionServiceConfigurationReferenceObject) {
+        OpenDJPersistentStore.sessionServiceConfigurationReferenceObject
+                = sessionServiceConfigurationReferenceObject;
     }
 
     /**
@@ -288,7 +306,28 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         try {
             if (instance == null) {
                 // Initialize the Initial Singleton Service Instance.
-                initialize();
+                initialize(null);
+            }
+            return instance;
+        } catch (StoreException se) {
+            debug.error("Unable to Initialize the AMSessionRepository Singleton Service Component!");
+            return null;
+        }
+    }
+
+    /**
+     * Provide Service Instance Access to our Singleton
+     *
+     * @return OpenDJPersistentStore Singleton Instance.
+     * @throws StoreException
+     */
+    public static AMSessionRepository getInstance(
+            SessionServiceConfigurationReferenceObject
+                    sessionServiceConfigurationReferenceObject) throws StoreException {
+        try {
+            if (instance == null) {
+                // Initialize the Initial Singleton Service Instance.
+                initialize(sessionServiceConfigurationReferenceObject);
             }
             return instance;
         } catch (StoreException se) {
@@ -300,13 +339,19 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Perform Initialization
      */
-    private synchronized static void initialize() throws StoreException {
+    private synchronized static void initialize(SessionServiceConfigurationReferenceObject sessionServiceConfigurationReferenceObject) throws StoreException {
         // Establish our instance.
-        instance = new OpenDJPersistentStore();
+        instance = new OpenDJPersistentStore(sessionServiceConfigurationReferenceObject);
         // Initialize this Service
         debug.warning("Initializing Configuration for the OpenAM Session Repository using Implementation Class: " +
                 OpenDJPersistentStore.class.getSimpleName());
-
+        if (instance.sessionServiceConfigurationReferenceObject != null)
+        {
+        debug.warning("Additional Parameters supplied by SessionService for behaviour of OpenAM Session Repository: " +
+                instance.sessionServiceConfigurationReferenceObject.toString());
+        } else {
+            debug.warning("No Additional Parameters supplied by SessionService for behaviour of OpenAM Session Repository.");
+        }
         // Set up Shutdown Thread Hook.
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -321,7 +366,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         try {
 
             // TODO **********************************************************************************
-            // TODO -- Interrogate the Session Service Sub Configuration Paramaters.
+            // TODO -- Interrogate the Session Service Sub Configuration Parameters.
             // TODO -- To determine where our store lies.
             // TODO -- Our Store can be our embedded or an External Directory where our configuration
             // TODO -- is stored or an external resource either LDAP or HTTP.
