@@ -319,6 +319,15 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // Internal Session container, whose default is o=openam-session
         // This really needs to come from a connection pool.
         try {
+
+            // TODO **********************************************************************************
+            // TODO -- Interrogate the Session Service Sub Configuration Paramaters.
+            // TODO -- To determine where our store lies.
+            // TODO -- Our Store can be our embedded or an External Directory where our configuration
+            // TODO -- is stored or an external resource either LDAP or HTTP.
+            // TODO **********************************************************************************
+
+
             icConn = InternalClientConnection.getRootConnection();
             InternalSearchOperation iso = icConn.processSearch(SESSION_FAILOVER_HA_BASE_DN,
                     SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
@@ -336,6 +345,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             } else {
                 final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
                 debug.warning(message.toString());
+                icConnAvailable = false;
                 throw new StoreException(message.toString());
             }
         } catch (DirectoryException directoryException) {
@@ -838,7 +848,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     // UnMarshal
                     AMRecordDataEntry dataEntry = new AMRecordDataEntry(baseDN.toString(), AMRecord.READ, results);
                     // Return UnMarshaled Object
-                    logAMRootEntity(dataEntry.getAMRecord(),"OpenDJPersistenceStore.writeImmediate: \nBaseDN:[" + baseDN.toString() + "] ");
+                    logAMRootEntity(dataEntry.getAMRecord(),"OpenDJPersistenceStore.read: \nBaseDN:[" + baseDN.toString() + "] ");
                     // Return UnMarshaled Object
                     return dataEntry.getAMRecord();
                 } else {
@@ -1127,21 +1137,26 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                         AMSessionDBServer server = new AMSessionDBServer();
 
                         for (Attribute attribute : attributes) {
-                            if (attribute.getName().equals("adminPort")) {
+                            if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_ADMIN_PORT)) {
                                 server.setAdminPort(attribute.iterator().next().getValue().toString());
-                            } else if (attribute.getName().equals("jmxPort")) {
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_JMX_PORT)) {
                                 server.setJmxPort(attribute.iterator().next().getValue().toString());
-                            } else if (attribute.getName().equals("ldapPort")) {
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_LDAP_PORT)) {
                                 server.setLdapPort(attribute.iterator().next().getValue().toString());
-                            } else if (attribute.getName().equals("replPort")) {
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_REPL_PORT)) {
                                 server.setReplPort(attribute.iterator().next().getValue().toString());
-                            } else if (attribute.getName().equals("replPort")) {
-                                    server.setReplPort(attribute.iterator().next().getValue().toString());
-
-
-
-
-
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_ID)) {
+                                    server.setId(attribute.iterator().next().getValue().toString());
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_ADDRESS)) {
+                                    server.setAddress(attribute.iterator().next().getValue().toString());
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_IS_UP)) {
+                                server.setUp(Boolean.valueOf(attribute.iterator().next().getValue().toString()));
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_PROTOCOL)) {
+                                server.setProtocol(attribute.iterator().next().getValue().toString());
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_TIMESTAMP)) {
+                                server.setTimeStamp(attribute.iterator().next().getValue().toString());
+                            } else if (attribute.getName().equalsIgnoreCase(AMSessionDBServer.ATTRIBUTE_NAME_URL)) {
+                                server.setUrl(attribute.iterator().next().getValue().toString());
                             } else {
                                 final LocalizableMessage message = DB_UNK_ATTR.get(attribute.getName());
                                 debug.warning(message.toString());
@@ -1396,8 +1411,8 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      */
     private void logAMRootEntity(AMRootEntity amRootEntity, String message) {
         // Set to Message to Error to see messages.
-        if (debug.messageEnabled()) {
-            debug.message(
+        //if (debug.messageEnabled()) {
+            debug.error(
                     ((message != null) && (!message.isEmpty()) ? message : "") +
                             "\nService:[" + amRootEntity.getService() + "]," +
                             "\n     Op:[" + amRootEntity.getOperation() + "]," +
@@ -1416,7 +1431,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                             (amRootEntity.getAuxData() != null) ?
                                     amRootEntity.getAuxData().length() + " bytes]" : "null].")
             );
-        }
+        //}
     }
     /**
     * Return current Time in Seconds.

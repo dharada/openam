@@ -615,6 +615,10 @@ public class Step3 extends LDAPStoreWizardPage {
             SetupConstants.SMS_DS_DATASTORE);    
     }
 
+    /**
+     * Validate an Existing SM Host for Configuration Backend.
+     * @return
+     */
     public boolean validateSMHost() {
         Context ctx = getContext();
         String strSSL = (String)ctx.getSessionAttribute(

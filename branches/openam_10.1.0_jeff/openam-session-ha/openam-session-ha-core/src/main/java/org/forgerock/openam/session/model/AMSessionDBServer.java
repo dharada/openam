@@ -61,10 +61,10 @@ public class AMSessionDBServer implements Serializable {
 
     private String id;
     private String protocol;
-    private URL url;
-    private InetSocketAddress address;
+    private String url;
+    private String address;
     private boolean isUp;
-    private long timeStamp;
+    private String timeStamp = "0";
     private String adminPort;
     private String ldapPort;
     private String jmxPort;
@@ -113,10 +113,10 @@ public class AMSessionDBServer implements Serializable {
         this.serverDN = serverDN;
         this.id = id;
         this.protocol = protocol;
-        this.url = url;
-        this.address = address;
+        this.url = url.toExternalForm();
+        this.address = address.toString();
         this.isUp = up;
-        this.timeStamp = Calendar.getInstance().getTimeInMillis();
+        this.timeStamp = Long.toString(Calendar.getInstance().getTimeInMillis());
 
         // Set the Attribute Values Array Map as Well.
         Set<String> set = new HashSet<String>();
@@ -128,7 +128,7 @@ public class AMSessionDBServer implements Serializable {
         attributeValues.put(ATTRIBUTE_NAME_PROTOCOL, set);
 
         set = new HashSet<String>();
-        set.add(this.url.toExternalForm());
+        set.add(this.url);
         attributeValues.put(ATTRIBUTE_NAME_URL, set);
 
         set = new HashSet<String>();
@@ -140,7 +140,7 @@ public class AMSessionDBServer implements Serializable {
         attributeValues.put(ATTRIBUTE_NAME_IS_UP, set);
 
         set = new HashSet<String>();
-        set.add(AMRecordDataEntry.toDJDateFormat(this.timeStamp));
+        set.add(AMRecordDataEntry.toDJDateFormat(Long.valueOf(this.timeStamp)));
         attributeValues.put(ATTRIBUTE_NAME_TIMESTAMP, set);
 
     }
@@ -157,11 +157,11 @@ public class AMSessionDBServer implements Serializable {
         return protocol;
     }
 
-    public URL getUrl() {
+    public String getUrl() {
         return url;
     }
 
-    public InetSocketAddress getAddress() {
+    public String getAddress() {
         return address;
     }
 
@@ -190,10 +190,14 @@ public class AMSessionDBServer implements Serializable {
     }
 
     public void setUrl(URL url) {
+        this.url = url.toExternalForm();
+    }
+
+    public void setUrl(String url) {
         this.url = url;
     }
 
-    public void setAddress(InetSocketAddress address) {
+    public void setAddress(String address) {
         this.address = address;
     }
 
@@ -202,6 +206,10 @@ public class AMSessionDBServer implements Serializable {
     }
 
     public void setTimeStamp(long timeStamp) {
+        this.timeStamp = Long.toString(timeStamp);
+    }
+
+    public void setTimeStamp(String timeStamp) {
         this.timeStamp = timeStamp;
     }
 

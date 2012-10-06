@@ -208,20 +208,7 @@
                             <Value>true</Value>
                         </DefaultValues>
                     </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-store-type"
-                                     type="single_choice"
-                                     syntax="string"
-                                     i18nKey="a124">
-                        <ChoiceValues>
-                            <ChoiceValue i18nKey="a125">embedded</ChoiceValue>
-                            <ChoiceValue i18nKey="a126">external</ChoiceValue>
-                            <ChoiceValue i18nKey="a128">none</ChoiceValue>
-                        </ChoiceValues>
-                        <DefaultValues>
-                            <Value>embedded</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
+                    <AttributeSchema name="iplanet-am-session-sfo-store-suffix"
                                      type="single"
                                      syntax="dn"
                                      i18nKey="a129">
@@ -242,7 +229,7 @@
                                      syntax="string"
                                      i18nKey="a108">
                         <DefaultValues>
-                            <Value>guest</Value>
+                            <Value>cn=Directory Manager</Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-store-password"
@@ -250,7 +237,7 @@
                                      syntax="password"
                                      i18nKey="a109">
                         <DefaultValues>
-                            <Value>guest</Value>
+                            <Value>cangetin</Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-store-cpl-max-wait-time"
@@ -260,13 +247,6 @@
                                      i18nKey="a111">
                         <DefaultValues>
                             <Value>5000</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-JDBC-driver-Impl-classname"
-                                     type="single"
-                                     syntax="string">
-                        <DefaultValues>
-                            <Value>com.iplanet.dpro.session.jdbc.HADBConnectionImpl</Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-min-pool-size"
