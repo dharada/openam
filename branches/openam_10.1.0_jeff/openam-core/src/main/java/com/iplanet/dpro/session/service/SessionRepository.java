@@ -84,7 +84,7 @@ public class SessionRepository {
             throws Exception {
         if (sessionRepository == null) {
             Class c = Class.forName(REPOSITORY_CLASS);
-            Method factoryMethod = c.getDeclaredMethod("getInstance");
+            Method factoryMethod = c.getDeclaredMethod("getInstance", SessionServiceConfigurationReferenceObject.class);
             sessionRepository = (AMSessionRepository) factoryMethod.invoke(null,
                     new Object[]{sessionServiceConfigurationReferenceObject});
         }
