@@ -94,13 +94,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             sessionServiceConfigurationReferenceObject;
 
     /**
-     * Used when we have an explicit External Persistence Directory Store
-     * besides using the normal Configuration Store in embedded or
-     * external mode.
-     */
-    private static volatile URL externalLDAPConnectionURL;
-
-    /**
      * Debug Logging
      */
     private static Debug debug = SessionService.sessionDebug;
@@ -130,9 +123,12 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * Internal LDAP Connection.
      */
     private static boolean icConnAvailable = false;
-    private static boolean externalConnAvailable = false;
     private static InternalClientConnection icConn;
-    private static LDAPConnectionPool externalLDAPConnectionPool;
+    /**
+     * External LDAP Connection.
+     */
+    private static boolean externalConnAvailable = false;
+    private static OpenDJDataLayer externalDataLayer;
     /**
      * Define Session DN Constants
      */
@@ -170,6 +166,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private final static String EXPDATE_FILTER_POST = ")";
     private final static String NUM_SUB_ORD_ATTR = "numSubordinates";
     private final static String ALL_ATTRS = "(" + NUM_SUB_ORD_ATTR + "=*)";
+    private final static String OBJECTCLASS_STAR_FILTER = "(objectclass=*)";
     /**
      * Return Attribute Constructs
      */
@@ -376,7 +373,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         if ((sessionServiceConfigurationReferenceObject != null)
                 && (sessionServiceConfigurationReferenceObject.getAmSessionRepositoryType().
                 equals(AMSessionRepositoryType.external))) {
-            prepareExternalConnectionPool();
+            prepareExternalDataLayer();
         } else {
             prepareInternalConnection();
         }
@@ -1393,24 +1390,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         }
     }
 
-
-    /**
-     * Private Helper Method to Obtain a DN from a Host URL.
-     *
-     * @param urlHost
-     * @return
-     */
-    private static String getFQDN(String urlHost) {
-        try {
-            URL url = new URL(urlHost);
-            return url.getHost();
-        } catch (MalformedURLException mue) {
-            final LocalizableMessage message = DB_MAL_URL.get(urlHost);
-            debug.warning(message.toString());
-            return urlHost;
-        }
-    }
-
     /**
      * Process any and all deferred AM Session Repository Operations.
      */
@@ -1530,90 +1509,32 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      *
      * @throws StoreException
      */
-    private synchronized static void prepareExternalConnectionPool() throws StoreException {
-        LDAPConnection ldapConnection = null;
+    private synchronized static void prepareExternalDataLayer() throws StoreException {
+        icConnAvailable = false;
+        externalConnAvailable = false;
         try {
-            externalLDAPConnectionURL = new URL(sessionServiceConfigurationReferenceObject.getSessionRepositoryURL());
-            if (!externalLDAPConnectionURL.getProtocol().startsWith("ldap")) {
-                // TODO Support other Protocols, such as http[s] for restful calls...
-                throw new IllegalArgumentException(
-                        "Currently External Session Persistence only supports LDAP as a storage protocol, Protocol" +
-                                externalLDAPConnectionURL.getProtocol() + ", is Invalid!");
-            }
-
-            // Establish an independent LDAP Connection Pool to this Resource.
-            externalLDAPConnectionPool = new LDAPConnectionPool("OpenAM_SF_EXT_STORE_POOL",
-                    sessionServiceConfigurationReferenceObject.getMinPoolSize(),
-                    sessionServiceConfigurationReferenceObject.getMaxPoolSize(),
-                    externalLDAPConnectionURL.getHost(),
-                    externalLDAPConnectionURL.getPort(),
-                    sessionServiceConfigurationReferenceObject.getSessionStoreUserName(),
-                    sessionServiceConfigurationReferenceObject.getSessionStorePassword());
-
-            ldapConnection = externalLDAPConnectionPool.getConnection();
-
-
-
-            // TODO --
-
-            // Continue with established Connection to ensure we have our top level DN for our Storage use.
-            LDAPSearchResults results = ldapConnection.search(sessionServiceConfigurationReferenceObject.getSessionRepositoryRootDN(),
-                    LDAPv2.SCOPE_ONE, "(objectclass=*)", new String[]{}, false);
-            if ( (results != null) && (results.getCount()>0) )
+            // Obtain our External LDAP Connection Pool.
+            externalDataLayer =
+                    OpenDJDataLayer.getInstance(sessionServiceConfigurationReferenceObject);
+            if (externalDataLayer != null)
             {
-                debug.error("Search for base container: " + sessionServiceConfigurationReferenceObject.getSessionRepositoryRootDN() +
-                        ", was successful and yielded Entries Found:[" + results.getCount() + "]");
-
-
-            } else {
-
-                debug.error("Search for base container: " + sessionServiceConfigurationReferenceObject.getSessionRepositoryRootDN() +
-                        ", Failed!");
+                LDAPConnection exConn = externalDataLayer.getConnection();
+                if (exConn == null)
+                    { throw new Exception("Unable to obtain External LDAP Connection from Pool!"); }
+                // Continue with established Connection to ensure we have our top level DN for our Storage use.
+                LDAPSearchResults results = exConn.search(sessionServiceConfigurationReferenceObject.getSessionRepositoryRootDN(),
+                    0, Constants.FAMRECORD_FILTER, new String[]{}, false);
+                // Check Results.
+                if ( (results == null) || (results.getCount()>0) )
+                    { throw new Exception("Unable to obtain Initial Test External LDAP Search Result!"); }
+                // Return Connection to Pool
+                externalDataLayer.releaseConnection(exConn);
+                icConnAvailable = false;
+                externalConnAvailable = true;
             }
-
-
-            /*
-
-            LDAPSearchResults results = ldapConnection.search(sessionServiceConfigurationReferenceObject.getSessionRepositoryRootDN(),
-             SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
-             0, 0, false, Constants.FAMRECORD_FILTER, returnAttrs_DN_ONLY);
-
-
-             debug.warning("Search for base container: " + SESSION_FAILOVER_HA_BASE_DN +
-             ", yielded Result Code:[" + iso.getResultCode().toString() + "]");
-             if (iso.getResultCode() == ResultCode.SUCCESS) {
-             final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-             debug.message(message.toString());
-             } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
-             final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-             debug.warning(message.toString());
-             } else {
-             final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
-             debug.warning(message.toString());
-             icConnAvailable = false;
-             throw new StoreException(message.toString());
-             }
-
-             **/
-
-            icConnAvailable = true;
-            externalConnAvailable = true;
-
-        } catch (MalformedURLException mue) {
-            icConnAvailable = false;
-            externalConnAvailable = false;
-            throw new StoreException("Invalid URL supplied for External Session Persistence Store, " +
-                    "Session Failover will not be Available! " + mue.getMessage(), mue);
-
-        } catch (com.sun.identity.shared.ldap.LDAPException ldapException) {
-            icConnAvailable = false;
-            externalConnAvailable = false;
+        } catch (Exception exception) {
             throw new StoreException("LDAP Exception occurred obtaining External LDAP Connection Pool, " +
-                    "Session Failover will not be Available! " + ldapException.getLDAPErrorMessage(), ldapException);
-        } finally {
-            if (ldapConnection != null) {
-                externalLDAPConnectionPool.close(ldapConnection);
-            }
+                    "Session Failover will not be Available! " + exception.getMessage(), exception);
         }
     }
 
