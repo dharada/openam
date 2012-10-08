@@ -257,6 +257,7 @@ public class SessionService {
     private static final String CONNECT_MAX_WAIT_TIME =
             "iplanet-am-session-store-cpl-max-wait-time";
 
+    @Deprecated
     private static final String JDBC_DRIVER_CLASS =
             "iplanet-am-session-JDBC-driver-Impl-classname";
 
@@ -265,6 +266,9 @@ public class SessionService {
 
     private static final String SESSION_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";
+
+    private static final String SESSION_REPOSITORY_ROOTDN =
+            "iplanet-am-session-sfo-store-rootdn";
 
     private static final String MIN_POOL_SIZE =
             "iplanet-am-session-min-pool-size";
@@ -290,6 +294,8 @@ public class SessionService {
 
     // Can be Null, if using Internal Embedded OpenDJ Instance or OpenAM Configuration Directory.
     private static String sessionRepositoryURL = null;
+
+    private static String sessionRepositoryRootDN = null;
 
     private static String amSessionRepositoryStringType;
 
@@ -2110,8 +2116,10 @@ public class SessionService {
 
         if (amSessionRepository == null) {
             try {
-                amSessionRepository = SessionRepository.getInstance(new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
-                        sessionStoreUserName, sessionStorePassword, sessionRepositoryURL));
+                amSessionRepository = SessionRepository.getInstance(
+                        new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
+                        sessionStoreUserName, sessionStorePassword, sessionRepositoryURL, sessionRepositoryRootDN,
+                        minPoolSize, maxPoolSize ));
                 String message =
                         "Obtained Session Repository Implementation: " +
                                 amSessionRepository.getClass().getSimpleName();
@@ -2245,6 +2253,21 @@ public class SessionService {
                             sessionAttrs, SESSION_STORE_USERNAME, "cn=Directory Manager");
                     sessionStorePassword = CollectionHelper.getMapAttr(
                             sessionAttrs, SESSION_STORE_PASSWORD, "password");
+                    sessionRepositoryURL = CollectionHelper.getMapAttr(
+                            sessionAttrs, SESSION_REPOSITORY_URL, "");
+                    sessionRepositoryRootDN = CollectionHelper.getMapAttr(
+                            sessionAttrs, SESSION_REPOSITORY_ROOTDN, "");
+                    connectionMaxWaitTime = Integer.parseInt(
+                            CollectionHelper.getMapAttr(
+                                    sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
+                    minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
+                            sessionAttrs, MIN_POOL_SIZE, "8"));
+                    maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
+                            sessionAttrs, MAX_POOL_SIZE, "32"));
+
+                    jdbcDriverClass = CollectionHelper.getMapAttr(
+                            sessionAttrs, JDBC_DRIVER_CLASS, "");
+
 
                     // *********************************************************
                     // Check for Type of Backend Persistent Store.
@@ -2253,7 +2276,9 @@ public class SessionService {
                             sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
                     amSessionRepositoryType
                             = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
-
+                    if ( (sessionRepositoryURL != null) && (!sessionRepositoryURL.isEmpty()) &&
+                         (sessionRepositoryRootDN != null) && (!sessionRepositoryRootDN.isEmpty()) )
+                        { amSessionRepositoryType =  AMSessionRepositoryType.external; }
 
                     // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
@@ -2268,19 +2293,7 @@ public class SessionService {
                     // (As Cluster Service uses Cluster Member Map).
                     initializationClusterService();
 
-                    // Initialize the instance bootstrap paramaters.
-                    connectionMaxWaitTime = Integer.parseInt(
-                            CollectionHelper.getMapAttr(
-                                    sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
-                    jdbcDriverClass = CollectionHelper.getMapAttr(
-                            sessionAttrs, JDBC_DRIVER_CLASS, "");
-                    sessionRepositoryURL = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_REPOSITORY_URL, "");
-                    minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, MIN_POOL_SIZE, "8"));
-                    maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, MAX_POOL_SIZE, "32"));
-
+                    // Show Configuration Attributes
                     if (sessionDebug.messageEnabled()) {
                         sessionDebug.message("UserName=" + sessionStoreUserName
                                 + " : " + "clusterServerList="
@@ -3631,6 +3644,7 @@ public class SessionService {
     /**
      * @return Returns the jdbcDriverClass.
      */
+    @Deprecated
     public static String getJdbcDriverClass() {
         return jdbcDriverClass;
     }

@@ -194,12 +194,11 @@
                                  i18nKey="a123">
                 </AttributeSchema>
 
-
                 <SubSchema name="Site" inheritance="multiple" i18nKey="site">
                     <AttributeSchema name="iplanet-am-session-sfo-enabled"
                                      type="single"
                                      syntax="boolean"
-                                     i18nKey="a121">
+                                     i18nKey="a124">
                         <BooleanValues>
                             <BooleanTrueValue i18nKey="i18nTrue">true</BooleanTrueValue>
                             <BooleanFalseValue i18nKey="i18nFalse">false</BooleanFalseValue>
@@ -208,26 +207,26 @@
                             <Value>true</Value>
                         </DefaultValues>
                     </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-sfo-store-suffix"
-                                     type="single"
-                                     syntax="dn"
-                                     i18nKey="a129">
-                        <DefaultValues>
-                            <Value>o=openam-session</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-repository-url"
                                      type="single"
                                      syntax="url"
-                                     i18nKey="a113">
+                                     i18nKey="a125">
                         <DefaultValues>
                             <Value></Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
+                                     type="single"
+                                     syntax="dn"
+                                     i18nKey="a126">
+                        <DefaultValues>
+                            <Value>o=openam-session,dc=openam,dc=forgerock,dc=org</Value>
+                        </DefaultValues>
+                    </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-store-username"
                                      type="single"
-                                     syntax="string"
-                                     i18nKey="a108">
+                                     syntax="dn"
+                                     i18nKey="a127">
                         <DefaultValues>
                             <Value>cn=Directory Manager</Value>
                         </DefaultValues>
@@ -235,24 +234,16 @@
                     <AttributeSchema name="iplanet-am-session-store-password"
                                      type="single"
                                      syntax="password"
-                                     i18nKey="a109">
+                                     i18nKey="a128">
                         <DefaultValues>
-                            <Value>cangetin</Value>
-                        </DefaultValues>
-                    </AttributeSchema>
-                    <AttributeSchema name="iplanet-am-session-store-cpl-max-wait-time"
-                                     type="single"
-                                     syntax="number_range"
-                                     rangeStart="0" rangeEnd="2147483647"
-                                     i18nKey="a111">
-                        <DefaultValues>
-                            <Value>5000</Value>
+                            <Value>password</Value>
                         </DefaultValues>
                     </AttributeSchema>
                     <AttributeSchema name="iplanet-am-session-min-pool-size"
                                      type="single"
                                      syntax="number_range"
-                                     rangeStart="1" rangeEnd="100">
+                                     rangeStart="1" rangeEnd="100"
+                                     i18nKey="a129">
                         <DefaultValues>
                             <Value>8</Value>
                         </DefaultValues>
@@ -260,11 +251,22 @@
                     <AttributeSchema name="iplanet-am-session-max-pool-size"
                                      type="single"
                                      syntax="number_range"
-                                     rangeStart="1" rangeEnd="100">
+                                     rangeStart="1" rangeEnd="100"
+                                     i18nKey="a130">
                         <DefaultValues>
                             <Value>32</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <AttributeSchema name="iplanet-am-session-store-cpl-max-wait-time"
+                                     type="single"
+                                     syntax="number_range"
+                                     rangeStart="0" rangeEnd="2147483647"
+                                     i18nKey="a131">
+                        <DefaultValues>
+                            <Value>5000</Value>
+                        </DefaultValues>
+                    </AttributeSchema>
+
                 </SubSchema>
             </Global>
             <Dynamic>

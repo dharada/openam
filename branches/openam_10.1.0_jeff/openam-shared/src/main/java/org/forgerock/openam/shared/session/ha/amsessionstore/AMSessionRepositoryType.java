@@ -47,7 +47,7 @@ public enum AMSessionRepositoryType {
     embedded(1, 1, "embedded", "Embedded", "OpenAM Configuration Directory", "session.store.type.embedded",
             "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore"),
 
-    external(2, 2, "external", "External", "OpenAM External OpenDJ Directory", "session.store.type.external",
+    external(2, 2, "external", "External", "OpenAM External Session Directory", "session.store.type.external",
             "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore");
 
     /**

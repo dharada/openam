@@ -63,6 +63,22 @@ public class SessionServiceConfigurationReferenceObject implements java.io.Seria
      */
     private String sessionRepositoryURL = null;
 
+    /**
+     * Session Repository Root DN,
+     * DN used as the Top-Level Container for Session Persistence.
+     */
+    private String sessionRepositoryRootDN = null;
+
+    /**
+     * Min Pool Size for External resource
+     */
+    private int minPoolSize;
+
+    /**
+     * Max Pool Size for External resource
+     */
+    private int maxPoolSize;
+
 
     /**
      * Default Constructor with All applicable fields.
@@ -72,18 +88,23 @@ public class SessionServiceConfigurationReferenceObject implements java.io.Seria
      * @param sessionStorePassword
      * @param sessionRepositoryURL
      */
-    public SessionServiceConfigurationReferenceObject(AMSessionRepositoryType amSessionRepositoryType, String sessionStoreUserName, String sessionStorePassword, String sessionRepositoryURL) {
+    public SessionServiceConfigurationReferenceObject(AMSessionRepositoryType amSessionRepositoryType,
+                                                      String sessionStoreUserName,
+                                                      String sessionStorePassword,
+                                                      String sessionRepositoryURL,
+                                                      String sessionRepositoryRootDN,
+                                                      int minPoolSize,
+                                                      int maxPoolSize)
+    {
         this.amSessionRepositoryType = amSessionRepositoryType;
         this.sessionStoreUserName = sessionStoreUserName;
         this.sessionStorePassword = sessionStorePassword;
         this.sessionRepositoryURL = sessionRepositoryURL;
+        this.sessionRepositoryRootDN = sessionRepositoryRootDN;
+        this.minPoolSize = minPoolSize;
+        this.maxPoolSize = maxPoolSize;
     }
 
-    /**
-     * default no parameter constructor.
-     */
-    public SessionServiceConfigurationReferenceObject() {
-    }
 
     public AMSessionRepositoryType getAmSessionRepositoryType() {
         return amSessionRepositoryType;
@@ -101,13 +122,29 @@ public class SessionServiceConfigurationReferenceObject implements java.io.Seria
         return sessionRepositoryURL;
     }
 
+    public String getSessionRepositoryRootDN() {
+        return sessionRepositoryRootDN;
+    }
+
+    public int getMinPoolSize() {
+        return minPoolSize;
+    }
+
+    public int getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append("SessionServiceConfigurationReferenceObject");
         sb.append("{amSessionRepositoryType=").append(amSessionRepositoryType);
         sb.append(", sessionStoreUserName='").append(sessionStoreUserName).append('\'');
+        sb.append(", sessionStorePassword='").append(sessionStorePassword).append('\'');
         sb.append(", sessionRepositoryURL='").append(sessionRepositoryURL).append('\'');
+        sb.append(", sessionRepositoryRootDN='").append(sessionRepositoryRootDN).append('\'');
+        sb.append(", minPoolSize=").append(minPoolSize);
+        sb.append(", maxPoolSize=").append(maxPoolSize);
         sb.append('}');
         return sb.toString();
     }
