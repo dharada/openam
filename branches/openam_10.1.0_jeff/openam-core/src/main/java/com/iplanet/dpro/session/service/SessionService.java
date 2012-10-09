@@ -248,10 +248,10 @@ public class SessionService {
     private static final String TOP_LEVEL_ADMIN_ROLE =
             "Top-level Admin Role";
 
-    private static final String SESSION_STORE_USERNAME =
+    private static final String SESSION_EXTERNAL_STORE_USERNAME =
             "iplanet-am-session-store-username";
 
-    private static final String SESSION_STORE_PASSWORD =
+    private static final String SESSION_EXTERNAL_STORE_PASSWORD =
             "iplanet-am-session-store-password";
 
     private static final String CONNECT_MAX_WAIT_TIME =
@@ -261,19 +261,19 @@ public class SessionService {
     private static final String JDBC_DRIVER_CLASS =
             "iplanet-am-session-JDBC-driver-Impl-classname";
 
-    private static final String SESSION_REPOSITORY_URL =
+    private static final String SESSION_EXTERNAL_REPOSITORY_URL =
             "iplanet-am-session-repository-url";
 
     private static final String SESSION_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";
 
-    private static final String SESSION_REPOSITORY_ROOTDN =
+    private static final String SESSION_EXTERNAL_REPOSITORY_ROOTDN =
             "iplanet-am-session-sfo-store-rootdn";
 
-    private static final String MIN_POOL_SIZE =
+    private static final String EXTERNAL_MIN_POOL_SIZE =
             "iplanet-am-session-min-pool-size";
 
-    private static final String MAX_POOL_SIZE =
+    private static final String EXTERNAL_MAX_POOL_SIZE =
             "iplanet-am-session-max-pool-size";
 
     // constants for permissions
@@ -292,16 +292,13 @@ public class SessionService {
     @Deprecated
     private static String jdbcDriverClass = null;
 
-    // Can be Null, if using Internal Embedded OpenDJ Instance or OpenAM Configuration Directory.
-    private static String sessionRepositoryURL = null;
+    private static String sessionExternalRepositoryURL = null;
 
-    private static String sessionRepositoryRootDN = null;
+    private static String sessionExternalRepositoryRootDN = null;
 
-    private static String amSessionRepositoryStringType;
+    private static int externalMinPoolSize = 8;
 
-    private static int minPoolSize = 8;
-
-    private static int maxPoolSize = 32;
+    private static int externalMaxPoolSize = 32;
 
     private static int maxWaitTimeForConstraint = 6000; // in milli-second
 
@@ -1898,13 +1895,12 @@ public class SessionService {
                 thisSessionServiceURL = Session.getSessionServiceURL(
                         thisSessionServerProtocol, thisSessionServer,
                         thisSessionServerPortAsString, thisSessionURI);
-           // } // End of isSiteEnabled.
         } catch (Exception ex) {
             sessionDebug.error(
                     "SessionService.SessionService(): Initialization Failed",
                     ex);
         }
-    }
+    } // End of private single constructor.
 
     /**
      * Initialization Helper Class.
@@ -1945,8 +1941,10 @@ public class SessionService {
         // Instantiate the State Service.
         clusterStateService = new ClusterStateService(this,sessionServerID, timeout, period, clusterMemberMap);
         // Show our State Server Info Map
-        // TODO set error to message.
-        sessionDebug.error("SessionService's ClusterStateService Initialized Successfully, "+clusterStateService.toString());
+        if (sessionDebug.messageEnabled())
+            { sessionDebug.message("SessionService's ClusterStateService Initialized Successfully, "+
+                    clusterStateService.toString());
+            }
     }
 
     /**
@@ -2116,10 +2114,19 @@ public class SessionService {
 
         if (amSessionRepository == null) {
             try {
-                amSessionRepository = SessionRepository.getInstance(
+                if (amSessionRepositoryType.equals(AMSessionRepositoryType.external))
+                { amSessionRepository = SessionRepository.getInstance(
                         new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
-                        sessionStoreUserName, sessionStorePassword, sessionRepositoryURL, sessionRepositoryRootDN,
-                        minPoolSize, maxPoolSize ));
+                                sessionStoreUserName, sessionStorePassword, sessionExternalRepositoryURL, sessionExternalRepositoryRootDN,
+                                externalMinPoolSize, externalMaxPoolSize));
+                } else {
+                    amSessionRepository = SessionRepository.getInstance();
+                }
+                if (amSessionRepository == null)
+                {
+                    sessionDebug.error("Unable to obtain an AMSessionRepository Implementation!");
+                    return null;
+                }
                 String message =
                         "Obtained Session Repository Implementation: " +
                                 amSessionRepository.getClass().getSimpleName();
@@ -2249,21 +2256,22 @@ public class SessionService {
 
                     useInternalRequestRouting = true;
 
+                    // These are all for External Session Persistence.
                     sessionStoreUserName = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_STORE_USERNAME, "cn=Directory Manager");
+                            sessionAttrs, SESSION_EXTERNAL_STORE_USERNAME, "cn=Directory Manager");
                     sessionStorePassword = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_STORE_PASSWORD, "password");
-                    sessionRepositoryURL = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_REPOSITORY_URL, "");
-                    sessionRepositoryRootDN = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_REPOSITORY_ROOTDN, "");
+                            sessionAttrs, SESSION_EXTERNAL_STORE_PASSWORD, "password");
+                    sessionExternalRepositoryURL = CollectionHelper.getMapAttr(
+                            sessionAttrs, SESSION_EXTERNAL_REPOSITORY_URL, "");
+                    sessionExternalRepositoryRootDN = CollectionHelper.getMapAttr(
+                            sessionAttrs, SESSION_EXTERNAL_REPOSITORY_ROOTDN, "");
                     connectionMaxWaitTime = Integer.parseInt(
                             CollectionHelper.getMapAttr(
                                     sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
-                    minPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, MIN_POOL_SIZE, "8"));
-                    maxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, MAX_POOL_SIZE, "32"));
+                    externalMinPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
+                            sessionAttrs, EXTERNAL_MIN_POOL_SIZE, "8"));
+                    externalMaxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
+                            sessionAttrs, EXTERNAL_MAX_POOL_SIZE, "32"));
 
                     jdbcDriverClass = CollectionHelper.getMapAttr(
                             sessionAttrs, JDBC_DRIVER_CLASS, "");
@@ -2272,12 +2280,12 @@ public class SessionService {
                     // *********************************************************
                     // Check for Type of Backend Persistent Store.
                     // *********************************************************
-                    amSessionRepositoryStringType = CollectionHelper.getMapAttr(
+                    String amSessionRepositoryStringType = CollectionHelper.getMapAttr(
                             sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
                     amSessionRepositoryType
                             = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
-                    if ( (sessionRepositoryURL != null) && (!sessionRepositoryURL.isEmpty()) &&
-                         (sessionRepositoryRootDN != null) && (!sessionRepositoryRootDN.isEmpty()) )
+                    if ( (sessionExternalRepositoryURL != null) && (!sessionExternalRepositoryURL.isEmpty()) &&
+                         (sessionExternalRepositoryRootDN != null) && (!sessionExternalRepositoryRootDN.isEmpty()) )
                         { amSessionRepositoryType =  AMSessionRepositoryType.external; }
 
                     // Obtain Site Ids
@@ -2300,9 +2308,9 @@ public class SessionService {
                                 + getClusterServerList() + ": "
                                 + "connectionMaxWaitTime=" + connectionMaxWaitTime
                                 + " :" + "jdbcDriverClass=" + jdbcDriverClass
-                                + " : " + "Session Repository URL=" + sessionRepositoryURL + " : "
-                                + "minPoolSize=" + minPoolSize + " : "
-                                + "maxPoolSize=" + maxPoolSize);
+                                + " : " + "Session Repository URL=" + sessionExternalRepositoryURL + " : "
+                                + "externalMinPoolSize=" + externalMinPoolSize + " : "
+                                + "externalMaxPoolSize=" + externalMaxPoolSize);
                     }
                     // ************************************************************************
                     // Now Bootstrap AMSessionRepository Implementation, if one was specified.
@@ -2324,7 +2332,7 @@ public class SessionService {
             ssm.addListener(utils);
             utils.schemaChanged(amSessionService, null);
         } catch (Exception ex) {
-            sessionDebug.error("SessionService.postInit():+"
+            sessionDebug.error("SessionService.postInit(): "
                     + "Unable to get Session Schema Information", ex);
         }
     }
@@ -3650,24 +3658,24 @@ public class SessionService {
     }
 
     /**
-     * @return Returns the sessionRepositoryURL.
+     * @return Returns the sessionExternalRepositoryURL.
      */
-    public static String getSessionRepositoryURL() {
-        return sessionRepositoryURL;
+    public static String getSessionExternalRepositoryURL() {
+        return sessionExternalRepositoryURL;
     }
 
     /**
-     * @return Returns the maxPoolSize.
+     * @return Returns the externalMaxPoolSize.
      */
-    public static int getMaxPoolSize() {
-        return maxPoolSize;
+    public static int getExternalMaxPoolSize() {
+        return externalMaxPoolSize;
     }
 
     /**
-     * @return Returns the minPoolSize.
+     * @return Returns the externalMinPoolSize.
      */
-    public static int getMinPoolSize() {
-        return minPoolSize;
+    public static int getExternalMinPoolSize() {
+        return externalMinPoolSize;
     }
 
     /**

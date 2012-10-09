@@ -28,15 +28,11 @@
  */
 package org.forgerock.openam.session.ha.amsessionstore.store.opendj;
 
-import com.iplanet.am.util.SystemProperties;
-import com.iplanet.dpro.session.exceptions.StoreException;
 import com.iplanet.dpro.session.service.SessionServiceConfigurationReferenceObject;
-import com.iplanet.services.ldap.*;
 import com.sun.identity.common.LDAPConnectionPool;
 import com.sun.identity.common.ShutdownListener;
 import com.sun.identity.common.ShutdownManager;
 import com.sun.identity.shared.debug.Debug;
-import com.sun.identity.shared.ldap.LDAPBind;
 import com.sun.identity.shared.ldap.LDAPConnection;
 import com.sun.identity.shared.ldap.LDAPException;
 import com.sun.identity.shared.ldap.LDAPSearchConstraints;
@@ -46,7 +42,7 @@ import java.net.URL;
 import java.util.HashMap;
 
 /**
- * OpenDJDataLayer
+ * OpenDJExternalDataLayer
  * Access An External LDAP Directory Server or VIP Cluster to provide
  * Session Failover Persistence.
  * <p/>
@@ -54,7 +50,7 @@ import java.util.HashMap;
  *
  * @author jeff.schenk@forgerock.com
  */
-class OpenDJDataLayer {
+class OpenDJExternalDataLayer {
 
     /**
      * Static section to retrieve the debug object.
@@ -83,25 +79,25 @@ class OpenDJDataLayer {
     static final String LDAP_MAXBACKLOG = "maxbacklog";
     static final String LDAP_REFERRAL = "referral";
 
-    private static OpenDJDataLayer m_instance = null;
+    private static OpenDJExternalDataLayer m_instance = null;
 
     private LDAPConnectionPool _ldapPool = null;
     private LDAPSearchConstraints _defaultSearchConstraints = null;
 
     /**
-     * OpenDJDataLayer constructor
+     * OpenDJExternalDataLayer constructor
      */
-    private OpenDJDataLayer(SessionServiceConfigurationReferenceObject
-                                    sessionServiceConfigurationReferenceObject) {
-        OpenDJDataLayer.sessionServiceConfigurationReferenceObject =
+    private OpenDJExternalDataLayer(SessionServiceConfigurationReferenceObject
+                                            sessionServiceConfigurationReferenceObject) {
+        OpenDJExternalDataLayer.sessionServiceConfigurationReferenceObject =
                 sessionServiceConfigurationReferenceObject;
         initLdapPool();
     }
 
     /**
-     * Create the singleton OpenDJDataLayer object if it doesn't exist already.
+     * Create the singleton OpenDJExternalDataLayer object if it doesn't exist already.
      */
-    protected synchronized static OpenDJDataLayer getInstance(
+    protected synchronized static OpenDJExternalDataLayer getInstance(
             SessionServiceConfigurationReferenceObject
                     sessionServiceConfigurationReferenceObject) {
         // Obtain the Debug instance.
@@ -110,7 +106,7 @@ class OpenDJDataLayer {
         // Make sure only one instance of this class is created.
         if (m_instance == null) {
 
-            m_instance = new OpenDJDataLayer(sessionServiceConfigurationReferenceObject);
+            m_instance = new OpenDJExternalDataLayer(sessionServiceConfigurationReferenceObject);
         }
         return m_instance;
     }
@@ -126,12 +122,12 @@ class OpenDJDataLayer {
             return null;
 
         if (debug.messageEnabled()) {
-            debug.message("OpenDJDataLayer:getConnection()-"
+            debug.message("OpenDJExternalDataLayer:getConnection()-"
                     + "Invoking _ldapPool.getConnection()");
         }
         LDAPConnection conn = _ldapPool.getConnection();
         if (debug.messageEnabled()) {
-            debug.message("OpenDJDataLayer:getConnection()-Got Connection : "
+            debug.message("OpenDJExternalDataLayer:getConnection()-Got Connection : "
                     + conn);
         }
 
@@ -160,13 +156,13 @@ class OpenDJDataLayer {
         // Returns the connection to the pool and
         // make it available.
         if (debug.messageEnabled()) {
-            debug.message("OpenDJDataLayer:releaseConnection()-" +
+            debug.message("OpenDJExternalDataLayer:releaseConnection()-" +
                     "Invoking _ldapPool.close(conn,ldapErrCode) : " +
                     conn + ":" + ldapErrCode);
         }
         _ldapPool.close(conn, ldapErrCode);
         if (debug.messageEnabled()) {
-            debug.message("OpenDJDataLayer:releaseConnection()-" +
+            debug.message("OpenDJExternalDataLayer:releaseConnection()-" +
                     "Released Connection:close(conn,ldapErrCode) : " + conn);
         }
     }
@@ -212,7 +208,7 @@ class OpenDJDataLayer {
     }
 
     /**
-     * Initialize the pool shared by all OpenDJDataLayer object(s).
+     * Initialize the pool shared by all OpenDJExternalDataLayer object(s).
      */
     private synchronized void initLdapPool() {
         // Dont' do anything if pool is already initialized
@@ -273,8 +269,8 @@ class OpenDJDataLayer {
                 }
             } // End of Check for Shutdown Lock Acquired.
         } catch (LDAPException e) {
-            debug.error("OpenDJDataLayer:initLdapPool()-"
-                    + "Exception in OpenDJDataLayer.initLdapPool:", e);
+            debug.error("OpenDJExternalDataLayer:initLdapPool()-"
+                    + "Exception in OpenDJExternalDataLayer.initLdapPool:", e);
         }
     }
 }

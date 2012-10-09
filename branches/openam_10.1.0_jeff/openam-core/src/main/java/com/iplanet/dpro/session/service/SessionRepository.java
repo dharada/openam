@@ -43,6 +43,9 @@ public class SessionRepository {
     private static final String  OPENDJ_REPOSITORY_CLASS =
             "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore";
 
+    private static final String  OPENDJ_EXTERNAL_REPOSITORY_CLASS =
+            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJExternalPersistentStore";
+
     private static final String REPOSITORY_CLASS = SystemProperties.get(
             AMSessionRepository.REPOSITORY_CLASS_PROPERTY, OPENDJ_REPOSITORY_CLASS);
 
@@ -64,7 +67,7 @@ public class SessionRepository {
     public static synchronized AMSessionRepository getInstance()
             throws Exception {
         if (sessionRepository == null) {
-            Class c = Class.forName(REPOSITORY_CLASS);
+            Class c = Class.forName(OPENDJ_REPOSITORY_CLASS);
             Method factoryMethod = c.getDeclaredMethod("getInstance");
             sessionRepository  = (AMSessionRepository) factoryMethod.invoke(null, null);
         }
@@ -83,7 +86,7 @@ public class SessionRepository {
                     sessionServiceConfigurationReferenceObject)
             throws Exception {
         if (sessionRepository == null) {
-            Class c = Class.forName(REPOSITORY_CLASS);
+            Class c = Class.forName(OPENDJ_EXTERNAL_REPOSITORY_CLASS);
             Method factoryMethod = c.getDeclaredMethod("getInstance", SessionServiceConfigurationReferenceObject.class);
             sessionRepository = (AMSessionRepository) factoryMethod.invoke(null,
                     new Object[]{sessionServiceConfigurationReferenceObject});

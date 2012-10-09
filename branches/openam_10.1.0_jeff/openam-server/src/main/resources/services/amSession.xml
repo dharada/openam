@@ -193,7 +193,6 @@
                                  syntax="string"
                                  i18nKey="a123">
                 </AttributeSchema>
-
                 <SubSchema name="Site" inheritance="multiple" i18nKey="site">
                     <AttributeSchema name="iplanet-am-session-sfo-enabled"
                                      type="single"
@@ -207,61 +206,61 @@
                             <Value>true</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a125 -->
                     <AttributeSchema name="iplanet-am-session-repository-url"
                                      type="single"
-                                     syntax="url"
-                                     i18nKey="a125">
+                                     syntax="url">
                         <DefaultValues>
                             <Value></Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a126 -->
                     <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
                                      type="single"
-                                     syntax="dn"
-                                     i18nKey="a126">
+                                     syntax="dn">
                         <DefaultValues>
                             <Value>o=openam-session,dc=openam,dc=forgerock,dc=org</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a127 -->
                     <AttributeSchema name="iplanet-am-session-store-username"
                                      type="single"
-                                     syntax="dn"
-                                     i18nKey="a127">
+                                     syntax="dn">
                         <DefaultValues>
                             <Value>cn=Directory Manager</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a128 -->
                     <AttributeSchema name="iplanet-am-session-store-password"
                                      type="single"
-                                     syntax="password"
-                                     i18nKey="a128">
+                                     syntax="password">
                         <DefaultValues>
                             <Value>password</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a129 -->
                     <AttributeSchema name="iplanet-am-session-min-pool-size"
                                      type="single"
                                      syntax="number_range"
-                                     rangeStart="1" rangeEnd="100"
-                                     i18nKey="a129">
+                                     rangeStart="1" rangeEnd="100">
                         <DefaultValues>
                             <Value>8</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a130 -->
                     <AttributeSchema name="iplanet-am-session-max-pool-size"
                                      type="single"
                                      syntax="number_range"
-                                     rangeStart="1" rangeEnd="100"
-                                     i18nKey="a130">
+                                     rangeStart="1" rangeEnd="100">
                         <DefaultValues>
                             <Value>32</Value>
                         </DefaultValues>
                     </AttributeSchema>
+                    <!-- Was i18Key a131 -->
                     <AttributeSchema name="iplanet-am-session-store-cpl-max-wait-time"
                                      type="single"
                                      syntax="number_range"
-                                     rangeStart="0" rangeEnd="2147483647"
-                                     i18nKey="a131">
+                                     rangeStart="0" rangeEnd="2147483647">
                         <DefaultValues>
                             <Value>5000</Value>
                         </DefaultValues>
