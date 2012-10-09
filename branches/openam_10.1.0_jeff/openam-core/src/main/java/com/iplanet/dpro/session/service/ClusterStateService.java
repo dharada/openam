@@ -301,7 +301,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
         }
         if ( (servers == null) || servers.isEmpty() )
             { return false; }
-        return servers.get(serverId).isUp;
+        return (servers.get(serverId)!=null) ? servers.get(serverId).isUp : false;
     }
 
     /**
@@ -408,7 +408,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
                 sessionService.cleanUpRemoteSessions();
             }
         } catch (Exception ex) {
-            sessionDebug.error("cleanRemoteSessions Background thread has encountered an Exceptin: " + ex.getMessage(), ex);
+            sessionDebug.error("cleanRemoteSessions Background thread has encountered an Exception: " + ex.getMessage(), ex);
         }
     }
 

@@ -108,7 +108,8 @@ public class AuthSSOToken implements SSOToken {
                 System.out.println("Unknown Host Exception Encountered, could be related to MACOSX_PORT-564,\n"
                         +unknownHostException.getCause());
                 System.out.println("Assuming Loop Back Address as our Address!");
-                key += Base64.encode((InetAddress.getLoopbackAddress()).getAddress());
+                //key += Base64.encode((InetAddress.getLoopbackAddress()).getAddress());  JDK1.7 Fix.
+                key += Base64.encode(new byte[]{127,0,0,1});
             }
         } catch (Exception e) {
             e.printStackTrace();
