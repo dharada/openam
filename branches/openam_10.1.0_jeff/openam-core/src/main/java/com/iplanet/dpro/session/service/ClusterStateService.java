@@ -341,7 +341,7 @@ public class ClusterStateService extends GeneralTaskRunnable {
      * @return server id
      */
     String getServerSelection(int index) {
-        if ((serverSelectionList == null) || (serverSelectionList.length <= 0) || (index < 0)) {
+        if ((serverSelectionList == null) || (serverSelectionList.length <= 0) || (index <= 0)) {
             return null;
         }
         return serverSelectionList[index].id;
