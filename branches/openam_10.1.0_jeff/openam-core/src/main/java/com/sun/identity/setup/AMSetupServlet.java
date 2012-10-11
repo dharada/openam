@@ -709,7 +709,8 @@ public class AMSetupServlet extends HttpServlet {
                                 adminToken, serverInstanceName, site);
                         }
 
-
+                        // TODO Add SubSchema for Global Session to automate
+                        // TODO setting the session failover switch.
 
 
                     } // End of site map check.
