@@ -47,6 +47,8 @@ public class Step5 extends AjaxPage {
         "validateURL",this,"validateURL");
     public ActionLink validateSiteLink = new ActionLink(
         "validateSite",this,"validateSite");
+    public ActionLink setSessionHASFO = new ActionLink(
+            "setSessionHASFO",this,"setSessionHASFO");
 
     public Step5() {}
 
@@ -54,13 +56,27 @@ public class Step5 extends AjaxPage {
         String host = (String)getContext().getSessionAttribute(
             SessionAttributeNames.LB_SITE_NAME);
         String port = (String)getContext().getSessionAttribute(
-            SessionAttributeNames.LB_PRIMARY_URL); 
-        
+            SessionAttributeNames.LB_PRIMARY_URL);
+        String sessionHASFOEnabled = (String)getContext().getSessionAttribute(
+                SessionAttributeNames.LB_SESSION_HA_SFO);
+        if ( (sessionHASFOEnabled == null) || (sessionHASFOEnabled.isEmpty()) )
+            { sessionHASFOEnabled = "false"; }
+
         if (host != null) {
             addModel("host", host);
         }
         if (port != null) {
             addModel("port", port);
+        }
+        if (sessionHASFOEnabled != null) {
+            if ((sessionHASFOEnabled.equalsIgnoreCase("true")) ||
+                (sessionHASFOEnabled.equalsIgnoreCase("yes")) ||
+                (sessionHASFOEnabled.equalsIgnoreCase("checked"))) {
+                sessionHASFOEnabled = "true";
+            } else {
+                sessionHASFOEnabled = "false";
+            }
+            addModel("sessionHASFOEnabled", sessionHASFOEnabled);
         }
         super.onInit();
     }
@@ -68,6 +84,7 @@ public class Step5 extends AjaxPage {
     public boolean clear() {
         getContext().removeSessionAttribute(SetupConstants.LB_SITE_NAME);
         getContext().removeSessionAttribute(SetupConstants.LB_PRIMARY_URL);
+        getContext().removeSessionAttribute(SetupConstants.LB_SESSION_HA_SFO);
         setPath(null);
         return false;
     }
@@ -110,4 +127,30 @@ public class Step5 extends AjaxPage {
         setPath(null);
         return returnVal;
     }
+
+    public boolean setSessionHASFO() {
+        boolean returnVal = true;
+        String sessionHASFOEnabled = toString("sessionHASFOEnabled");
+
+        if (sessionHASFOEnabled != null) {
+            if ((sessionHASFOEnabled.equalsIgnoreCase("on")) ||
+                    (sessionHASFOEnabled.equalsIgnoreCase("true")) ||
+                    (sessionHASFOEnabled.equalsIgnoreCase("yes")) ||
+                    (sessionHASFOEnabled.equalsIgnoreCase("checked")))
+            {
+                sessionHASFOEnabled = "true";
+            } else {
+                sessionHASFOEnabled = "false";
+            }
+        } else {
+            sessionHASFOEnabled = "false";
+        }
+        Boolean isSessionHASFOEnabled = Boolean.valueOf( sessionHASFOEnabled );
+        getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO, isSessionHASFOEnabled.toString());
+        writeValid("ok.label");
+
+        setPath(null);
+        return returnVal;
+    }
+
 }

@@ -42,6 +42,9 @@ import org.apache.click.Context;
  */
 public class Step7 extends AjaxPage {
 
+    private static final String DISABLED = "Disabled";
+    private static final String ENABLED = "Enabled";
+
     public void onInit() {
         Context ctx = getContext();
         String tmp = getAttribute(
@@ -139,6 +142,21 @@ public class Step7 extends AjaxPage {
             (String)ctx.getSessionAttribute(
                 SessionAttributeNames.LB_PRIMARY_URL));
 
+        // Normalize the information for Summary.
+        tmp =  (String)ctx.getSessionAttribute(
+                SessionAttributeNames.LB_SESSION_HA_SFO);
+        if ( (tmp==null) || (tmp.isEmpty()) )
+            { tmp = DISABLED; }
+        else  if ((tmp.equalsIgnoreCase("true")) ||
+                (tmp.equalsIgnoreCase("yes")) ||
+                (tmp.equalsIgnoreCase("checked"))) {
+            tmp = ENABLED;
+        } else {
+            tmp = DISABLED;
+        }
+        add("loadBalancerSessionHASFO",tmp);
+
+        // Initialize our Parent Object.
         super.onInit();
     }
 

@@ -686,6 +686,8 @@ public class AMSetupServlet extends HttpServlet {
                             SetupConstants.LB_SITE_NAME);
                         String primaryURL = (String)siteMap.get(
                             SetupConstants.LB_PRIMARY_URL);
+                        Boolean isSessionHASFOEnabled = Boolean.valueOf( (String)siteMap.get(
+                                SetupConstants.LB_SESSION_HA_SFO));
 
                         /* 
                          * If primary url is null that means we are adding
@@ -706,7 +708,11 @@ public class AMSetupServlet extends HttpServlet {
                             ServerConfiguration.addToSite(
                                 adminToken, serverInstanceName, site);
                         }
-                    }
+
+
+
+
+                    } // End of site map check.
                     if (EmbeddedOpenDS.isMultiServer(map)) {
                         // Setup Replication port in SMS for each server
                         updateReplPortInfo(map);
