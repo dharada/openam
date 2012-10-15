@@ -25,7 +25,7 @@
         $('loadBalancerHostName').disabled = false;
         $('loadBalancerPort').disabled = false;
         $('loadBalancerSessionHASFO').disabled = false;
-        $('loadBalancerSessionHASFO').checked = true;
+        $('loadBalancerSessionHASFO').checked = false;
     }
 
     function urlValidated(response) {
@@ -49,10 +49,25 @@
             $('loadBalancerPort').value + "&ie7fix=" + ie7fix, urlValidated);
     }
 
-    function setSessionHASFO() {
-        ie7fix++;
-        AjaxUtils.call("$context$path?actionLink=setSessionHASFO&sessionHASFOEnabled=" +
-                $('loadBalancerSessionHASFO').value + "&ie7fix=" + ie7fix, urlValidated);
+    <!--                     -->
+    <!-- HA SFO callbacks    -->
+    <!--                     -->
+    function sessionHASFOValidated(body) {
+        $('nextTabButton').disabled = eval(loadBalancerValid);
+        $('loadBalancerSessionHASFOStatus').innerHTML = okString;
+    }
+
+    function sessionHASFOInvalidated(body) {
+        loadBalancerValid = false;
+        $('nextTabButton').disabled = true;
+        $('loadBalancerSessionHASFOStatus').innerHTML = errorImage + '<small>'+body+'</small>';
+    }
+
+    function validateSessionHASFO() {
+        var params = "sessionHASFOEnabled=" + $('loadBalancerSessionHASFO').value;
+        APP.call("$context$path", "validateSessionHASFO", params,
+                sessionHASFOValidated, sessionHASFOInvalidated);
+
     }
 
     <!--                     -->
@@ -85,10 +100,10 @@
                 $('loadBalancerHostName').disabled = false;
                 $('loadBalancerPort').disabled = false;
                 $('loadBalancerSessionHASFO').disabled = false;
-                $('loadBalancerSessionHASFO').checked = true;
+                $('loadBalancerSessionHASFO').checked = false;
                 validateSiteName();
                 validatePrimaryURL();
-                setSessionHASFO();
+                validateSessionHASFO();
             } else {
                 $('loadBalancerHostName').disabled = true;
                 $('loadBalancerPort').disabled = true;
@@ -146,8 +161,8 @@
                         <td>
                             <input id="loadBalancerSessionHASFO" name="loadBalancerSessionHASFO"
                                    type="checkbox"
-                                    onkeyup="APP.callDelayed(this, setSessionHASFO)"
-                                    onchange="APP.callDelayed(this, setSessionHASFO)"/>
+                                    onkeyup="APP.callDelayed(this, validateSessionHASFO)"
+                                    onchange="APP.callDelayed(this, validateSessionHASFO)"/>
                              <span id="loadBalancerSessionHASFOStatus"></span>
                         </td>
                     </tr>

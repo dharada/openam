@@ -225,8 +225,12 @@ public class Wizard extends AjaxPage implements Constants {
             SessionAttributeNames.LB_SITE_NAME);
         String primaryURL = (String)getContext().getSessionAttribute(
             SessionAttributeNames.LB_PRIMARY_URL);
-        Boolean isSessionHASFOEnabled = Boolean.valueOf( (String)getContext().getSessionAttribute(
+        // Assume no Session HA Failover.
+        Boolean isSessionHASFOEnabled = false;
+        if (getContext().getSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO) != null)
+        {   isSessionHASFOEnabled = Boolean.valueOf( (Boolean)getContext().getSessionAttribute(
                 SessionAttributeNames.LB_SESSION_HA_SFO));
+        }
         if (loadBalancerHost != null) {
             siteConfig.put(SetupConstants.LB_SITE_NAME, loadBalancerHost);
             siteConfig.put(SetupConstants.LB_PRIMARY_URL, primaryURL);

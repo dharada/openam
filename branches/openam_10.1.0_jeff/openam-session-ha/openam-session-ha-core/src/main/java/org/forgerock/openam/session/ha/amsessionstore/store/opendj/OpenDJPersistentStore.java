@@ -1081,6 +1081,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             // Place Entry in Collection to be removed from Queue.
             tobeRemoved.add(amSessionRepositoryDeferredOperation);
         }
+        // Remove all entries processed in the Queue.
         amSessionRepositoryDeferredOperationConcurrentLinkedQueue.removeAll(tobeRemoved);
         if (count > 0) {
             debug.warning("Performed " + count + " Deferred Operations.");

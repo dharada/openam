@@ -384,7 +384,7 @@ public class Step4 extends AjaxPage {
             
             //String filter = "cn=" + "\"" + rootSuffix + "\"";    // NOT SURE Why "cn" is specified. would never work.
             String[] attrs = {""};
-            ld.search(rootSuffix, LDAPConnection.SCOPE_ONE, ObjectClassFilter,
+            ld.search(rootSuffix, LDAPConnection.SCOPE_BASE, ObjectClassFilter,
                 attrs, false);
             writeToResponse("ok");
         } catch (LDAPException lex) {
@@ -481,7 +481,7 @@ public class Step4 extends AjaxPage {
             
             //String filter = "cn=" + "\"" + rootSuffix + "\"";
             String[] attrs = {""};
-            ld.search(rootSuffix, LDAPConnection.SCOPE_ONE, ObjectClassFilter,
+            ld.search(rootSuffix, LDAPConnection.SCOPE_BASE, ObjectClassFilter,
                 attrs, false);
             writeToResponse("ok");
         } catch (LDAPException lex) {

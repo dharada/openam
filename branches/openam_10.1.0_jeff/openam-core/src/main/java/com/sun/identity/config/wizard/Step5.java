@@ -36,51 +36,55 @@ import com.sun.identity.config.SessionAttributeNames;
 import com.sun.identity.config.util.AjaxPage;
 import com.sun.identity.setup.SetupConstants;
 import org.apache.click.control.ActionLink;
+
 import java.net.URL;
 import java.net.MalformedURLException;
 
+/**
+ * Wizard Step # 5: Site Name, URL and Session HA Failover indicator.
+ * Session Failover indicator new @since 10.1
+ */
 public class Step5 extends AjaxPage {
 
     public ActionLink clearLink = new ActionLink(
-        "clear", this, "clear");
+            "clear", this, "clear");
     public ActionLink validateLink = new ActionLink(
-        "validateURL",this,"validateURL");
+            "validateURL", this, "validateURL");
     public ActionLink validateSiteLink = new ActionLink(
-        "validateSite",this,"validateSite");
-    public ActionLink setSessionHASFO = new ActionLink(
-            "setSessionHASFO",this,"setSessionHASFO");
+            "validateSite", this, "validateSite");
+    public ActionLink validateSessionHASFO = new ActionLink(
+            "validateSessionHASFO", this, "validateSessionHASFO");
 
-    public Step5() {}
+    public Step5() {
+    }
 
     public void onInit() {
-        String host = (String)getContext().getSessionAttribute(
-            SessionAttributeNames.LB_SITE_NAME);
-        String port = (String)getContext().getSessionAttribute(
-            SessionAttributeNames.LB_PRIMARY_URL);
-        String sessionHASFOEnabled = (String)getContext().getSessionAttribute(
+        String host = (String) getContext().getSessionAttribute(
+                SessionAttributeNames.LB_SITE_NAME);
+        String port = (String) getContext().getSessionAttribute(
+                SessionAttributeNames.LB_PRIMARY_URL);
+        Boolean sessionHASFOEnabled = (Boolean) getContext().getSessionAttribute(
                 SessionAttributeNames.LB_SESSION_HA_SFO);
-        if ( (sessionHASFOEnabled == null) || (sessionHASFOEnabled.isEmpty()) )
-            { sessionHASFOEnabled = "false"; }
-
         if (host != null) {
             addModel("host", host);
         }
         if (port != null) {
             addModel("port", port);
         }
-        if (sessionHASFOEnabled != null) {
-            if ((sessionHASFOEnabled.equalsIgnoreCase("true")) ||
-                (sessionHASFOEnabled.equalsIgnoreCase("yes")) ||
-                (sessionHASFOEnabled.equalsIgnoreCase("checked"))) {
-                sessionHASFOEnabled = "true";
-            } else {
-                sessionHASFOEnabled = "false";
-            }
-            addModel("sessionHASFOEnabled", sessionHASFOEnabled);
+        if (sessionHASFOEnabled == null) {
+            sessionHASFOEnabled = false;
         }
+        // Add Session HA Failover.
+        addModel("sessionHASFOEnabled", sessionHASFOEnabled);
+        // Initialize our Parent.
         super.onInit();
     }
 
+    /**
+     * Clear all Site / VIP / Load Balancer Settings
+     *
+     * @return boolean indicator to view.
+     */
     public boolean clear() {
         getContext().removeSessionAttribute(SetupConstants.LB_SITE_NAME);
         getContext().removeSessionAttribute(SetupConstants.LB_PRIMARY_URL);
@@ -89,66 +93,89 @@ public class Step5 extends AjaxPage {
         return false;
     }
 
-    /** 
+    /**
+     * Validate the Site Name
+     *
      * host= site config name
      * port = primary loadURL
+     * Just a little confusing!
      */
-    public boolean validateURL() {
-        String primaryURL = toString("port");
-        if (primaryURL == null) {
-            writeToResponse(getLocalizedString("missing.primary.url"));
-        } else {
-            try {
-                URL hostURL =  new URL(primaryURL);
-                getContext().setSessionAttribute( 
-                    SessionAttributeNames.LB_PRIMARY_URL, primaryURL);
-                writeToResponse("ok");
-            } catch (MalformedURLException m) {
-                writeToResponse(getLocalizedString("primary.url.is.invalid"));
-            }
-        }
-
-        setPath(null);
-        return false;
-    }
-
     public boolean validateSite() {
-        boolean returnVal = true;
+        boolean returnVal = false;
         String siteName = toString("host");
         if (siteName == null) {
             writeInvalid(getLocalizedString("missing.site.name"));
-            returnVal = false;
+            returnVal = true;
         } else {
-            getContext().setSessionAttribute( 
-                SessionAttributeNames.LB_SITE_NAME, siteName);
+            getContext().setSessionAttribute(
+                    SessionAttributeNames.LB_SITE_NAME, siteName);
             writeValid("ok.label");
         }
-
         setPath(null);
         return returnVal;
     }
 
-    public boolean setSessionHASFO() {
-        boolean returnVal = true;
-        String sessionHASFOEnabled = toString("sessionHASFOEnabled");
+    /**
+     * Validate the Site URL
+     *
+     * host= site config name
+     * port = primary loadURL
+     * Just a little confusing!
+     */
+    public boolean validateURL() {
+        boolean returnVal = false;
+        String primaryURL = toString("port");
+        if (primaryURL == null) {
+            writeToResponse(getLocalizedString("missing.primary.url"));
+            returnVal = true;
+        } else {
+            try {
+                URL hostURL = new URL(primaryURL);
+                getContext().setSessionAttribute(
+                        SessionAttributeNames.LB_PRIMARY_URL, primaryURL);
+                writeToResponse("ok");
+            } catch (MalformedURLException m) {
+                writeToResponse(getLocalizedString("primary.url.is.invalid"));
+                returnVal = true;
+            }
+        }
+        setPath(null);
+        return returnVal;
+    }
 
-        if (sessionHASFOEnabled != null) {
-            if ((sessionHASFOEnabled.equalsIgnoreCase("on")) ||
-                    (sessionHASFOEnabled.equalsIgnoreCase("true")) ||
-                    (sessionHASFOEnabled.equalsIgnoreCase("yes")) ||
-                    (sessionHASFOEnabled.equalsIgnoreCase("checked")))
-            {
-                sessionHASFOEnabled = "true";
+    /**
+     * Validate the Session HA Failover Indicator,
+     * based upon other required fields.
+     * @return boolean indicator false, indicates Valid | true, indicates Invalid.
+     */
+    public boolean validateSessionHASFO() {
+        boolean returnVal = false;
+        Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
+        if (sessionHASFOEnabled)
+        {
+            // Check to ensure we have a Site Name an a URL.
+            String host = (String) getContext().getSessionAttribute(
+                    SessionAttributeNames.LB_SITE_NAME);
+            String port = (String) getContext().getSessionAttribute(
+                    SessionAttributeNames.LB_PRIMARY_URL);
+            if ((host == null) || (host.isEmpty())) {
+                writeInvalid(getLocalizedString("missing.site.name"));
+                returnVal = true;
+            } else if ((port == null) || (port.isEmpty())) {
+                writeInvalid(getLocalizedString("primary.url.is.invalid"));
+                returnVal = true;
             } else {
-                sessionHASFOEnabled = "false";
+                getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
+                        sessionHASFOEnabled);
+                writeValid("ok.label");
             }
         } else {
-            sessionHASFOEnabled = "false";
+            // The session HA SFO Indicator is Off/UnChecked, so allow the setting,
+            // regardless of other fields on form.
+            getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
+                    sessionHASFOEnabled);
+            writeValid("ok.label");
         }
-        Boolean isSessionHASFOEnabled = Boolean.valueOf( sessionHASFOEnabled );
-        getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO, isSessionHASFOEnabled.toString());
-        writeValid("ok.label");
-
         setPath(null);
         return returnVal;
     }

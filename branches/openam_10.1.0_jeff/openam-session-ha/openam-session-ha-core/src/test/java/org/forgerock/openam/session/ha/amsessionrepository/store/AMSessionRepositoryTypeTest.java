@@ -29,6 +29,7 @@
 
 package org.forgerock.openam.session.ha.amsessionrepository.store;
 
+import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJExternalPersistentStore;
 import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
 import org.testng.annotations.AfterClass;
@@ -76,11 +77,14 @@ public class AMSessionRepositoryTypeTest {
     @Test
     public void testGetAMSessionRepositoryTypeText() throws Exception {
 
-        assertEquals(AMSessionRepositoryType.getAMSessionRepositoryTypeText(AMSessionRepositoryType.embedded.type()),
-                AMSessionRepositoryType.embedded.textDefinition());
+        assertEquals(AMSessionRepositoryType.getAMSessionRepositoryTypeText(AMSessionRepositoryType.CONFIG.type()),
+                AMSessionRepositoryType.CONFIG.textDefinition());
 
-        assertEquals(AMSessionRepositoryType.getAMSessionRepositoryTypeText(AMSessionRepositoryType.embedded.displayType()),
-                AMSessionRepositoryType.embedded.textDefinition());
+        assertEquals(AMSessionRepositoryType.getAMSessionRepositoryTypeText(AMSessionRepositoryType.CONFIG.displayType()),
+                AMSessionRepositoryType.CONFIG.textDefinition());
+
+        assertEquals(AMSessionRepositoryType.getAMSessionRepositoryTypeText("config"),
+                AMSessionRepositoryType.CONFIG.textDefinition());
 
     }
 
@@ -90,11 +94,11 @@ public class AMSessionRepositoryTypeTest {
     @Test
     public void testGetAMSessionRepositoryTypeImplementationClass() throws Exception {
 
-        assertEquals(AMSessionRepositoryType.embedded.amSessionRepositoryImplementationClassName(),
+        assertEquals(AMSessionRepositoryType.CONFIG.amSessionRepositoryImplementationClassName(),
                 OpenDJPersistentStore.class.getName());
 
-        assertEquals(AMSessionRepositoryType.external.amSessionRepositoryImplementationClassName(),
-                OpenDJPersistentStore.class.getName());
+        assertEquals(AMSessionRepositoryType.EXTERNAL.amSessionRepositoryImplementationClassName(),
+                OpenDJExternalPersistentStore.class.getName());
 
     }
 
@@ -104,14 +108,14 @@ public class AMSessionRepositoryTypeTest {
     @Test
     public void testAMSessionRepositoryTypeValueOf() throws Exception {
 
-        assertEquals(AMSessionRepositoryType.embedded,
-                AMSessionRepositoryType.valueOf("embedded"));
+        assertEquals(AMSessionRepositoryType.CONFIG,
+                AMSessionRepositoryType.valueOf("config".toUpperCase()));
 
-        assertEquals(AMSessionRepositoryType.external,
-                AMSessionRepositoryType.valueOf("external"));
+        assertEquals(AMSessionRepositoryType.EXTERNAL,
+                AMSessionRepositoryType.valueOf("external".toUpperCase()));
 
-        assertEquals(AMSessionRepositoryType.none,
-                AMSessionRepositoryType.valueOf("none"));
+        assertEquals(AMSessionRepositoryType.NONE,
+                AMSessionRepositoryType.valueOf("none".toUpperCase()));
 
     }
 

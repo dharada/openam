@@ -33,6 +33,7 @@
 package com.sun.identity.setup;
 
 import com.iplanet.am.util.AdminUtils;
+import com.iplanet.dpro.session.service.AMSessionRepository;
 import com.iplanet.services.ldap.DSConfigMgr;
 import com.iplanet.services.naming.WebtopNaming;
 import com.iplanet.services.util.Crypt;
@@ -144,6 +145,7 @@ import org.forgerock.openam.upgrade.OpenDJUpgrader;
 import org.forgerock.openam.upgrade.UpgradeException;
 import org.forgerock.openam.upgrade.UpgradeServices;
 import org.forgerock.openam.upgrade.UpgradeUtils;
+import org.forgerock.openam.utils.AMSessionHAFailoverSetup;
 
 /**
  * This class is the first class to get loaded by the Servlet 
@@ -569,7 +571,7 @@ public class AMSetupServlet extends HttpServlet {
             req.addParameter("UserStore", store);
         }
         
-        boolean result = processRequest(req, res);            
+        boolean result = processRequest(req, res);
        
         if (result == false) {
             response.getWriter().write( 
@@ -595,10 +597,10 @@ public class AMSetupServlet extends HttpServlet {
             response);
         return processRequest(req, res);
     }
-    
+
     public static boolean processRequest(
-        IHttpServletRequest request,
-        IHttpServletResponse response
+            IHttpServletRequest request,
+            IHttpServletResponse response
     ) {
         setLocale(request);
         InstallLog.getInstance().open();
@@ -709,10 +711,15 @@ public class AMSetupServlet extends HttpServlet {
                                 adminToken, serverInstanceName, site);
                         }
 
-                        // TODO Add SubSchema for Global Session to automate
-                        // TODO setting the session failover switch.
-
-
+                        /**
+                         * Now create the SubSchema for Global Session to automate
+                         * setting the Session HA Failover property.
+                         * @since 10.1.0
+                         */
+                        Map values = new HashMap(1);
+                        values.put(AMSessionRepository.IS_SFO_ENABLED, isSessionHASFOEnabled.toString());
+                        AMSessionHAFailoverSetup.getInstance().
+                                createSiteAndSessionHAFOElementEntry(site, AMSessionHAFailoverSetup.AM_SESSION_SERVICE, values);
                     } // End of site map check.
                     if (EmbeddedOpenDS.isMultiServer(map)) {
                         // Setup Replication port in SMS for each server
@@ -1999,7 +2006,7 @@ public class AMSetupServlet extends HttpServlet {
     ) throws IOException {
         // Get OpenSSO web application base location.
         URL url = servletCtx.getResource("/WEB-INF/lib/opensso.jar");
-        // TODO: Needs to be Fixed...
+        // TODO: Needs to be Fixed...JAR Name not valid!
         String webAppLocation = (url.toString()).substring(5);
         int index = webAppLocation.indexOf("WEB-INF");
         webAppLocation = webAppLocation.substring(0, index-1);

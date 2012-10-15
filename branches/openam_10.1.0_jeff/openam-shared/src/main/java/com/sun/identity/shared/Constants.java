@@ -1218,18 +1218,18 @@ public interface Constants {
 
     static final String OU_FAMRECORDS = "ou=famrecords";
 
-    static final String OU_AMSESSIONDB = "ou=amsessiondb";
-
     static final String AMRECORD_NAMING_ATTR = "pKey";
 
     static final String TOP = "top";
+
+    static final String ASTERISK = "*";
 
     static final String FR_FAMRECORD = "frFamRecord";
 
     static final String OBJECTCLASS = "objectClass";
 
-    static final String FR_AMSESSIONDB = "frAmSessionDb";
+    static final String FAMRECORD_FILTER = "("+OBJECTCLASS+EQUALS+ASTERISK+")";
 
-    static final String FAMRECORD_FILTER = "(objectclass=*)";
+    static final String OBJECTCLASS_FILTER = "("+OBJECTCLASS+EQUALS+ASTERISK+")";
 
 }

@@ -67,7 +67,7 @@ public class SessionRepository {
     public static synchronized AMSessionRepository getInstance()
             throws Exception {
         if (sessionRepository == null) {
-            Class c = Class.forName(OPENDJ_REPOSITORY_CLASS);
+            Class c = Class.forName(REPOSITORY_CLASS);
             Method factoryMethod = c.getDeclaredMethod("getInstance");
             sessionRepository  = (AMSessionRepository) factoryMethod.invoke(null, null);
         }

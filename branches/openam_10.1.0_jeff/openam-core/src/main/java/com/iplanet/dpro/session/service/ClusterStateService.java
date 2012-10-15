@@ -83,15 +83,26 @@ public class ClusterStateService extends GeneralTaskRunnable {
             return id.compareTo(((ServerInfo) o).id);
         }
 
+        /**
+         * toString Override.
+         * @return String representation of this Inner Object Class.
+         */
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("ServerInfo ID:[" + this.id + "], ");
-            sb.append("Protocol:[" + this.protocol + "], ");
-            sb.append("URL:[" + ((this.url == null) ? "null], " : this.url.toString()) + "], ");
-            sb.append("Address:[" + ((this.address == null) ? "null], " : this.address.toString() + "], Resolved:[" +
-                    (!this.address.isUnresolved() ? "true" : "false")) + "], ");
-            sb.append("Local:[" + this.isLocal + "], ");
-            sb.append("Up:[" + this.isUp + "].\n");
+            sb.append("ServerInfo ID:[").append(this.id).append("], ");
+            sb.append("Protocol:[").append(this.protocol).append("], ");
+            sb.append("URL:[").append(((this.url == null) ? "null" : this.url.toString()));
+            sb.append("], ");
+            sb.append("Address:[");
+            if (this.address == null)
+                { sb.append("null], "); }
+            else
+            {
+                sb.append(this.address.toString()).append("], Unresolved:[");
+                sb.append(this.address.isUnresolved()).append("], ");
+            }
+            sb.append("Local:[").append(this.isLocal).append("], ");
+            sb.append("Up:[").append(this.isUp).append("].\n");
             return sb.toString();
         }
     } //. End of Inner Class Definition.
@@ -263,10 +274,6 @@ public class ClusterStateService extends GeneralTaskRunnable {
                 serverSelectionList[getNextSelected()] = info;
                 if (sessionDebug.messageEnabled())
                     { sessionDebug.error("Added Server to ClusterStateService: " + info.toString()); }
-
-                // TODO Register the Server to our Directory.
-
-
             } // End of For Loop.
 
             // to ensure that ordering in different server instances is identical
@@ -336,12 +343,12 @@ public class ClusterStateService extends GeneralTaskRunnable {
 
     /**
      * Returns server id for a given index inside the server list
-     *
-     * @param index index in the server list
+     * or null if out of bounds.
+     * @param index index in the server list, relative to Zero.
      * @return server id
      */
     String getServerSelection(int index) {
-        if ((serverSelectionList == null) || (serverSelectionList.length <= 0) || (index <= 0)) {
+        if ( (getServerSelectionListSize() <= 0) || (index < 0) || (index >= getServerSelectionListSize()) ) {
             return null;
         }
         return serverSelectionList[index].id;

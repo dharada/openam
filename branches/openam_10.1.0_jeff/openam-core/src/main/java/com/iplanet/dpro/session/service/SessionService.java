@@ -160,7 +160,7 @@ public class SessionService {
      * Default to Embedded until we initialize.
      */
     private static AMSessionRepositoryType amSessionRepositoryType =
-            AMSessionRepositoryType.embedded;
+            AMSessionRepositoryType.CONFIG;
 
     /**
      * SSO Token Manager Instance Reference.
@@ -2114,7 +2114,7 @@ public class SessionService {
 
         if (amSessionRepository == null) {
             try {
-                if (amSessionRepositoryType.equals(AMSessionRepositoryType.external))
+                if (amSessionRepositoryType.equals(AMSessionRepositoryType.EXTERNAL))
                 { amSessionRepository = SessionRepository.getInstance(
                         new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
                                 sessionStoreUserName, sessionStorePassword, sessionExternalRepositoryURL, sessionExternalRepositoryRootDN,
@@ -2124,16 +2124,17 @@ public class SessionService {
                 }
                 if (amSessionRepository == null)
                 {
-                    sessionDebug.error("Unable to obtain an AMSessionRepository Implementation!");
+                    sessionDebug.error("Unable to obtain an AMSessionRepository Implementation, please check Configuration!");
                     return null;
                 }
-                String message =
-                        "Obtained Session Repository Implementation: " +
-                                amSessionRepository.getClass().getSimpleName();
-                sessionDebug.message(message);
+                if (sessionDebug.messageEnabled())
+                {
+                    sessionDebug.message("Obtained Session Repository Implementation: " +
+                            amSessionRepository.getClass().getSimpleName());
+                }
             } catch (Exception e) {
                 sessionDebug
-                        .error("Failed to initialize session repository", e);
+                        .error("Failed to initialize Session Repository", e);
             }
         }
         return amSessionRepository;
@@ -2281,12 +2282,12 @@ public class SessionService {
                     // Check for Type of Backend Persistent Store.
                     // *********************************************************
                     String amSessionRepositoryStringType = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_REPOSITORY_TYPE, "none");
+                            sessionAttrs, SESSION_REPOSITORY_TYPE, AMSessionRepositoryType.NONE.name());
                     amSessionRepositoryType
-                            = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType);
+                            = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType.toUpperCase());
                     if ( (sessionExternalRepositoryURL != null) && (!sessionExternalRepositoryURL.isEmpty()) &&
                          (sessionExternalRepositoryRootDN != null) && (!sessionExternalRepositoryRootDN.isEmpty()) )
-                        { amSessionRepositoryType =  AMSessionRepositoryType.external; }
+                        { amSessionRepositoryType =  AMSessionRepositoryType.EXTERNAL; }
 
                     // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
