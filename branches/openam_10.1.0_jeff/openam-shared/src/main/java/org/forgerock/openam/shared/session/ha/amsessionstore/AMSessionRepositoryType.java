@@ -45,10 +45,7 @@ public enum AMSessionRepositoryType {
     NONE(0, 0, "none", "None", "Session Failover High Availability Disabled", "session.store.type.none", null),
 
     CONFIG(1, 1, "config", "Config", "OpenAM Configuration Directory", "session.store.type.config",
-            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore"),
-
-    EXTERNAL(2, 2, "external", "External", "OpenAM External Session Directory", "session.store.type.external",
-            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJExternalPersistentStore");
+            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore");
 
     /**
      * Index

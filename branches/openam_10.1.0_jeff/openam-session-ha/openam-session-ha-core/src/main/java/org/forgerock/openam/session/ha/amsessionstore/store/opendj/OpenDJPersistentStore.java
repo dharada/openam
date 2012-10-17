@@ -310,7 +310,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
 
         // Finish Initialization
         if (debug.messageEnabled()) {
-            debug.warning("Successful Configuration Initialization for the OpenAM Session Repository using Implementation Class: " +
+            debug.message("Successful Configuration Initialization for the OpenAM Session Repository using Implementation Class: " +
                     OpenDJPersistentStore.class.getSimpleName());
         }
     }

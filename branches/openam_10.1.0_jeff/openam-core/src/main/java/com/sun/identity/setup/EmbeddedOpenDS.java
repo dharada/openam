@@ -239,8 +239,7 @@ public class EmbeddedOpenDS {
 
         for (int i = 0; i < opendsJarFiles.length; i++) {
             String jarFileName = "/WEB-INF/lib/" + opendsJarFiles[i];
-            ReadableByteChannel inChannel =
-                    Channels.newChannel(AMSetupServlet.getResourceAsStream(servletCtx, jarFileName));
+            ReadableByteChannel inChannel = Channels.newChannel(AMSetupServlet.getResourceAsStream(servletCtx, jarFileName));
             FileChannel outChannel = new FileOutputStream(odsRoot + "/lib/" + NewOpendsJarFiles[i]).getChannel();
 
             try {
@@ -383,10 +382,8 @@ public class EmbeddedOpenDS {
             FileChannel outChannel = null;
             try {
                 // Copy over the File.
-                inChannel =
-                        new FileInputStream(additionalSchemaSourceFile).getChannel();
-                outChannel =
-                        new FileOutputStream(targetDirectory + additionalSchemaSourceFile.getName()).getChannel();
+                inChannel = new FileInputStream(additionalSchemaSourceFile).getChannel();
+                outChannel = new FileOutputStream(targetDirectory + additionalSchemaSourceFile.getName()).getChannel();
                 channelCopy(inChannel, outChannel);
             } catch (IOException ioe) {
                 Debug.getInstance(SetupConstants.DEBUG_NAME).error(

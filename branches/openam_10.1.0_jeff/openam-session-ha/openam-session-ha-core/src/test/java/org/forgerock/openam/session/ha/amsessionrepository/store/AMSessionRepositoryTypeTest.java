@@ -29,7 +29,6 @@
 
 package org.forgerock.openam.session.ha.amsessionrepository.store;
 
-import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJExternalPersistentStore;
 import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
 import org.testng.annotations.AfterClass;
@@ -64,7 +63,7 @@ public class AMSessionRepositoryTypeTest {
     public void testGetAMSessionRepositoryTypes() throws Exception {
         Map<String,String> types = AMSessionRepositoryType.getAMSessionRepositoryTypes();
         assertNotNull(types, "Expected non-null Collection of AMSessionRepositoryType(s), very Bad!");
-        assertEquals(types.size(), 3, "Wrong number of AmSessionRepositoryTypeS");
+        assertEquals(types.size(), 2, "Wrong number of AmSessionRepositoryTypeS");
         for(Map.Entry<String,String> entry : types.entrySet())
         {
             System.out.println("key:["+entry.getKey()+"], Value:["+entry.getValue()+"]");
@@ -97,9 +96,6 @@ public class AMSessionRepositoryTypeTest {
         assertEquals(AMSessionRepositoryType.CONFIG.amSessionRepositoryImplementationClassName(),
                 OpenDJPersistentStore.class.getName());
 
-        assertEquals(AMSessionRepositoryType.EXTERNAL.amSessionRepositoryImplementationClassName(),
-                OpenDJExternalPersistentStore.class.getName());
-
     }
 
     /**
@@ -110,9 +106,6 @@ public class AMSessionRepositoryTypeTest {
 
         assertEquals(AMSessionRepositoryType.CONFIG,
                 AMSessionRepositoryType.valueOf("config".toUpperCase()));
-
-        assertEquals(AMSessionRepositoryType.EXTERNAL,
-                AMSessionRepositoryType.valueOf("external".toUpperCase()));
 
         assertEquals(AMSessionRepositoryType.NONE,
                 AMSessionRepositoryType.valueOf("none".toUpperCase()));

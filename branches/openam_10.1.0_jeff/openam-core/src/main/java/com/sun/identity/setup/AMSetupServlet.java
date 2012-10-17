@@ -73,18 +73,9 @@ import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.encode.Base64;
 import com.sun.identity.shared.locale.Locale;
-import com.sun.identity.sm.AttributeSchema;
-import com.sun.identity.sm.OrganizationConfigManager;
-import com.sun.identity.sm.ServiceConfig;
-import com.sun.identity.sm.ServiceConfigManager;
-import com.sun.identity.sm.ServiceSchema;
-import com.sun.identity.sm.ServiceSchemaManager;
-import com.sun.identity.sm.ServiceManager;
-import com.sun.identity.sm.SMSException;
-import com.sun.identity.sm.SMSEntry;
-import com.sun.identity.sm.CachedSMSEntry;
+import com.sun.identity.sm.*;
 import com.sun.identity.shared.StringUtils;
-import com.sun.identity.sm.SMSPropertiesObserver;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -145,7 +136,7 @@ import org.forgerock.openam.upgrade.OpenDJUpgrader;
 import org.forgerock.openam.upgrade.UpgradeException;
 import org.forgerock.openam.upgrade.UpgradeServices;
 import org.forgerock.openam.upgrade.UpgradeUtils;
-import org.forgerock.openam.utils.AMSessionHAFailoverSetup;
+import com.sun.identity.sm.SessionHAFailoverSetupSubConfig;
 
 /**
  * This class is the first class to get loaded by the Servlet 
@@ -717,9 +708,12 @@ public class AMSetupServlet extends HttpServlet {
                          * @since 10.1.0
                          */
                         Map values = new HashMap(1);
-                        values.put(AMSessionRepository.IS_SFO_ENABLED, isSessionHASFOEnabled.toString());
-                        AMSessionHAFailoverSetup.getInstance().
-                                createSiteAndSessionHAFOElementEntry(site, AMSessionHAFailoverSetup.AM_SESSION_SERVICE, values);
+                        Set innerValues = new HashSet(1);
+                        innerValues.add(isSessionHASFOEnabled.toString());
+                        values.put(AMSessionRepository.IS_SFO_ENABLED, innerValues);
+                        SessionHAFailoverSetupSubConfig.getInstance().
+                                createSessionHAFOSubConfigEntry(adminToken, site,
+                                        SessionHAFailoverSetupSubConfig.AM_SESSION_SERVICE, values);
                     } // End of site map check.
                     if (EmbeddedOpenDS.isMultiServer(map)) {
                         // Setup Replication port in SMS for each server

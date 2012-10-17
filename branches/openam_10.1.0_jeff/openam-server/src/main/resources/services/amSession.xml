@@ -214,14 +214,6 @@
                             <Value></Value>
                         </DefaultValues>
                     </AttributeSchema>
-                    <!-- Was i18Key a125 -->
-                    <AttributeSchema name="iplanet-am-session-repository-url"
-                                     type="single"
-                                     syntax="url">
-                        <DefaultValues>
-                            <Value></Value>
-                        </DefaultValues>
-                    </AttributeSchema>
                     <!-- Was i18Key a126 -->
                     <AttributeSchema name="iplanet-am-session-sfo-store-rootdn"
                                      type="single"

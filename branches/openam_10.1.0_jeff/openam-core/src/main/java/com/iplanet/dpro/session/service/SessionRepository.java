@@ -33,18 +33,19 @@ import com.iplanet.am.util.SystemProperties;
 import java.lang.reflect.Method;
 
 /**
+ *
  * <code>SessionRepository</code> represents the session
  * repository , default repository 
- * is <code>OpenDJPersistentStore</code>.
+ * is <code>OpenDJPersistentStore</code> or can be overridden
+ * by specifying a valid implementation class name for our
+ * default Session Repository Class.
+ *
  */
 
 public class SessionRepository {
 
     private static final String  OPENDJ_REPOSITORY_CLASS =
             "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore";
-
-    private static final String  OPENDJ_EXTERNAL_REPOSITORY_CLASS =
-            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJExternalPersistentStore";
 
     private static final String REPOSITORY_CLASS = SystemProperties.get(
             AMSessionRepository.REPOSITORY_CLASS_PROPERTY, OPENDJ_REPOSITORY_CLASS);
@@ -74,23 +75,4 @@ public class SessionRepository {
         return sessionRepository;
     }
 
-    /**
-     * Common Get Instance method to obtain access to
-     * Service Methods.
-     *
-     * @return AMSessionRepository Singleton Instance.
-     * @throws Exception
-     */
-    public static synchronized AMSessionRepository getInstance(
-            SessionServiceConfigurationReferenceObject
-                    sessionServiceConfigurationReferenceObject)
-            throws Exception {
-        if (sessionRepository == null) {
-            Class c = Class.forName(OPENDJ_EXTERNAL_REPOSITORY_CLASS);
-            Method factoryMethod = c.getDeclaredMethod("getInstance", SessionServiceConfigurationReferenceObject.class);
-            sessionRepository = (AMSessionRepository) factoryMethod.invoke(null,
-                    new Object[]{sessionServiceConfigurationReferenceObject});
-        }
-        return sessionRepository;
-    }
 }

@@ -151,6 +151,9 @@ public class Step5 extends AjaxPage {
     public boolean validateSessionHASFO() {
         boolean returnVal = false;
         Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
+
+        // todo fixme.
+
         if (sessionHASFOEnabled)
         {
             // Check to ensure we have a Site Name an a URL.

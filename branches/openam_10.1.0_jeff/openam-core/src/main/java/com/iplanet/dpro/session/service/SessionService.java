@@ -2113,15 +2113,8 @@ public class SessionService {
         }
 
         if (amSessionRepository == null) {
-            try {
-                if (amSessionRepositoryType.equals(AMSessionRepositoryType.EXTERNAL))
-                { amSessionRepository = SessionRepository.getInstance(
-                        new SessionServiceConfigurationReferenceObject(amSessionRepositoryType,
-                                sessionStoreUserName, sessionStorePassword, sessionExternalRepositoryURL, sessionExternalRepositoryRootDN,
-                                externalMinPoolSize, externalMaxPoolSize));
-                } else {
+            try {   // Obtain our AM Session Repository Instance to provide Session HA and Failover.
                     amSessionRepository = SessionRepository.getInstance();
-                }
                 if (amSessionRepository == null)
                 {
                     sessionDebug.error("Unable to obtain an AMSessionRepository Implementation, please check Configuration!");
@@ -2285,10 +2278,6 @@ public class SessionService {
                             sessionAttrs, SESSION_REPOSITORY_TYPE, AMSessionRepositoryType.NONE.name());
                     amSessionRepositoryType
                             = AMSessionRepositoryType.valueOf(amSessionRepositoryStringType.toUpperCase());
-                    if ( (sessionExternalRepositoryURL != null) && (!sessionExternalRepositoryURL.isEmpty()) &&
-                         (sessionExternalRepositoryRootDN != null) && (!sessionExternalRepositoryRootDN.isEmpty()) )
-                        { amSessionRepositoryType =  AMSessionRepositoryType.EXTERNAL; }
-
                     // Obtain Site Ids
                     Set<String> serverIDs = WebtopNaming.getSiteNodes(sessionServerID);
                     if ((serverIDs == null) || (serverIDs.isEmpty())) {

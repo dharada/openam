@@ -67,32 +67,11 @@ public interface AMSessionRepository {
     static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX =
             "iplanet-am-session-sfo-store-root-suffix";
 
-    static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOTDN =
-            "iplanet-am-session-sfo-store-rootdn";
-
     static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";
 
     static final String CLEANUP_GRACE_PERIOD =
             "com.sun.identity.session.repository.cleanupGracePeriod";
-
-    static final String SESSION_STORE_USERNAME =
-            "iplanet-am-session-store-username";
-
-    static final String SESSION_STORE_PASSWORD =
-            "iplanet-am-session-store-password";
-
-    static final String CONNECT_MAX_WAIT_TIME =
-            "iplanet-am-session-store-cpl-max-wait-time";
-
-    static final String SESSION_REPOSITORY_URL =
-            "iplanet-am-session-repository-url";
-
-    static final String MIN_POOL_SIZE =
-            "iplanet-am-session-min-pool-size";
-
-    static final String MAX_POOL_SIZE =
-            "iplanet-am-session-max-pool-size";
 
     /**
      * Retrieves session state from the repository.
