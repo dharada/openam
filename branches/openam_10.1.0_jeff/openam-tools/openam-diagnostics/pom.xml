@@ -30,7 +30,7 @@
 
     <!-- Parent Project -->
     <parent>
-        <groupId>org.forgerock</groupId>
+        <groupId>org.forgerock.openam</groupId>
         <artifactId>openam-tools</artifactId>
         <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
@@ -49,12 +49,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.forgerock</groupId>
+            <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-shared</artifactId>
             <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.forgerock</groupId>
+            <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-diagnostics-schema</artifactId>
             <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>

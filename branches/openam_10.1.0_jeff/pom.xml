@@ -57,7 +57,7 @@
 
     <!-- Component Definition -->
     <name>OpenAM Project</name>
-    <groupId>org.forgerock</groupId>
+    <groupId>org.forgerock.openam</groupId>
     <artifactId>openam</artifactId>
     <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -1339,7 +1339,7 @@
                             </subpackages>
                             <doclet>com.sun.identity.tools.javadocs.SupportedAPIDoclet</doclet>
                             <docletArtifact>
-                                <groupId>org.forgerock</groupId>
+                                <groupId>org.forgerock.openam</groupId>
                                 <artifactId>openam-shared</artifactId>
                                 <version>10.1.JEFF-SNAPSHOT</version>
                             </docletArtifact>
