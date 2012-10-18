@@ -103,7 +103,7 @@ public class Step5 extends AjaxPage {
     public boolean validateSite() {
         boolean returnVal = false;
         String siteName = toString("host");
-        if (siteName == null) {
+        if ( (siteName == null) || (siteName.isEmpty()) ) {
             writeInvalid(getLocalizedString("missing.site.name"));
             returnVal = true;
         } else {
@@ -125,12 +125,12 @@ public class Step5 extends AjaxPage {
     public boolean validateURL() {
         boolean returnVal = false;
         String primaryURL = toString("port");
-        if (primaryURL == null) {
+        if ( (primaryURL == null) || (primaryURL.isEmpty()) ) {
             writeToResponse(getLocalizedString("missing.primary.url"));
             returnVal = true;
         } else {
             try {
-                URL hostURL = new URL(primaryURL);
+                new URL(primaryURL);
                 getContext().setSessionAttribute(
                         SessionAttributeNames.LB_PRIMARY_URL, primaryURL);
                 writeToResponse("ok");
@@ -151,12 +151,10 @@ public class Step5 extends AjaxPage {
     public boolean validateSessionHASFO() {
         boolean returnVal = false;
         Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
-
-        // todo fixme.
-
         if (sessionHASFOEnabled)
         {
-            // Check to ensure we have a Site Name an a URL.
+            // Check to ensure we have a Site Name an a URL only if
+            // Session HA SFO Enabled.
             String host = (String) getContext().getSessionAttribute(
                     SessionAttributeNames.LB_SITE_NAME);
             String port = (String) getContext().getSessionAttribute(

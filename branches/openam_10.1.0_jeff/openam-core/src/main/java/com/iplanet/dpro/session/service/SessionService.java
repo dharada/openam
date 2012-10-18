@@ -2406,7 +2406,15 @@ public class SessionService {
             if ((serverID == null) || (serverURL == null)) {
                 continue;
             }
+            // ************************************************************
+            // This if Clause is very important, please do not think it is
+            // not.  If we pollute the cluster map with duplicate URLs
+            // There is a very good chance Login processing will
+            // automatically fail, since it can not determine
+            // which serverId is which.
             // Only Associate one Server URL to a Single ServerID.
+            // @since 10.1
+            //
             if (!clusterMemberMap.containsValue(serverURL))
                 { clusterMemberMap.put(serverID, serverURL); }
         }

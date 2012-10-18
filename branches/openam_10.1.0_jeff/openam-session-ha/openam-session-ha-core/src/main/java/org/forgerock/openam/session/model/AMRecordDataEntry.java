@@ -46,6 +46,7 @@ import com.sun.identity.shared.debug.Debug;
 import org.apache.commons.codec.binary.Base64;
 import org.forgerock.i18n.LocalizableMessage;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
 import org.opends.server.protocols.ldap.LDAPAttribute;
 import org.opends.server.types.RawAttribute;
 
@@ -61,7 +62,7 @@ public class AMRecordDataEntry {
     /**
      * Debug Logging
      */
-    private static Debug debug = SessionService.sessionDebug;
+    private static Debug DEBUG = SessionService.sessionDebug;
 
     /**
      * AMRecordDataEntry Object Properties
@@ -95,7 +96,7 @@ public class AMRecordDataEntry {
     private static void initialize() {
         List<String> valueList = new ArrayList<String>();
         valueList.add(Constants.TOP);
-        valueList.add(Constants.FR_FAMRECORD);
+        valueList.add(OpenDJPersistentStore.FR_FAMRECORD);
         LDAPAttribute ldapAttr = new LDAPAttribute(Constants.OBJECTCLASS, valueList);
         objectClasses = new ArrayList<LDAPAttribute>();
         objectClasses.add(ldapAttr);
@@ -202,8 +203,9 @@ public class AMRecordDataEntry {
                 String key, v;
 
                 if (value.indexOf('=') == -1) {
-                    // TODO Warning
                     key = v = value;
+                    final LocalizableMessage message = EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value);
+                    DEBUG.warning(this.getClass().getSimpleName()+message.toString()+EXTRA_BYTE_ATTR);
                 } else {
                     key = value.substring(0, value.indexOf('='));
                     v = value.substring(value.indexOf('=') + 1);
@@ -219,8 +221,9 @@ public class AMRecordDataEntry {
                 String key, v;
 
                 if (value.indexOf('=') == -1) {
-                    // TODO Warning
                     key = v = value;
+                    final LocalizableMessage message = EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value);
+                    DEBUG.warning(this.getClass().getSimpleName()+message.toString()+EXTRA_STRING_ATTR);
                 } else {
                     key = value.substring(0, value.indexOf('='));
                     v = value.substring(value.indexOf('=') + 1);
@@ -406,7 +409,7 @@ public class AMRecordDataEntry {
             expDate = formatter.parse(date);
         } catch (ParseException pe) {
             final LocalizableMessage message = DB_DJ_PARSE.get(date);
-            debug.error(message.toString());
+            DEBUG.error(message.toString());
             throw new StoreException(message.toString());
         }
 

@@ -121,10 +121,14 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
      * @param serviceName Name of the Specific Service.
      * @param values      Map of attribute name to its values.
      * @return boolean Indicates True, if method was successful or not.
+     * @throws IllegalStateException - when this method was already run successfully.
+     * @throws StoreException - when down stream Persistent store exception occurs.
      */
     public static synchronized boolean createSessionHAFOSubConfigEntry(SSOToken adminToken, String siteName,
                                                    String serviceName, Map values)
-            throws StoreException {
+            throws StoreException, IllegalStateException {
+        if (thisCreateServiceSubConfigHasBeenUsed)
+            { throw new IllegalStateException(""); }
         return createServiceSubConfig(adminToken, siteName, DEFAULT_SITE_SERVICE_ID, serviceName, values);
     }
 
@@ -160,7 +164,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
             // Add the Sub Configuration Entry.
             serviceConfig.addSubConfig(siteName, serviceID, 0, values);
             // Tell our view Cache to update with the new Value!
-            serviceConfigManagerImpl.objectChanged(baseDN, ServiceListener.MODIFIED);
+            serviceConfigManagerImpl.objectChanged("ou"+EQUALS+siteName+COMMA+baseDN, ServiceListener.ADDED);
             // Assume Success, if we hit here.
             successful = true;
         } catch (SMSException smsException) {
@@ -170,7 +174,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
             throw new StoreException("Unable to Dynamically Add the Session HA SF Property for DN:["
                     + baseDN + "], SSO Exception: " + ssoException.getMessage(), ssoException);
         }
-        // Set if we can allow this to used again or not.
+        // Set if we can allow this to be used again or not.
         thisCreateServiceSubConfigHasBeenUsed = successful;
         // return our indicator.
         return successful;

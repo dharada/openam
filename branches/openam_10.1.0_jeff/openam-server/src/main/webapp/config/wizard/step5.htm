@@ -53,8 +53,13 @@
     <!-- HA SFO callbacks    -->
     <!--                     -->
     function sessionHASFOValidated(body) {
-        $('nextTabButton').disabled = eval(loadBalancerValid);
-        $('loadBalancerSessionHASFOStatus').innerHTML = okString;
+        loadBalancerValid = true;
+        $('nextTabButton').disabled = false;
+        if( $('loadBalancerHostName').value != null && $('loadBalancerPort').value != null ) {
+            $('loadBalancerSessionHASFOStatus').innerHTML = okString;
+        } else {
+            $('loadBalancerSessionHASFOStatus').innerHTML = null;
+        }
     }
 
     function sessionHASFOInvalidated(body) {
@@ -156,7 +161,7 @@
                     </tr>
                     <tr>
                     <tr>
-                    <td><label for="loadBalancerSessionHASFO"><em>*&nbsp;</em>
+                    <td><label for="loadBalancerSessionHASFO"><em>&nbsp;</em>
                         $page.getLocalizedString("session.ha.sfo.enabled.label")</label></td>
                         <td>
                             <input id="loadBalancerSessionHASFO" name="loadBalancerSessionHASFO"
