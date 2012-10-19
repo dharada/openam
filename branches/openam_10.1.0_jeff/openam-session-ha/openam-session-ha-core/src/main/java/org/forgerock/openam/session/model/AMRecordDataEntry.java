@@ -43,14 +43,13 @@ import java.util.TimeZone;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
-import org.apache.commons.codec.binary.Base64;
+import com.sun.identity.shared.encode.Base64;
 import org.forgerock.i18n.LocalizableMessage;
 import com.iplanet.dpro.session.exceptions.StoreException;
 import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
+import org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages;
 import org.opends.server.protocols.ldap.LDAPAttribute;
 import org.opends.server.types.RawAttribute;
-
-import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 
 /**
  * This class encapsulates a distinguished name and its attribute values.
@@ -146,8 +145,7 @@ public class AMRecordDataEntry {
         if (attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB) != null) {
             Set<String> values = attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB);
             for (String value : values) {
-                Base64 base64 = new Base64();
-                record.setSerializedInternalSessionBlob(base64.decode(value));
+                record.setSerializedInternalSessionBlob(Base64.decode(value));
             }
         }
 
@@ -204,8 +202,8 @@ public class AMRecordDataEntry {
 
                 if (value.indexOf('=') == -1) {
                     key = v = value;
-                    final LocalizableMessage message = EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value);
-                    DEBUG.warning(this.getClass().getSimpleName()+message.toString()+EXTRA_BYTE_ATTR);
+                    final LocalizableMessage message = AmsessionstoreMessages.EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value, EXTRA_BYTE_ATTR);
+                    DEBUG.warning(this.getClass().getSimpleName() + message.toString());
                 } else {
                     key = value.substring(0, value.indexOf('='));
                     v = value.substring(value.indexOf('=') + 1);
@@ -222,8 +220,8 @@ public class AMRecordDataEntry {
 
                 if (value.indexOf('=') == -1) {
                     key = v = value;
-                    final LocalizableMessage message = EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value);
-                    DEBUG.warning(this.getClass().getSimpleName()+message.toString()+EXTRA_STRING_ATTR);
+                    final LocalizableMessage message = AmsessionstoreMessages.EXTRA_ATTRIBUTE_NO_KEY_VALUE_SEPARATOR.get(value, EXTRA_STRING_ATTR);
+                    DEBUG.warning(this.getClass().getSimpleName()+message.toString());
                 } else {
                     key = value.substring(0, value.indexOf('='));
                     v = value.substring(value.indexOf('=') + 1);
@@ -253,8 +251,7 @@ public class AMRecordDataEntry {
 
         if (record.getSerializedInternalSessionBlob() != null) {
             set = new HashSet<String>();
-            Base64 base64 = new Base64();
-            set.add(base64.encodeAsString(record.getSerializedInternalSessionBlob()));
+            set.add(Base64.encode(record.getSerializedInternalSessionBlob()));
             attributeValues.put(SERIALIZED_INTERNAL_SESSION_BLOB, set);
         }
 
@@ -408,7 +405,7 @@ public class AMRecordDataEntry {
         try {
             expDate = formatter.parse(date);
         } catch (ParseException pe) {
-            final LocalizableMessage message = DB_DJ_PARSE.get(date);
+            final LocalizableMessage message = AmsessionstoreMessages.DB_DJ_PARSE.get(date);
             DEBUG.error(message.toString());
             throw new StoreException(message.toString());
         }
@@ -421,4 +418,3 @@ public class AMRecordDataEntry {
         return formatter.format(expDate);
     }
 }
-
