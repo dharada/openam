@@ -125,10 +125,10 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
      * @throws StoreException - when down stream Persistent store exception occurs.
      */
     public static synchronized boolean createSessionHAFOSubConfigEntry(SSOToken adminToken, String siteName,
-                                                   String serviceName, Map values)
+                                                                       String serviceName, Map values)
             throws StoreException, IllegalStateException {
         if (thisCreateServiceSubConfigHasBeenUsed)
-            { throw new IllegalStateException(""); }
+        { throw new IllegalStateException(""); }
         return createServiceSubConfig(adminToken, siteName, DEFAULT_SITE_SERVICE_ID, serviceName, values);
     }
 
@@ -140,7 +140,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
      *
      */
     private static synchronized boolean createServiceSubConfig(SSOToken adminToken, String siteName, String serviceID,
-                                                  String serviceName, Map values) throws StoreException {
+                                                               String serviceName, Map values) throws StoreException {
         boolean successful;
         String baseDN = SITE_SESSION_FAILOVER_HA_SERVICES_BASE_DN_TEMPLATE.
                 replace("%1", serviceName);
@@ -163,8 +163,11 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
             // Create the Session HA Failover Indicator Setting for the Specified Site and
             // Add the Sub Configuration Entry.
             serviceConfig.addSubConfig(siteName, serviceID, 0, values);
+            // TODO Neither of these attempts below of poking cache work. Fix.
             // Tell our view Cache to update with the new Value!
             serviceConfigManagerImpl.objectChanged("ou"+EQUALS+siteName+COMMA+baseDN, ServiceListener.ADDED);
+            // Attempt to Force it!
+            serviceConfigManagerImpl.allObjectsChanged();
             // Assume Success, if we hit here.
             successful = true;
         } catch (SMSException smsException) {
