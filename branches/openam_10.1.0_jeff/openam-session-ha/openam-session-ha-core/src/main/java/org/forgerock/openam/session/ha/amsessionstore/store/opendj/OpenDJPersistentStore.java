@@ -61,6 +61,7 @@ import org.opends.server.protocols.internal.InternalSearchOperation;
 import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
 
+
 import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 
 /**
@@ -76,7 +77,24 @@ import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSessionRepository {
 
     /**
+<<<<<<< .working
      * Globals Constants, so not to pollute entire product.
+=======
+     * Globals Constants, so not to pollute entire product.
+     */
+    public static final String OU_FAMRECORDS = "ou=famrecords";
+
+    public static final String FR_FAMRECORD = "frFamRecord";
+
+    private static final String AMRECORD_NAMING_ATTR = "pKey";
+
+    private static final String OBJECTCLASS = "objectClass";
+
+    private static final String FAMRECORD_FILTER = "("+OBJECTCLASS+Constants.EQUALS+Constants.ASTERISK+")";
+
+    /**
+     * Single Instance
+>>>>>>> .merge-right.r3417
      */
     public static final String OU_FAMRECORDS = "ou=famrecords";
 
@@ -172,7 +190,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private static String[] returnAttrs_PKEY_ONLY_ARRAY;
 
     private static LinkedHashSet<String> returnAttrs_DN_ONLY;
+<<<<<<< .working
     private static String[] returnAttrs_DN_ONLY_ARRAY;
+=======
+>>>>>>> .merge-right.r3417
     /**
      * Deferred Operation Queue.
      */
@@ -315,6 +336,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         });
         // **********************************************************************************************
         // Obtain our Directory Connection and ensure we can access our
+<<<<<<< .working
         // Internal Directory Connection or use an External Source as
         // per configuration.
         //
@@ -333,6 +355,21 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // **********************************************************************************************
         prepareInternalConnection();
 
+=======
+        // Internal Directory Connection or use an External Source as
+        // per configuration.
+        //
+        prepareBackEndPersistenceStore();
+        //
+        // Interrogate the Session Service Sub Configuration Parameters.
+        // To determine where our store lies.
+        // Our Store can be our embedded or an External Directory where our configuration
+        // is stored.
+        // **********************************************************************************************
+        prepareInternalConnection();
+
+        // ******************************************
+>>>>>>> .merge-right.r3417
         // ******************************************
         // Start our AM Repository Store Thread.
         storeThread = new Thread(instance);
@@ -372,8 +409,13 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     public void run() {
         while (!shutdown) {
             try {
+<<<<<<< .working
                 // Delete any expired Sessions up to now.
                 deleteExpired(nowInSeconds());
+                // Process any Deferred Operations
+                processDeferredAMSessionRepositoryOperations();
+=======
+>>>>>>> .merge-right.r3417
                 // Process any Deferred Operations
                 processDeferredAMSessionRepositoryOperations();
                 Thread.sleep(SLEEP_INTERVAL);
@@ -1180,6 +1222,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         return cal.getTime();
     }
 
+<<<<<<< .working
     /**
      * Prepare our BackEnd Persistence Store.
      *
@@ -1313,4 +1356,72 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         return "1";
     }
 
+=======
+    /**
+     * Prepare our BackEnd Persistence Store.
+     *
+     * @throws StoreException
+     */
+    private synchronized static void prepareBackEndPersistenceStore() throws StoreException {
+
+             DEBUG.error("Attempting to Prepare BackEnd Persistence Store for Session Services.");
+
+             // com.sun.identity.sm.ldap.SMDataLayer smd = SMDataLayer.getInstance();
+
+             DEBUG.error("Successfully Prepared BackEnd Persistence Store for Session Services.");
+
+
+    }
+
+    /**
+     * Prepare the Internal Connection for Use as our
+     * Session Persistent store.
+     *
+     * @throws StoreException
+     */
+    private synchronized static void prepareInternalConnection() throws StoreException {
+        try {
+            // Using Embedded Directory Store or where ever the OpenAM Configuration Store resides.
+            try {
+                icConn = InternalClientConnection.getRootConnection();
+                icConnAvailable = true;
+            } catch (ExceptionInInitializerError exceptionInInitializerError) {
+                DEBUG.error("Unable to obtain the Internal Client Connection for CTS Persistence, will attempt External!",exceptionInInitializerError);
+            }
+            // If we were not able to obtain an Internal Connection,
+            // now try the Service Management Data Layer.
+            if (icConn == null)
+            {
+                DEBUG.error("Internal Client Connection was not obtained, Session Persistence will be Ignored!");
+                icConnAvailable = false;
+                return;
+            }
+
+            // Continue with established Connection to ensure we have our top level DN for our Storage use.
+            InternalSearchOperation iso = icConn.processSearch(SESSION_FAILOVER_HA_BASE_DN,
+                    SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
+                    0, 0, false, FAMRECORD_FILTER, returnAttrs_DN_ONLY);
+            DEBUG.warning("Search for base container: " + SESSION_FAILOVER_HA_BASE_DN +
+                    ", yielded Result Code:[" + iso.getResultCode().toString() + "]");
+            if (iso.getResultCode() == ResultCode.SUCCESS) {
+                final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+                DEBUG.message(message.toString());
+            } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+                icConnAvailable = false;
+                DEBUG.error(message.toString());
+            } else {
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
+                DEBUG.error(message.toString());
+                icConnAvailable = false;
+                throw new StoreException(message.toString());
+            }
+        } catch (DirectoryException directoryException) {
+            DEBUG.error("Unable to obtain the Internal Root Container for Session Persistence!",
+                    directoryException);
+            icConnAvailable = false;
+        }
+    }
+
+>>>>>>> .merge-right.r3417
 }

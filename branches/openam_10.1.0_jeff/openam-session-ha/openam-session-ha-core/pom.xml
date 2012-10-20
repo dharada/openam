@@ -91,8 +91,7 @@
 
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-session-ha-locale</artifactId>
-            <version>10.1.JEFF-SNAPSHOT</version>
+            <artifactId>openam-locale</artifactId>
         </dependency>
 
         <dependency>

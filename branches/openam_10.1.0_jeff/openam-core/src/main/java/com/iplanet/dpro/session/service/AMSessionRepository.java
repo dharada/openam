@@ -201,5 +201,14 @@ public interface AMSessionRepository {
      * @return DBStatistics
      */
     public DBStatistics getDBStatistics();
+<<<<<<< .working
 
+    /**
+     * Get Singleton Instance for the Implementation.
+     */
+    public AMSessionRepository getInstance() throws StoreException;
+
+=======
+
+>>>>>>> .merge-right.r3417
 }

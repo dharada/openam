@@ -5,7 +5,7 @@
 <!--
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 ForgeRock AS. All Rights Reserved
+ * Copyright (c) 2011-2012 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -30,15 +30,15 @@
     <!-- Parent Project -->
     <parent>
         <groupId>org.forgerock.openam</groupId>
-        <artifactId>openam-session-ha</artifactId>
+        <artifactId>openam</artifactId>
         <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <!-- Component Definition -->
-    <name>OpenAM Session High-Availability Locale Constants</name>
-    <description>OpenAM Session High-Availability Locale Constants
+    <name>OpenAM Common Locale Bundles</name>
+    <description>OpenAM Common Locale Bundles
     </description>
-    <artifactId>openam-session-ha-locale</artifactId>
+    <artifactId>openam-locale</artifactId>
     <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>jar</packaging>
     <organization>
@@ -101,10 +101,10 @@
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                         <manifestEntries>
-                            <Specification-Title>OpenAM Session High-Availability Locale Constants Component</Specification-Title>
+                            <Specification-Title>OpenAM Common Locale Constants Component</Specification-Title>
                             <Specification-Version>${project.version} - ${maven.build.timestamp}</Specification-Version>
                             <Specification-Vendor>ForgeRock</Specification-Vendor>
-                            <Implementation-Title>OpenAM Session High-Availability Locale Constants Component</Implementation-Title>
+                            <Implementation-Title>OpenAM Common Locale Constants Component</Implementation-Title>
                             <Implementation-Version>${project.version} - ${maven.build.timestamp}</Implementation-Version>
                             <Implementation-Vendor>ForgeRock</Implementation-Vendor>
                             <Built-By>${user.name}</Built-By>

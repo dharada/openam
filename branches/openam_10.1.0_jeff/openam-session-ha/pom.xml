@@ -56,7 +56,6 @@
     </properties>
 
     <modules>
-        <module>openam-session-ha-locale</module>
         <module>openam-session-ha-core</module>
     </modules>
 
@@ -134,6 +133,12 @@
             <dependency>
                 <groupId>org.forgerock.openam</groupId>
                 <artifactId>openam-core</artifactId>
+                <version>10.1.JEFF-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.forgerock.openam</groupId>
+                <artifactId>openam-locale</artifactId>
                 <version>10.1.JEFF-SNAPSHOT</version>
             </dependency>
 
