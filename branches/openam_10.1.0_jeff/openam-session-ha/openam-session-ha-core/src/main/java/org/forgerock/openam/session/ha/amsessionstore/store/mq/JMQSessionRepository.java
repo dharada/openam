@@ -183,7 +183,7 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
      * @throws com.iplanet.dpro.session.exceptions.StoreException
      *
      */
-    public JMQSessionRepository getInstance() throws Exception {
+    public JMQSessionRepository getInstance() throws StoreException {
         initPersistSession();
         SystemTimer.getTimer().schedule(this, new Date((
                 System.currentTimeMillis() / 1000) * 1000));

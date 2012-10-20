@@ -184,7 +184,7 @@
 
         <!-- OpenAM Forgerock REST - CORE Module -->
         <!-- Commenting out until it gets stable -->
-        <module>openam-forgerock-rest</module>
+        <!-- <module>openam-forgerock-rest</module> -->
 
         <!-- OpenAM Core Module -->
         <module>openam-core</module>

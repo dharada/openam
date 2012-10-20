@@ -42,6 +42,9 @@ import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.debug.Debug;
+import com.sun.identity.shared.ldap.*;
+import com.sun.identity.shared.ldap.LDAPException;
+import com.sun.identity.sm.ldap.OpenDJSMDataLayerAccessor;
 import org.forgerock.openam.session.model.*;
 
 import org.forgerock.i18n.LocalizableMessage;
@@ -57,7 +60,6 @@ import org.opends.server.protocols.internal.InternalClientConnection;
 import org.opends.server.protocols.internal.InternalSearchOperation;
 import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
-
 
 import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 
@@ -87,9 +89,14 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private static final String FAMRECORD_FILTER = "("+OBJECTCLASS+Constants.EQUALS+Constants.ASTERISK+")";
 
     /**
-     * Single Instance
+     * Singleton Instance
      */
     private static volatile OpenDJPersistentStore instance;
+
+    /**
+     * Shared SM Data Layer Accessor.
+     */
+    private static volatile OpenDJSMDataLayerAccessor openDJSMDataLayerAccessor;
 
     /**
      * Debug Logging
@@ -156,9 +163,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * Return Attribute Constructs
      */
     private static LinkedHashSet<String> returnAttrs;
+    private static String[] returnAttrs_ARRAY;
+
     private static LinkedHashSet<String> numSubOrgAttrs;
+    private static String[] numSubOrgAttrs_ARRAY;
+
     private static LinkedHashSet<String> returnAttrs_PKEY_ONLY;
+    private static String[] returnAttrs_PKEY_ONLY_ARRAY;
+
     private static LinkedHashSet<String> returnAttrs_DN_ONLY;
+    private static String[] returnAttrs_DN_ONLY_ARRAY;
     /**
      * Deferred Operation Queue.
      */
@@ -247,6 +261,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
 
         returnAttrs_DN_ONLY = new LinkedHashSet<String>();
         returnAttrs_DN_ONLY.add("dn");
+        returnAttrs_DN_ONLY_ARRAY = returnAttrs_DN_ONLY.toArray(returnAttrs_DN_ONLY_ARRAY);
 
         numSubOrgAttrs = new LinkedHashSet<String>();
         numSubOrgAttrs.add(NUM_SUB_ORD_ATTR);
@@ -265,7 +280,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @return OpenDJPersistentStore Singleton Instance.
      * @throws StoreException
      */
-    public static AMSessionRepository getInstance() throws StoreException {
+    public AMSessionRepository getInstance() throws StoreException {
         try {
             if (instance == null) {
                 // Initialize the Initial Singleton Service Instance.
@@ -303,7 +318,13 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // Internal Directory Connection or use an External Source as
         // per configuration.
         //
-        prepareBackEndPersistenceStore();
+        try {
+            prepareBackEndPersistenceStore();
+        } catch(StoreException se) {
+            DEBUG.error("Backend Persistent Store Initialization Failed: "+se.getMessage());
+            DEBUG.error("Backend Persistent Store requests will be Ignored, until this condition is resolved!");
+            return;
+        }
         //
         // Interrogate the Session Service Sub Configuration Parameters.
         // To determine where our store lies.
@@ -1162,17 +1183,74 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Prepare our BackEnd Persistence Store.
      *
-     * @throws StoreException
+     * @throws StoreException - Exception thrown if Error condition exists.
      */
     private synchronized static void prepareBackEndPersistenceStore() throws StoreException {
+        DEBUG.error("Attempting to Prepare BackEnd Persistence Store for Session Services."); // TODO make level message
+        try {
+            openDJSMDataLayerAccessor = OpenDJSMDataLayerAccessor.getSharedSMDataLayerAccessor();
+            if (openDJSMDataLayerAccessor == null)
+                { throw new StoreException("Unable to obtain BackEnd Persistence Store for Session Services."); }
+        } catch(Exception e) {
+            DEBUG.error("Exception Occurred during attempt to access shared SM Data Layer!",e);
+            throw new StoreException(e);
+        }
+        // Now Exercise and Validate the
+        // LDAP Connection from the Pool and perform a Read of our DIT Container to verify setup..
+        if (!validateBackEndPersistenceStore()) {
+            String message = "Validation of BackEnd Persistent Store was unsuccessful!\n"+
+                    "Please Verify DIT Structure in OpenAM Configuration Directory.";
+            DEBUG.error(message);
+            throw new StoreException(message);
+        }
 
-             DEBUG.error("Attempting to Prepare BackEnd Persistence Store for Session Services.");
+        // Show Informational Message.
+        if (DEBUG.errorEnabled())   // TODO make level message
+            {  DEBUG.error("Successfully Prepared BackEnd Persistence Store for Session Services."); }
+    }
 
-             // com.sun.identity.sm.ldap.SMDataLayer smd = SMDataLayer.getInstance();
+    /**
+     * Private Helper Method to perform Validation of our LDAP Connection.
+     * @return boolean - indicates if validation was successful or not.
+     * @throws StoreException - Exception thrown if Error condition exists.
+     */
+    private static boolean validateBackEndPersistenceStore() throws StoreException {
+        boolean isBackEndValid = false;
+        try {
+            // Obtain a Connection.
+            LDAPConnection ldapConnection = openDJSMDataLayerAccessor.getConnection(generateSecureMethodToken());
+            LDAPSearchListener searchListener = ldapConnection.search(SESSION_FAILOVER_HA_BASE_DN,
+                    LDAPv2.SCOPE_ONE,FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, null, null);
+            if (searchListener == null)
+                { return isBackEndValid; }
+            LDAPMessage message = searchListener.getResponse();
+            if (message == null)
+                { return isBackEndValid; }
 
-             DEBUG.error("Successfully Prepared BackEnd Persistence Store for Session Services.");
+            DEBUG.error("Validation of BackEnd Persistence Store for base container: " + SESSION_FAILOVER_HA_BASE_DN +
+                    ", yielded Result Message:[" + message.toString() + "]");
+            /**
+             if (iso.getResultCode() == ResultCode.SUCCESS) {
+             final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+             DEBUG.message(message.toString());
+             } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+             final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+             DEBUG.error(message.toString());
+             } else {
+             final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
+             DEBUG.error(message.toString());
+             throw new StoreException(message.toString());
+             }
+             **/
+            // Release the Connection.
+            openDJSMDataLayerAccessor.releaseConnection(generateSecureMethodToken(), ldapConnection);
 
-
+        } catch (LDAPException ldapException) {
+            DEBUG.error("Unable to Access and Validate the Shared SMDataLayer Root Container for Session Persistence!",
+                    ldapException);
+        }
+        // Return the Result.
+        return isBackEndValid;
     }
 
     /**
@@ -1181,6 +1259,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      *
      * @throws StoreException
      */
+    @Deprecated
     private synchronized static void prepareInternalConnection() throws StoreException {
         try {
             // Using Embedded Directory Store or where ever the OpenAM Configuration Store resides.
@@ -1223,6 +1302,15 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     directoryException);
             icConnAvailable = false;
         }
+    }
+
+    /**
+     * Private Helper Method to Generate the Secure Token for Validation.
+     * @return
+     */
+    private static String generateSecureMethodToken() {
+        // TODO
+        return "1";
     }
 
 }
