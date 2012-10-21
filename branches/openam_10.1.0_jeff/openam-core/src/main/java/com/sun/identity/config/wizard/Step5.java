@@ -156,7 +156,6 @@ public class Step5 extends AjaxPage {
         return returnVal;
     }
 
-<<<<<<< .working
     /**
      * Validate the Session HA Failover Indicator,
      * based upon other required fields.
@@ -183,33 +182,6 @@ public class Step5 extends AjaxPage {
                         sessionHASFOEnabled);
                 writeValid("ok.label");
             }
-=======
-    /**
-     * Validate the Session HA Failover Indicator,
-     * based upon other required fields.
-     * @return boolean indicator false, indicates Valid | true, indicates Invalid.
-     */
-    public boolean validateSessionHASFO() {
-        boolean returnVal = false;
-        Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
-        if (sessionHASFOEnabled)
-        {
-            // Check to ensure we have a Site Name an a URL only if
-            // Session HA SFO Enabled.
-            String siteName = toString("host");
-            String primaryURL = toString("port");
-            if ((siteName == null) || (siteName.isEmpty())) {
-                writeInvalid(getLocalizedString("missing.site.name"));
-                returnVal = true;
-            } else if ((primaryURL == null) || (primaryURL.isEmpty())) {
-                writeInvalid(getLocalizedString("missing.primary.url"));
-                returnVal = true;
-            } else {
-                getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
-                        sessionHASFOEnabled);
-                writeValid("ok.label");
-            }
->>>>>>> .merge-right.r3417
         } else {
             // The session HA SFO Indicator is Off/UnChecked, so allow the setting,
             // regardless of other fields on form.
