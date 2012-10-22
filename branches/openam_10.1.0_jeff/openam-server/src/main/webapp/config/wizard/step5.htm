@@ -53,26 +53,24 @@
     <!-- HA SFO callbacks    -->
     <!--                     -->
     function sessionHASFOValidated(body) {
-        loadBalancerValid = true;
-        $('nextTabButton').disabled = false;
-        if( $('loadBalancerHostName').value != null && $('loadBalancerPort').value != null ) {
+        var message = response.responseText;
+        if (message == "ok") {
+            $('nextTabButton').disabled = false;
             $('loadBalancerSessionHASFOStatus').innerHTML = okString;
+            loadBalancerValid = true;
         } else {
-            $('loadBalancerSessionHASFOStatus').innerHTML = null;
+            $('nextTabButton').disabled = true;
+            $('loadBalancerSessionHASFOStatus').innerHTML = errorImage +
+                    "<small>" + message + "</small>";
+            loadBalancerValid = false;
         }
     }
 
-    function sessionHASFOInvalidated(body) {
-        loadBalancerValid = false;
-        $('nextTabButton').disabled = true;
-        $('loadBalancerSessionHASFOStatus').innerHTML = errorImage + '<small>'+body+'</small>';
-    }
-
     function validateSessionHASFO() {
-        var params = "sessionHASFOEnabled=" + $('loadBalancerSessionHASFO').value;
-        APP.call("$context$path", "validateSessionHASFO", params,
-                sessionHASFOValidated, sessionHASFOInvalidated);
-
+        ie7fix++;
+        AjaxUtils.call("$context$path?actionLink=validateSessionHASFO&sessionHASFOEnabled=" +
+                $('loadBalancerSessionHASFO').value +
+                "&ie7fix=" + ie7fix, sessionHASFOValidated);
     }
 
     <!--                     -->

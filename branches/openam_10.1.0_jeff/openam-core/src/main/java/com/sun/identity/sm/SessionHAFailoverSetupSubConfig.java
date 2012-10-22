@@ -128,7 +128,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
                                                                        String serviceName, Map values)
             throws StoreException, IllegalStateException {
         if (thisCreateServiceSubConfigHasBeenUsed)
-        { throw new IllegalStateException(""); }
+            { throw new IllegalStateException(""); }
         return createServiceSubConfig(adminToken, siteName, DEFAULT_SITE_SERVICE_ID, serviceName, values);
     }
 

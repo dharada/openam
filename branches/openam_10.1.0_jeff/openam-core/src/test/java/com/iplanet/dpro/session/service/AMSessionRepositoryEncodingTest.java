@@ -27,26 +27,27 @@
  *
  */
 
-package com.iplanet.dpro.session.service.store;
+package com.iplanet.dpro.session.service;
 
-import com.iplanet.am.util.SystemProperties;
-import com.iplanet.dpro.session.service.AMSessionRepository;
-import com.iplanet.dpro.session.service.SessionRepository;
-import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.junit.Ignore;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 
 /**
  * AMSessionRepositoryEncodingTest Tester.
  *
  * @author jeff.schenk@forgerock.com
  * @version 10.1
- * @since <pre>Sep 3, 2012</pre>
+ * @since <pre>Aug 29, 2012</pre>
  */
-public class AMSessionRepositoryGetInstanceTest {
+public class AMSessionRepositoryEncodingTest {
 
     @BeforeClass
     public void before() throws Exception {
@@ -57,15 +58,9 @@ public class AMSessionRepositoryGetInstanceTest {
     }
 
     @Ignore
-    public void testGetInstance() throws Exception {
-        // Not working.  As it needs too much environment
-        // to properly test, which is unfortunate.
+    public void testEncoding() throws Exception {
 
-        // Acquire System Properties for minimum environment.
-        SystemProperties systemProperties = new SystemProperties();
-        AMSessionRepository amSessionRepository = SessionRepository.getInstance();
-        assertNotNull(amSessionRepository);
-        assertEquals(CTSPersistentStore.class.getName(), amSessionRepository.getClass().getName());
+
     }
 
 

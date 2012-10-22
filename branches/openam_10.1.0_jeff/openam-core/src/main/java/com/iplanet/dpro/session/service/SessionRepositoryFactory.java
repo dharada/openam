@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2005 Sun Microsystems Inc. All Rights Reserved
+ * Copyright (c) 2012 ForgeRock AS Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -17,46 +17,46 @@
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
  * at opensso/legal/CDDLv1.0.txt.
+ *
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: SessionRepository.java,v 1.4 2008/06/25 05:41:31 qcheng Exp $
+ * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
 import com.sun.identity.sm.ldap.CTSPersistentStore;
-
-import java.lang.reflect.Method;
+import com.sun.identity.sm.mq.JMQSessionRepository;
 
 /**
- *
- * <code>SessionRepository</code> represents the session
- * repository , default repository 
- * is <code>CTSPersistentStore</code> or can be overridden
- * by specifying a valid implementation class name for our
- * default Session Repository Class.
- *
+ * <code>SessionRepositoryFactory</code> provides a default
+ * factory for obtaining our Core Token services BackEnd Repository.
  */
 
-public class SessionRepository {
+class SessionRepositoryFactory {
 
-    private static final String  DEFAULT_CTS_REPOSITORY_CLASS_NAME =
+    /**
+     * Global Definitions.
+     */
+    private static final String DEFAULT_CTS_REPOSITORY_CLASS_NAME =
             CTSPersistentStore.class.getName();
 
     private static final String CTS_REPOSITORY_CLASS_NAME = SystemProperties.get(
             AMSessionRepository.CTS_REPOSITORY_CLASS_PROPERTY, DEFAULT_CTS_REPOSITORY_CLASS_NAME);
 
+    /**
+     * Singleton instance of AM Session Repository or CTS.
+     */
     private static AMSessionRepository sessionRepository = null;
 
     /**
      * Private, do not allow instantiation.
      */
-    private SessionRepository() {
+    private SessionRepositoryFactory() {
     }
 
     /**
@@ -66,12 +66,17 @@ public class SessionRepository {
      * @return AMSessionRepository Singleton Instance.
      * @throws Exception
      */
-    public static synchronized AMSessionRepository getInstance()
+    protected static AMSessionRepository getInstance()
             throws Exception {
         if (sessionRepository == null) {
-            Class c = Class.forName(CTS_REPOSITORY_CLASS_NAME);
-            Method factoryMethod = c.getDeclaredMethod("getInstance");
-            sessionRepository  = (AMSessionRepository) factoryMethod.invoke(null, null);
+            if (CTS_REPOSITORY_CLASS_NAME.equals(CTSPersistentStore.class.getName())) {
+                sessionRepository = CTSPersistentStore.getInstance();
+            } else if (CTS_REPOSITORY_CLASS_NAME.equals(JMQSessionRepository.class.getName())) {
+                sessionRepository = JMQSessionRepository.getInstance();
+            } else {
+                throw new IllegalAccessException("Unable to instantiate the CTS Persistent Store as Implementation Class:["+
+                        CTS_REPOSITORY_CLASS_NAME+"], is unknown to OpenAM!");
+            }
         }
         return sessionRepository;
     }

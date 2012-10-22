@@ -27,7 +27,7 @@
  *
  */
 
-package com.iplanet.dpro.session.service.store;
+package com.iplanet.dpro.session.service;
 
 import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 import com.sun.identity.sm.ldap.CTSPersistentStore;

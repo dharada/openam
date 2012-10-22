@@ -2101,33 +2101,21 @@ public class SessionService {
     }
 
     /**
-     * Utility method to obtain session repository reference
+     * Utility helper method to obtain session repository reference
      *
      * @return reference to session repository
      */
     protected static AMSessionRepository getRepository() {
-
         if (!getUseInternalRequestRouting()) {
             sessionDebug.warning("Not Using Internal Request Routing, unable to provide Session Storage!");
             return null;
         }
-
         if (amSessionRepository == null) {
             try {   // Obtain our AM Session Repository Instance to provide Session HA and Failover.
-                    amSessionRepository = SessionRepository.getInstance();
-                if (amSessionRepository == null)
-                {
-                    sessionDebug.error("Unable to obtain an AMSessionRepository Implementation, please check Configuration!");
-                    return null;
-                }
-                if (sessionDebug.messageEnabled())
-                {
-                    sessionDebug.message("Obtained Session Repository Implementation: " +
-                            amSessionRepository.getClass().getSimpleName());
-                }
+                amSessionRepository = SessionRepositoryFactory.getInstance();
             } catch (Exception e) {
                 sessionDebug
-                        .error("Failed to initialize Session Repository", e);
+                        .error("Failed to initialize CTS BackEnd Repository", e);
             }
         }
         return amSessionRepository;
@@ -2250,27 +2238,6 @@ public class SessionService {
 
                     useInternalRequestRouting = true;
 
-                    // These are all for External Session Persistence.
-                    sessionStoreUserName = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_EXTERNAL_STORE_USERNAME, "cn=Directory Manager");
-                    sessionStorePassword = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_EXTERNAL_STORE_PASSWORD, "password");
-                    sessionExternalRepositoryURL = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_EXTERNAL_REPOSITORY_URL, "");
-                    sessionExternalRepositoryRootDN = CollectionHelper.getMapAttr(
-                            sessionAttrs, SESSION_EXTERNAL_REPOSITORY_ROOTDN, "");
-                    connectionMaxWaitTime = Integer.parseInt(
-                            CollectionHelper.getMapAttr(
-                                    sessionAttrs, CONNECT_MAX_WAIT_TIME, "5000"));
-                    externalMinPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, EXTERNAL_MIN_POOL_SIZE, "8"));
-                    externalMaxPoolSize = Integer.parseInt(CollectionHelper.getMapAttr(
-                            sessionAttrs, EXTERNAL_MAX_POOL_SIZE, "32"));
-
-                    jdbcDriverClass = CollectionHelper.getMapAttr(
-                            sessionAttrs, JDBC_DRIVER_CLASS, "");
-
-
                     // *********************************************************
                     // Check for Type of Backend Persistent Store.
                     // *********************************************************
@@ -2291,17 +2258,6 @@ public class SessionService {
                     // (As Cluster Service uses Cluster Member Map).
                     initializationClusterService();
 
-                    // Show Configuration Attributes
-                    if (sessionDebug.messageEnabled()) {
-                        sessionDebug.message("UserName=" + sessionStoreUserName
-                                + " : " + "clusterServerList="
-                                + getClusterServerList() + ": "
-                                + "connectionMaxWaitTime=" + connectionMaxWaitTime
-                                + " :" + "jdbcDriverClass=" + jdbcDriverClass
-                                + " : " + "Session Repository URL=" + sessionExternalRepositoryURL + " : "
-                                + "externalMinPoolSize=" + externalMinPoolSize + " : "
-                                + "externalMaxPoolSize=" + externalMaxPoolSize);
-                    }
                     // ************************************************************************
                     // Now Bootstrap AMSessionRepository Implementation, if one was specified.
                     if (amSessionRepository == null) {
@@ -2414,6 +2370,8 @@ public class SessionService {
             // which serverId is which.
             // Only Associate one Server URL to a Single ServerID.
             // @since 10.1
+            //
+            // Further investigate, as we should not get duplicates here...
             //
             if (!clusterMemberMap.containsValue(serverURL))
                 { clusterMemberMap.put(serverID, serverURL); }

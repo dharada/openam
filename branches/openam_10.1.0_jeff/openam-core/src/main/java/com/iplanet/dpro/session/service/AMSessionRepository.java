@@ -203,9 +203,4 @@ public interface AMSessionRepository {
      */
     public DBStatistics getDBStatistics();
 
-    /**
-     * Get Singleton Instance for the Implementation.
-     */
-    public AMSessionRepository getInstance() throws StoreException;
-
 }

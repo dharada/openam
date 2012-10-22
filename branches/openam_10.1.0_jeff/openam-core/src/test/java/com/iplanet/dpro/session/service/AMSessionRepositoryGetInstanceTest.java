@@ -26,44 +26,45 @@
  * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-package com.iplanet.dpro.session.service.store;
 
-import com.sun.identity.sm.model.AMRecord;
-import com.sun.identity.sm.model.FAMRecord;
+package com.iplanet.dpro.session.service;
 
-import java.io.Serializable;
+import com.iplanet.am.util.SystemProperties;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
+import org.junit.Ignore;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+
+import static org.testng.Assert.*;
 
 /**
- * MockInternalSession Test POJO.
+ * AMSessionRepositoryEncodingTest Tester.
  *
  * @author jeff.schenk@forgerock.com
  * @version 10.1
- * @since <pre>Aug 29, 2012</pre>
+ * @since <pre>Sep 3, 2012</pre>
  */
-public class MockInternalSession implements Serializable {
-    private static final long serialVersionUID = 101L;   //  10.1
+public class AMSessionRepositoryGetInstanceTest {
 
-    private AMRecord amRecord;
-
-    private FAMRecord famRecord;
-
-    public MockInternalSession() {
+    @BeforeClass
+    public void before() throws Exception {
     }
 
-    public AMRecord getAmRecord() {
-        return amRecord;
+    @AfterClass
+    public void after() throws Exception {
     }
 
-    public void setAmRecord(AMRecord amRecord) {
-        this.amRecord = amRecord;
+    @Ignore
+    public void testGetInstance() throws Exception {
+        // Not working.  As it needs too much environment
+        // to properly test, which is unfortunate.
+
+        // Acquire System Properties for minimum environment.
+        SystemProperties systemProperties = new SystemProperties();
+        AMSessionRepository amSessionRepository = SessionRepositoryFactory.getInstance();
+        assertNotNull(amSessionRepository);
+        assertEquals(CTSPersistentStore.class.getName(), amSessionRepository.getClass().getName());
     }
 
-    public FAMRecord getFamRecord() {
-        return famRecord;
-    }
 
-    public void setFamRecord(FAMRecord famRecord) {
-        this.famRecord = famRecord;
-    }
-
-}
+} 

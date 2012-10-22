@@ -94,8 +94,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     /**
      * Singleton Instance
      */
-    private static volatile CTSPersistentStore instance = new CTSPersistentStore();
-    private static boolean initialized = false;
+    private static volatile CTSPersistentStore instance;
 
     /**
      * Shared SM Data Layer Accessor.
@@ -266,17 +265,24 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
 
         returnAttrs_DN_ONLY = new LinkedHashSet<String>();
         returnAttrs_DN_ONLY.add("dn");
-        returnAttrs_DN_ONLY_ARRAY = returnAttrs_DN_ONLY.toArray(returnAttrs_DN_ONLY_ARRAY);
 
         numSubOrgAttrs = new LinkedHashSet<String>();
         numSubOrgAttrs.add(NUM_SUB_ORD_ATTR);
 
+        try {
+            // Initialize the Initial Singleton Service Instance.
+            initialize();
+        } catch (StoreException se) {
+            DEBUG.error("CTS Persistent Store Initialization Failed: "+se.getMessage());
+            DEBUG.error("CTS Persistent Store requests will be Ignored, until this condition is resolved!");
+        }
+
     } // End of Static Initialization Stanza.
 
     /**
-     * Protected Singleton from being Instantiated.
+     * Private restricted to preserve Singleton Instantiation.
      */
-    private CTSPersistentStore() {
+    private CTSPersistentStore() throws Exception {
     }
 
     /**
@@ -285,17 +291,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      * @return CTSPersistentStore Singleton Instance.
      * @throws StoreException
      */
-    public AMSessionRepository getInstance() throws StoreException {
-        try {
-            if (!initialized) {
-                // Initialize the Initial Singleton Service Instance.
-                initialize();
-            }
+    public static AMSessionRepository getInstance() throws StoreException {
             return instance;
-        } catch (StoreException se) {
-            DEBUG.error("Unable to Initialize the AMSessionRepository Singleton Service Component!");
-            return null;
-        }
     }
 
     /**
@@ -321,27 +318,18 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         // Internal Directory Connection or use an External Source as
         // per configuration.
         //
-        try {
-            prepareBackEndPersistenceStore();
-        } catch(StoreException se) {
-            DEBUG.error("Backend Persistent Store Initialization Failed: "+se.getMessage());
-            DEBUG.error("Backend Persistent Store requests will be Ignored, until this condition is resolved!");
-            return;
-        }
+        prepareCTSPersistenceStore();
         // ******************************************
         // Start our AM Repository Store Thread.
         storeThread = new Thread(instance);
         storeThread.setName(ID);
         storeThread.start();
         DEBUG.warning(DB_DJ_STR_OK.get().toString());
-
         // Finish Initialization
         if (DEBUG.messageEnabled()) {
             DEBUG.message("Successful Configuration Initialization for the OpenAM Session Repository using Implementation Class: " +
                     CTSPersistentStore.class.getSimpleName());
         }
-        // Indicate we are Initialized.
-        initialized=true;
     }
 
     /**
@@ -1182,8 +1170,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      *
      * @throws StoreException - Exception thrown if Error condition exists.
      */
-    private synchronized static void prepareBackEndPersistenceStore() throws StoreException {
-        DEBUG.error("Attempting to Prepare BackEnd Persistence Store for Session Services."); // TODO make level message
+    private synchronized static void prepareCTSPersistenceStore() throws StoreException {
+        DEBUG.message("Attempting to Prepare BackEnd Persistence Store for Session Services.");
         try {
             CTSDataLayer = CTSDataLayer.getSharedSMDataLayerAccessor();
             if (CTSDataLayer == null)
@@ -1193,17 +1181,16 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             throw new StoreException(e);
         }
         // Now Exercise and Validate the
-        // LDAP Connection from the Pool and perform a Read of our DIT Container to verify setup..
-        if (!validateBackEndPersistenceStore()) {
+        // LDAP Connection from the Pool and perform a Read of our DIT Container to verify setup.
+        if (!validateCTSPersistenceStore()) {
             String message = "Validation of BackEnd Persistent Store was unsuccessful!\n"+
                     "Please Verify DIT Structure in OpenAM Configuration Directory.";
             DEBUG.error(message);
             throw new StoreException(message);
         }
-
         // Show Informational Message.
-        if (DEBUG.errorEnabled())   // TODO make level message
-            {  DEBUG.error("Successfully Prepared BackEnd Persistence Store for Session Services."); }
+        if (DEBUG.messageEnabled())
+            {  DEBUG.message("Successfully Prepared BackEnd Persistence Store for Session Services."); }
     }
 
     /**
@@ -1211,94 +1198,28 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      * @return boolean - indicates if validation was successful or not.
      * @throws StoreException - Exception thrown if Error condition exists.
      */
-    private static boolean validateBackEndPersistenceStore() throws StoreException {
+    private static boolean validateCTSPersistenceStore() throws StoreException {
         boolean isBackEndValid = false;
         try {
             // Obtain a Connection.
             LDAPConnection ldapConnection = CTSDataLayer.getConnection();
-            LDAPSearchListener searchListener = ldapConnection.search(SESSION_FAILOVER_HA_BASE_DN,
-                    LDAPv2.SCOPE_ONE,FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, null, null);
-            if (searchListener == null)
+            LDAPSearchResults searchResults = ldapConnection.search(SESSION_FAILOVER_HA_BASE_DN,
+                    LDAPv2.SCOPE_ONE,FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, new LDAPSearchConstraints());
+            if ( (searchResults == null) || (searchResults.getCount() <= 0) )
                 { return isBackEndValid; }
-            LDAPMessage message = searchListener.getResponse();
-            if (message == null)
-                { return isBackEndValid; }
-
-            DEBUG.error("Validation of BackEnd Persistence Store for base container: " + SESSION_FAILOVER_HA_BASE_DN +
-                    ", yielded Result Message:[" + message.toString() + "]");
-            /**
-             if (iso.getResultCode() == ResultCode.SUCCESS) {
-             final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-             DEBUG.message(message.toString());
-             } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
-             final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-             DEBUG.error(message.toString());
-             } else {
-             final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
-             DEBUG.error(message.toString());
-             throw new StoreException(message.toString());
-             }
-             **/
+            DEBUG.message("Validation of BackEnd Persistence Store for base container: " + SESSION_FAILOVER_HA_BASE_DN +
+                    ", yielded Result Count:[" + searchResults.getCount() + "]");
+            final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
+            DEBUG.message(message.toString());
             // Release the Connection.
             CTSDataLayer.releaseConnection(ldapConnection);
-
+            isBackEndValid = true;       // Indicate we have a valid backEnd.
         } catch (LDAPException ldapException) {
-            DEBUG.error("Unable to Access and Validate the Shared SMDataLayer Root Container for Session Persistence!",
+            DEBUG.error("Excepotion Occurred, Unable to Access and Validate the Shared SMDataLayer Root Container for Session Persistence!",
                     ldapException);
         }
-        // Return the Result.
+        // Return the Validation Indicator.
         return isBackEndValid;
-    }
-
-    /**
-     * Prepare the Internal Connection for Use as our
-     * Session Persistent store.
-     *
-     * @throws StoreException
-     */
-    @Deprecated
-    private synchronized static void prepareInternalConnection() throws StoreException {
-        try {
-            // Using Embedded Directory Store or where ever the OpenAM Configuration Store resides.
-            try {
-                icConn = InternalClientConnection.getRootConnection();
-                icConnAvailable = true;
-            } catch (ExceptionInInitializerError exceptionInInitializerError) {
-                DEBUG.error("Unable to obtain the Internal Client Connection for CTS Persistence, will attempt External!",exceptionInInitializerError);
-            }
-            // If we were not able to obtain an Internal Connection,
-            // now try the Service Management Data Layer.
-            if (icConn == null)
-            {
-                DEBUG.error("Internal Client Connection was not obtained, Session Persistence will be Ignored!");
-                icConnAvailable = false;
-                return;
-            }
-
-            // Continue with established Connection to ensure we have our top level DN for our Storage use.
-            InternalSearchOperation iso = icConn.processSearch(SESSION_FAILOVER_HA_BASE_DN,
-                    SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
-                    0, 0, false, FAMRECORD_FILTER, returnAttrs_DN_ONLY);
-            DEBUG.warning("Search for base container: " + SESSION_FAILOVER_HA_BASE_DN +
-                    ", yielded Result Code:[" + iso.getResultCode().toString() + "]");
-            if (iso.getResultCode() == ResultCode.SUCCESS) {
-                final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-                DEBUG.message(message.toString());
-            } else if (iso.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-                icConnAvailable = false;
-                DEBUG.error(message.toString());
-            } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(SESSION_FAILOVER_HA_BASE_DN, iso.getResultCode().toString());
-                DEBUG.error(message.toString());
-                icConnAvailable = false;
-                throw new StoreException(message.toString());
-            }
-        } catch (DirectoryException directoryException) {
-            DEBUG.error("Unable to obtain the Internal Root Container for Session Persistence!",
-                    directoryException);
-            icConnAvailable = false;
-        }
     }
 
 }

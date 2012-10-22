@@ -182,9 +182,9 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
      * @throws com.iplanet.dpro.session.exceptions.StoreException
      *
      */
-    public JMQSessionRepository getInstance() throws StoreException {
+    public static JMQSessionRepository getInstance() throws StoreException {
         initPersistSession();
-        SystemTimer.getTimer().schedule(this, new Date((
+        SystemTimer.getTimer().schedule(instance, new Date((
                 System.currentTimeMillis() / 1000) * 1000));
         return instance;
     }
@@ -495,43 +495,43 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
 
     }
 
-    @Override
+    //@Override
     public DBStatistics getDBStatistics() {
         // TODO
         return null;
     }
 
-    @Override
+    //@Override
     public void delete(String id) throws StoreException, NotFoundException {
         // TODO
     }
 
-    @Override
+    //@Override
     public void deleteExpired(long expDate) throws StoreException {
         // TODO
     }
 
-    @Override
+    //@Override
     public void write(AMRootEntity amRootEntity) throws StoreException {
         // TODO
     }
 
-    @Override
+    //@Override
     public AMRootEntity read(String id) throws StoreException, NotFoundException {
         return null;  // TODO
     }
 
-    @Override
+    //@Override
     public Set<String> readWithSecKey(String id) throws StoreException, NotFoundException {
         return null;  // TODO
     }
 
-    @Override
+    //@Override
     public void shutdown() {
         // TODO
     }
 
-    @Override
+    //@Override
     public Map<String, Long> getRecordCount(String id) throws StoreException {
         return null;  // TODO
     }

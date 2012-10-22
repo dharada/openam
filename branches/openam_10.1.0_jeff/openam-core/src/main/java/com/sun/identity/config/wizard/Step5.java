@@ -135,15 +135,13 @@ public class Step5 extends AjaxPage {
         } else {
             try {
                 URL hostURL = new URL(primaryURL);
-                if ( (hostURL.getHost() == null) || (hostURL.getHost().trim().isEmpty()) ||
-                     (hostURL.getPath() == null) || (hostURL.getPath().trim().isEmpty()) ||
-                     (hostURL.getPath().trim().equalsIgnoreCase("/"))   ) {
+                if ( (hostURL.getHost() == null) || (hostURL.getHost().trim().isEmpty()) ) {
                     writeToResponse(getLocalizedString("missing.host.name"));
                     returnVal = true;
-                } else if ( (hostURL.getHost().trim().endsWith(".")) || (hostURL.getHost().trim().endsWith("?")) ||
-                            (hostURL.getHost().trim().endsWith("&")) || (hostURL.getHost().trim().endsWith(":")) ) {
-                        writeToResponse(getLocalizedString("primary.url.is.invalid"));
-                        returnVal = true;
+                } else if ( (hostURL.getPath() == null) || (hostURL.getPath().trim().isEmpty()) ||
+                            (hostURL.getPath().trim().equalsIgnoreCase("/")) ) {
+                    writeToResponse(getLocalizedString("primary.url.no.uri"));
+                    returnVal = true;
                 } else {
                     getContext().setSessionAttribute(
                             SessionAttributeNames.LB_PRIMARY_URL, primaryURL);
@@ -165,32 +163,12 @@ public class Step5 extends AjaxPage {
      */
     public boolean validateSessionHASFO() {
         boolean returnVal = false;
-        Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
-        if (sessionHASFOEnabled)
-        {
-            // todo fix....
-            // Check to ensure we have a Site Name an a URL only if
-            // Session HA SFO Enabled.
-            String siteName = getContext().getRequestParameter(SessionAttributeNames.LB_SITE_NAME);
-            String primaryURL = getContext().getRequestParameter(SessionAttributeNames.LB_PRIMARY_URL);
-            if ((siteName == null) || (siteName.trim().isEmpty())) {
-                writeInvalid(getLocalizedString("missing.site.name"));
-                returnVal = true;
-            } else if ((primaryURL == null) || (primaryURL.trim().isEmpty())) {
-                writeInvalid(getLocalizedString("missing.primary.url"));
-                returnVal = true;
-            } else {
-                getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
-                        sessionHASFOEnabled);
-                writeValid("ok.label");
-            }
-        } else {
-            // The session HA SFO Indicator is Off/UnChecked, so allow the setting,
-            // regardless of other fields on form.
-            getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
+        boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
+         // The session HA SFO Indicator is On/Checked or Off/UnChecked, so allow the setting,
+         // regardless of other fields on form.
+         getContext().setSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO,
                     sessionHASFOEnabled);
-            writeValid("ok.label");
-        }
+            writeValid("ok");
         setPath(null);
         return returnVal;
     }

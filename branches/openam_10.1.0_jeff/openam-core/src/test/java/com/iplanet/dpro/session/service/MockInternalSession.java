@@ -26,42 +26,44 @@
  * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
+package com.iplanet.dpro.session.service;
 
-package com.iplanet.dpro.session.service.store;
+import com.sun.identity.sm.model.AMRecord;
+import com.sun.identity.sm.model.FAMRecord;
 
-import org.junit.Ignore;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
+import java.io.Serializable;
 
 /**
- * AMSessionRepositoryEncodingTest Tester.
+ * MockInternalSession Test POJO.
  *
  * @author jeff.schenk@forgerock.com
  * @version 10.1
  * @since <pre>Aug 29, 2012</pre>
  */
-public class AMSessionRepositoryEncodingTest {
+public class MockInternalSession implements Serializable {
+    private static final long serialVersionUID = 101L;   //  10.1
 
-    @BeforeClass
-    public void before() throws Exception {
+    private AMRecord amRecord;
+
+    private FAMRecord famRecord;
+
+    public MockInternalSession() {
     }
 
-    @AfterClass
-    public void after() throws Exception {
+    public AMRecord getAmRecord() {
+        return amRecord;
     }
 
-    @Ignore
-    public void testEncoding() throws Exception {
-
-
+    public void setAmRecord(AMRecord amRecord) {
+        this.amRecord = amRecord;
     }
 
+    public FAMRecord getFamRecord() {
+        return famRecord;
+    }
 
-} 
+    public void setFamRecord(FAMRecord famRecord) {
+        this.famRecord = famRecord;
+    }
+
+}
