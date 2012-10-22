@@ -23,7 +23,47 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-package org.forgerock.openam.session.ha.amsessionrepository.store;
+package com.iplanet.dpro.session.service.store;
+
+import com.sun.identity.sm.model.AMRecord;
+import com.sun.identity.sm.model.FAMRecord;
+
+import java.io.Serializable;
+
+/**
+ * MockInternalSession Test POJO.
+ *
+ * @author jeff.schenk@forgerock.com
+ * @version 10.1
+ * @since <pre>Aug 29, 2012</pre>
+ */
+public class MockInternalSession implements Serializable {
+    private static final long serialVersionUID = 101L;   //  10.1
+
+    private AMRecord amRecord;
+
+    private FAMRecord famRecord;
+
+    public MockInternalSession() {
+    }
+
+    public AMRecord getAmRecord() {
+        return amRecord;
+    }
+
+    public void setAmRecord(AMRecord amRecord) {
+        this.amRecord = amRecord;
+    }
+
+    public FAMRecord getFamRecord() {
+        return famRecord;
+    }
+
+    public void setFamRecord(FAMRecord famRecord) {
+        this.famRecord = famRecord;
+    }
+
+}

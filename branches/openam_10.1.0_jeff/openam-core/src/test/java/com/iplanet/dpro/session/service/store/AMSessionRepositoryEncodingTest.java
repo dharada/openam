@@ -27,7 +27,7 @@
  *
  */
 
-package org.forgerock.openam.session.ha.amsessionrepository.store;
+package com.iplanet.dpro.session.service.store;
 
 import org.junit.Ignore;
 import org.testng.annotations.AfterClass;

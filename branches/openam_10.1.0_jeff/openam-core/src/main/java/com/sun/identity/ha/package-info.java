@@ -22,24 +22,13 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: FAMRecordPersister.java,v 1.2 2008/06/25 05:43:27 qcheng Exp $
+ * $Id: package-info.java,v 1.2 2008/06/25 05:43:27 qcheng Exp $
  *
  */
-
-/*
- * Portions Copyrighted [2010] [ForgeRock AS]
- */
-
-package com.sun.identity.ha;
-
-import org.forgerock.openam.session.model.FAMRecord;
-
+ 
 /**
- * FAMRecordPersister is an interface. It sends FAMRecord and processes
- * return message, also reformats the message to FAMRecord.
+ * This package contains classes that represent the data structure 
+ * and method to store/recover persistent object in failover mode.
  */
-public interface FAMRecordPersister {
-    public FAMRecord send(FAMRecord famRecord) throws Exception;
-
-    public void close() throws Exception;
-}
+@Deprecated
+package com.sun.identity.ha;

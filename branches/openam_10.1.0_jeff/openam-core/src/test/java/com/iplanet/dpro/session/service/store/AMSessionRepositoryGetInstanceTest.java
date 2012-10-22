@@ -27,16 +27,15 @@
  *
  */
 
-package org.forgerock.openam.session.ha.amsessionrepository.store;
+package com.iplanet.dpro.session.service.store;
 
 import com.iplanet.am.util.SystemProperties;
 import com.iplanet.dpro.session.service.AMSessionRepository;
 import com.iplanet.dpro.session.service.SessionRepository;
-import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.junit.Ignore;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
@@ -66,7 +65,7 @@ public class AMSessionRepositoryGetInstanceTest {
         SystemProperties systemProperties = new SystemProperties();
         AMSessionRepository amSessionRepository = SessionRepository.getInstance();
         assertNotNull(amSessionRepository);
-        assertEquals(OpenDJPersistentStore.class.getName(), amSessionRepository.getClass().getName());
+        assertEquals(CTSPersistentStore.class.getName(), amSessionRepository.getClass().getName());
     }
 
 

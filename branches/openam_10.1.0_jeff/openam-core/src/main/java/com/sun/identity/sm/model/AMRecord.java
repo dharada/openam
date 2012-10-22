@@ -26,7 +26,9 @@
  * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-package org.forgerock.openam.session.model;
+package com.sun.identity.sm.model;
+
+import org.forgerock.openam.session.model.AMRootEntity;
 
 import java.util.HashMap;
 import java.util.Map;

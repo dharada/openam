@@ -26,10 +26,9 @@
  * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-package org.forgerock.openam.session.ha.amsessionstore.store;
+package com.sun.identity.sm.ldap;
 
 import com.iplanet.am.util.SystemProperties;
-import com.sun.identity.shared.Constants;
 
 import java.io.Serializable;
 

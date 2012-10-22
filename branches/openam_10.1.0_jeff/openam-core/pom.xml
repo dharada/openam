@@ -124,6 +124,12 @@
     <dependencies>
         <dependency>
             <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-locale</artifactId>
+            <version>10.1.JEFF-SNAPSHOT</version>
+            <!-- This Version -->
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-shared</artifactId>
             <version>10.1.JEFF-SNAPSHOT</version>
             <!-- This Version -->

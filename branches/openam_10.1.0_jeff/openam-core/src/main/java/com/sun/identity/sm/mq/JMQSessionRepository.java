@@ -29,13 +29,12 @@
 /**
  * Portions Copyrighted 2011-2012 ForgeRock AS
  */
-package org.forgerock.openam.session.ha.amsessionstore.store.mq;
+package com.sun.identity.sm.mq;
 
 import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.SessionID;
 import com.iplanet.dpro.session.exceptions.NotFoundException;
 import com.iplanet.dpro.session.exceptions.StoreException;
-import com.iplanet.dpro.session.service.SessionServiceConfigurationReferenceObject;
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.common.SystemTimer;
 import com.iplanet.am.util.SystemProperties;
@@ -50,7 +49,7 @@ import javax.jms.IllegalStateException;
 
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
-import org.forgerock.openam.session.model.FAMRecord;
+import com.sun.identity.sm.model.FAMRecord;
 import com.sun.identity.ha.FAMRecordPersister;
 import com.sun.identity.ha.FAMPersisterManager;
 import com.sun.identity.shared.Constants;
@@ -179,7 +178,7 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
     /**
      * Provide Service Instance Access to our Singleton
      *
-     * @return OpenDJPersistentStore Singleton Instance.
+     * @return CTSPersistentStore Singleton Instance.
      * @throws com.iplanet.dpro.session.exceptions.StoreException
      *
      */

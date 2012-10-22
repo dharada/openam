@@ -1,4 +1,4 @@
-package org.forgerock.openam.session.model;
+package com.sun.identity.sm.model;
 
 /**
  * Type of AM Session Repository Deferred Operation to be performed.

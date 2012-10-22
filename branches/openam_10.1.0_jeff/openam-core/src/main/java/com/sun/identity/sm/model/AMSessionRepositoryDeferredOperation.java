@@ -26,7 +26,7 @@
  * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
-package org.forgerock.openam.session.model;
+package com.sun.identity.sm.model;
 
 import java.io.Serializable;
 

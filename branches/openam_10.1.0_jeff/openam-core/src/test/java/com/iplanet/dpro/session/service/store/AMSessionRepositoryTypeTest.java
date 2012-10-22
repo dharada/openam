@@ -27,10 +27,10 @@
  *
  */
 
-package org.forgerock.openam.session.ha.amsessionrepository.store;
+package com.iplanet.dpro.session.service.store;
 
 import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
-import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -94,7 +94,7 @@ public class AMSessionRepositoryTypeTest {
     public void testGetAMSessionRepositoryTypeImplementationClass() throws Exception {
 
         assertEquals(AMSessionRepositoryType.CONFIG.amSessionRepositoryImplementationClassName(),
-                OpenDJPersistentStore.class.getName());
+                CTSPersistentStore.class.getName());
 
     }
 

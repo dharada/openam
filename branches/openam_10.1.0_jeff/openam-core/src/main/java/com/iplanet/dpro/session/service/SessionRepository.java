@@ -29,6 +29,7 @@
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
 
 import java.lang.reflect.Method;
 
@@ -36,7 +37,7 @@ import java.lang.reflect.Method;
  *
  * <code>SessionRepository</code> represents the session
  * repository , default repository 
- * is <code>OpenDJPersistentStore</code> or can be overridden
+ * is <code>CTSPersistentStore</code> or can be overridden
  * by specifying a valid implementation class name for our
  * default Session Repository Class.
  *
@@ -44,11 +45,11 @@ import java.lang.reflect.Method;
 
 public class SessionRepository {
 
-    private static final String  OPENDJ_REPOSITORY_CLASS =
-            "org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore";
+    private static final String  DEFAULT_CTS_REPOSITORY_CLASS_NAME =
+            CTSPersistentStore.class.getName();
 
-    private static final String REPOSITORY_CLASS = SystemProperties.get(
-            AMSessionRepository.REPOSITORY_CLASS_PROPERTY, OPENDJ_REPOSITORY_CLASS);
+    private static final String CTS_REPOSITORY_CLASS_NAME = SystemProperties.get(
+            AMSessionRepository.CTS_REPOSITORY_CLASS_PROPERTY, DEFAULT_CTS_REPOSITORY_CLASS_NAME);
 
     private static AMSessionRepository sessionRepository = null;
 
@@ -68,7 +69,7 @@ public class SessionRepository {
     public static synchronized AMSessionRepository getInstance()
             throws Exception {
         if (sessionRepository == null) {
-            Class c = Class.forName(REPOSITORY_CLASS);
+            Class c = Class.forName(CTS_REPOSITORY_CLASS_NAME);
             Method factoryMethod = c.getDeclaredMethod("getInstance");
             sessionRepository  = (AMSessionRepository) factoryMethod.invoke(null, null);
         }

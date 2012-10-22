@@ -300,7 +300,7 @@
                             <filtering>false</filtering>
                         </webResource>
                         <webResource>
-                            <directory>${project.basedir}/../openam-session-ha/openam-session-ha-core/src/main/resources/ldif
+                            <directory>${project.basedir}/../openam-core/src/main/resources/ha_sfo/ldif
                             </directory>
                             <includes>
                                 <!-- The xx-...ldif Files get moved into Place when installing OpenDJ. -->
@@ -407,12 +407,6 @@
         <dependency>
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-saml2-schema</artifactId>
-            <version>10.1.JEFF-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-session-ha-core</artifactId>
             <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
 

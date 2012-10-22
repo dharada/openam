@@ -23,7 +23,7 @@
  *
  */
 
-package org.forgerock.openam.session.ha.amsessionstore.store.opendj;
+package com.sun.identity.sm.ldap;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,9 +34,9 @@ import java.util.Set;
 
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.debug.Debug;
-import org.forgerock.openam.session.model.AMRecordDataEntry;
 import com.sun.identity.common.CaseInsensitiveHashMap;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import com.sun.identity.sm.model.AMRecordDataEntry;
 import org.opends.server.types.Attribute;
 import org.opends.server.types.AttributeValue;
 import org.opends.server.types.SearchResultEntry;
@@ -45,7 +45,7 @@ import org.opends.server.types.SearchResultEntry;
  *
  * @author steve
  */
-public class EmbeddedSearchResultIterator {
+public class CTSEmbeddedSearchResultIterator {
 
     /**
      * Debug Logging
@@ -66,7 +66,7 @@ public class EmbeddedSearchResultIterator {
      * @param results LDAP Search Results object.
      * @param excludeDNs a set of distinguished names to be excluded
      */
-    public EmbeddedSearchResultIterator(LinkedList results, Set excludeDNs) {
+    public CTSEmbeddedSearchResultIterator(LinkedList results, Set excludeDNs) {
         resultIter = results.iterator();
         this.excludeDNs = excludeDNs;
         hasExcludeDNs = (excludeDNs != null) && !excludeDNs.isEmpty();

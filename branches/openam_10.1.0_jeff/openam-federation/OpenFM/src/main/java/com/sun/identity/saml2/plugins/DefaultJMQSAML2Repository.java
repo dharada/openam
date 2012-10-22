@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import javax.jms.IllegalStateException;
-import org.forgerock.openam.session.model.FAMRecord;
+import com.sun.identity.sm.model.FAMRecord;
 import com.sun.identity.ha.FAMRecordPersister;
 import com.sun.identity.ha.FAMPersisterManager;
 import com.sun.identity.saml2.common.SAML2Utils;

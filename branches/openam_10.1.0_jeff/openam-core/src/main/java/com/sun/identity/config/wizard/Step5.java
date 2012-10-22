@@ -90,9 +90,9 @@ public class Step5 extends AjaxPage {
      * @return boolean indicator to view.
      */
     public boolean clear() {
-        getContext().removeSessionAttribute(SetupConstants.LB_SITE_NAME);
-        getContext().removeSessionAttribute(SetupConstants.LB_PRIMARY_URL);
-        getContext().removeSessionAttribute(SetupConstants.LB_SESSION_HA_SFO);
+        getContext().removeSessionAttribute(SessionAttributeNames.LB_SITE_NAME);
+        getContext().removeSessionAttribute(SessionAttributeNames.LB_PRIMARY_URL);
+        getContext().removeSessionAttribute(SessionAttributeNames.LB_SESSION_HA_SFO);
         setPath(null);
         return false;
     }
@@ -135,7 +135,9 @@ public class Step5 extends AjaxPage {
         } else {
             try {
                 URL hostURL = new URL(primaryURL);
-                if ( (hostURL.getHost() == null) || (hostURL.getHost().trim().isEmpty()) ) {
+                if ( (hostURL.getHost() == null) || (hostURL.getHost().trim().isEmpty()) ||
+                     (hostURL.getPath() == null) || (hostURL.getPath().trim().isEmpty()) ||
+                     (hostURL.getPath().trim().equalsIgnoreCase("/"))   ) {
                     writeToResponse(getLocalizedString("missing.host.name"));
                     returnVal = true;
                 } else if ( (hostURL.getHost().trim().endsWith(".")) || (hostURL.getHost().trim().endsWith("?")) ||
@@ -164,17 +166,17 @@ public class Step5 extends AjaxPage {
     public boolean validateSessionHASFO() {
         boolean returnVal = false;
         Boolean sessionHASFOEnabled = toBoolean("sessionHASFOEnabled");
-        if (sessionHASFOEnabled.booleanValue())
+        if (sessionHASFOEnabled)
         {
-            // todo fix.
+            // todo fix....
             // Check to ensure we have a Site Name an a URL only if
             // Session HA SFO Enabled.
-            String siteName = toString("host");
-            String primaryURL = toString("port");
-            if ((siteName == null) || (siteName.isEmpty())) {
+            String siteName = getContext().getRequestParameter(SessionAttributeNames.LB_SITE_NAME);
+            String primaryURL = getContext().getRequestParameter(SessionAttributeNames.LB_PRIMARY_URL);
+            if ((siteName == null) || (siteName.trim().isEmpty())) {
                 writeInvalid(getLocalizedString("missing.site.name"));
                 returnVal = true;
-            } else if ((primaryURL == null) || (primaryURL.isEmpty())) {
+            } else if ((primaryURL == null) || (primaryURL.trim().isEmpty())) {
                 writeInvalid(getLocalizedString("missing.primary.url"));
                 returnVal = true;
             } else {

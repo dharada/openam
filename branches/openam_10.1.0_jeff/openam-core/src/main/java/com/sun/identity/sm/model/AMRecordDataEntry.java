@@ -27,7 +27,7 @@
  *
  */
 
-package org.forgerock.openam.session.model;
+package com.sun.identity.sm.model;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -44,10 +44,11 @@ import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.encode.Base64;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.forgerock.i18n.LocalizableMessage;
 import com.iplanet.dpro.session.exceptions.StoreException;
-import org.forgerock.openam.session.ha.amsessionstore.store.opendj.OpenDJPersistentStore;
 import org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages;
+import org.forgerock.openam.session.model.AMRootEntity;
 import org.opends.server.protocols.ldap.LDAPAttribute;
 import org.opends.server.types.RawAttribute;
 
@@ -95,7 +96,7 @@ public class AMRecordDataEntry {
     private static void initialize() {
         List<String> valueList = new ArrayList<String>();
         valueList.add(Constants.TOP);
-        valueList.add(OpenDJPersistentStore.FR_FAMRECORD);
+        valueList.add(CTSPersistentStore.FR_FAMRECORD);
         LDAPAttribute ldapAttr = new LDAPAttribute(Constants.OBJECTCLASS, valueList);
         objectClasses = new ArrayList<LDAPAttribute>();
         objectClasses.add(ldapAttr);

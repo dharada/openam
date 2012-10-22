@@ -49,13 +49,14 @@ import org.forgerock.openam.session.model.DBStatistics;
  * <code>retrieve</code> , <code>save</code> , <code>delete</code> the session
  * from the session repository.
  *
- * @see <code>OpenDJPersistentStore</code>
+ * @see <code>CTSPersistentStore</code>
  */
 public interface AMSessionRepository {
 
     static final String DEBUG_NAME = "amSessionRepository";
 
-    static final String REPOSITORY_CLASS_PROPERTY =
+    // TODO This property Name Value should probably change.
+    static final String CTS_REPOSITORY_CLASS_PROPERTY =
             "com.sun.am.session.SessionRepositoryImpl";
 
     static final String IS_SFO_ENABLED =

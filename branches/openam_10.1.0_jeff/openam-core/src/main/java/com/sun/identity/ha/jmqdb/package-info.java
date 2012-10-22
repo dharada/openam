@@ -30,5 +30,5 @@
  * This package contains classes that represent JMQ based repository 
  * to store/recover persistent object in failover mode.
  */
-
+@Deprecated
 package com.sun.identity.ha.jmqdb;

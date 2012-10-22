@@ -27,7 +27,7 @@
  *
  */
 
-package org.forgerock.openam.session.ha.amsessionstore.store.opendj;
+package com.sun.identity.sm.ldap;
 
 import java.util.*;
 
@@ -44,15 +44,20 @@ import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.ldap.*;
 import com.sun.identity.shared.ldap.LDAPException;
-import com.sun.identity.sm.ldap.OpenDJSMDataLayerAccessor;
-import org.forgerock.openam.session.model.*;
+import com.sun.identity.sm.model.AMRecord;
+import com.sun.identity.sm.model.AMRecordDataEntry;
+import com.sun.identity.sm.model.AMSessionRepositoryDeferredOperation;
 
+import com.sun.identity.sm.model.FAMRecord;
 import org.forgerock.i18n.LocalizableMessage;
+import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.iplanet.dpro.session.exceptions.NotFoundException;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import org.forgerock.openam.session.model.AMRootEntity;
+import org.forgerock.openam.session.model.DBStatistics;
 import org.opends.server.core.AddOperation;
 import org.opends.server.core.DeleteOperation;
 import org.opends.server.core.ModifyOperation;
@@ -60,9 +65,6 @@ import org.opends.server.protocols.internal.InternalClientConnection;
 import org.opends.server.protocols.internal.InternalSearchOperation;
 import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
-
-
-import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
 
 /**
  * Provide Implementation of AMSessionRepository using the internal/external
@@ -74,7 +76,7 @@ import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
  * @author steve
  * @author jeff.schenk@forgerock.com
  */
-public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSessionRepository {
+public class CTSPersistentStore extends GeneralTaskRunnable implements AMSessionRepository {
 
     /**
      * Globals Constants, so not to pollute entire product.
@@ -92,12 +94,13 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Singleton Instance
      */
-    private static volatile OpenDJPersistentStore instance;
+    private static volatile CTSPersistentStore instance = new CTSPersistentStore();
+    private static boolean initialized = false;
 
     /**
      * Shared SM Data Layer Accessor.
      */
-    private static volatile OpenDJSMDataLayerAccessor openDJSMDataLayerAccessor;
+    private static volatile CTSDataLayer CTSDataLayer;
 
     /**
      * Debug Logging
@@ -111,7 +114,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private static Thread storeThread;
 
     private static final int SLEEP_INTERVAL = 60 * 1000;
-    private final static String ID = "OpenDJPersistentStore";
+    private final static String ID = "CTSPersistentStore";
 
     /**
      * Grace Period
@@ -273,18 +276,18 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     /**
      * Protected Singleton from being Instantiated.
      */
-    private OpenDJPersistentStore() {
+    private CTSPersistentStore() {
     }
 
     /**
      * Provide Service Instance Access to our Singleton
      *
-     * @return OpenDJPersistentStore Singleton Instance.
+     * @return CTSPersistentStore Singleton Instance.
      * @throws StoreException
      */
     public AMSessionRepository getInstance() throws StoreException {
         try {
-            if (instance == null) {
+            if (!initialized) {
                 // Initialize the Initial Singleton Service Instance.
                 initialize();
             }
@@ -300,12 +303,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      */
     private synchronized static void initialize()
             throws StoreException {
-        // Establish our instance.
-        instance = new OpenDJPersistentStore();
         // Initialize this Service
         if (DEBUG.messageEnabled()) {
             DEBUG.message("Initializing Configuration for the OpenAM Session Repository using Implementation Class: " +
-                    OpenDJPersistentStore.class.getSimpleName());
+                    CTSPersistentStore.class.getSimpleName());
         }
         // *******************************
         // Set up Shutdown Thread Hook.
@@ -327,14 +328,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             DEBUG.error("Backend Persistent Store requests will be Ignored, until this condition is resolved!");
             return;
         }
-        //
-        // Interrogate the Session Service Sub Configuration Parameters.
-        // To determine where our store lies.
-        // Our Store can be our embedded or an External Directory where our configuration
-        // is stored.
-        // **********************************************************************************************
-        prepareInternalConnection();
-
         // ******************************************
         // Start our AM Repository Store Thread.
         storeThread = new Thread(instance);
@@ -345,14 +338,16 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         // Finish Initialization
         if (DEBUG.messageEnabled()) {
             DEBUG.message("Successful Configuration Initialization for the OpenAM Session Repository using Implementation Class: " +
-                    OpenDJPersistentStore.class.getSimpleName());
+                    CTSPersistentStore.class.getSimpleName());
         }
+        // Indicate we are Initialized.
+        initialized=true;
     }
 
     /**
      * Perform Service Shutdown.
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void shutdown() {
         internalShutdown();
         DEBUG.warning(DB_AM_SHUT.get().toString());
@@ -370,7 +365,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * Service Thread Run Process Loop.
      */
     @SuppressWarnings("SleepWhileInLoop")
-    @Override
+    //@Override - Compiling as 1.5
     public void run() {
         while (!shutdown) {
             try {
@@ -426,7 +421,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @param is reference to <code>InternalSession</code> object being saved.
      * @throws Exception if anything goes wrong.
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void save(InternalSession is) throws Exception {
         if (is == null) {
             return;
@@ -467,7 +462,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @throws com.iplanet.dpro.session.exceptions.StoreException
      *
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void write(AMRootEntity amRootEntity) throws StoreException {
         if (amRootEntity == null) {
             return;
@@ -620,7 +615,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @throws com.iplanet.dpro.session.exceptions.NotFoundException
      *
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void delete(String id) throws StoreException, NotFoundException {
         deleteImmediate(id);
     }
@@ -631,7 +626,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @param sid session ID.
      * @throws Exception if anything goes wrong.
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void delete(SessionID sid) throws Exception {
         deleteImmediate(sid);
     }
@@ -678,7 +673,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      *
      * @throws Exception
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void deleteExpired() throws Exception {
         deleteExpired(nowInSeconds());
     }
@@ -690,7 +685,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @param expDate The expDate in seconds
      * @throws StoreException
      */
-    @Override
+    //@Override - Compiling as 1.5
     public void deleteExpired(long expDate)
             throws StoreException {
         try {
@@ -756,10 +751,10 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * Retrieve a persisted Internal Session.
      *
      * @param sid session ID
-     * @return
+     * @return  InternalSession
      * @throws Exception
      */
-    @Override
+    //@Override - Compiling as 1.5
     public InternalSession retrieve(SessionID sid) throws Exception {
         try {
             String key = SessionUtils.getEncryptedStorageKey(sid);
@@ -775,7 +770,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
             // Return Internal Session.
             return is;
         } catch (Exception e) {
-            DEBUG.error("OpenDJPersistentStore.retrieve(): failed retrieving "
+            DEBUG.error("CTSPersistentStore.retrieve(): failed retrieving "
                     + "session", e);
             return null;
         }
@@ -790,7 +785,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @throws Exception if there is any problem with accessing the session
      *                   repository.
      */
-    @Override
+    //@Override - Compiling as 1.5
     public Map<String, String> getSessionsByUUID(String uuid) throws SessionException {
         try {
             AMRecord amRecord = (AMRecord) this.read(uuid);
@@ -811,7 +806,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @throws NotFoundException
      * @throws StoreException
      */
-    @Override
+    //@Override - Compiling as 1.5
     public AMRootEntity read(String id)
             throws NotFoundException, StoreException {
         if ((id == null) || (id.isEmpty())) {
@@ -836,7 +831,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                             (SearchResultEntry) searchResult.get(0);
                     List<Attribute> attributes = entry.getAttributes();
                     Map<String, Set<String>> results =
-                            EmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
+                            CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
                     // UnMarshal
                     AMRecordDataEntry dataEntry = new AMRecordDataEntry(baseDN.toString(), AMRecord.READ, results);
                     // Return UnMarshaled Object
@@ -871,7 +866,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @throws StoreException
      * @throws NotFoundException
      */
-    @Override
+    //@Override - Compiling as 1.5
     public Set<String> readWithSecKey(String id)
             throws StoreException, NotFoundException {
         try {
@@ -899,7 +894,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     for (SearchResultEntry entry : searchResult) {
                         List<Attribute> attributes = entry.getAttributes();
                         Map<String, Set<String>> results =
-                                EmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
+                                CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
                         Set<String> value = results.get(AMRecordDataEntry.DATA);
                         if (value != null && !value.isEmpty()) {
                             for (String v : value) {
@@ -940,7 +935,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      * @return
      * @throws StoreException
      */
-    @Override
+    //@Override - Compiling as 1.5
     public Map<String, Long> getRecordCount(String id)
             throws StoreException {
         try {
@@ -965,7 +960,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     for (SearchResultEntry entry : searchResult) {
                         List<Attribute> attributes = entry.getAttributes();
                         Map<String, Set<String>> results =
-                                EmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
+                                CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
 
                         String key = "";
                         Long expDate = new Long(0);
@@ -1016,7 +1011,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      *
      * @return
      */
-    @Override
+    //@Override - Compiling as 1.5
     public DBStatistics getDBStatistics() {
         DBStatistics stats = DBStatistics.getInstance();
 
@@ -1100,7 +1095,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
      *
      * @return long current run period.
      */
-    @Override
+    //@Override - Compiling as 1.5
     public long getRunPeriod() {
         return runPeriod;
     }
@@ -1190,8 +1185,8 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
     private synchronized static void prepareBackEndPersistenceStore() throws StoreException {
         DEBUG.error("Attempting to Prepare BackEnd Persistence Store for Session Services."); // TODO make level message
         try {
-            openDJSMDataLayerAccessor = OpenDJSMDataLayerAccessor.getSharedSMDataLayerAccessor();
-            if (openDJSMDataLayerAccessor == null)
+            CTSDataLayer = CTSDataLayer.getSharedSMDataLayerAccessor();
+            if (CTSDataLayer == null)
                 { throw new StoreException("Unable to obtain BackEnd Persistence Store for Session Services."); }
         } catch(Exception e) {
             DEBUG.error("Exception Occurred during attempt to access shared SM Data Layer!",e);
@@ -1220,7 +1215,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
         boolean isBackEndValid = false;
         try {
             // Obtain a Connection.
-            LDAPConnection ldapConnection = openDJSMDataLayerAccessor.getConnection(generateSecureMethodToken());
+            LDAPConnection ldapConnection = CTSDataLayer.getConnection();
             LDAPSearchListener searchListener = ldapConnection.search(SESSION_FAILOVER_HA_BASE_DN,
                     LDAPv2.SCOPE_ONE,FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, null, null);
             if (searchListener == null)
@@ -1245,7 +1240,7 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
              }
              **/
             // Release the Connection.
-            openDJSMDataLayerAccessor.releaseConnection(generateSecureMethodToken(), ldapConnection);
+            CTSDataLayer.releaseConnection(ldapConnection);
 
         } catch (LDAPException ldapException) {
             DEBUG.error("Unable to Access and Validate the Shared SMDataLayer Root Container for Session Persistence!",
@@ -1304,15 +1299,6 @@ public class OpenDJPersistentStore extends GeneralTaskRunnable implements AMSess
                     directoryException);
             icConnAvailable = false;
         }
-    }
-
-    /**
-     * Private Helper Method to Generate the Secure Token for Validation.
-     * @return
-     */
-    private static String generateSecureMethodToken() {
-        // TODO
-        return "1";
     }
 
 }
