@@ -171,6 +171,18 @@
             <!-- This Version -->
         </dependency>
 
+        <!-- LDAP APIs -->
+        <dependency>
+            <groupId>external</groupId>
+            <artifactId>OpenDJ</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.forgerock.opendj</groupId>
+            <artifactId>opendj-ldap-sdk</artifactId>
+        </dependency>
+
+        <!-- View Dependencies -->
         <dependency>
             <groupId>com.iplanet.jato</groupId>
             <artifactId>jato</artifactId>
@@ -518,14 +530,6 @@
         <dependency>
             <groupId>external</groupId>
             <artifactId>jss4</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>external</groupId>
-            <artifactId>OpenDJ</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.forgerock.opendj</groupId>
-            <artifactId>opendj-ldap-sdk</artifactId>
         </dependency>
         <dependency>
             <groupId>external</groupId>

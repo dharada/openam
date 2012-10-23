@@ -25,17 +25,13 @@
 
 package com.sun.identity.sm.ldap;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.common.CaseInsensitiveHashMap;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import com.sun.identity.shared.ldap.LDAPAttributeSet;
 import com.sun.identity.sm.model.AMRecordDataEntry;
 import org.opends.server.types.Attribute;
 import org.opends.server.types.AttributeValue;
@@ -134,5 +130,30 @@ public class CTSEmbeddedSearchResultIterator {
         }
         
         return (answer);
-    }    
+    }
+
+    public static Map<String, Set<String>> convertLDAPAttributeSetToMap(LDAPAttributeSet attributes) {
+        Map answer = null;
+        if ((attributes == null) || (attributes.size() <= 0)) {
+              return answer;
+        }
+        // Enumerate over Attributes.
+        Enumeration enumeration = attributes.getAttributes();
+        while(enumeration.hasMoreElements()) {
+            Attribute attribute = (Attribute) enumeration.nextElement();
+                if (attribute != null) {
+                    Set<String> strValues = new HashSet<String>();
+                    for(AttributeValue value : attribute) {
+                        strValues.add(value.toString());
+                    }
+                    if (answer == null) {
+                        answer = new CaseInsensitiveHashMap(10);
+                    }
+                    answer.put(attribute.getName(), strValues);
+                }
+            }
+        // Return Converted Data structure.
+        return answer;
+    }
+
 }

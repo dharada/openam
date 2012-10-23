@@ -43,8 +43,9 @@ import java.util.TimeZone;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.debug.Debug;
-import com.sun.identity.shared.encode.Base64;
+
 import com.sun.identity.sm.ldap.CTSPersistentStore;
+import org.apache.commons.codec.binary.Base64;
 import org.forgerock.i18n.LocalizableMessage;
 import com.iplanet.dpro.session.exceptions.StoreException;
 import org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages;
@@ -146,7 +147,7 @@ public class AMRecordDataEntry {
         if (attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB) != null) {
             Set<String> values = attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB);
             for (String value : values) {
-                record.setSerializedInternalSessionBlob(Base64.decode(value));
+                record.setSerializedInternalSessionBlob(Base64.decodeBase64(value));
             }
         }
 
@@ -251,9 +252,9 @@ public class AMRecordDataEntry {
         }
 
         if (record.getSerializedInternalSessionBlob() != null) {
-            set = new HashSet<String>();
-            set.add(Base64.encode(record.getSerializedInternalSessionBlob()));
-            attributeValues.put(SERIALIZED_INTERNAL_SESSION_BLOB, set);
+            Set byteSet = new HashSet<byte[]>();
+            byteSet.add(Base64.encodeBase64(record.getSerializedInternalSessionBlob()));
+            attributeValues.put(SERIALIZED_INTERNAL_SESSION_BLOB, byteSet);
         }
 
         if (record.getPrimaryKey() != null) {
