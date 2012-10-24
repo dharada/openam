@@ -26,8 +26,9 @@
                                                                                 
 --%>
 
-
-
+<%--
+   Portions Copyrighted 2012 ForgeRock Inc
+--%>
 
 <html>
 
@@ -45,22 +46,12 @@
 <% 
 String ServiceURI = (String) viewBean.getDisplayFieldValue(viewBean.SERVICE_URI);
 String encoded = "false";
-String orgValue = request.getParameter("realm");
-if ((orgValue == null) || (orgValue.length() == 0)) {
-    orgValue = request.getParameter("org");
-}
-if ((orgValue == null) || (orgValue.length() == 0)) {
-    orgValue = request.getParameter("domain");
-}
-orgValue = (String) viewBean.getEncodedInputValue(orgValue);
-String moduleValue = (String) viewBean.getEncodedInputValue(request.getParameter("module"));
 String gotoURL = (String) viewBean.getValidatedInputURL(
     request.getParameter("goto"), request.getParameter("encoded"), request);
-if (((orgValue != null) && (orgValue.length() != 0)) ||
-    ((moduleValue != null) && (moduleValue.length() != 0)) ||
-    ((gotoURL != null) && (gotoURL.length() != 0))) {
+if ((gotoURL != null) && (gotoURL.length() != 0)) {
     encoded = "true";
 }
+String encodedQueryParams = (String) viewBean.getEncodedQueryParams(request);
 %>
 
 <link rel="stylesheet" href="<%= ServiceURI %>/css/styles.css" type="text/css" />
@@ -200,8 +191,7 @@ if (((orgValue != null) && (orgValue.length() != 0)) ||
       <td>&nbsp;</td>
     </tr>
   </table>
-<input type="hidden" name="org" value="<%= orgValue %>">
-<input type="hidden" name="module" value="<%= moduleValue %>">
+<input type="hidden" name="SunQueryParamsString" value="<%= encodedQueryParams %>" />
 <input type="hidden" name="goto" value="<%= gotoURL %>">
 <input type="hidden" name="encoded" value="<%= encoded %>">
 <input type="hidden" name="new_org" value="true">

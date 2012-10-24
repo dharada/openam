@@ -26,7 +26,9 @@
                                                                                 
 --%>
 
-
+<%--
+   Portions Copyrighted 2012 ForgeRock Inc
+--%>
 
 
 <html>
@@ -190,6 +192,7 @@ if ((gotoURL != null) && (gotoURL.length() != 0)) {
       <td>&nbsp;</td>
     </tr>
   </table>
+<input type="hidden" name="SunQueryParamsString" value="<%= encodedQueryParams %>" />
 <input type="hidden" name="AMOrigURL" value="<%= viewBean.getDisplayFieldValue(viewBean.AM_ORIG_URL) %>" />
 <input type="hidden" name="goto" value="<%= gotoURL %>" />
 <input type="hidden" name="encoded" value="<%= encoded %>" />
