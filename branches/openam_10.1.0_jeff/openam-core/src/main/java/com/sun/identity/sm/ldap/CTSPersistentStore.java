@@ -163,16 +163,11 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     private final static String SKEY_FILTER_POST = ")";
     private final static String EXPDATE_FILTER_PRE = "(expirationDate<=";
     private final static String EXPDATE_FILTER_POST = ")";
-    private final static String NUM_SUB_ORD_ATTR = "numSubordinates";
-    private final static String ALL_ATTRS = "(" + NUM_SUB_ORD_ATTR + "=*)";
     /**
      * Return Attribute Constructs
      */
     private static LinkedHashSet<String> returnAttrs;
     private static String[] returnAttrs_ARRAY;
-
-    private static LinkedHashSet<String> numSubOrgAttrs;
-    private static String[] numSubOrgAttrs_ARRAY;
 
     private static LinkedHashSet<String> returnAttrs_PKEY_ONLY;
     private static String[] returnAttrs_PKEY_ONLY_ARRAY;
@@ -271,10 +266,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         returnAttrs_DN_ONLY = new LinkedHashSet<String>();
         returnAttrs_DN_ONLY.add("dn");
         returnAttrs_DN_ONLY_ARRAY = returnAttrs_DN_ONLY.toArray(new String[returnAttrs_DN_ONLY.size()]);
-
-        numSubOrgAttrs = new LinkedHashSet<String>();
-        numSubOrgAttrs.add(NUM_SUB_ORD_ATTR);
-        numSubOrgAttrs_ARRAY = numSubOrgAttrs.toArray(new String[numSubOrgAttrs.size()]);
 
         try {
             // Initialize the Initial Singleton Service Instance.
@@ -934,7 +925,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             // UnMarshal
             AMRecordDataEntry dataEntry = new AMRecordDataEntry(filter.toString(), AMRecord.READ, results);
             // Log Action
-            logAMRootEntity(dataEntry.getAMRecord(), "CTSPersistenceStore.read: \nBaseDN:[" + filter.toString() + "] ");
+            logAMRootEntity(dataEntry.getAMRecord(), "CTSPersistenceStore.readWithSecKey: \nBaseDN:[" + filter.toString() + "] ");
             // Return UnMarshaled Object
             Set<String> result = new HashSet<String>();
             Set<String> value = results.get(AMRecordDataEntry.DATA);
@@ -978,73 +969,77 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     //@Override - Compiling as 1.5
     public Map<String, Long> getRecordCount(String id)
             throws StoreException {
+        if ((id == null) || (id.isEmpty())) {
+            return null;
+        }
+        // Initialize LDAP Objects
+        LDAPConnection ldapConnection = null;
+        LDAPSearchResults searchResults = null;
         try {
             StringBuilder filter = new StringBuilder();
+            // Create Search Filter for our Secondary Key.
             filter.append(SKEY_FILTER_PRE).append(id).append(SKEY_FILTER_POST);
-
-
-            // TODO
-
-            InternalClientConnection icConn = InternalClientConnection.getRootConnection();
-            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
-                    SearchScope.SINGLE_LEVEL, DereferencePolicy.NEVER_DEREF_ALIASES,
-                    0, 0, false, filter.toString(), returnAttrs);
-            ResultCode resultCode = iso.getResultCode();
-
-
-            // Interrogate the LDAP Result Code.
-            if (resultCode == ResultCode.SUCCESS) {
-                LinkedList<SearchResultEntry> searchResult = iso.getSearchEntries();
-
-                if (!searchResult.isEmpty()) {
-                    Map<String, Long> result = new HashMap<String, Long>();
-
-                    for (SearchResultEntry entry : searchResult) {
-                        List<Attribute> attributes = entry.getAttributes();
-                        Map<String, Set<String>> results =
-                                CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
-
-                        String key = "";
-                        Long expDate = new Long(0);
-
-                        Set<String> value = results.get(AMRecordDataEntry.AUX_DATA);
-
-                        if (value != null && !value.isEmpty()) {
-                            for (String v : value) {
-                                key = v;
-                            }
-                        }
-
-                        value = results.get(AMRecordDataEntry.EXP_DATE);
-
-                        if (value != null && !value.isEmpty()) {
-                            for (String v : value) {
-                                expDate = AMRecordDataEntry.toAMDateFormat(v);
-                            }
-                        }
-
-                        result.put(key, expDate);
-                    }
-
-                    final LocalizableMessage message = DB_GET_REC_CNT_OK.get(id, Integer.toString(result.size()));
-                    DEBUG.message(message.toString());
-                    return result;
-                } else {
-                    return null;
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            // Perform the Search.
+            searchResults = ldapConnection.search(FAM_RECORDS_BASE_DN,
+                    LDAPv2.SCOPE_ONE, filter.toString(), returnAttrs_ARRAY, false, new LDAPSearchConstraints());
+            // Anything Found?
+            if ((searchResults == null) || (searchResults.getCount() <= 0) || (!searchResults.hasMoreElements())) {
+                return null;
+            }
+            // Process our Results.
+            Map<String, Long> result = new HashMap<String, Long>();
+            while(searchResults.hasMoreElements()) {
+                LDAPEntry ldapEntry = searchResults.next();
+                if (ldapEntry == null) {
+                    continue;
                 }
-            } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
+                // Process the Entries Attribute Set.
+                LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
+                LDAPAttributeSet attributes = ldapEntry.getAttributeSet();
+                // Convert LDAP attributes to a simple Map.
+                Map<String, Set<String>> results =
+                        CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
+
+                // Get the AuxData.
+                String key = "";
+                Long expDate = new Long(0);
+                Set<String> value = results.get(AMRecordDataEntry.AUX_DATA);
+                if (value != null && !value.isEmpty()) {
+                    for (String v : value) {
+                        key = v;
+                    }
+                }
+                // Get our Expiration Date.
+                value = results.get(AMRecordDataEntry.EXP_DATE);
+                if (value != null && !value.isEmpty()) {
+                    for (String v : value) {
+                        expDate = AMRecordDataEntry.toAMDateFormat(v);
+                    }
+                }
+                result.put(key, expDate);
+            }
+            // Return our Results.
+            final LocalizableMessage message = DB_GET_REC_CNT_OK.get(id, Integer.toString(result.size()));
+            DEBUG.message(message.toString());
+            return result;
+        } catch (LDAPException ldapException) {
+            if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 final LocalizableMessage message = DB_ENT_NOT_P.get(FAM_RECORDS_BASE_DN);
                 DEBUG.message(message.toString());
                 return null;
             } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(FAM_RECORDS_BASE_DN, resultCode.toString());
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(FAM_RECORDS_BASE_DN,
+                        ldapException.getLDAPErrorMessage());
                 DEBUG.warning(message.toString());
                 throw new StoreException(message.toString());
             }
-        } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(FAM_RECORDS_BASE_DN);
-            DEBUG.warning(message.toString(), dex);
-            throw new StoreException(message.toString(), dex);
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection);
+            }
         }
     }
 
@@ -1056,82 +1051,9 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     //@Override - Compiling as 1.5
     public DBStatistics getDBStatistics() {
         DBStatistics stats = DBStatistics.getInstance();
-
-        try {
-            stats.setNumRecords(getNumSubordinates());
-        } catch (StoreException se) {
-            final LocalizableMessage message = DB_STATS_FAIL.get(se.getMessage());
-            DEBUG.warning(message.toString());
-            stats.setNumRecords(-1);
-        }
-
+        // TODO Build out proper Statistics.
         return stats;
     }
-
-    /**
-     * Helper method to obtain number of Subordinates.
-     *
-     * @return
-     * @throws StoreException
-     */
-    protected int getNumSubordinates()
-            throws StoreException {
-        int recordCount = -1;
-
-        try {
-
-
-            InternalClientConnection icConn = InternalClientConnection.getRootConnection();
-            InternalSearchOperation iso = icConn.processSearch(FAM_RECORDS_BASE_DN,
-                    SearchScope.BASE_OBJECT, DereferencePolicy.NEVER_DEREF_ALIASES,
-                    0, 0, false, ALL_ATTRS, numSubOrgAttrs);
-            ResultCode resultCode = iso.getResultCode();
-
-
-            if (resultCode == ResultCode.SUCCESS) {
-                LinkedList<SearchResultEntry> searchResult = iso.getSearchEntries();
-
-                if (!searchResult.isEmpty()) {
-                    for (SearchResultEntry entry : searchResult) {
-                        List<Attribute> attributes = entry.getAttributes();
-
-                        for (Attribute attr : attributes) {
-                            if (attr.isVirtual() && attr.getName().equals(NUM_SUB_ORD_ATTR)) {
-                                Iterator<AttributeValue> values = attr.iterator();
-
-                                while (values.hasNext()) {
-                                    AttributeValue value = values.next();
-
-                                    try {
-                                        recordCount = Integer.parseInt(value.toString());
-                                    } catch (NumberFormatException nfe) {
-                                        final LocalizableMessage message = DB_STATS_NFS.get(nfe.getMessage());
-                                        DEBUG.warning(message.toString());
-                                        throw new StoreException(message.toString());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (resultCode == ResultCode.NO_SUCH_OBJECT) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get(FAM_RECORDS_BASE_DN);
-                DEBUG.warning(message.toString());
-                throw new StoreException(message.toString());
-            } else {
-                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(FAM_RECORDS_BASE_DN, resultCode.toString());
-                DEBUG.warning(message.toString());
-                throw new StoreException(message.toString());
-            }
-        } catch (DirectoryException dex) {
-            final LocalizableMessage message = DB_ENT_ACC_FAIL2.get(FAM_RECORDS_BASE_DN);
-            DEBUG.error(message.toString(), dex);
-            throw new StoreException(message.toString(), dex);
-        }
-        // return the recordCount from the Query against the Store.
-        return recordCount;
-    }
-
 
     /**
      * Return Service Run Period.
@@ -1176,8 +1098,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      */
     private void logAMRootEntity(AMRootEntity amRootEntity, String message) {
         // Set to Message to Error to see messages.
-        if (DEBUG.errorEnabled()) {
-            DEBUG.error(
+        if (DEBUG.messageEnabled()) {
+            DEBUG.message(
                     ((message != null) && (!message.isEmpty()) ? message : "") +
                             "\nService:[" + amRootEntity.getService() + "]," +
                             "\n     Op:[" + amRootEntity.getOperation() + "]," +
