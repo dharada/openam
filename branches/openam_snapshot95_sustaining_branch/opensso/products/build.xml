@@ -281,7 +281,7 @@
     
     <target name="create-version"> 
         <tstamp>
-            <format property="war.time.stamp" pattern="yyyy-MMMM-dd HH:mm"/>
+            <format property="war.time.stamp" pattern="yyyy-MMMM-dd HH:mm" locale="en,UK" />
         </tstamp>       
         <condition property="version.set" value="${opensso.enterprise} Build ${build.number.set}" >
             <isset property="build.enterprise"/>
