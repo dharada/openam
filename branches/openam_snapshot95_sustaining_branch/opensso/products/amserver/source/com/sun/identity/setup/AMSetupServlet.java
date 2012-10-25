@@ -2320,7 +2320,8 @@ public class AMSetupServlet extends HttpServlet {
     private static boolean copyRegFiles(String destDir) {
         String [] jarFiles = {"scn_stprs_util.jar",
                               "commons-codec-1.3.jar",
-                              "opensso-register.jar"};
+                              "opensso-register.jar",
+                              "opensso-sharedlib.jar"};
 
         try {
             for (int i = 0; i < jarFiles.length; i++) {

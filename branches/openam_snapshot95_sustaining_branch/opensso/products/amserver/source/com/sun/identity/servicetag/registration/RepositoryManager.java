@@ -33,10 +33,14 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+/**
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.servicetag.registration;
 
 import com.sun.identity.servicetag.registration.RegistrationService.RegistrationStatus;
 import com.sun.identity.servicetag.registration.RegistrationService.RegistrationReminder;
+import com.sun.identity.shared.xml.XMLUtils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -56,7 +60,6 @@ import java.util.List;
 import java.io.File;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 
 /**
@@ -93,8 +96,7 @@ public class RepositoryManager {
     public RepositoryManager(File registrationFile) throws RegistrationException {
         this.registrationFile = registrationFile;
         try {
-//            logger.fine("RepositoryManager created for file " + registrationFile.getCanonicalPath());
-            documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            documentBuilder = XMLUtils.getSafeDocumentBuilder(false);
             transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount","4");
@@ -514,11 +516,7 @@ public class RepositoryManager {
     /** default value for the registration status element */
     private static final RegistrationReminder REGISTRATION_REMINDER_DEFAULT_VALUE = 
             RegistrationReminder.ASK_FOR_REGISTRATION;
-    /*
-     * Doc builder factory, doc builder, transformer factory, and transformer
-     * are all reusable so get them once.
-     */
-    private final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+
     private final DocumentBuilder documentBuilder; 
     
     private final TransformerFactory transformerFactory = TransformerFactory.newInstance();

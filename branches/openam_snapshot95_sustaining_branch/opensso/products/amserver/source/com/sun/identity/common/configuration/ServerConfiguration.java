@@ -25,7 +25,9 @@
  * $Id: ServerConfiguration.java,v 1.16 2010/01/15 18:10:55 veiming Exp $
  *
  */
-
+/**
+ * Portions Copyrighted 2012 ForgeRock Inc
+ */
 package com.sun.identity.common.configuration;
 
 import com.iplanet.am.util.SystemProperties;
@@ -57,7 +59,6 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -1130,12 +1131,7 @@ public class ServerConfiguration extends ConfigurationBase {
             }
             ServiceConfig cfg = getServerConfig(ssoToken, serverName);
             if (cfg == null) {
-                DocumentBuilderFactory factory = 
-                    DocumentBuilderFactory.newInstance();
-                factory.setValidating(false);
-                factory.setNamespaceAware(false);
-
-                DocumentBuilder builder = factory.newDocumentBuilder();
+                DocumentBuilder builder = XMLUtils.getSafeDocumentBuilder(false);
                 Document document = builder.parse(xmlFile);
                 Element topElement = document.getDocumentElement();
                 Map map = XMLUtils.parseAttributeValuePairTags(
