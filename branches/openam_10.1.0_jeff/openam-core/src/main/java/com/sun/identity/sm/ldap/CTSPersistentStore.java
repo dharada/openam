@@ -62,9 +62,6 @@ import com.iplanet.dpro.session.exceptions.StoreException;
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
 
-import org.opends.server.protocols.internal.InternalClientConnection;
-import org.opends.server.protocols.internal.InternalSearchOperation;
-
 import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
 
