@@ -31,6 +31,7 @@ import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.common.CaseInsensitiveHashMap;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import com.sun.identity.shared.ldap.LDAPAttribute;
 import com.sun.identity.shared.ldap.LDAPAttributeSet;
 import com.sun.identity.sm.model.AMRecordDataEntry;
 import org.opends.server.types.Attribute;
@@ -140,11 +141,15 @@ public class CTSEmbeddedSearchResultIterator {
         // Enumerate over Attributes.
         Enumeration enumeration = attributes.getAttributes();
         while(enumeration.hasMoreElements()) {
-            Attribute attribute = (Attribute) enumeration.nextElement();
+            LDAPAttribute attribute = (LDAPAttribute) enumeration.nextElement();
+            // TODO Refactor for Proper API.
+            //Attribute attribute = (Attribute) enumeration.nextElement();
+            //org.opends.server.types.Attribute
+
                 if (attribute != null) {
                     Set<String> strValues = new HashSet<String>();
-                    for(AttributeValue value : attribute) {
-                        strValues.add(value.toString());
+                    for(String value : attribute.getStringValueArray()) {
+                        strValues.add(value);
                     }
                     if (answer == null) {
                         answer = new CaseInsensitiveHashMap(10);

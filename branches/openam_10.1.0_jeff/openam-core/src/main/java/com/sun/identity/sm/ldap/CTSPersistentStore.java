@@ -62,8 +62,6 @@ import com.iplanet.dpro.session.exceptions.StoreException;
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
 
-import org.opends.server.core.DeleteOperation;
-import org.opends.server.core.ModifyOperation;
 import org.opends.server.protocols.internal.InternalClientConnection;
 import org.opends.server.protocols.internal.InternalSearchOperation;
 
@@ -73,9 +71,14 @@ import org.opends.server.types.*;
 /**
  * Provide Implementation of AMSessionRepository using the internal/external
  * Configuration Directory as OpenAM's Session and Token Store.
- * <p/>
+ * <p>
  * Having a replicated Directory
- * will provide the underlying SFO/HA for OpenAM Session Data.
+ * will provide the underlying Session High Availability and Failover
+ * for OpenAM Session Data.
+ * </p>
+ * <p/>
+ * TODO -- Verify SAML Token CRUD.
+ * TODO -- Verify OAUTH2 Token CRUD.
  *
  * @author steve
  * @author jeff.schenk@forgerock.com
@@ -131,11 +134,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
 
     private static boolean caseSensitiveUUID =
             SystemProperties.getAsBoolean(com.sun.identity.shared.Constants.CASE_SENSITIVE_UUID);
-    /**
-     * Internal LDAP Connection.
-     */
-    //private static boolean icConnAvailable = false;
-    //private static InternalClientConnection icConn;
 
     /**
      * Define Session DN Constants
@@ -300,6 +298,11 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      * @throws StoreException
      */
     public static AMSessionRepository getInstance() throws StoreException {
+        synchronized (CTSPersistentStore.class) {
+            if (instance == null) {
+                initialize();
+            }
+        }
         return instance;
     }
 
@@ -438,25 +441,21 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             SessionID sid = is.getID();
             String key = SessionUtils.getEncryptedStorageKey(sid);
             if (key == null) {
-                DEBUG.error("CTSPersistenceStore.save(): Primary Encrypted Key "
-                        + "null, not persisting Session.");
+                DEBUG.error("CTSPersistenceStore.saveImmediate(): Primary Encrypted Key "
+                        + " is null, Unable to persist Session.");
                 return;
             }
             byte[] serializedInternalSession = SessionUtils.encode(is);
             long expirationTime = is.getExpirationTime() + gracePeriod;
             String uuid = caseSensitiveUUID ? is.getUUID() : is.getUUID().toLowerCase();
-
             // Create a FAMRecord Object to wrap our Serialized Internal Session
             FAMRecord famRec = new FAMRecord(
                     SESSION, FAMRecord.WRITE, key, expirationTime, uuid,
                     is.getState(), sid.toString(), serializedInternalSession);
-
             // Persist Session Record
             writeImmediate(famRec);
-
         } catch (Exception e) {
-            DEBUG.error("CTSPersistenceStore.save(): failed "
-                    + "to save Session", e);
+            DEBUG.error("CTSPersistenceStore.saveImmediate(): failed to save Session", e);
         }
     }
 
@@ -486,15 +485,17 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             throws StoreException {
         // Setup the BaseDN.
         String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", (record).getPrimaryKey());
-        // Log Action
-        logAMRootEntity(record, "CTSPersistenceStore.writeImmediate: \nBaseDN:[" + baseDN.toString() + "] ");
-        // Perform a search to determine if the record exists already
+        // Perform a search to determine if the record already exists,
         // so we know whether to Update the Record or Add.
-        // Update or store/add/bind if Primary Key not found.
+        // Update or Add, if Primary Key not found.
         if (doesDNExist(baseDN.toString())) {
             updateImmediate(record);
+            // Log Action
+            logAMRootEntity(record, "CTSPersistenceStore.updateImmediate: \nBaseDN:[" + baseDN.toString() + "] ");
         } else {
             storeImmediate(record);
+            // Log Action
+            logAMRootEntity(record, "CTSPersistenceStore.storeImmediate: \nBaseDN:[" + baseDN.toString() + "] ");
         }
     }
 
@@ -513,8 +514,11 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         // Prepare to Marshal our AMRootEntity Object.
         AMRecordDataEntry entry = new AMRecordDataEntry(record);
         List<RawAttribute> attrList = entry.getAttrList();
+        // Construct our Entity's DN.
         String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", (record).getPrimaryKey());
+        // Ensure our ObjectClass Attributes have been set per our Entity instance Type.
         attrList.addAll(AMRecordDataEntry.getObjectClasses());
+        // Initialize the Attribute Set
         LDAPAttributeSet ldapAttributeSet = new LDAPAttributeSet();
         // Obtain a Connection.
         LDAPConnection ldapConnection = null;
@@ -531,11 +535,17 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             // Add the new Directory Entry.
             LDAPEntry ldapEntry = new LDAPEntry(baseDN, ldapAttributeSet);
             ldapConnection.add(ldapEntry);
-            final LocalizableMessage message = DB_SVR_CREATE.get(baseDN);
-            DEBUG.message(message.toString());
+            if (DEBUG.messageEnabled()) {
+                final LocalizableMessage message = DB_SVR_CREATE.get(baseDN);
+                DEBUG.message(message.toString());
+            }
         } catch (LDAPException ldapException) {
             if (ldapException.getLDAPResultCode() == LDAPException.ENTRY_ALREADY_EXISTS) {
                 final LocalizableMessage message = DB_SVR_CRE_FAIL.get(baseDN);
+                DEBUG.warning(message.toString());
+            } else if (ldapException.getLDAPResultCode() == LDAPException.OBJECT_CLASS_VIOLATION) {
+                // This usually indicates schema has not been applied to the Directory Information Base (DIB) Instance.
+                final LocalizableMessage message = OBJECTCLASS_VIOLATION.get(baseDN);
                 DEBUG.warning(message.toString());
             } else {
                 final LocalizableMessage message = DB_SVR_CRE_FAIL2.get(baseDN, Integer.toString(ldapException.getLDAPResultCode()));
@@ -581,19 +591,25 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             } // End of Inner For Each Modification Iteration.
             // Now Perform the Modification of the Object.
             ldapConnection.modify(baseDN, ldapModificationSet);
-            final LocalizableMessage message = DB_SVR_MOD.get(baseDN);
-            DEBUG.message("CTSPersistenceStore..updateImmediate: [" + message + "]");
+            if (DEBUG.messageEnabled()) {
+                final LocalizableMessage message = DB_SVR_MOD.get(baseDN);
+                DEBUG.message(message.toString());
+            }
         } catch (LDAPException ldapException) {
             // Not Found  No Such Object
             if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 final LocalizableMessage message = DB_ENT_NOT_P.get(baseDN);
                 DEBUG.warning(message.toString());
-                return;
+            } else if (ldapException.getLDAPResultCode() == LDAPException.OBJECT_CLASS_VIOLATION) {
+                // This usually indicates schema has not been applied to the Directory Information Base (DIB) Instance.
+                final LocalizableMessage message = OBJECTCLASS_VIOLATION.get(baseDN);
+                DEBUG.warning(message.toString());
+            } else {
+                // Other Issue Detected.
+                final LocalizableMessage message = DB_SVR_MOD_FAIL.get(baseDN, ldapException.errorCodeToString());
+                DEBUG.warning(message.toString());
+                throw new StoreException(message.toString());
             }
-            // Other Issue Detected.
-            final LocalizableMessage message = DB_SVR_MOD_FAIL.get(baseDN, ldapException.errorCodeToString());
-            DEBUG.warning(message.toString());
-            throw new StoreException(message.toString());
         } finally {
             if (ldapConnection != null) {
                 // Release the Connection.
@@ -717,7 +733,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         LDAPConnection ldapConnection = null;
         try {
             if (DEBUG.messageEnabled()) {
-                DEBUG.message("OpenDJPersistence:deleteExpired Polling for any Expired Sessions older than: "
+                DEBUG.message("CTSPersistenceStore:deleteExpired Polling for any Expired Sessions older than: "
                         + getDate(expDate * 1000));
             }
             // Initialize Filter.
@@ -729,26 +745,25 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             LDAPSearchResults searchResults = ldapConnection.search(FAM_RECORDS_BASE_DN,
                     LDAPv2.SCOPE_ONE, filter.toString(), returnAttrs_PKEY_ONLY_ARRAY, false, new LDAPSearchConstraints());
             // Anything Found?
-            if ((searchResults == null) || (searchResults.getCount() <= 0)) {
-                final LocalizableMessage message = DB_ENT_NOT_P.get(FAM_RECORDS_BASE_DN);
-                DEBUG.error(message.toString());
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
                 return;
             }
-            // Iterate
-            while(searchResults.hasMoreElements()) {
+            // Iterate over results and delete each entry.
+            while (searchResults.hasMoreElements()) {
                 LDAPEntry ldapEntry = searchResults.next();
-                if (ldapEntry == null)
-                    { continue; }
+                if (ldapEntry == null) {
+                    continue;
+                }
                 // Process the Entry to perform a delete Against it.
                 LDAPAttribute primaryKeyAttribute = ldapEntry.getAttribute(AMRecordDataEntry.PRI_KEY);
-                if ( (primaryKeyAttribute == null) || (primaryKeyAttribute.size() <= 0) ||
-                     (primaryKeyAttribute.getStringValueArray() == null) )
-                    { continue; }
+                if ((primaryKeyAttribute == null) || (primaryKeyAttribute.size() <= 0) ||
+                        (primaryKeyAttribute.getStringValueArray() == null)) {
+                    continue;
+                }
                 String[] values = primaryKeyAttribute.getStringValueArray();
                 deleteImmediate(values[0]);
-
             } // End of while loop.
-        } catch(LDAPException ldapException) {
+        } catch (LDAPException ldapException) {
             // Not Found  No Such Object, Nothing to Delete.
             if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 return;
@@ -789,7 +804,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
                 // Log Action
                 logAMRootEntity(amRootEntity, "CTSPersistenceStore.retrieve:\nFound Session ID:[" + key + "] ");
             } else {
-                DEBUG.warning("CTSPersistenceStore.retrieve: Not Found for Session ID:[" + key + "] ");
+                DEBUG.error("CTSPersistenceStore.retrieve: Not Found for Session ID:[" + key + "] ");
             }
             // Return Internal Session.
             return is;
@@ -845,9 +860,9 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
             searchResults = ldapConnection.search(baseDN,
-                    LDAPv2.SCOPE_ONE, FAMRECORD_FILTER, returnAttrs_ARRAY, false, new LDAPSearchConstraints());
+                    LDAPv2.SCOPE_BASE, FAMRECORD_FILTER, returnAttrs_ARRAY, false, new LDAPSearchConstraints());
             // Anything Found?
-            if ((searchResults == null) || (searchResults.getCount() <= 0) || (!searchResults.hasMoreElements())) {
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
                 return null;
             }
             // UnMarshal LDAP Entry to a Map.
@@ -862,7 +877,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             // Return UnMarshaled Object
             return dataEntry.getAMRecord();
         } catch (LDAPException ldapException) {
-            // Not Found  No Such Object
+            // Not Found, No Such Object
             if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 final LocalizableMessage message = DB_ENT_NOT_P.get(baseDN);
                 DEBUG.error(message.toString());
@@ -929,8 +944,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
                 }
             }
             // Show Success
-            final LocalizableMessage message = DB_R_SEC_KEY_OK.get(id, Integer.toString(result.size()));
             if (DEBUG.messageEnabled()) {
+                final LocalizableMessage message = DB_R_SEC_KEY_OK.get(id, Integer.toString(result.size()));
                 DEBUG.message(message.toString());
             }
             // return result
@@ -1118,11 +1133,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     }
 
 
-
-
-
-
-
     /**
      * Return Service Run Period.
      *
@@ -1286,8 +1296,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             ldapConnection = getDirectoryConnection();
             // Perform the Search.
             LDAPSearchResults searchResults = ldapConnection.search(dn,
-                    LDAPv2.SCOPE_ONE, FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, new LDAPSearchConstraints());
-            if ((searchResults == null) || (searchResults.getCount() <= 0)) {
+                    LDAPv2.SCOPE_BASE, FAMRECORD_FILTER, returnAttrs_DN_ONLY_ARRAY, false, new LDAPSearchConstraints());
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
                 return false;
             }
             return true;

@@ -23,7 +23,7 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * Portions Copyrighted [2010] [ForgeRock AS]
+ * Portions Copyrighted [2010-2012] [ForgeRock AS]
  *
  */
 
@@ -147,7 +147,8 @@ public class AMRecordDataEntry {
         if (attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB) != null) {
             Set<String> values = attributeValues.get(SERIALIZED_INTERNAL_SESSION_BLOB);
             for (String value : values) {
-                record.setSerializedInternalSessionBlob(Base64.decodeBase64(value));
+                Base64 base64 = new Base64();
+                record.setSerializedInternalSessionBlob(base64.decode(value));
             }
         }
 
@@ -252,9 +253,10 @@ public class AMRecordDataEntry {
         }
 
         if (record.getSerializedInternalSessionBlob() != null) {
-            Set byteSet = new HashSet<byte[]>();
-            byteSet.add(Base64.encodeBase64(record.getSerializedInternalSessionBlob()));
-            attributeValues.put(SERIALIZED_INTERNAL_SESSION_BLOB, byteSet);
+            set = new HashSet<String>();
+            Base64 base64 = new Base64();
+            set.add(base64.encodeAsString(record.getSerializedInternalSessionBlob()));
+            attributeValues.put(SERIALIZED_INTERNAL_SESSION_BLOB, set);
         }
 
         if (record.getPrimaryKey() != null) {
