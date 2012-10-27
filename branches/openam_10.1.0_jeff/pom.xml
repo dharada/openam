@@ -207,9 +207,6 @@
         <!-- OpenAM Server -->
         <module>openam-server</module>
 
-        <!-- OpenAM Standalone Container Environment -->
-        <module>openam-server-engine</module>
-
         <!-- Tools Artifacts -->
         <module>openam-tools</module>
 
