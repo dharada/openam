@@ -32,6 +32,7 @@ import com.iplanet.dpro.session.exceptions.StoreException;
 import com.iplanet.dpro.session.service.AMSessionRepository;
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
+import com.iplanet.ums.IUMSConstants;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.configuration.SystemPropertiesManager;
 
@@ -166,22 +167,18 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
 
             // Tell our view Cache to update with the new Value!
             serviceConfigManagerImpl.objectChanged("ou"+EQUALS+siteName+COMMA+baseDN, ServiceListener.ADDED);
-            // TODO This attempt above of poking cache should work, but does not.  Fix!
+            // TODO This attempt above of poking cache should work, but does not.  Fix!!!
 
             // Assume Success, if we hit here.
             successful = true;
-        } catch (SMSException smsException) {
-            // Did the Service Entry Already Exist?
-            if (smsException.getMessage().trim().equalsIgnoreCase("service already exists"))
-            {
+        } catch (ServiceAlreadyExistsException smsException) {
                 // Yes, in which case, assume we were successful.
                 successful = true;
                 // Set if we can allow this to be used again or not.
                 thisCreateServiceSubConfigHasBeenUsed = successful;
                 // return our indicator.
                 return successful;
-            }
-            // Otherwise Something else went wrong.....
+        } catch (SMSException smsException) {
             throw new StoreException("Unable to Dynamically Add the Session HA SF Property for DN:["
                     + baseDN + "], SMSErrorCode: " + smsException.getExceptionCode()
                     +  "], SMSException: " + smsException.getMessage(), smsException);
