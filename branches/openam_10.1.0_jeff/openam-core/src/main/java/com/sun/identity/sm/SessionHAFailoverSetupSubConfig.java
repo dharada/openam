@@ -172,12 +172,9 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
             // Assume Success, if we hit here.
             successful = true;
         } catch (ServiceAlreadyExistsException smsException) {
+                // Does Entry Already Exists?
                 // Yes, in which case, assume we were successful.
                 successful = true;
-                // Set if we can allow this to be used again or not.
-                thisCreateServiceSubConfigHasBeenUsed = successful;
-                // return our indicator.
-                return successful;
         } catch (SMSException smsException) {
             throw new StoreException("Unable to Dynamically Add the Session HA SF Property for DN:["
                     + baseDN + "], SMSErrorCode: " + smsException.getExceptionCode()
