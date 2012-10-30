@@ -417,6 +417,11 @@ public class AMRecordDataEntry {
         return expDate.getTime() / 1000;
     }
 
+    /**
+     * Helper Date Method to get formatted Date.
+     * @param date
+     * @return
+     */
     public static String toDJDateFormat(Long date) {
         Date expDate = new Date(date.longValue() * 1000L);
         return formatter.format(expDate);

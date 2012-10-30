@@ -96,6 +96,14 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     private static final String FAMRECORD_FILTER = "(" + OBJECTCLASS + Constants.EQUALS + Constants.ASTERISK + ")";
 
     /**
+     * Search Constructs
+     */
+    private final static String SKEY_FILTER_PRE = "(sKey=";
+    private final static String SKEY_FILTER_POST = ")";
+    private final static String EXPDATE_FILTER_PRE = "(expirationDate<=";
+    private final static String EXPDATE_FILTER_POST = ")";
+
+    /**
      * Singleton Instance
      */
     private static volatile CTSPersistentStore instance = new CTSPersistentStore();
@@ -154,12 +162,12 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
                     FAM_RECORDS_BASE_DN;
 
     /**
-     * Search Constructs
+     * Session Expiration Filter.
      */
-    private final static String SKEY_FILTER_PRE = "(sKey=";
-    private final static String SKEY_FILTER_POST = ")";
-    private final static String EXPDATE_FILTER_PRE = "(expirationDate<=";
-    private final static String EXPDATE_FILTER_POST = ")";
+    private final static String SESSION_EXPIRATION_FILTER_TEMPLATE =
+            "(&(" + OBJECTCLASS + Constants.EQUALS + FR_FAMRECORD +
+                    ")" + EXPDATE_FILTER_PRE  + "?" + EXPDATE_FILTER_POST + ")";
+
     /**
      * Return Attribute Constructs
      */
@@ -352,7 +360,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         while (!shutdown) {
             try {
                 // Delete any expired Sessions up to now.
-                deleteExpired(nowInSeconds());
+                deleteExpired(Calendar.getInstance());
                 // Process any Deferred Operations
                 processDeferredAMSessionRepositoryOperations();
                 Thread.sleep(SLEEP_INTERVAL);
@@ -677,7 +685,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             // Delete the Entry, our Entries are flat,
             // so we have no children to contend with, if this
             // changes however, this deletion will need to
-            // specify a control to delete children entries.
+            // specify a control to delete child entries.
             ldapConnection.delete(baseDN);
         } catch (LDAPException ldapException) {
             final LocalizableMessage message = DB_ENT_DEL_FAIL.get(baseDN);
@@ -698,34 +706,38 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      */
     //@Override - Compiling as 1.5
     public void deleteExpired() throws Exception {
-        deleteExpired(nowInSeconds());
+        deleteExpired(Calendar.getInstance());
     }
 
     /**
-     * Delete Expired Sessions older than specified
-     * expiration Date.
+     * Delete all records in the store
+     * that have an expiry date older than the one specified.
      *
-     * @param expDate The expDate in seconds
+     * @param expirationDate The Calendar Entry depicting the time in which all existing Session
+     *                       objects should be deleted if less than this time.
      * @throws StoreException
      */
-    //@Override - Compiling as 1.5
-    public void deleteExpired(long expDate)
-            throws StoreException {
+    public void deleteExpired(Calendar expirationDate) throws StoreException {
+        // Check and formulate the Date String for Query.
+        if (expirationDate == null) {
+            expirationDate = Calendar.getInstance();
+        }
+        // Formulate the Date String.
+        String formattedExpirationDate = getFormattedExpirationDate(expirationDate);
         // Initialize.
         LDAPConnection ldapConnection = null;
         try {
             if (DEBUG.messageEnabled()) {
                 DEBUG.message("CTSPersistenceStore:deleteExpired Polling for any Expired Sessions older than: "
-                        + getDate(expDate * 1000));
+                        + expirationDate.toString() );
             }
             // Initialize Filter.
-            StringBuilder filter = new StringBuilder();
-            filter.append(EXPDATE_FILTER_PRE).append(expDate).append(EXPDATE_FILTER_POST);
+            String filter = SESSION_EXPIRATION_FILTER_TEMPLATE.replace("?", formattedExpirationDate);
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
             // Perform Search
             LDAPSearchResults searchResults = ldapConnection.search(FAM_RECORDS_BASE_DN,
-                    LDAPv2.SCOPE_ONE, filter.toString(), returnAttrs_PKEY_ONLY_ARRAY, false, new LDAPSearchConstraints());
+                    LDAPv2.SCOPE_SUB, filter.toString(), returnAttrs_PKEY_ONLY_ARRAY, false, new LDAPSearchConstraints());
             // Anything Found?
             if ((searchResults == null) || (!searchResults.hasMoreElements())) {
                 return;
@@ -778,6 +790,11 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     public InternalSession retrieve(SessionID sid) throws Exception {
         try {
             String key = SessionUtils.getEncryptedStorageKey(sid);
+            // Read the Session Information from the Store.
+            // if we have a not found, simply return null,
+            // this can occur the first time a new session
+            // is created and we try to obtain the ID from the
+            // store.
             AMRootEntity amRootEntity = this.read(key);
             InternalSession is = null;
             if ((amRootEntity != null) &&
@@ -785,10 +802,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
                 is = (InternalSession) SessionUtils.decode(amRootEntity.getSerializedInternalSessionBlob());
                 // Log Action
                 logAMRootEntity(amRootEntity, "CTSPersistenceStore.retrieve:\nFound Session ID:[" + key + "] ");
-            } else {
-                DEBUG.error("CTSPersistenceStore.retrieve: Not Found for Session ID:[" + key + "] ");
             }
-            // Return Internal Session.
+            // Return unMarshaled Internal Session or null.
             return is;
         } catch (Exception e) {
             DEBUG.error("CTSPersistentStore.retrieve(): failed retrieving "
@@ -1229,5 +1244,47 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             }
         }
     }
+
+    /**
+     * Private helper method to properly format the Expiration Date
+     * for a proper LDAP Date Attribute Query.
+     *
+     * @param expirationDate
+     * @return String - representing the Formatted Date String for Query.
+     */
+    private static String getFormattedExpirationDate(Calendar expirationDate) {
+        StringBuilder sb = new StringBuilder();
+        sb.append( expirationDate.get(Calendar.YEAR));
+        sb.append( formatDigit(expirationDate.get(Calendar.MONTH)+1) );
+        sb.append( formatDigit(expirationDate.get(Calendar.DAY_OF_MONTH)) );
+        sb.append( formatDigit(expirationDate.get(Calendar.HOUR_OF_DAY)) );
+        sb.append( formatDigit(expirationDate.get(Calendar.MINUTE)) );
+        sb.append( formatDigit(expirationDate.get(Calendar.SECOND)) );
+        sb.append( ".0Z" ); // Assume Zulu Time.
+        // Return the String.
+        return sb.toString();
+    }
+
+    /**
+     * Simple Helper Method to convert a Time represented as a Long in
+     * Milliseconds to a Calebdar object.
+     *
+     * @param expirationDate
+     * @return Calendar Object set to Expiration Date.
+     */
+    private static Calendar getFormattedExpirationDate(long expirationDate) {
+        Calendar expirationDateOnCalendar = Calendar.getInstance();
+        expirationDateOnCalendar.setTimeInMillis(expirationDate);
+        return expirationDateOnCalendar;
+    }
+
+    /**
+     * Private Helper Method to Format Digits.
+     */
+    private static String formatDigit(int number) {
+        if (number > 9)
+        { return Integer.toString(number); }
+        else { return  "0" + (Integer.toString(number)); }
+    } // End of private Helper Method.
 
 }

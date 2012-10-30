@@ -507,7 +507,7 @@ public class JMQSessionRepository extends GeneralTaskRunnable implements
     }
 
     //@Override
-    public void deleteExpired(long expDate) throws StoreException {
+    public void deleteExpired(Calendar expDate) throws StoreException {
         // TODO
     }
 

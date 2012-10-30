@@ -31,8 +31,7 @@
  */
 package com.iplanet.dpro.session.service;
 
-import java.net.InetSocketAddress;
-import java.net.URL;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,10 +125,11 @@ public interface AMSessionRepository {
      * Delete all records in the store
      * that have an expiry date older than the one specified.
      *
-     * @param expDate The expDate in seconds
+     * @param expirationDate The Calendar Entry depicting the time in which all existing Session
+     *                       objects should be deleted if less than this time.
      * @throws StoreException
      */
-    public void deleteExpired(long expDate) throws StoreException;
+    public void deleteExpired(Calendar expirationDate) throws StoreException;
 
 
     /**
