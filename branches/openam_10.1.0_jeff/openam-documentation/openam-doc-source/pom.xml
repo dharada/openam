@@ -32,13 +32,13 @@
     <parent>
         <groupId>org.forgerock.openam</groupId>
         <artifactId>openam-documentation</artifactId>
-        <version>10.1.0-SNAPSHOT</version>
+        <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <!-- Documentation Module -->
     <groupId>org.forgerock.openam</groupId>
     <artifactId>openam-doc-source</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
 
     <name>OpenAM Core Documentation Sources</name>
 
@@ -290,7 +290,7 @@
         <dependency>
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-doc-content</artifactId>
-            <version>10.1.0-SNAPSHOT</version>
+            <version>10.1.JEFF-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

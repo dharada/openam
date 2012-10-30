@@ -30,14 +30,14 @@
     <parent>
         <groupId>org.forgerock.openam</groupId>
         <artifactId>openam</artifactId>
-        <version>10.1.0-SNAPSHOT</version>
+        <version>10.1.JEFF-SNAPSHOT</version>
     </parent>
 
     <!-- Component Definition -->
     <name>OpenAM Client SDK</name>
     <description>OpenAM Java Client SDK</description>
     <artifactId>openam-clientsdk</artifactId>
-    <version>10.1.0-SNAPSHOT</version>
+    <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <!-- Build -->
