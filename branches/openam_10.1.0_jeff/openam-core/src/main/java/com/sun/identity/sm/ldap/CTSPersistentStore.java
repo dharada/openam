@@ -98,7 +98,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     /**
      * Singleton Instance
      */
-    private static volatile CTSPersistentStore instance;
+    private static volatile CTSPersistentStore instance = new CTSPersistentStore();
 
     /**
      * Shared SM Data Layer Accessor.
@@ -286,11 +286,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      * @throws StoreException
      */
     public static AMSessionRepository getInstance() throws StoreException {
-        synchronized (CTSPersistentStore.class) {
-            if (instance == null) {
-                initialize();
-            }
-        }
         return instance;
     }
 
@@ -300,7 +295,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     private synchronized static void initialize()
             throws StoreException {
         // Initialize this Service
-        instance = new CTSPersistentStore(); // Our Singleton Service Instance.
         if (DEBUG.messageEnabled()) {
             DEBUG.message("Initializing Configuration for the OpenAM Session Repository using Implementation Class: " +
                     CTSPersistentStore.class.getSimpleName());

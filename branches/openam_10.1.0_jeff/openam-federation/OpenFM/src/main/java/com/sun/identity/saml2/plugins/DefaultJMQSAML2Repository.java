@@ -57,6 +57,7 @@ import com.sun.identity.saml2.common.SAML2Utils;
  * This class is used in SAML2 failover mode to store/recover serialized
  * state of Assertion/Response object
  */
+@Deprecated
 public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     implements JMQSAML2Repository {
 
