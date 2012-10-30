@@ -45,6 +45,7 @@ import java.util.UUID;
  *
  * @author Jonathan Scudder
  */
+@Deprecated
 public class JMQTokenRepo extends GeneralTaskRunnable implements JsonResource {
 
     final static Debug debug = Debug.getInstance("CTS");

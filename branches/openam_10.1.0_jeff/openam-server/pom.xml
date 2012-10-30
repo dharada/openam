@@ -37,8 +37,7 @@
 
     <!-- Component Definition -->
     <name>OpenAM Server</name>
-    <description>OpenAM Server Component
-    </description>
+    <description>OpenAM Server Component</description>
     <artifactId>openam-server</artifactId>
     <version>10.1.JEFF-SNAPSHOT</version>
     <packaging>war</packaging>
@@ -335,7 +334,6 @@
                 <excludes>
                     <exclude>config/**</exclude>
                     <exclude>console/**</exclude>
-                    <exclude>distUI/**</exclude>
                     <exclude>locale/**</exclude>
                     <exclude>federation-locale/**</exclude>
                     <exclude>openfm-locale/**</exclude>
@@ -373,6 +371,12 @@
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-core</artifactId>
             <version>10.1.JEFF-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-server-auth-ui</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
