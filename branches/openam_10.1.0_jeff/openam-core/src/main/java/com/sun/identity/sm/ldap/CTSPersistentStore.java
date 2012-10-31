@@ -991,7 +991,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
             searchResults = ldapConnection.search(FAM_RECORDS_BASE_DN,
                     LDAPv2.SCOPE_ONE, filter.toString(), returnAttrs_ARRAY, false, new LDAPSearchConstraints());
             // Anything Found?
-            if ((searchResults == null) || (searchResults.getCount() <= 0) || (!searchResults.hasMoreElements())) {
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
                 return null;
             }
             // Process our Results.
