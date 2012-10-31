@@ -26,8 +26,9 @@
  *
  */
 
-/*
+/**
  * Portions Copyrighted 2011-2012 ForgeRock Inc
+ * Portions Copyrighted 2012 Open Source Solution Technology Corporation
  */
 
 package com.sun.identity.idsvcs.rest;
@@ -162,8 +163,9 @@ public class IdentityServicesHandler extends HttpServlet {
 
         if (cookies != null) {
             for (int c = 0; c < cookies.length; c++) {
-                cookies[c].getName().equals(lbCookieName);
-                return;
+                if (cookies[c].getName().equals(lbCookieName)) {
+                    return;
+                }
             }
         }
         
