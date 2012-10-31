@@ -252,11 +252,6 @@ public final class IdentityResource implements CollectionResourceProvider {
         Token admin = new Token();
         admin.setId(adminToken.getTokenID().toString());
 
-        SSOToken adminToken = (SSOToken) AccessController.doPrivileged(
-                AdminTokenAction. getInstance());
-        Token admin = new Token();
-        admin.setId(adminToken.getTokenID().toString());
-
         try {
 
             JsonValue result = new JsonValue(new LinkedHashMap<String, Object>(1));
