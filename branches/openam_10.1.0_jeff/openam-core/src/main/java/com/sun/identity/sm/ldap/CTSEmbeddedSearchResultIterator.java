@@ -39,6 +39,8 @@ import org.opends.server.types.AttributeValue;
 import org.opends.server.types.SearchResultEntry;
 
 /**
+ *  Provide a Helper Class to provide LDAP Result attributes
+ *  to proper Object properties/fields.
  *
  * @author steve
  */
@@ -69,6 +71,12 @@ public class CTSEmbeddedSearchResultIterator {
         hasExcludeDNs = (excludeDNs != null) && !excludeDNs.isEmpty();
     }
 
+    /**
+     * Provides indication if Iterator has an element
+     * in the stack.
+     *
+     * @return boolean - indicator - True if element in stack.
+     */
     public boolean hasNext() {
         if (!resultIter.hasNext()) {
             return false;
@@ -99,16 +107,30 @@ public class CTSEmbeddedSearchResultIterator {
         return (current != null);
     }
 
-    public Object next() {
+    /**
+     * Returns the next available AMRecordDataEntry within the Iteration.
+     * @return Object
+     */
+    public AMRecordDataEntry next() {
         AMRecordDataEntry tmp = current;
         current = null;
         return tmp;
     }
 
+    /**
+     * Unsupported Operation
+     */
     public void remove() {
         // not supported.
+        throw new UnsupportedOperationException("Remove is an Unsupported Operation!");
     }
 
+    /**
+     * Static Method to convert an LDAP Attribute List to a Map.
+     *
+     * @param attributes
+     * @return Map<String, Set<String>> - Converted from Attributes.
+     */
     public static Map<String, Set<String>> convertLDAPAttributeSetToMap(List<Attribute> attributes) {
         Map answer = null;
         
@@ -133,8 +155,14 @@ public class CTSEmbeddedSearchResultIterator {
         return (answer);
     }
 
+    /**
+     * Static Method to convert an LDAP Attribute Set to a Map.
+     *
+     * @param attributes
+     * @return Map<String, Set<String>> - Converted from Attribute Set.
+     */
     public static Map<String, Set<String>> convertLDAPAttributeSetToMap(LDAPAttributeSet attributes) {
-        Map answer = null;
+        Map<String, Set<String>> answer = null;
         if ((attributes == null) || (attributes.size() <= 0)) {
               return answer;
         }
