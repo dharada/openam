@@ -769,10 +769,10 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
         try {
             // Initialize Filter.
             String filter = SESSION_EXPIRATION_FILTER_TEMPLATE.replace("?", formattedExpirationDate);
-            //if (DEBUG.messageEnabled()) {
+            if (DEBUG.messageEnabled()) {
             DEBUG.error(messageTag + "Searching Expired Sessions Older than:["
                     + formattedExpirationDate + "]");
-            //}
+            }
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
             // Create our Search Constraints to limit number of expired sessions returned during this tick,
