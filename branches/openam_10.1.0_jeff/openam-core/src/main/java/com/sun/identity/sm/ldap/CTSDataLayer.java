@@ -103,6 +103,12 @@ class CTSDataLayer {
         if (lastLDAPException == null) {
             sharedSMDataLayer.releaseConnection(ldapConnection);
         } else {
+            if (lastLDAPException.getLDAPResultCode() == LDAPException.CONNECT_ERROR) {
+                // We had a connect error using the connection provided, attempt
+                // to recovery the connection if possible, before returning to
+                // the Connection pool.
+                // TODO -- Add additional logic to properly fix a broken connection.
+            }
             sharedSMDataLayer.releaseConnection(ldapConnection, lastLDAPException.getLDAPResultCode());
         }
     }
