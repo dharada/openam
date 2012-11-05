@@ -28,7 +28,7 @@
 
 package com.sun.identity.console.session;
 
-import com.iplanet.dpro.session.service.AMSessionRepository;
+import com.sun.identity.coretoken.interfaces.AMSessionRepository;
 import com.iplanet.jato.model.ModelControlException;
 import com.iplanet.jato.view.View;
 import com.iplanet.jato.view.event.ChildDisplayEvent;

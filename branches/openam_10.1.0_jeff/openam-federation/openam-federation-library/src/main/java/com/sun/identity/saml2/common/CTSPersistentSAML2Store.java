@@ -26,40 +26,34 @@
  *
  */
 
-package com.sun.identity.saml2.plugins;
+package com.sun.identity.saml2.common;
 
-import com.sun.identity.common.SystemTimer;
-
-import com.sun.identity.common.GeneralTaskRunnable;
-
+import com.iplanet.dpro.session.Session;
 import com.iplanet.dpro.session.SessionException;
-import com.sun.identity.coretoken.interfaces.AMTokenSAML2Repository;
-import com.sun.identity.shared.configuration.SystemPropertiesManager;
-
 import com.iplanet.dpro.session.service.SessionService;
 import com.iplanet.dpro.session.share.SessionBundle;
 import com.iplanet.services.naming.WebtopNaming;
+import com.sun.identity.common.GeneralTaskRunnable;
+import com.sun.identity.common.SystemTimer;
+import com.sun.identity.coretoken.interfaces.AMTokenSAML2Repository;
+import com.sun.identity.ha.FAMPersisterManager;
+import com.sun.identity.ha.FAMRecordPersister;
+import com.sun.identity.saml2.common.SAML2Utils;
 import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.shared.Constants;
+import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.debug.Debug;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-import javax.jms.IllegalStateException;
 import com.sun.identity.sm.model.FAMRecord;
-import com.sun.identity.ha.FAMRecordPersister;
-import com.sun.identity.ha.FAMPersisterManager;
-import com.sun.identity.saml2.common.SAML2Utils;
+
+import javax.jms.IllegalStateException;
+import java.util.*;
 
 
 /**
  * This class is used in SAML2 failover mode to store/recover serialized
  * state of Assertion/Response object
  */
-@Deprecated
-public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
+public class CTSPersistentSAML2Store extends GeneralTaskRunnable
     implements AMTokenSAML2Repository {
 
     /* Operations */
@@ -70,8 +64,8 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     static public final String DELETE = "DELETE";
 
     static public final String DELETEBYDATE = "DELETEBYDATE";
-    
-  
+
+
     // Private data members
     String serverId;
 
@@ -84,21 +78,21 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
      */
     private static long gracePeriod = 5 * 60; /* 5 mins in secs */
 
-    private static final String CLEANUP_GRACE_PERIOD = 
+    private static final String CLEANUP_GRACE_PERIOD =
         "com.sun.identity.session.repository.cleanupGracePeriod";
 
-    private static final String BRIEF_DB_ERROR_MSG = 
+    private static final String BRIEF_DB_ERROR_MSG =
         "SAML2 failover service is not functional due to DB unavailability.";
 
-    private static final String DB_ERROR_MSG = 
+    private static final String DB_ERROR_MSG =
         "SAML2 database is not available at this moment."
             + "Please check with the system administrator " +
                     "for appropriate actions";
 
-    private static final String LOG_MSG_DB_BACK_ONLINE = 
+    private static final String LOG_MSG_DB_BACK_ONLINE =
         "SESSION_DATABASE_BACK_ONLINE";
 
-    private static final String LOG_MSG_DB_UNAVAILABLE = 
+    private static final String LOG_MSG_DB_UNAVAILABLE =
         "SESSION_DATABASE_UNAVAILABLE";
 
     private static boolean lastLoggedDBStatusIsUp = true;
@@ -112,7 +106,7 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
 
     private static long cleanUpValue = 0;
 
-    public static final String CLEANUP_RUN_PERIOD = 
+    public static final String CLEANUP_RUN_PERIOD =
         "com.sun.identity.saml2.repository.cleanupRunPeriod";
 
     /**
@@ -121,7 +115,7 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
      */
     private static long healthCheckPeriod = 1 * 60 * 1000;
 
-    public static final String HEALTH_CHECK_RUN_PERIOD = 
+    public static final String HEALTH_CHECK_RUN_PERIOD =
         "com.sun.identity.saml2.repository.healthCheckRunPeriod";
 
     /**
@@ -131,7 +125,7 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     private static long runPeriod = 1 * 60 * 1000; // 1 min in milliseconds
 
 
-    static Debug debug = SAML2Utils.debug;
+    static Debug debug = Debug.getInstance("amToken");
     private String SAML2="saml2";
 
     static {
@@ -176,7 +170,7 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     * @exception Exception when cannot create a new SAML2 repository
     *
     */
-   public DefaultJMQSAML2Repository() throws Exception {
+   public CTSPersistentSAML2Store() throws Exception {
 
         String thisSessionServerProtocol = SystemPropertiesManager
                 .get(Constants.AM_SERVER_PROTOCOL);
@@ -210,7 +204,8 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     private void initPersistSession() {
         try {
             pSession = FAMPersisterManager.getInstance().
-                getFAMRecordPersister(); 
+                getFAMRecordPersister();
+
             isDatabaseUp = true;
         } catch (Exception e) {
             isDatabaseUp = false;
@@ -440,7 +435,7 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
     
     /**
      * Monitoring logic used by background thread This thread is used for both
-     * clenup expired sessions in the repository and for the Database health
+     * cleanup of expired sessions in the repository and for the Repository health
      * checking. The thread always runs with smallest value of cleanUpPeriod and
      * healthCheckPeriod.
      */
@@ -476,4 +471,6 @@ public class DefaultJMQSAML2Repository extends GeneralTaskRunnable
         }
 
     }
+
+
 }

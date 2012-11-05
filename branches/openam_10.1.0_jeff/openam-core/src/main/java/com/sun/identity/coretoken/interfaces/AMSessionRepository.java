@@ -29,7 +29,7 @@
 /**
  * Portions Copyrighted 2012 ForgeRock AS
  */
-package com.iplanet.dpro.session.service;
+package com.sun.identity.coretoken.interfaces;
 
 import java.util.Calendar;
 import java.util.Map;
@@ -39,6 +39,7 @@ import com.iplanet.dpro.session.SessionID;
 import com.iplanet.dpro.session.exceptions.NotFoundException;
 import com.iplanet.dpro.session.exceptions.StoreException;
 
+import com.iplanet.dpro.session.service.InternalSession;
 import com.sun.identity.shared.debug.Debug;
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
@@ -72,6 +73,9 @@ public interface AMSessionRepository {
 
     static final String CLEANUP_GRACE_PERIOD =
             "com.sun.identity.session.repository.cleanupGracePeriod";
+
+    static final String SYS_PROPERTY_EXPIRED_SEARCH_LIMIT =
+            "forgerock-openam-session-expired-search-limit";
 
     /**
      * Retrieves session state from the repository.

@@ -22,21 +22,25 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: SAML2Repository.java,v 1.1 2008/07/22 18:08:20 weisun2 Exp $
+ * $Id: SAML2RepositoryFactory.java,v 1.1 2008/07/22 18:08:20 weisun2 Exp $
  */ 
 
 package com.sun.identity.saml2.common;
 
-import com.sun.identity.common.SystemConfigurationUtil; 
-import com.sun.identity.saml2.plugins.JMQSAML2Repository; 
+import com.sun.identity.common.SystemConfigurationUtil;
+import com.sun.identity.coretoken.interfaces.AMTokenSAML2Repository;
 
 /**
- * <code>SAML2Repository</code> represents the saml2 repository,
+ * <code>SAML2RepositoryFactory</code> represents the saml2 repository,
  * default repository is <code>DefaultJMQSAML2Repository</code>
  */
-public class SAML2Repository {
+public class SAML2RepositoryFactory {
 
-    private static final String DEFAULT_REPOSITORY_CLASS = 
+    private static final String DEFAULT_REPOSITORY_CLASS =
+        "com.sun.identity.saml2.common.CTSPersistentSAML2Store";
+
+    @Deprecated
+    private static final String DEFAULT_JMQ_REPOSITORY_CLASS =
         "com.sun.identity.saml2.plugins.DefaultJMQSAML2Repository"; 
         
     private static final String REPOSITORY_CLASS_PROPERTY =
@@ -46,23 +50,26 @@ public class SAML2Repository {
         SystemConfigurationUtil.getProperty(
         REPOSITORY_CLASS_PROPERTY, DEFAULT_REPOSITORY_CLASS);
 
-    private static JMQSAML2Repository saml2Repository = null;
+    /**
+     * Cached Instance Reference to our SAML2 Token Repository
+     */
+    private static AMTokenSAML2Repository saml2Repository = null;
 
     static {
         try {
-            saml2Repository = (JMQSAML2Repository) Class.forName(
+            saml2Repository = (AMTokenSAML2Repository) Class.forName(
                 REPOSITORY_CLASS).newInstance();
         } catch (Exception e) {
             SAML2Utils.debug.error("Failed to instantiate " +
-                "JMQSAML2Repository", e); 
+                "AMTokenSAML2Repository", e);
             saml2Repository = null; 
         }
     } 
     /**
-     * @return the instance of JMQSAML2Repository
-     * @throws SAML2Exception when failed to instantiate JMQSAML2Repository
+     * @return the instance of AMTokenSAML2Repository
+     * @throws SAML2Exception when failed to instantiate AMTokenSAML2Repository
      */
-    public static JMQSAML2Repository getInstance()
+    public static AMTokenSAML2Repository getInstance()
         throws SAML2Exception {
         if (saml2Repository == null) {
             throw new SAML2Exception(

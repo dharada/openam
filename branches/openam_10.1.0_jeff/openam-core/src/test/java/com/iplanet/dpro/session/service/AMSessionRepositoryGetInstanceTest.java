@@ -30,6 +30,7 @@
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
+import com.sun.identity.coretoken.interfaces.AMSessionRepository;
 import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.junit.Ignore;
 import org.testng.annotations.AfterClass;

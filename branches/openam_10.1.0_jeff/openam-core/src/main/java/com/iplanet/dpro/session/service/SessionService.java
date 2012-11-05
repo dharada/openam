@@ -60,6 +60,7 @@ import com.sun.identity.common.ShutdownListener;
 import com.sun.identity.common.ShutdownManager;
 import com.sun.identity.common.configuration.ServerConfiguration;
 import com.sun.identity.common.configuration.SiteConfiguration;
+import com.sun.identity.coretoken.interfaces.AMSessionRepository;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.idm.IdSearchResults;
@@ -2917,7 +2918,9 @@ public class SessionService {
             InternalSession sess = null;
             try {
                 sess = getRepository().retrieve(sid);
-                updateSessionMaps(sess);
+                if (sess != null) {
+                    updateSessionMaps(sess);
+                }
             } catch (Exception e) {
                 sessionDebug.error("Failed to retrieve new session", e);
             }

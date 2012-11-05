@@ -29,8 +29,8 @@
 
 package com.iplanet.dpro.session.service;
 
-import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 import com.sun.identity.sm.ldap.CTSPersistentStore;
+import org.forgerock.openam.shared.session.ha.amsessionstore.AMSessionRepositoryType;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

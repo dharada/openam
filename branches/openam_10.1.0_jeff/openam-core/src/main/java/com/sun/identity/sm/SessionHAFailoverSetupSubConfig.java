@@ -29,10 +29,9 @@
 package com.sun.identity.sm;
 
 import com.iplanet.dpro.session.exceptions.StoreException;
-import com.iplanet.dpro.session.service.AMSessionRepository;
+import com.sun.identity.coretoken.interfaces.AMSessionRepository;
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
-import com.iplanet.ums.IUMSConstants;
 import com.sun.identity.shared.Constants;
 import com.sun.identity.shared.configuration.SystemPropertiesManager;
 

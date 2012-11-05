@@ -24,6 +24,7 @@ package com.sun.identity.sm.ldap;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.ldap.LDAPConnection;
+import com.sun.identity.shared.ldap.LDAPException;
 
 /**
  * Protected Static Helper Accessor class to Access the protected SMDataLayer.
@@ -88,6 +89,22 @@ class CTSDataLayer {
      */
     protected void releaseConnection(LDAPConnection ldapConnection, int ldapErrorCode ) {
         sharedSMDataLayer.releaseConnection(ldapConnection, ldapErrorCode);
+    }
+
+    /**
+     * Release an obtained Connection back to the pool, with a
+     * specified Last LDAP Stack Exception for clean-up.
+     *
+     * @param ldapConnection
+     * @param lastLDAPException - Last up Stream LDAP Exception, can be null if no issues arose
+     *                          with the connection or operations.
+     */
+    protected void releaseConnection(LDAPConnection ldapConnection, LDAPException lastLDAPException ) {
+        if (lastLDAPException == null) {
+            sharedSMDataLayer.releaseConnection(ldapConnection);
+        } else {
+            sharedSMDataLayer.releaseConnection(ldapConnection, lastLDAPException.getLDAPResultCode());
+        }
     }
 
 }

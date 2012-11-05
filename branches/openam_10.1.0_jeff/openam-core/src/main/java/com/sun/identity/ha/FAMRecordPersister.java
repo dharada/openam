@@ -38,6 +38,7 @@ import com.sun.identity.sm.model.FAMRecord;
  * FAMRecordPersister is an interface. It sends FAMRecord and processes
  * return message, also reformats the message to FAMRecord.
  */
+@Deprecated
 public interface FAMRecordPersister {
     public FAMRecord send(FAMRecord famRecord) throws Exception;
 

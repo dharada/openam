@@ -22,11 +22,11 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
- * $Id: JMQSAML2Repository.java,v 1.3 2008/08/01 22:15:00 hengming Exp $
+ * $Id: AMTokenSAML2Repository.java,v 1.3 2008/08/01 22:15:00 hengming Exp $
  *
  */
 
-package com.sun.identity.saml2.plugins;
+package com.sun.identity.coretoken.interfaces;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ import java.util.List;
  * This class is used in SAML2 failover mode to store/recover serialized
  * state of IDPSession/Response object.
  */
-public interface JMQSAML2Repository {
+public interface AMTokenSAML2Repository {
 
    /**
     * Retrives existing SAML2 object from persistent datastore
@@ -60,7 +60,6 @@ public interface JMQSAML2Repository {
 
     /**
      * Deletes expired SAML2 object from the repository
-     * @exception When Unable to delete the expired SAML2 object
      */
     public void deleteExpired();
 
