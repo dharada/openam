@@ -222,7 +222,7 @@ public class IDPSingleLogout {
                 }
                 try {
                     if (SAML2Utils.isSAML2FailOverEnabled()) {
-                         SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                         SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                      }
                 } catch (SAML2Exception e) {
                      debug.error("Error while deleting idpSessionIndex"
@@ -255,7 +255,7 @@ public class IDPSingleLogout {
                 }
                 try {
                     if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                        SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                     }
                 } catch (SAML2Exception e) {
                     debug.error("Error while deleting idpSessionIndex"
@@ -905,7 +905,7 @@ public class IDPSingleLogout {
             }
             try {
                 if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                    SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                  }
             } catch (SAML2Exception e) {
                  debug.error("Error while deleting idpSessionIndex"
@@ -960,7 +960,7 @@ public class IDPSingleLogout {
                     }
                     try {
                         if (SAML2Utils.isSAML2FailOverEnabled()) {
-                            SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                            SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                         }
                     } catch (SAML2Exception e) {
                         debug.error("Error while deleting idpSessionIndex"
@@ -1068,7 +1068,7 @@ public class IDPSingleLogout {
                 }
                 try {
                     if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                        SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                     }
                 } catch (SAML2Exception e) {
                     debug.error("Error while deleting idpSessionIndex"
@@ -1130,7 +1130,7 @@ public class IDPSingleLogout {
             }
             try {
                 if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                    SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                 }
             } catch (SAML2Exception e) {
                 debug.error("Error while deleting idpSessionIndex"
@@ -1279,7 +1279,7 @@ public class IDPSingleLogout {
                     (SAML2Utils.isSAML2FailOverEnabled())) {
                     // Read from DataBase
                     IDPSessionCopy idpSessionCopy = (IDPSessionCopy)
-                        SAML2RepositoryFactory.getInstance().retrieve(sessionIndex);
+                        SAML2RepositoryFactory.getInstance().retrieveSAML2Token(sessionIndex);
                     // Copy back to IDPSession
                     if (idpSessionCopy != null) {
                         idpSession = new IDPSession(idpSessionCopy);
@@ -1405,7 +1405,7 @@ public class IDPSingleLogout {
 				   size());
                        }
                        if (SAML2Utils.isSAML2FailOverEnabled()) {
-                           SAML2RepositoryFactory.getInstance().delete(sessionIndex);
+                           SAML2RepositoryFactory.getInstance().deleteSAML2Token(sessionIndex);
                        }
                        IDPCache.authnContextCache.remove(sessionIndex);
                     }   
@@ -1504,7 +1504,7 @@ public class IDPSingleLogout {
 			        size());
                     }
                     if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        SAML2RepositoryFactory.getInstance().delete(sessionIndex);
+                        SAML2RepositoryFactory.getInstance().deleteSAML2Token(sessionIndex);
                     }
                     IDPCache.authnContextCache.remove(sessionIndex);
                 }    
@@ -1685,7 +1685,7 @@ public class IDPSingleLogout {
                 }
                 try {
                     if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        SAML2RepositoryFactory.getInstance().delete(idpSessionIndex);
+                        SAML2RepositoryFactory.getInstance().deleteSAML2Token(idpSessionIndex);
                     }
                 } catch (SAML2Exception e) {
                     debug.error("Error while deleting idpSessionIndex"

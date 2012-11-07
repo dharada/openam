@@ -21,16 +21,16 @@
 package com.iplanet.dpro.session.service;
 
 import com.iplanet.am.util.SystemProperties;
-import com.sun.identity.coretoken.interfaces.AMSessionRepository;
+import com.sun.identity.coretoken.interfaces.AMTokenRepository;
 import com.sun.identity.sm.ldap.CTSPersistentStore;
 import com.sun.identity.sm.mq.JMQSessionRepository;
 
 /**
- * <code>SessionRepositoryFactory</code> provides a default
+ * <code>AMTokenRepositoryFactory</code> provides a default
  * factory for obtaining our Core Token services BackEnd Repository.
  */
 
-class SessionRepositoryFactory {
+class AMTokenRepositoryFactory {
 
     /**
      * Global Definitions.
@@ -39,39 +39,39 @@ class SessionRepositoryFactory {
             CTSPersistentStore.class.getName();
 
     private static final String CTS_REPOSITORY_CLASS_NAME = SystemProperties.get(
-            AMSessionRepository.CTS_REPOSITORY_CLASS_PROPERTY, DEFAULT_CTS_REPOSITORY_CLASS_NAME);
+            AMTokenRepository.CTS_REPOSITORY_CLASS_PROPERTY, DEFAULT_CTS_REPOSITORY_CLASS_NAME);
 
     /**
      * Singleton instance of AM Session Repository or CTS.
      */
-    private static AMSessionRepository sessionRepository = null;
+    private static AMTokenRepository amTokenRepository = null;
 
     /**
      * Private, do not allow instantiation.
      */
-    private SessionRepositoryFactory() {
+    private AMTokenRepositoryFactory() {
     }
 
     /**
      * Common Get Instance method to obtain access to
      * Service Methods.
      *
-     * @return AMSessionRepository Singleton Instance.
+     * @return AMTokenRepository Singleton Instance.
      * @throws Exception
      */
-    protected static AMSessionRepository getInstance()
+    protected static AMTokenRepository getInstance()
             throws Exception {
-        if (sessionRepository == null) {
+        if (amTokenRepository == null) {
             if (CTS_REPOSITORY_CLASS_NAME.equals(CTSPersistentStore.class.getName())) {
-                sessionRepository = CTSPersistentStore.getInstance();
+                amTokenRepository = CTSPersistentStore.getInstance();
             } else if (CTS_REPOSITORY_CLASS_NAME.equals(JMQSessionRepository.class.getName())) {
-                sessionRepository = JMQSessionRepository.getInstance();
+                amTokenRepository = JMQSessionRepository.getInstance();
             } else {
                 throw new IllegalAccessException("Unable to instantiate the CTS Persistent Store as Implementation Class:["+
                         CTS_REPOSITORY_CLASS_NAME+"], is unknown to OpenAM!");
             }
         }
-        return sessionRepository;
+        return amTokenRepository;
     }
 
 }

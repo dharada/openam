@@ -38,7 +38,7 @@ import com.iplanet.dpro.session.exceptions.StoreException;
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.common.SystemTimer;
 import com.iplanet.am.util.SystemProperties;
-import com.sun.identity.coretoken.interfaces.AMSessionRepository;
+import com.sun.identity.coretoken.interfaces.AMTokenRepository;
 import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.session.util.SessionUtils;
@@ -61,7 +61,7 @@ import com.sun.identity.shared.Constants;
  */
 @Deprecated
 public class JMQSessionRepository extends GeneralTaskRunnable implements
-    AMSessionRepository {
+        AMTokenRepository {
 
     /**
      * Singleton Definition.

@@ -1447,7 +1447,7 @@ public class SPACSUtils {
             SPCache.assertionByIDCache.put(assertionID, SAML2Constants.ONETIME);
             try {
                 if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    SAML2RepositoryFactory.getInstance().save(assertionID,
+                    SAML2RepositoryFactory.getInstance().saveSAML2Token(assertionID,
                     SAML2Constants.ONETIME, 
                     ((Long) smap.get(SAML2Constants.NOTONORAFTER)).longValue(),
                     null);
@@ -1801,7 +1801,7 @@ public class SPACSUtils {
                     // Try and retrieve the value from the SAML2 repository
                     // The key is this way to make it unique compared to when
                     // the same key is used to store a copy of the AuthnRequestInfo
-                    String relayState = (String) SAML2RepositoryFactory.getInstance().retrieve(relayStateID + relayStateID);
+                    String relayState = (String) SAML2RepositoryFactory.getInstance().retrieveSAML2Token(relayStateID + relayStateID);
                     if (relayState != null) {
                         // Get back the relayState
                         relayStateUrl = relayState;

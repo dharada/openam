@@ -433,7 +433,7 @@ public class AssertionIDRequestUtil {
                         "reading assertion from DB. ID = " + assertionID);
                 }
                 String assertionStr =
-                    (String) SAML2RepositoryFactory.getInstance().retrieve(assertionID);
+                    (String) SAML2RepositoryFactory.getInstance().retrieveSAML2Token(assertionID);
                 if (assertionStr != null) {
                     assertion = AssertionFactory.getInstance().createAssertion(
                         assertionStr);

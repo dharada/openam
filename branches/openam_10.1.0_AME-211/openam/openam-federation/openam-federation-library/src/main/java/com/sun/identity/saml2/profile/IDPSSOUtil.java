@@ -817,7 +817,7 @@ public class IDPSSOUtil {
                     (SAML2Utils.isSAML2FailOverEnabled())) {
                 // Read from DataBase
                 IDPSessionCopy idpSessionCopy = (IDPSessionCopy)
-                    SAML2RepositoryFactory.getInstance().retrieve(sessionIndex);
+                    SAML2RepositoryFactory.getInstance().retrieveSAML2Token(sessionIndex);
                 // Copy back to IDPSession
                 if (idpSessionCopy != null) {
                     idpSession = new IDPSession(idpSessionCopy);
@@ -957,7 +957,7 @@ public class IDPSSOUtil {
 
             IDPCache.assertionByIDCache.put(assertionID, assertion);
             if (SAML2Utils.isSAML2FailOverEnabled()) {
-                SAML2RepositoryFactory.getInstance().save(assertionID,
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(assertionID,
                     assertion.toXMLString(true, true),
                     conditions.getNotOnOrAfter().getTime() / 1000,
                     cacheKey);
@@ -973,7 +973,7 @@ public class IDPSSOUtil {
             long sessionExpireTime = System.currentTimeMillis() / 1000 +
                  (sessionProvider.getTimeLeft(session));
             if (SAML2Utils.isSAML2FailOverEnabled()) {
-                SAML2RepositoryFactory.getInstance().save(sessionIndex,
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(sessionIndex,
                     new IDPSessionCopy(idpSession), sessionExpireTime, null);
             }
             if (SAML2Utils.debug.messageEnabled()) {
@@ -2107,7 +2107,7 @@ public class IDPSSOUtil {
             if (SAML2Utils.isSAML2FailOverEnabled()) {
                 long expireTime = getValidTimeofResponse(
                     realm, idpEntityID,res);
-                SAML2RepositoryFactory.getInstance().save(
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(
                     artStr,res.toXMLString(true,true),expireTime / 1000,
                     null);
                 if (SAML2Utils.debug.messageEnabled()) {

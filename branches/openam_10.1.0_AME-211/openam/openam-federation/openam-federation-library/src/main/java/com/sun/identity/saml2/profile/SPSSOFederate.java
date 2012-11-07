@@ -363,7 +363,7 @@ public class SPSSOFederate {
             if (SAML2Utils.isSAML2FailOverEnabled()) {
                 // sessionExpireTime is counted in seconds
                 long sessionExpireTime = System.currentTimeMillis() / 1000 + SPCache.interval;                    
-                SAML2RepositoryFactory.getInstance().save(authnRequest.getID(), new AuthnRequestInfoCopy(reqInfo), sessionExpireTime, null);
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(authnRequest.getID(), new AuthnRequestInfoCopy(reqInfo), sessionExpireTime, null);
                 if (SAML2Utils.debug.messageEnabled()) {
                     SAML2Utils.debug.message("SPSSOFederate.initiateAuthnRequest:"
                             + " SAVE AuthnRequestInfoCopy for requestID " + authnRequest.getID());
@@ -610,7 +610,7 @@ public class SPSSOFederate {
             if (SAML2Utils.isSAML2FailOverEnabled()) {
                 // sessionExpireTime is counted in seconds
                 long sessionExpireTime = System.currentTimeMillis() / 1000 + SPCache.interval;                    
-                SAML2RepositoryFactory.getInstance().save(authnRequest.getID(),
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(authnRequest.getID(),
                         new AuthnRequestInfoCopy(reqInfo), sessionExpireTime, null);
                 if (SAML2Utils.debug.messageEnabled()) {
                     SAML2Utils.debug.message("SPSSOFederate.initiateECPRequest:"
@@ -1048,7 +1048,7 @@ public class SPSSOFederate {
             try {
                 // Need to make the key unique due to the requestID also being used to
                 // store a copy of the AuthnRequestInfo
-                SAML2RepositoryFactory.getInstance().save(requestID + requestID, relayState, sessionExpireTime, null);
+                SAML2RepositoryFactory.getInstance().saveSAML2Token(requestID + requestID, relayState, sessionExpireTime, null);
             } catch (SAML2Exception ex) {
                 if (SAML2Utils.debug.messageEnabled()) {
                     SAML2Utils.debug.message("SPSSOFederate.getRelayStateID: Unable to SAVE relayState for requestID "

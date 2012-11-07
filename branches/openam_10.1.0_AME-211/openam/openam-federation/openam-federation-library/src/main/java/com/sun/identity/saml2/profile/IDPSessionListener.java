@@ -245,7 +245,7 @@ public class IDPSessionListener
             }
 
             if (SAML2Utils.isSAML2FailOverEnabled()) {
-                SAML2RepositoryFactory.getInstance().delete(sessionIndex);
+                SAML2RepositoryFactory.getInstance().deleteSAML2Token(sessionIndex);
             }       
             if (SAML2Utils.debug.messageEnabled()) {
                 SAML2Utils.debug.message(

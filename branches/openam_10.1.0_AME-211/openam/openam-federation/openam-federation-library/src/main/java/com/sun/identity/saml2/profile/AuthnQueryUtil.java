@@ -240,7 +240,7 @@ public class AuthnQueryUtil {
                 SAML2Utils.debug.message("AuthnQueryUtil.processAuthnQuery: " +
                     "getting user assertions from DB. user = " + cacheKey);
             }
-            List list = SAML2RepositoryFactory.getInstance().retrieveWithSecondaryKey(
+            List list = SAML2RepositoryFactory.getInstance().retrieveSAML2TokenWithSecondaryKey(
                 cacheKey);
             if ((list != null) && (!list.isEmpty())) {
                 assertions = new ArrayList();

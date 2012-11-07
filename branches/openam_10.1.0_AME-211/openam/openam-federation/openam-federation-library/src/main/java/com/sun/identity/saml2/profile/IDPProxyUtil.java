@@ -284,7 +284,7 @@ public class IDPProxyUtil {
         if (SAML2Utils.isSAML2FailOverEnabled()) {
             // sessionExpireTime is counted in seconds
             long sessionExpireTime = System.currentTimeMillis() / 1000 + SPCache.interval;                    
-            SAML2RepositoryFactory.getInstance().save(requestID,
+            SAML2RepositoryFactory.getInstance().saveSAML2Token(requestID,
                     new AuthnRequestInfoCopy(reqInfo), sessionExpireTime, null);
             if (SAML2Utils.debug.messageEnabled()) {
                 SAML2Utils.debug.message(classMethod + " SAVE AuthnRequestInfoCopy for requestID " + requestID);
@@ -504,7 +504,7 @@ public class IDPProxyUtil {
      * @param response HttpServletResponse
      * @param requestID request ID 
      * @param idpMetaAlias meta Alias 
-     * @param newSession Session object 
+     * @param newSess Session object
      * @exception SAML2Exception for any SAML2 failure.
      */
     private static void sendProxyResponse(

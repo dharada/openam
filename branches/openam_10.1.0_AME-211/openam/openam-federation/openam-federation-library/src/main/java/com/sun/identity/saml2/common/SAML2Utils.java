@@ -325,7 +325,7 @@ public class SAML2Utils extends SAML2SDKUtils {
                 if (SAML2Utils.isSAML2FailOverEnabled()) {
                     // Attempt to read AuthnRequestInfoCopy from SAML2 repository
                     AuthnRequestInfoCopy reqInfoCopy = 
-                            (AuthnRequestInfoCopy) SAML2RepositoryFactory.getInstance().retrieve(inRespToResp);
+                            (AuthnRequestInfoCopy) SAML2RepositoryFactory.getInstance().retrieveSAML2Token(inRespToResp);
                     if (reqInfoCopy != null) {
                         // Get back the AuthnRequestInfo
                         reqInfo = reqInfoCopy.getAuthnRequestInfo(httpRequest, httpResponse);
@@ -612,7 +612,7 @@ public class SAML2Utils extends SAML2SDKUtils {
                
                 if ((!foundAssertion) && SAML2Utils.isSAML2FailOverEnabled()) {
                     try {
-                        if ((SAML2RepositoryFactory.getInstance().retrieve(assertionID)) != null) {
+                        if ((SAML2RepositoryFactory.getInstance().retrieveSAML2Token(assertionID)) != null) {
                             foundAssertion = true; 
                         }    
                     } catch(Exception ae) {

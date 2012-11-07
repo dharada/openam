@@ -27,7 +27,7 @@ import com.iplanet.am.util.SystemProperties;
 import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.SessionID;
 import com.iplanet.dpro.session.exceptions.EntryAlreadyExistsException;
-import com.sun.identity.coretoken.interfaces.AMSessionRepository;
+import com.sun.identity.coretoken.interfaces.AMTokenRepository;
 import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.common.GeneralTaskRunnable;
@@ -60,7 +60,7 @@ import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
 
 /**
- * Provide Implementation of AMSessionRepository using the internal/external
+ * Provide Implementation of AMTokenRepository using the internal/external
  * Configuration Directory as OpenAM's Session and Token Store.
  * <p>
  * Having a replicated Directory
@@ -72,7 +72,7 @@ import org.opends.server.types.*;
  * @author steve
  * @author jeff.schenk@forgerock.com
  */
-public class CTSPersistentStore extends GeneralTaskRunnable implements AMSessionRepository {
+public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRepository {
 
     /**
      * Globals Constants, so not to pollute entire product.
@@ -175,7 +175,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
     private static String[] returnAttrs_DN_ONLY_ARRAY;
 
     /**
-     * Expired Session Search Limit.
+     * Expired Session Search Limit and Date & Time Formatter.
      */
     private static final int DEFAULT_EXPIRED_SESSION_SEARCH_LIMIT = 250;
     private static int EXPIRED_SESSION_SEARCH_LIMIT;
@@ -305,7 +305,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMSession
      * @return CTSPersistentStore Singleton Instance.
      * @throws StoreException
      */
-    public static AMSessionRepository getInstance() throws StoreException {
+    public static AMTokenRepository getInstance() throws StoreException {
         return instance;
     }
 

@@ -424,7 +424,7 @@ public class IDPArtifactResolution {
                         SAML2Utils.debug.message("Artifact=" + artStr);
                     }
                     String tmp = (String) SAML2RepositoryFactory.getInstance()
-                            .retrieve(artStr);
+                            .retrieveSAML2Token(artStr);
                     res = ProtocolFactory.getInstance().createResponse(tmp);
                 } catch (SAML2Exception e) {
                     SAML2Utils.debug.error(classMethod + "DB ERROR!!!", e);
@@ -444,7 +444,7 @@ public class IDPArtifactResolution {
         // Remove Response from persistent DB
         try {
             if (saml2FailoverEnabled) {
-                SAML2RepositoryFactory.getInstance().delete(artStr);
+                SAML2RepositoryFactory.getInstance().deleteSAML2Token(artStr);
             }
         } catch (SAML2Exception e) {
             SAML2Utils.debug.error(classMethod + "Error deleting the SAML object from the repository", e);
