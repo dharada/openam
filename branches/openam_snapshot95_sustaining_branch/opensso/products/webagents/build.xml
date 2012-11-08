@@ -40,6 +40,7 @@
 
 
     <import file="../products.xml" />
+    <import file="../installtools/installtools.xml" />
     <import file="webagents.xml" />
 
     <tstamp>
@@ -110,6 +111,8 @@
     <target name="preparebuild">
         <mkdir dir="${webagents.built.dir}"/>
         <mkdir dir="${webagents.dist.dir}"/>
+        <echo message="Dispatch to installtools to build install libraries"/>
+        <ant antfile="${installtools.base.dir}/build.xml" inheritRefs="true" />
     </target>
 
     <target name="clean">
@@ -226,6 +229,7 @@
             tofile="${webagents.dist.dir}/proxy_v40_${build.os}${build.type.suffix}_build_date.js" filtering="true"/>
         <copy file="${webagents.basedir}/agents/source/sjsws/build_date.js.template"
             tofile="${webagents.dist.dir}/sjsws_v70_${build.os}${build.type.suffix}_build_date.js" filtering="true"/>
+        <antcall target="prenightly" inheritRefs="true"/>
         <antcall target="all" inheritRefs="true"/>
 <!--
         <copy file="${webagents.docs.dir}/nightly.html" 
@@ -234,6 +238,15 @@
         <antcall target="postnightly" inheritRefs="true"/>
     </target>
 
+    <target name="prenightly" depends="preparebuild">
+        <copy todir="${webagents.basedir}/extlib" >
+            <fileset dir="${installtools.dist.dir}">
+                <include name="opensso-installtools.jar" />
+                <include name="opensso-installtools-launcher.jar" />
+            </fileset>
+        </copy>
+    </target>
+        
     <target name="postnightly">
         <copy todir="${prd.nightly.dist.dir}/webagents/${nightly.date}">
             <fileset dir="${webagents.dist.dir}" />
