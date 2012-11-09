@@ -45,7 +45,6 @@ public interface AMTokenRepository {
 
     static final String DEBUG_NAME = "amSessionRepository";
 
-    // TODO This property Name Value should probably change.
     static final String CTS_REPOSITORY_CLASS_PROPERTY =
             "com.sun.am.session.SessionRepositoryImpl";
 
@@ -60,6 +59,9 @@ public interface AMTokenRepository {
 
     static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";
+
+    static final String SYS_PROPERTY_TOKEN_ROOT_SUFFIX =
+            "iplanet-am-config-token-root-suffix";
 
     static final String CLEANUP_GRACE_PERIOD =
             "com.sun.identity.session.repository.cleanupGracePeriod";

@@ -53,6 +53,7 @@ import javax.xml.soap.SOAPConnection;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
+import com.iplanet.dpro.session.exceptions.StoreException;
 import com.sun.identity.saml2.common.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -1452,6 +1453,8 @@ public class SPACSUtils {
                     ((Long) smap.get(SAML2Constants.NOTONORAFTER)).longValue(),
                     null);
                 }
+            } catch (StoreException se) {
+                SAML2Utils.debug.error(classMethod + "DB error!", se);
             } catch (SAML2Exception e) {
                 SAML2Utils.debug.error(classMethod + "DB error!", e); 
             }
@@ -1810,6 +1813,9 @@ public class SPACSUtils {
                                 + " retrieved from SAML2 repository for relayStateID: " + relayStateID);
                         }
                     }
+                } catch (StoreException se) {
+                    SAML2Utils.debug.error("SPACUtils.getRelayState: Unable to retrieve relayState for relayStateID "
+                            + relayStateID, se);
                 } catch (SAML2Exception ex) {                    
                     SAML2Utils.debug.error("SPACUtils.getRelayState: Unable to retrieve relayState for relayStateID "
                             + relayStateID, ex);                    

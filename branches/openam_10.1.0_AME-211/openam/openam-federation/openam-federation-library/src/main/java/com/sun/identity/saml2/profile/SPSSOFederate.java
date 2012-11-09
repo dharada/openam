@@ -32,6 +32,7 @@
 
 package com.sun.identity.saml2.profile;
 
+import com.iplanet.dpro.session.exceptions.StoreException;
 import com.sun.identity.liberty.ws.paos.PAOSException;
 import com.sun.identity.liberty.ws.paos.PAOSConstants;
 import com.sun.identity.liberty.ws.paos.PAOSHeader;
@@ -374,10 +375,15 @@ public class SPSSOFederate {
             throw new SAML2Exception(
                     SAML2Utils.bundle.getString("errorCreatingAuthnRequest"));
         } catch (SAML2MetaException sme) {
-            SAML2Utils.debug.error("SPSSOFederate:Error retreiving metadata"
+            SAML2Utils.debug.error("SPSSOFederate:Error retrieving metadata"
                                     ,sme);
             throw new SAML2Exception(
                     SAML2Utils.bundle.getString("metaDataError"));            
+        } catch (StoreException sme) {
+            SAML2Utils.debug.error("SPSSOFederate: Store Exception retrieving metadata"
+                ,sme);
+            throw new SAML2Exception(
+                SAML2Utils.bundle.getString("metaDataError"));
         }
     }
 
@@ -622,6 +628,11 @@ public class SPSSOFederate {
                                     ,sme);
             throw new SAML2Exception(
                     SAML2Utils.bundle.getString("metaDataError"));            
+        } catch (StoreException sme) {
+            SAML2Utils.debug.error("SPSSOFederate:Error retreiving metadata"
+                    ,sme);
+            throw new SAML2Exception(
+                    SAML2Utils.bundle.getString("metaDataError"));
         }
             
 
@@ -1054,6 +1065,9 @@ public class SPSSOFederate {
                     SAML2Utils.debug.message("SPSSOFederate.getRelayStateID: Unable to SAVE relayState for requestID "
                             + requestID, ex);
                 }
+            } catch (StoreException se) {
+                SAML2Utils.debug.error("SPSSOFederate.getRelayStateID: Unable to SAVE relayState for requestID "
+                        + requestID, se);
             }
             if (SAML2Utils.debug.messageEnabled()) {
                 SAML2Utils.debug.message("SPSSOFederate.getRelayStateID: SAVE relayState for requestID " + requestID);
