@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
@@ -28,18 +28,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
-import org.forgerock.restlet.ext.oauth2.model.RefreshToken;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
+import org.forgerock.openam.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.model.RefreshToken;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Post;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ * Implements the Refresh Token Flow
+ * @see <a href="http://tools.ietf.org/html/rfc6749#section-6">6. Refreshing an Access Token</a>
  */
 public class RefreshTokenServerResource extends AbstractFlow {
 
@@ -55,36 +55,35 @@ public class RefreshTokenServerResource extends AbstractFlow {
 
         client = getAuthenticatedClient();
         String refresh_token =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.REFRESH_TOKEN,
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.REFRESH_TOKEN,
                         String.class);
         // Find Token
         RefreshToken refreshToken = getTokenStore().readRefreshToken(refresh_token);
 
         if (null == refreshToken) {
+            OAuth2Utils.DEBUG.error("Refresh token does not exist for id: " + refresh_token );
             throw OAuthProblemException.OAuthError.INVALID_REQUEST.handle(getRequest(),
                     "RefreshToken does not exist");
         } else if (!refreshToken.getClient().getClientId().equals(client.getClient().getClientId())) {
-            // TODO throw Exception
+            OAuth2Utils.DEBUG.error("Refresh Token was issued to a different client id: " + refreshToken.getClient().getClientId() );
             throw OAuthProblemException.OAuthError.INVALID_REQUEST.handle(getRequest(),
                     "Token was issued to a different client");
         } else {
-            // TODO validate the refresh token.
-            if (refreshToken.getExpireTime() - System.currentTimeMillis() < 0
-                    || refreshToken.isExpired()) {
+            if (refreshToken.isExpired()) {
+                OAuth2Utils.DEBUG.warning("Refresh Token is expired for id: " + refresh_token);
                 throw OAuthProblemException.OAuthError.EXPIRED_TOKEN.handle(getRequest());
             }
 
             // Get the requested scope
             String scope_before =
                     OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
+                            .getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
 
             // Get the granted scope
             Set<String> granted_after = new TreeSet<String>(refreshToken.getScope());
-            granted_after.retainAll(client.getClient().allowedGrantScopes());
 
             // Validate the granted scope
-            Set<String> checkedScope = getCheckedScope(scope_before, granted_after, granted_after);
+            Set<String> checkedScope = executeRefreshTokenScopePlugin(scope_before, granted_after);
 
             // Generate Token
             AccessToken token = createAccessToken(refreshToken, checkedScope);
@@ -95,7 +94,7 @@ public class RefreshTokenServerResource extends AbstractFlow {
 
     @Override
     protected String[] getRequiredParameters() {
-        return new String[] { OAuth2.Params.GRANT_TYPE, OAuth2.Params.REFRESH_TOKEN };
+        return new String[] { OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.Params.REFRESH_TOKEN };
     }
 
     /**
@@ -103,12 +102,12 @@ public class RefreshTokenServerResource extends AbstractFlow {
      * 
      * @param checkedScope
      * @return
-     * @throws org.forgerock.restlet.ext.oauth2.OAuthProblemException
+     * @throws org.forgerock.openam.oauth2.exceptions.OAuthProblemException
      * 
      */
     protected AccessToken createAccessToken(RefreshToken refreshToken, Set<String> checkedScope) {
         return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
-                checkedScope, refreshToken);
+                checkedScope, refreshToken, OAuth2Utils.getRealm(getRequest()));
     }
 
 }

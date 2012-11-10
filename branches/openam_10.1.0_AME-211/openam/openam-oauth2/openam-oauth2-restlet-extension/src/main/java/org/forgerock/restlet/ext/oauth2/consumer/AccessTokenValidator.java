@@ -19,17 +19,16 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
 
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 
 /**
- * An AccessTokenValidator does ...
- * 
- * @author Laszlo Hordos
+ * An AccessTokenValidator validates a token
+ *
  */
 public interface AccessTokenValidator<T extends AbstractAccessToken> {
     public T verify(T token) throws OAuthProblemException;

@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
@@ -27,12 +27,10 @@ package org.forgerock.restlet.ext.oauth2.flow;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.model.AccessToken;
 import org.restlet.data.Form;
-import org.restlet.data.Method;
 import org.restlet.data.Reference;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
@@ -40,8 +38,10 @@ import org.restlet.resource.Post;
 import org.restlet.routing.Redirector;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ *
+ * Implements the Implicit Flow
+ *
+ * @see <a href="http://tools.ietf.org/html/rfc6749#section-4.2">4.2.  Implicit Grant</a>
  */
 public class ImplicitGrantServerResource extends AbstractFlow {
 
@@ -65,70 +65,54 @@ public class ImplicitGrantServerResource extends AbstractFlow {
     public Representation represent() {
         resourceOwner = getAuthenticatedResourceOwner();
 
-        String approval_prompt =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.APPROVAL_PROMPT,
-                        String.class);
+        // Validate the client
+        client = validateRemoteClient();
+        // Validate Redirect URI throw exception
+        sessionClient =
+                client.getClientInstance(OAuth2Utils.getRequestParameter(getRequest(),
+                        OAuth2Constants.Params.REDIRECT_URI, String.class));
 
-        if (true) {
-            /*
-             * APPROVAL_PROMPT = false AND CLIENT.AUTO_GRANT
-             */
+        // The target contains the state
+        String state =
+                OAuth2Utils
+                        .getRequestParameter(getRequest(), OAuth2Constants.Params.STATE, String.class);
 
-            // Validate the client
-            client = validateRemoteClient();
-            // Validate Redirect URI throw exception
-            sessionClient =
-                    client.getClientInstance(OAuth2Utils.getRequestParameter(getRequest(),
-                            OAuth2.Params.REDIRECT_URI, String.class));
+        // Get the requested scope
+        String scope_before =
+                OAuth2Utils
+                        .getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
+        // Validate the granted scope
+        Set<String> checkedScope = executeAccessTokenScopePlugin(scope_before);
 
-            // The target contains the state
-            String state =
-                    OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.STATE, String.class);
+        AccessToken token = createAccessToken(checkedScope);
+        Form tokenForm = tokenToForm(token.convertToMap());
 
-            // Get the requested scope
-            String scope_before =
-                    OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
-            // Validate the granted scope
-            Set<String> checkedScope =
-                    getCheckedScope(scope_before, client.getClient().allowedGrantScopes(), client
-                            .getClient().defaultGrantScopes());
-
-            AccessToken token = createAccessToken(checkedScope);
-            Form tokenForm = tokenToForm(token.convertToMap());
-
-            /*
-             * scope OPTIONAL, if identical to the scope requested by the
-             * client, otherwise REQUIRED. The scope of the access token as
-             * described by Section 3.3.
-             */
-            if (isScopeChanged()) {
-                tokenForm.add(OAuth2.Params.SCOPE, OAuth2Utils.join(checkedScope, OAuth2Utils
-                        .getScopeDelimiter(getContext())));
-            }
-            if (null != state) {
-                tokenForm.add(OAuth2.Params.STATE, state);
-            }
-
-            Reference redirectReference = new Reference(sessionClient.getRedirectUri());
-            redirectReference.setFragment(tokenForm.getQueryString());
-
-            Redirector dispatcher =
-                    new Redirector(getContext(), redirectReference.toString(),
-                            Redirector.MODE_CLIENT_FOUND);
-            dispatcher.handle(getRequest(), getResponse());
-            return getResponseEntity();
-
-        } else {
-            // Build approval page data
-            return getPage("authorize.ftl", getDataModel());
+        /*
+         * scope OPTIONAL, if identical to the scope requested by the
+         * client, otherwise REQUIRED. The scope of the access token as
+         * described by Section 3.3.
+         */
+        if (isScopeChanged()) {
+            tokenForm.add(OAuth2Constants.Params.SCOPE, OAuth2Utils.join(checkedScope, OAuth2Utils
+                    .getScopeDelimiter(getContext())));
         }
+        if (null != state) {
+            tokenForm.add(OAuth2Constants.Params.STATE, state);
+        }
+
+        Reference redirectReference = new Reference(sessionClient.getRedirectUri());
+        redirectReference.setFragment(tokenForm.getQueryString());
+
+        Redirector dispatcher =
+                new Redirector(getContext(), redirectReference.toString(),
+                        Redirector.MODE_CLIENT_FOUND);
+        dispatcher.handle(getRequest(), getResponse());
+        return getResponseEntity();
     }
 
     @Override
     protected String[] getRequiredParameters() {
-        return new String[] { OAuth2.Params.RESPONSE_TYPE, OAuth2.Params.CLIENT_ID };
+        return new String[] { OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.Params.CLIENT_ID };
     }
 
     /**
@@ -136,12 +120,12 @@ public class ImplicitGrantServerResource extends AbstractFlow {
      * 
      * @param checkedScope
      * @return
-     * @throws org.forgerock.restlet.ext.oauth2.OAuthProblemException
+     * @throws org.forgerock.openam.oauth2.exceptions.OAuthProblemException
      * 
      */
     protected AccessToken createAccessToken(Set<String> checkedScope) {
         return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
-                checkedScope, OAuth2Utils.getContextRealm(getContext()),
+                checkedScope, OAuth2Utils.getRealm(getRequest()),
                 resourceOwner.getIdentifier(), sessionClient);
     }
 

@@ -19,14 +19,14 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.consumer;
 
 import java.util.logging.Level;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -36,9 +36,8 @@ import org.restlet.security.ChallengeAuthenticator;
 import org.restlet.security.Verifier;
 
 /**
- * An OAuth2Authenticator does ...
- * 
- * @author Laszlo Hordos
+ * An OAuth2Authenticator authenticates the subject sending the request and gets the token verifier.
+ * Used in the Demo application
  */
 public class OAuth2Authenticator extends ChallengeAuthenticator {
 

@@ -30,7 +30,7 @@ import java.util.Map;
 
 import org.fest.assertions.Condition;
 import org.fest.assertions.MapAssert;
-import org.forgerock.restlet.ext.oauth2.OAuth2;
+import org.forgerock.openam.oauth2.OAuth2Constants;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerOAuth2Proxy;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerToken;
 import org.forgerock.restlet.ext.oauth2.consumer.RequestFactory.AuthorizationCodeRequest;
@@ -80,12 +80,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -95,16 +95,16 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                         new Condition<Map<?, ?>>() {
                             @Override
                             public boolean matches(Map<?, ?> value) {
-                                return value.containsKey(OAuth2.Params.CODE);
+                                return value.containsKey(OAuth2Constants.Params.CODE);
                             }
                         });
 
         BearerToken token =
-                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2Constants.Params.CODE));
         assertNotNull(token);
 
     }
@@ -144,12 +144,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -159,16 +159,16 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
 
         BearerToken token =
-                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2Constants.Params.CODE));
         assertNotNull(token);
 
     }
@@ -206,13 +206,13 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
         //send empty redirect uri
-        parameters.add(OAuth2.Params.REDIRECT_URI, "");
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "");
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -222,11 +222,11 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
 
@@ -234,7 +234,7 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
 
         BearerToken token =
-                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2Constants.Params.CODE));
         assertNotNull(token);
 
     }
@@ -272,12 +272,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         parameters.add("UNRECOGNIZED PARAM", "Value");
         request.setEntity(parameters.getWebRepresentation());
 
@@ -288,15 +288,15 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
         BearerToken token =
-                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2Constants.Params.CODE));
         assertNotNull(token);
 
     }
@@ -334,15 +334,15 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.REDIRECT_URI, "http://localhost:8080/a");
-        parameters.add(OAuth2.Params.REDIRECT_URI, "http://localhost:8080/b");
-        parameters.add(OAuth2.Params.REDIRECT_URI, "http://localhost:8080/c");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "http://localhost:8080/a");
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "http://localhost:8080/b");
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "http://localhost:8080/c");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -352,18 +352,18 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
 
         assertThat(response.getLocationRef().toString().contains("http://localhost:8080/oauth2/cb?"));
 
         BearerToken token =
-                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2Constants.Params.CODE));
         assertNotNull(token);
     }
 
@@ -403,12 +403,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         Form parameters = new Form();
         //miss understood response type
         /* TODO: add the test for missing response type */
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, "NOT_UNDERSTOOD");
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, "NOT_UNDERSTOOD");
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -416,24 +416,62 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
     }
 
-    /* TODO:
+    /*
     If an authorization request fails validation due to a missing,
     invalid, or mismatching redirection URI, the authorization server
     SHOULD inform the resource owner of the error, and MUST NOT
     automatically redirect the user-agent to the invalid redirection URI.
      */
+    @Test
+    public void testAuthorizationInvalidRedirectURIInRequestParameters() throws Exception {
+
+        BearerOAuth2Proxy auth2Proxy = BearerOAuth2Proxy.popOAuth2Proxy(component.getContext());
+        assertNotNull(auth2Proxy);
+
+        AuthorizationCodeRequest factory =
+                auth2Proxy.getAuthorizationCodeRequest().setClientId("cid").setRedirectUri(
+                        auth2Proxy.getRedirectionEndpoint().toString()).setState("random");
+        factory.getScope().add("read");
+        factory.getScope().add("write");
+
+        Request request = factory.buildRequest();
+        ChallengeResponse resource_owner =
+                new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        request.setChallengeResponse(resource_owner);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertTrue(response.getStatus().isSuccess());
+        assertTrue(response.getEntity() instanceof TemplateRepresentation);
+        assertTrue(MediaType.TEXT_HTML.equals(response.getEntity().getMediaType()));
+
+        request = new Request(Method.POST, auth2Proxy.getAuthorizationEndpoint());
+        request.setChallengeResponse(resource_owner);
+        response = new Response(request);
+
+        Form parameters = new Form();
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "http://localhost:8080/a");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
+        request.setEntity(parameters.getWebRepresentation());
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
+        Form fragment = response.getLocationRef().getQueryAsForm();
+
+        // assert
+        assertThat(fragment.getValuesMap().get(OAuth2Constants.Params.ERROR).equalsIgnoreCase(OAuth2Constants.Error.REDIRECT_URI_MISMATCH));
+    }
 
     /* TODO:
     A public client that was not issued a client password MUST use the
     "client_id" request parameter to identify itself when sending requests
     to the token endpoint.
-    */
-
-    /* TODO:
-    The endpoint URI MAY include an "application/x-www-form-urlencoded"
-    formatted (per Appendix B) query component ([RFC3986] section 3.4),
-    which MUST be retained when adding additional query parameters.  The
-    endpoint URI MUST NOT include a fragment component.
     */
 
     @Test
@@ -465,12 +503,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -480,11 +518,11 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
 
@@ -497,12 +535,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         parameters = new Form();
-        parameters.add(OAuth2.Params.GRANT_TYPE, OAuth2.TokeEndpoint.AUTHORIZATION_CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
-        parameters.add(OAuth2.Params.CODE, fragment.getValuesMap().get(OAuth2.Params.CODE));
+        parameters.add(OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.TokeEndpoint.AUTHORIZATION_CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.CODE, fragment.getValuesMap().get(OAuth2Constants.Params.CODE));
         request.setEntity(parameters.getWebRepresentation());
         getClient().handle(request, response);
         assertEquals(response.getStatus(), Status.SUCCESS_ACCEPTED);
@@ -512,11 +550,11 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(representation.getObject()).includes(
-                MapAssert.entry(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER),
-                MapAssert.entry(OAuth2.Params.EXPIRES_IN, 3600)).is(new Condition<Map<?, ?>>() {
+                MapAssert.entry(OAuth2Constants.Params.TOKEN_TYPE, OAuth2Constants.Bearer.BEARER),
+                MapAssert.entry(OAuth2Constants.Params.EXPIRES_IN, 3600)).is(new Condition<Map<?, ?>>() {
             @Override
             public boolean matches(Map<?, ?> value) {
-                return value.containsKey(OAuth2.Params.ACCESS_TOKEN);
+                return value.containsKey(OAuth2Constants.Params.ACCESS_TOKEN);
             }
         });
     }
@@ -554,12 +592,12 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         Form parameters = new Form();
-        parameters.add(OAuth2.Params.RESPONSE_TYPE, OAuth2.AuthorizationEndpoint.CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.SCOPE, "read write");
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
         request.setEntity(parameters.getWebRepresentation());
 
         // handle
@@ -569,11 +607,11 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
 
         // assert
         assertThat(fragment.getValuesMap())
-                .includes(MapAssert.entry(OAuth2.Params.STATE, "random")).is(
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
                 new Condition<Map<?, ?>>() {
                     @Override
                     public boolean matches(Map<?, ?> value) {
-                        return value.containsKey(OAuth2.Params.CODE);
+                        return value.containsKey(OAuth2Constants.Params.CODE);
                     }
                 });
 
@@ -586,15 +624,97 @@ public class AuthorizationCodeServerResourceTest extends AbstractFlowTest {
         response = new Response(request);
 
         parameters = new Form();
-        parameters.add(OAuth2.Params.GRANT_TYPE, OAuth2.TokeEndpoint.AUTHORIZATION_CODE);
-        parameters.add(OAuth2.Params.CLIENT_ID, auth2Proxy.getClientId());
-        parameters.add(OAuth2.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
-        parameters.add(OAuth2.Params.STATE, "random");
-        parameters.add(OAuth2.Custom.DECISION, OAuth2.Custom.ALLOW);
-        parameters.add(OAuth2.Params.CODE, fragment.getValuesMap().get(OAuth2.Params.CODE));
+        parameters.add(OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.TokeEndpoint.AUTHORIZATION_CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.CODE, fragment.getValuesMap().get(OAuth2Constants.Params.CODE));
         request.setEntity(parameters.getWebRepresentation());
         getClient().handle(request, response);
         assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
+    }
+
+    /*
+   If an authorization request fails validation due to a missing,
+   invalid, or mismatching redirection URI, the authorization server
+   SHOULD inform the resource owner of the error, and MUST NOT
+   automatically redirect the user-agent to the invalid redirection URI.
+    */
+    @Test
+    public void testTokenInvalidRedirectURIRequest() throws Exception {
+
+        BearerOAuth2Proxy auth2Proxy = BearerOAuth2Proxy.popOAuth2Proxy(component.getContext());
+        assertNotNull(auth2Proxy);
+
+        AuthorizationCodeRequest factory =
+                auth2Proxy.getAuthorizationCodeRequest().setClientId("cid").setRedirectUri(
+                        auth2Proxy.getRedirectionEndpoint().toString()).setState("random");
+        factory.getScope().add("read");
+        factory.getScope().add("write");
+
+        Request request = factory.buildRequest();
+        ChallengeResponse resource_owner =
+                new ChallengeResponse(ChallengeScheme.HTTP_BASIC, "admin", "admin");
+        request.setChallengeResponse(resource_owner);
+        Response response = new Response(request);
+
+        // handle
+        getClient().handle(request, response);
+        assertTrue(response.getStatus().isSuccess());
+        assertTrue(response.getEntity() instanceof TemplateRepresentation);
+        assertTrue(MediaType.TEXT_HTML.equals(response.getEntity().getMediaType()));
+
+        request = new Request(Method.POST, auth2Proxy.getAuthorizationEndpoint());
+        request.setChallengeResponse(resource_owner);
+        response = new Response(request);
+
+        Form parameters = new Form();
+        parameters.add(OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.AuthorizationEndpoint.CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, auth2Proxy.getRedirectionEndpoint().toString());
+        parameters.add(OAuth2Constants.Params.SCOPE, "read write");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
+        request.setEntity(parameters.getWebRepresentation());
+
+        // handle
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.REDIRECTION_FOUND);
+        Form fragment = response.getLocationRef().getQueryAsForm();
+
+        // assert
+        assertThat(fragment.getValuesMap())
+                .includes(MapAssert.entry(OAuth2Constants.Params.STATE, "random")).is(
+                new Condition<Map<?, ?>>() {
+                    @Override
+                    public boolean matches(Map<?, ?> value) {
+                        return value.containsKey(OAuth2Constants.Params.CODE);
+                    }
+                });
+
+        /*BearerToken token =
+                auth2Proxy.flowAuthorizationToken(fragment.getFirstValue(OAuth2.Params.CODE));
+        assertNotNull(token);*/
+
+        request = new Request(Method.GET, auth2Proxy.getTokenEndpoint());
+        request.setChallengeResponse(resource_owner);
+        response = new Response(request);
+
+        parameters = new Form();
+        parameters.add(OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.TokeEndpoint.AUTHORIZATION_CODE);
+        parameters.add(OAuth2Constants.Params.CLIENT_ID, auth2Proxy.getClientId());
+        parameters.add(OAuth2Constants.Params.REDIRECT_URI, "http://localhost:8080/a");
+        parameters.add(OAuth2Constants.Params.STATE, "random");
+        parameters.add(OAuth2Constants.Custom.DECISION, OAuth2Constants.Custom.ALLOW);
+        parameters.add(OAuth2Constants.Params.CODE, fragment.getValuesMap().get(OAuth2Constants.Params.CODE));
+        request.setEntity(parameters.getWebRepresentation());
+        getClient().handle(request, response);
+        assertEquals(response.getStatus(), Status.CLIENT_ERROR_UNAUTHORIZED);
+        fragment = response.getLocationRef().getQueryAsForm();
+
+        // assert
+        assertThat(fragment.getValuesMap().get(OAuth2Constants.Params.ERROR).equalsIgnoreCase(OAuth2Constants.Error.REDIRECT_URI_MISMATCH));
     }
 
 }

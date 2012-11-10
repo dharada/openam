@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -27,12 +27,12 @@ package org.forgerock.restlet.ext.oauth2.consumer;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
+import org.forgerock.openam.oauth2.OAuth2Constants;
 import org.restlet.data.Parameter;
 import org.restlet.util.Series;
 
 /**
- * A NAME does ...
+ * Implements a bearer token
  * <p/>
  * 
  * <pre>
@@ -43,8 +43,7 @@ import org.restlet.util.Series;
  *      "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA"
  *  }
  * </pre>
- * 
- * @author Laszlo Hordos
+ *
  */
 public class BearerToken extends AbstractAccessToken {
 
@@ -65,6 +64,6 @@ public class BearerToken extends AbstractAccessToken {
 
     @Override
     public String getTokenType() {
-        return OAuth2.Bearer.BEARER;
+        return OAuth2Constants.Bearer.BEARER;
     }
 }

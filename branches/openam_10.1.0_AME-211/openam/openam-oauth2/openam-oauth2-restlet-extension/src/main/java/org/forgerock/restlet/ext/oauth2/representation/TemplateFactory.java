@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.representation;
 
@@ -36,8 +36,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
 /**
- * TODO Redesign it to be more flexible
- * 
+ *
  * @see <a
  *      href="http://freemarker.sourceforge.net/docs/pgui_config_templateloading.html">Template
  *      loading</a>

@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2.model.impl;
@@ -27,24 +27,23 @@ package org.forgerock.openam.oauth2.model.impl;
 import java.util.HashMap;
 
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.restlet.ext.oauth2.model.SessionClient;
+import org.forgerock.openam.oauth2.model.SessionClient;
 
 /**
- * TODO Description.
+ * Implements a {@link SessionClient}
  */
 public class SessionClientImpl extends JsonValue implements SessionClient {
 
-    // TODO clean up cases in interface
     private String clientId;
     private String redirectUri;
 
     /**
-     * TODO Description.
+     * Creates a session client
      * 
      * @param clientId
-     *            TODO Description
+     *            The ID of the client
      * @param redirectUri
-     *            TODO Description
+     *            The redirection URI of the client
      */
     public SessionClientImpl(String clientId, String redirectUri) {
         super(new HashMap<String, Object>());
@@ -52,11 +51,17 @@ public class SessionClientImpl extends JsonValue implements SessionClient {
         this.redirectUri = redirectUri;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getClientId() {
         return clientId;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getRedirectUri() {
         return redirectUri;

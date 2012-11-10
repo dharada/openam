@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [Forgerock Inc]"
  */
 package org.forgerock.restlet.ext.openam.server;
 
@@ -42,8 +42,7 @@ import com.iplanet.sso.SSOTokenManager;
  * {@link org.restlet.security.User}.
  * <p/>
  * This class works with the Servlet Extension only!!!
- * 
- * @author Laszlo Hordos
+ *
  */
 public class OpenAMServletAuthenticator extends AbstractOpenAMAuthenticator {
 
@@ -65,6 +64,9 @@ public class OpenAMServletAuthenticator extends AbstractOpenAMAuthenticator {
         super(context, parameters, optional, enroler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected SSOToken getToken(Request request, Response response) throws SSOException {
         SSOToken token = null;

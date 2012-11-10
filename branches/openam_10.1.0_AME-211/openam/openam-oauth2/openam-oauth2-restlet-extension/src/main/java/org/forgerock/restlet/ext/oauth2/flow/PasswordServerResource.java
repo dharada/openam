@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
@@ -27,11 +27,11 @@ package org.forgerock.restlet.ext.oauth2.flow;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
-import org.forgerock.restlet.ext.oauth2.model.RefreshToken;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
+import org.forgerock.openam.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.model.RefreshToken;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Post;
@@ -40,8 +40,9 @@ import org.restlet.security.User;
 import org.restlet.security.Verifier;
 
 /**
+ * Implements the Resource Owner Password Credentials Flow
  * @see <a
- *      href="http://tools.ietf.org/html/draft-ietf-oauth-v2-24#section-4.3>4.3.
+ *      href="http://tools.ietf.org/html/rfc6749#section-4.3>4.3.
  *      Resource Owner Password Credentials Grant</a>
  */
 public class PasswordServerResource extends AbstractFlow {
@@ -50,46 +51,53 @@ public class PasswordServerResource extends AbstractFlow {
     public Representation represent(Representation entity) {
         Representation rep = null;
         client = getAuthenticatedClient();
+
         String username =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.USERNAME, String.class);
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.USERNAME, String.class);
         String password =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.PASSWORD, String.class);
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.PASSWORD, String.class);
 
         // Authenticate ResourceOwner
         if (getContext().getDefaultVerifier() instanceof SecretVerifier) {
             if (Verifier.RESULT_VALID == ((SecretVerifier) getContext().getDefaultVerifier())
-                    .verify(username, password.toCharArray())) {
+                    .verify(getRequest(), getResponse())) {
                 resourceOwner = new User(username, password.toCharArray());
             } else {
+                OAuth2Utils.DEBUG.error("Unable to verify user: " + username + "password: " + password);
                 throw OAuthProblemException.OAuthError.ACCESS_DENIED.handle(getRequest());
             }
         } else {
+            OAuth2Utils.DEBUG.error("SecretVerifier is not set in the Context");
             throw OAuthProblemException.OAuthError.SERVER_ERROR.handle(getRequest(),
                     "SecretVerifier is not set in the Context");
         }
 
         // Get the requested scope
         String scope_before =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
         // Validate the granted scope
-        Set<String> checkedScope =
-                getCheckedScope(scope_before, client.getClient().allowedGrantScopes(), client
-                        .getClient().defaultGrantScopes());
+        Set<String> checkedScope = executeAccessTokenScopePlugin(scope_before);
 
-        AccessToken token = createAccessToken(checkedScope);
-        Map<String, Object> result = token.convertToMap();
+        AccessToken token = null;
+        Map<String, Object> result = null;
 
-        // TODO Conditional
-        RefreshToken refreshToken = createRefreshToken(checkedScope);
-        result.put(OAuth2.Params.REFRESH_TOKEN, refreshToken.getToken());
+        if (checkIfRefreshTokenIsRequired(getRequest())){
+            RefreshToken refreshToken = createRefreshToken(checkedScope);
+            token = createAccessToken(checkedScope, refreshToken);
+            result = token.convertToMap();
+            result.put(OAuth2Constants.Params.REFRESH_TOKEN, refreshToken.getToken());
+        } else {
+            token = createAccessToken(checkedScope, null);
+            result = token.convertToMap();
+        }
 
         return new JacksonRepresentation<Map>(result);
     }
 
     @Override
     protected String[] getRequiredParameters() {
-        return new String[] { OAuth2.Params.GRANT_TYPE, OAuth2.Params.USERNAME,
-            OAuth2.Params.PASSWORD };
+        return new String[] { OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.Params.USERNAME,
+            OAuth2Constants.Params.PASSWORD };
     }
 
     /**
@@ -97,13 +105,19 @@ public class PasswordServerResource extends AbstractFlow {
      * 
      * @param checkedScope
      * @return
-     * @throws org.forgerock.restlet.ext.oauth2.OAuthProblemException
+     * @throws org.forgerock.openam.oauth2.exceptions.OAuthProblemException
      * 
      */
-    protected AccessToken createAccessToken(Set<String> checkedScope) {
-        return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
-                checkedScope, OAuth2Utils.getContextRealm(getContext()),
-                resourceOwner.getIdentifier(), client.getClient().getClientId());
+    protected AccessToken createAccessToken(Set<String> checkedScope, RefreshToken token) {
+        if (token == null){
+            return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
+                    checkedScope, OAuth2Utils.getRealm(getRequest()),
+                    resourceOwner.getIdentifier(), client.getClient().getClientId(), null);
+        } else {
+            return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
+                    checkedScope, OAuth2Utils.getRealm(getRequest()),
+                    resourceOwner.getIdentifier(), client.getClient().getClientId(), token);
+        }
     }
 
     /**
@@ -111,12 +125,12 @@ public class PasswordServerResource extends AbstractFlow {
      * 
      * @param checkedScope
      * @return
-     * @throws org.forgerock.restlet.ext.oauth2.OAuthProblemException
+     * @throws org.forgerock.openam.oauth2.exceptions.OAuthProblemException
      * 
      */
     protected RefreshToken createRefreshToken(Set<String> checkedScope) {
         return getTokenStore().createRefreshToken(checkedScope,
-                OAuth2Utils.getContextRealm(getContext()), resourceOwner.getIdentifier(),
+                OAuth2Utils.getRealm(getRequest()), resourceOwner.getIdentifier(),
                 client.getClient().getClientId());
     }
 }

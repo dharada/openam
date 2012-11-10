@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * c
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -28,9 +28,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.ChallengeRequest;
@@ -47,8 +47,7 @@ import org.restlet.util.Series;
 
 /**
  * An AccessTokenExtractor extracts the AccessToken from the Request.
- * 
- * @author Laszlo Hordos
+ *
  */
 public abstract class AccessTokenExtractor<T extends AbstractAccessToken> extends
         AuthenticatorHelper {
@@ -220,6 +219,7 @@ public abstract class AccessTokenExtractor<T extends AbstractAccessToken> extend
         if (null != token) {
             OAuthProblemException exception = extractException(token);
             if (exception != null) {
+                OAuth2Utils.DEBUG.error("Unable to extract token from request", exception);
                 throw exception;
             }
         }
@@ -227,15 +227,15 @@ public abstract class AccessTokenExtractor<T extends AbstractAccessToken> extend
     }
 
     public static OAuthProblemException extractException(Map<String, Object> response) {
-        Object error = response.get(OAuth2.Params.ERROR);
+        Object error = response.get(OAuth2Constants.Params.ERROR);
         if (error instanceof String) {
             String error_uri = null;
-            Object o = response.get(OAuth2.Params.ERROR_URI);
+            Object o = response.get(OAuth2Constants.Params.ERROR_URI);
             if (o instanceof String) {
                 error_uri = (String) o;
             }
             String error_description = null;
-            o = response.get(OAuth2.Params.ERROR_DESCRIPTION);
+            o = response.get(OAuth2Constants.Params.ERROR_DESCRIPTION);
             if (o instanceof String) {
                 error_description = (String) o;
             }
@@ -245,9 +245,9 @@ public abstract class AccessTokenExtractor<T extends AbstractAccessToken> extend
     }
 
     public static OAuthProblemException extractException(Series<Parameter> response) {
-        return extractException(response.getFirstValue(OAuth2.Params.ERROR), response
-                .getFirstValue(OAuth2.Params.ERROR_DESCRIPTION), response
-                .getFirstValue(OAuth2.Params.ERROR_URI));
+        return extractException(response.getFirstValue(OAuth2Constants.Params.ERROR), response
+                .getFirstValue(OAuth2Constants.Params.ERROR_DESCRIPTION), response
+                .getFirstValue(OAuth2Constants.Params.ERROR_URI));
     }
 
     protected static OAuthProblemException extractException(String error, String error_description,

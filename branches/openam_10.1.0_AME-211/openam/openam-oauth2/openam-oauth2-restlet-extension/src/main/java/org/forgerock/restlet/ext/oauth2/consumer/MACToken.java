@@ -19,13 +19,13 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
 
 /**
- * A NAME does ...
+ * Implements a MACToken
  * <p/>
  * 
  * <pre>
@@ -38,8 +38,7 @@ package org.forgerock.restlet.ext.oauth2.consumer;
  *      "mac_algorithm":"hmac-sha-256"
  *  }
  * </pre>
- * 
- * @author Laszlo Hordos
+ *
  */
 public class MACToken {
 }

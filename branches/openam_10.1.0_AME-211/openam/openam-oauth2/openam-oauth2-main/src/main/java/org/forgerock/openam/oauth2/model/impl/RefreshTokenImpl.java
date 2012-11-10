@@ -19,43 +19,44 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2.model.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.model.RefreshToken;
-import org.forgerock.restlet.ext.oauth2.model.SessionClient;
-import org.forgerock.restlet.ext.oauth2.model.Token;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.model.RefreshToken;
+import org.forgerock.openam.oauth2.model.SessionClient;
+import org.forgerock.openam.oauth2.model.Token;
 
 /**
- * TODO Description.
+ * Implements a {@link RefreshToken} Token
  */
 public class RefreshTokenImpl extends TokenImpl implements RefreshToken {
 
     private String parent;
 
     /**
-     * TODO Description.
+     * Creates a refresh token
      * 
      * @param id
-     *            TODO Description
+     *            ID of the token
      * @param parent
-     *            TODO Description
+     *            Parent ID of the refresh token
      * @param userID
-     *            TODO Description
+     *            UserID of the user creating the token
      * @param client
-     *            TODO Description
+     *            SessionClient of the client creating the token
      * @param realm
-     *            TODO Description
+     *            Realm the token is created in
      * @param scope
-     *            TODO Description
+     *            Scope of the token
      * @param expireTime
-     *            TODO Description
+     *            Time in seconds until the token expires
      */
     public RefreshTokenImpl(String id, String parent, String userID, SessionClient client,
             String realm, Set<String> scope, long expireTime) {
@@ -65,16 +66,16 @@ public class RefreshTokenImpl extends TokenImpl implements RefreshToken {
     }
 
     /**
-     * TODO Description.
+     * Creates a refresh token
      * 
      * @param id
-     *            TODO Description
+     *            ID of the token
      * @param scope
-     *            TODO Description
+     *            Scope of the token
      * @param expireTime
-     *            TODO Description
+     *            Time in seconds until the token expires
      * @param token
-     *            TODO Description
+     *            Parent Token of the refresh token
      */
     public RefreshTokenImpl(String id, Set<String> scope, long expireTime, Token token) {
         super(id, token.getUserID(), token.getClient(), token.getRealm(), scope, expireTime);
@@ -82,12 +83,12 @@ public class RefreshTokenImpl extends TokenImpl implements RefreshToken {
     }
 
     /**
-     * TODO Description.
+     * Creates a refresh token.
      * 
      * @param id
-     *            TODO Description
+     *            ID of the token
      * @param value
-     *            TODO Description
+     *            A JsonValue map to populate this token with.
      */
     public RefreshTokenImpl(String id, JsonValue value) {
         super(id, value);
@@ -95,25 +96,37 @@ public class RefreshTokenImpl extends TokenImpl implements RefreshToken {
     }
 
     /**
-     * TODO Description.
+     * Set the parent token
      * 
      * @param parent
-     *            TODO Description
+     *            ID of the parent token
      */
     public void setParentToken(String parent) {
-        this.put(OAuth2.StoredToken.PARENT, parent);
-    }
-
-    @Override
-    public String getParentToken() {
-        return this.get(OAuth2.StoredToken.PARENT).asString();
+        Set<String> s = new HashSet<String>();
+        s.add(parent);
+        this.put(OAuth2Constants.StoredToken.PARENT, s);
     }
 
     /**
-     * TODO Description.
+     * {@inheritDoc}
+     */
+    @Override
+    public String getParentToken() {
+        String parent = null;
+        Set parentSet = (Set) get(OAuth2Constants.StoredToken.PARENT).getObject();
+        if (parentSet != null && !parentSet.isEmpty()){
+            parent = parentSet.iterator().next().toString();
+        }
+        return parent;
+    }
+
+    /**
+     * Set the token type
      */
     protected void setType() {
-        this.put(OAuth2.StoredToken.TYPE, OAuth2.Params.REFRESH_TOKEN);
+        Set<String> s = new HashSet<String>();
+        s.add(OAuth2Constants.Params.REFRESH_TOKEN);
+        this.put(OAuth2Constants.StoredToken.TYPE, s);
     }
 
 }

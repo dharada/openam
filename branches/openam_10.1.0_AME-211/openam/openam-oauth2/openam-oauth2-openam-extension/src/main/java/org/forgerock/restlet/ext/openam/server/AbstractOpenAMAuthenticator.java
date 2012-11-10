@@ -19,13 +19,15 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [Forgerock Inc]"
  */
 
 package org.forgerock.restlet.ext.openam.server;
 
+import org.forgerock.openam.oauth2.OAuth2Constants;
 import org.forgerock.restlet.ext.openam.OpenAMParameters;
 import org.forgerock.restlet.ext.openam.OpenAMUser;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -43,9 +45,7 @@ import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.idm.IdUtils;
 
 /**
- * A NAME does ...
- * 
- * @author Laszlo Hordos
+ * Used to authenticate to OpenAM and redirect to its login page.
  */
 public abstract class AbstractOpenAMAuthenticator extends Authenticator {
 
@@ -53,6 +53,7 @@ public abstract class AbstractOpenAMAuthenticator extends Authenticator {
     private String serviceName = null;
     private String moduleName = null;
     private String realm = null;
+    private String locale = null;
 
     /**
      * {@inheritDoc}
@@ -122,25 +123,38 @@ public abstract class AbstractOpenAMAuthenticator extends Authenticator {
                 return identity.isActive();
             }
         } catch (SSOException e) {
+            OAuth2Utils.DEBUG.error("Error authenticating user against OpenAM: ", e );
             redirect(request, response);
         } catch (IdRepoException e) {
+            OAuth2Utils.DEBUG.error("Error authenticating user against OpenAM: ", e );
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
         }
         return false;
     }
 
     protected void redirect(Request request, Response response) {
+        if (OAuth2Utils.DEBUG.messageEnabled()){
+            OAuth2Utils.DEBUG.message("Redirecting to OpenAM login page");
+        }
         Reference amserver = new Reference(openamServer);
+        realm = OAuth2Utils.getRealm(request);
+        moduleName = OAuth2Utils.getModuleName(request);
+        serviceName = OAuth2Utils.getServiceName(request);
+        locale = OAuth2Utils.getLocale(request);
+
         if (null != realm) {
-            amserver.addQueryParameter("realm", realm);
+            amserver.addQueryParameter(OAuth2Constants.Custom.REALM, realm);
+        }
+        if (null != locale){
+            amserver.addQueryParameter(OAuth2Constants.Custom.LOCALE, locale);
         }
         if (null != moduleName) {
-            amserver.addQueryParameter("module", moduleName);
+            amserver.addQueryParameter(OAuth2Constants.Custom.MODULE, moduleName);
         } else if (null != serviceName) {
-            amserver.addQueryParameter("service", serviceName);
+            amserver.addQueryParameter(OAuth2Constants.Custom.SERVICE, serviceName);
         }
 
-        amserver.addQueryParameter("goto", request.getResourceRef().toString());
+        amserver.addQueryParameter(OAuth2Constants.Custom.GOTO, request.getResourceRef().toString());
 
         Redirector redirector =
                 new Redirector(getContext(), amserver.toString(), Redirector.MODE_CLIENT_FOUND);

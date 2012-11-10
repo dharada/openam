@@ -19,21 +19,19 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2.internal;
 
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.forgerock.restlet.ext.openam.OpenAMParameters;
-import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.Status;
@@ -45,17 +43,14 @@ import com.sun.identity.authentication.AuthContext;
 import com.sun.identity.authentication.spi.AuthLoginException;
 
 /**
- * An AbstractIdentityVerifier does ...
- * 
- * @param <T>
- * @author Laszlo Hordos TODO Do not use SecretVerifier or use properly
+ * Verifies user credentials
+ * @param <T> the type of object being verified
  */
 public abstract class AbstractIdentityVerifier<T extends User> extends SecretVerifier {
 
     private String realm;
     private AuthContext.IndexType authIndexType;
     private String authIndexValue = null;
-    private Logger logger;
 
     /**
      * Constructor.
@@ -69,7 +64,6 @@ public abstract class AbstractIdentityVerifier<T extends User> extends SecretVer
         authIndexType = AuthContext.IndexType.MODULE_INSTANCE;
         authIndexValue = parameters.getLoginIndexName();
         realm = parameters.getOrgName();
-        logger = Context.getCurrentLogger();
     }
 
     @Override
@@ -172,19 +166,13 @@ public abstract class AbstractIdentityVerifier<T extends User> extends SecretVer
                 lc.submitRequirements(callbacks);
             }
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE,
-                        "IdentityServicesImpl:authenticate returning an InvalidCredentials"
-                                + " exception for invalid passwords.");
-            }
-
             // validate the password..
             if (lc.getStatus() == AuthContext.Status.SUCCESS) {
                 try {
                     // package up the token for transport..
                     ret = createUser(lc);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "IdentityServicesImpl:authContext: "
+                    OAuth2Utils.DEBUG.error( "AbstractIdentityVerifier::authContext: "
                             + "Unable to get SSOToken", e);
                     // we're going to throw a generic error
                     // because the system is likely down..
@@ -192,7 +180,7 @@ public abstract class AbstractIdentityVerifier<T extends User> extends SecretVer
                 }
             }
         } catch (AuthLoginException le) {
-            logger.log(Level.SEVERE, "IdentityServicesImpl:authContext AuthException", le);
+            OAuth2Utils.DEBUG.error("AbstractIdentityVerifier::authContext AuthException", le);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, le);
         }
         return ret;

@@ -19,14 +19,15 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.provider;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.provider.OAuth2Provider;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.forgerock.restlet.ext.oauth2.flow.ErrorServerResource;
 import org.restlet.Context;
 import org.restlet.Request;
@@ -88,10 +89,12 @@ public class OAuth2RealmRouter extends Router implements OAuth2Provider {
             } else {
                 next = realmRoutes.get(realm);
                 if (null == next) {
-                    OAuthProblemException.OAuthError.NOT_FOUND.handle(
-                            request,
-                            1 > realmRoutes.size() ? "There is not Realm configured"
-                                    : "Realm was not configured").pushException();
+                    //OAuthProblemException.OAuthError.NOT_FOUND.handle(
+                    //        request,
+                    //        1 > realmRoutes.size() ? "There is not Realm configured"
+                    //                : "Realm was not configured").pushException();
+
+                    //this.attachRealm(realm, defaultRealm);
                 }
             }
             next = next != null ? next : errorHandler;

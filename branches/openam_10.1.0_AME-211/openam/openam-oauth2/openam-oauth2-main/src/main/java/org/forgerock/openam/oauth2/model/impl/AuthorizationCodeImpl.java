@@ -19,40 +19,43 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2.model.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.model.AuthorizationCode;
-import org.forgerock.restlet.ext.oauth2.model.SessionClient;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
+import org.forgerock.openam.oauth2.model.AuthorizationCode;
+import org.forgerock.openam.oauth2.model.SessionClient;
+import org.restlet.Request;
 
 /**
- * TODO Description.
+ * Implements an {@link AuthorizationCode} Token
  */
 public class AuthorizationCodeImpl extends TokenImpl implements AuthorizationCode {
 
     /**
-     * TODO Description.
+     * Creates an Authorization Code Token
      * 
      * @param id
-     *            TODO Description
+     *            ID of the token
      * @param userID
-     *            TODO Description
+     *            UserID of the user creating the token
      * @param client
-     *            TODO Description
+     *            SessionClient of the client creating the token
      * @param realm
-     *            TODO Description
+     *            Realm the token is created in
      * @param scope
-     *            TODO Description
+     *            Scope of the token
      * @param issued
-     *            TODO Description
+     *            Whether or not the access code has already been used to create an access token
      * @param expireTime
-     *            TODO Description
+     *            Time in seconds until the token expires
      */
     public AuthorizationCodeImpl(String id, String userID, SessionClient client, String realm,
             Set<String> scope, boolean issued, long expireTime) {
@@ -62,12 +65,12 @@ public class AuthorizationCodeImpl extends TokenImpl implements AuthorizationCod
     }
 
     /**
-     * TODO Description.
+     * Creates an Authorization Code Token
      * 
      * @param id
-     *            TODO Description
+     *            ID of the token
      * @param value
-     *            TODO Description
+     *            A JsonValue map to populate this token with
      */
     public AuthorizationCodeImpl(String id, JsonValue value) {
         super(id, value);
@@ -75,30 +78,35 @@ public class AuthorizationCodeImpl extends TokenImpl implements AuthorizationCod
     }
 
     /**
-     * TODO Description.
-     * 
-     * @param issued
-     *            TODO Description
+     * {@inheritDoc}
      */
+    @Override
     public void setIssued(boolean issued) {
-        this.put(OAuth2.StoredToken.ISSUED, issued);
+        Set<String> s = new HashSet<String>();
+        s.add(String.valueOf(issued));
+        this.put(OAuth2Constants.StoredToken.ISSUED, s);
     }
 
     /**
-     * TODO Description.
-     * 
-     * @return TODO Description
+     * {@inheritDoc}
      */
     @Override
     public boolean isTokenIssued() {
-        return this.get(OAuth2.StoredToken.ISSUED).asBoolean();
+        Set issuedSet = (Set) get(OAuth2Constants.StoredToken.ISSUED).getObject();
+        if (issuedSet != null && !issuedSet.isEmpty()){
+            return Boolean.parseBoolean(issuedSet.iterator().next().toString());
+        }
+        throw OAuthProblemException.OAuthError.INVALID_TOKEN.handle(Request.getCurrent(),
+                "Access Code has no issued state. Invalid Token");
     }
 
     /**
-     * TODO Description.
+     * Set the type of the token
      */
     protected void setType() {
-        this.put(OAuth2.StoredToken.TYPE, OAuth2.Params.CODE);
+        Set<String> s = new HashSet<String>();
+        s.add(String.valueOf(OAuth2Constants.Params.CODE));
+        this.put(OAuth2Constants.StoredToken.TYPE, s);
     }
 
 }

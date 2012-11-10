@@ -61,13 +61,17 @@
         <!-- OpenAM -->
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-shared</artifactId>
-            <version>10.1.0-SNAPSHOT</version>
+            <artifactId>openam-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-core</artifactId>
+            <artifactId>openam-shared</artifactId>
             <version>10.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-rest</artifactId>
         </dependency>
 
         <!-- Restlet -->
@@ -136,11 +140,54 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>xerces-J</groupId>
+            <artifactId>xercesImpl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>xerces-J</groupId>
+            <artifactId>xml-apis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>xerces-J</groupId>
+            <artifactId>xml-resolver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>xerces-J</groupId>
+            <artifactId>xml-serializer</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <configuration>
+                        <webResources>
+                            <webResource>
+                            <directory>${project.basedir}/../../openam-server-only/src/main/resources/config
+                            </directory>
+                            <includes>
+                                <include>serverAttributeMap.properties</include>
+                            </includes>
+                            <targetPath>WEB-INF/classes</targetPath>
+                            <filtering>false</filtering>
+                        </webResource>
+                            <webResource>
+                                <directory>${project.basedir}/../../openam-server-only/src/main/resources/locale
+                                </directory>
+                                <includes>
+                                    <include>*.*</include>
+                                </includes>
+                                <targetPath>WEB-INF/classes</targetPath>
+                                <filtering>false</filtering>
+                            </webResource>
+                        </webResources>
+                    </configuration>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>

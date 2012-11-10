@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -27,7 +27,7 @@ package org.forgerock.restlet.ext.oauth2.consumer;
 import java.util.Collection;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.restlet.Request;
 import org.restlet.data.Parameter;
 import org.restlet.data.Reference;
@@ -35,9 +35,9 @@ import org.restlet.routing.Redirector;
 import org.restlet.util.Series;
 
 /**
- * A RequestCallbackHandler does ...
- * 
- * @author Laszlo Hordos
+ * A RequestCallbackHandler handles the request and gets nessesary information.
+ * Used by the demo application.
+ *
  */
 public interface RequestCallbackHandler<T extends AbstractAccessToken> {
 

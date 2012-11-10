@@ -24,7 +24,6 @@
 
 package org.forgerock.restlet.ext.openam;
 
-
 import org.restlet.data.Reference;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -35,8 +34,7 @@ import org.testng.annotations.Test;
  * @author Laszlo Hordos
  */
 public class OpenAMParametersTest {
-
-@Test(groups = { "openam" })
+    @Test
     public void testGetOpenAMServerRef() throws Exception {
         OpenAMParameters parameters = new OpenAMParameters();
         Reference baseRef = new Reference();
@@ -48,5 +46,4 @@ public class OpenAMParametersTest {
         baseRef.setPath(baseRef.getPath() + "/UI/Login");
         Assert.assertEquals(baseRef.toString(), "http://localhost:8080/openam/UI/Login");
     }
-
 }

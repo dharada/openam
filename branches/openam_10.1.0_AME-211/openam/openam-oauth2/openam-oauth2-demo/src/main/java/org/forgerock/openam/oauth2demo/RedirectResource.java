@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2demo;
@@ -29,9 +29,9 @@ import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerAuthenticatorHelper;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerOAuth2Proxy;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerToken;
@@ -50,39 +50,40 @@ import org.restlet.routing.Template;
 
 /**
  * A RedirectResource does ...
- * 
- * @author Laszlo Hordos
  */
 public class RedirectResource extends Redirector {
 
     private BearerAuthenticatorHelper helper = new BearerAuthenticatorHelper();
 
     /**
-     * TODO Description.
+     * Constructor for RedirectResource
      * 
      * @param context
-     *            TODO Description
+     *            context of the redirector
      * @param targetTemplate
-     *            TODO Description
+     *            template to display
      */
     public RedirectResource(Context context, String targetTemplate) {
         super(context, targetTemplate);
     }
 
     /**
-     * TODO Description.
+     * RedirectResource Constructor
      * 
      * @param context
-     *            TODO Description
+     *            context of the redirector
      * @param targetPattern
-     *            TODO Description
+     *            pattern to use
      * @param mode
-     *            TODO Description
+     *            mode to use
      */
     public RedirectResource(Context context, String targetPattern, int mode) {
         super(context, targetPattern, mode);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected Reference getTargetRef(Request request, Response response) {
         Reference target = null;
@@ -101,7 +102,7 @@ public class RedirectResource extends Redirector {
 
                 // Request access_token for the code
                 if (null == token) {
-                    String code = parameters.getFirstValue(OAuth2.Params.CODE);
+                    String code = parameters.getFirstValue(OAuth2Constants.Params.CODE);
                     if (code instanceof String) {
                         BearerOAuth2Proxy proxy = BearerOAuth2Proxy.popOAuth2Proxy(getContext());
                         if (null != proxy) {
@@ -115,7 +116,7 @@ public class RedirectResource extends Redirector {
                             .setAttribute(BearerToken.class.getName(), token);
                 }
 
-                String state = parameters.getFirstValue(OAuth2.Params.STATE);
+                String state = parameters.getFirstValue(OAuth2Constants.Params.STATE);
                 if (state instanceof String) {
                     try {
                         String stateURL = new String(Base64.decode(state), "ISO-8859-1");

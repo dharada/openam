@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -30,9 +30,8 @@ import org.restlet.Response;
 import org.restlet.Uniform;
 
 /**
- * A BearerOAuth2Proxy does ...
- * 
- * @author Laszlo Hordos
+ * A BearerOAuth2Proxy is a class used to test OAuth2 and by them demo application
+ *
  */
 public class BearerOAuth2Proxy extends OAuth2Proxy<BearerAuthenticatorHelper, BearerToken> {
 

@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -28,13 +28,14 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.restlet.data.Parameter;
 import org.restlet.util.Series;
 
 /**
- * A NAME does ...
+ * Defines an abstract access token
  * <p/>
  * 
  * <pre>
@@ -44,8 +45,7 @@ import org.restlet.util.Series;
  *      "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA"
  *  }
  * </pre>
- * 
- * @author Laszlo Hordos
+ *
  */
 public abstract class AbstractAccessToken implements Serializable {
 
@@ -64,18 +64,18 @@ public abstract class AbstractAccessToken implements Serializable {
 
     public AbstractAccessToken(Series<Parameter> token) {
         validated = false;
-        access_token = token.getFirstValue(OAuth2.Token.OAUTH_ACCESS_TOKEN);
+        access_token = token.getFirstValue(OAuth2Constants.Token.OAUTH_ACCESS_TOKEN);
         if (OAuth2Utils.isBlank(access_token)) {
-            // TODO Exception Invalid token
+            throw OAuthProblemException.OAuthError.INVALID_TOKEN.handle(null, "Invalid access token");
         }
-        String o = token.getFirstValue(OAuth2.Token.OAUTH_EXPIRES_IN);
+        String o = token.getFirstValue(OAuth2Constants.Token.OAUTH_EXPIRES_IN);
         if (o instanceof String) {
             // Todo Catch the exception
             expires_in = Long.decode(o);
         } else {
             expires_in = 0l;
         }
-        o = token.getFirstValue(OAuth2.Token.OAUTH_REFRESH_TOKEN);
+        o = token.getFirstValue(OAuth2Constants.Token.OAUTH_REFRESH_TOKEN);
         if (o instanceof String) {
             refresh_token = o;
         }
@@ -83,20 +83,20 @@ public abstract class AbstractAccessToken implements Serializable {
 
     public AbstractAccessToken(Map<String, Object> token) {
         validated = false;
-        Object o = token.get(OAuth2.Token.OAUTH_ACCESS_TOKEN);
+        Object o = token.get(OAuth2Constants.Token.OAUTH_ACCESS_TOKEN);
         if (o instanceof String) {
             access_token = (String) o;
         } else {
-            // TODO Exception Invalid token
+            throw OAuthProblemException.OAuthError.INVALID_TOKEN.handle(null, "Invalid access token");
         }
-        o = token.get(OAuth2.Token.OAUTH_EXPIRES_IN);
+        o = token.get(OAuth2Constants.Token.OAUTH_EXPIRES_IN);
         if (o instanceof String) {
             // Todo Catch the exception
             expires_in = Long.decode((String) o);
         } else if (o instanceof Number) {
             expires_in = (Number) o;
         }
-        o = token.get(OAuth2.Token.OAUTH_REFRESH_TOKEN);
+        o = token.get(OAuth2Constants.Token.OAUTH_REFRESH_TOKEN);
         if (o instanceof String) {
             refresh_token = (String) o;
         }

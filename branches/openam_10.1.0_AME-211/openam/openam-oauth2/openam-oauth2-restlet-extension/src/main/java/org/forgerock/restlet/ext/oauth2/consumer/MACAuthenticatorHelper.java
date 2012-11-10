@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.consumer;
 
@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
+import org.forgerock.openam.oauth2.OAuth2Constants;
 import org.restlet.Request;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.data.ChallengeScheme;
@@ -76,7 +76,7 @@ public class MACAuthenticatorHelper extends AuthenticatorHelper {
     }
 
     public static String retrieveToken(ChallengeResponse challenge) {
-        return challenge.getParameters().getFirstValue(OAuth2.Token.OAUTH_ACCESS_TOKEN);
+        return challenge.getParameters().getFirstValue(OAuth2Constants.Token.OAUTH_ACCESS_TOKEN);
     }
 
     /*

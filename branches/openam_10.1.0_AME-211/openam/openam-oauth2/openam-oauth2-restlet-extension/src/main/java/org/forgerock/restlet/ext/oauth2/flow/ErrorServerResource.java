@@ -19,25 +19,24 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ResourceException;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ * Implements an Unknown flow error
  */
 public class ErrorServerResource extends AbstractFlow {
 
     public ErrorServerResource() {
-        endpointType = OAuth2.EndpointType.OTHER;
+        endpointType = OAuth2Constants.EndpointType.OTHER;
     }
 
     /**

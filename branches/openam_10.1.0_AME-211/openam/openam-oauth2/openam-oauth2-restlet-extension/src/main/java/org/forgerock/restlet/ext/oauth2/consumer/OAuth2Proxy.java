@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.forgerock.restlet.ext.oauth2.consumer.RequestFactory.AuthorizationCodeRequest;
 import org.forgerock.restlet.ext.oauth2.consumer.RequestFactory.AuthorizationTokenRequest;
 import org.forgerock.restlet.ext.oauth2.consumer.RequestFactory.ClientCredentialsRequest;
@@ -61,9 +61,8 @@ import org.restlet.routing.Redirector;
 import org.restlet.util.Series;
 
 /**
- * An OAuth2Proxy does ...
- * 
- * @author Laszlo Hordos
+ * Triggers the OAuth2 Flows for the demo
+ *
  */
 public abstract class OAuth2Proxy<T extends AccessTokenExtractor<U>, U extends AbstractAccessToken>
         extends Restlet {

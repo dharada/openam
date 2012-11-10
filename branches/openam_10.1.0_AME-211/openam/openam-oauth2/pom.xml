@@ -44,6 +44,8 @@
         <module>openam-oauth2-core-token-service</module>
         <module>openam-oauth2-main</module>
         <module>openam-oauth2-demo</module>
+        <module>openam-oauth2-common</module>
+        <module>openam-oauth2-rest</module>
     </modules>
 
 
@@ -56,6 +58,9 @@
         <commons.json-fluent.version>1.1.0</commons.json-fluent.version>
         <commons.json-resource.version>1.2.2</commons.json-resource.version>
         <commons.json-patch.version>1.0.0</commons.json-patch.version>
+        <commons.json-resource-servlet.version>2.0.0-SNAPSHOT</commons.json-resource-servlet.version>
+        <commons.json-resource-c.version>2.0.0-SNAPSHOT</commons.json-resource-c.version>
+	<openam.version>10.0.0</openam.version>
     </properties>
 
     <dependencyManagement>
@@ -97,11 +102,12 @@
             </dependency>
 
             <!-- Commons -->
-            <dependency>
+            <!--<dependency>
                 <groupId>org.forgerock.commons</groupId>
                 <artifactId>org.forgerock.json.resource</artifactId>
                 <version>${commons.json-resource.version}</version>
             </dependency>
+            -->
             <dependency>
                 <groupId>org.forgerock.commons</groupId>
                 <artifactId>org.forgerock.restlet.ext.openam</artifactId>
@@ -170,10 +176,77 @@
                 <version>${restlet.version}</version>
             </dependency>
 
+            <!-- Commons -->
             <dependency>
-                <groupId>javax.ws.rs</groupId>
-                <artifactId>jsr311-api</artifactId>
-                <version>1.1.1</version>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>org.forgerock.json.resource</artifactId>
+                <version>${commons.json-resource.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>json-patch</artifactId>
+                <version>${commons.json-patch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>json-resource-servlet</artifactId>
+                <version>${commons.json-resource-servlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>json-resource</artifactId>
+                <version>${commons.json-resource-c.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>json-fluent</artifactId>
+                <version>${commons.json-fluent.version}</version>
+            </dependency>
+            <!-- Restlet -->
+            <dependency>
+                <groupId>org.restlet.jse</groupId>
+                <artifactId>org.restlet</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.jse</groupId>
+                <artifactId>org.restlet.ext.jackson</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.osgi</groupId>
+                <artifactId>org.restlet</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.osgi</groupId>
+                <artifactId>org.restlet.ext.jackson</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.osgi</groupId>
+                <artifactId>org.restlet.ext.servlet</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.osgi</groupId>
+                <artifactId>org.restlet.ext.freemarker</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.osgi</groupId>
+                <artifactId>org.restlet.ext.ssl</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.jse</groupId>
+                <artifactId>org.restlet.ext.simple</artifactId>
+                <version>${restlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.jse</groupId>
+                <artifactId>org.restlet.ext.crypto</artifactId>
+                <version>${restlet.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->

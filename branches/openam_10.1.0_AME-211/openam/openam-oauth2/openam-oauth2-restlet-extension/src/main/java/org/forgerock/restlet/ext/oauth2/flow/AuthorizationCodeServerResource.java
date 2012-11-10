@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
@@ -27,11 +27,12 @@ package org.forgerock.restlet.ext.oauth2.flow;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
-import org.forgerock.restlet.ext.oauth2.model.AuthorizationCode;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
+import org.forgerock.openam.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.model.AuthorizationCode;
+import org.forgerock.openam.oauth2.model.RefreshToken;
 import org.restlet.data.Form;
 import org.restlet.data.Reference;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -41,8 +42,9 @@ import org.restlet.resource.Post;
 import org.restlet.routing.Redirector;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ * Implements the Authorization Code Flow
+ *
+ * @see <a href="http://tools.ietf.org/html/rfc6749#section-4.1">4.1.  Authorization Code Grant</a>
  */
 public class AuthorizationCodeServerResource extends AbstractFlow {
 
@@ -67,15 +69,15 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
         // Validate Redirect URI throw exception
         sessionClient =
                 client.getClientInstance(OAuth2Utils.getRequestParameter(getRequest(),
-                        OAuth2.Params.REDIRECT_URI, String.class));
+                        OAuth2Constants.Params.REDIRECT_URI, String.class));
 
         String approval_prompt =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.APPROVAL_PROMPT,
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Custom.APPROVAL_PROMPT,
                         String.class);
-        String decision = OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.DECISION,
+        String decision = OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Custom.DECISION,
                 String.class);
 
-        if (!OAuth2.Custom.ALLOW.equalsIgnoreCase(decision)) {
+        if (!OAuth2Constants.Custom.ALLOW.equalsIgnoreCase(decision)) {
             /*
              * APPROVAL_PROMPT = true AND NOT (CLIENT.AUTO_GRANT)
              */
@@ -84,18 +86,17 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
             // The target contains the state
             String state =
                     OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.STATE, String.class);
+                            .getRequestParameter(getRequest(), OAuth2Constants.Params.STATE, String.class);
 
             // Get the requested scope
             String scope_before =
                     OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
-            // Validate the granted scope
-            Set<String> checkedScope =
-                    getCheckedScope(scope_before, client.getClient().allowedGrantScopes(), client
-                            .getClient().defaultGrantScopes());
+                            .getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
 
-            return getPage("authorize.ftl", getDataModel());
+            // Validate the granted scope
+            Set<String> checkedScope = executeAuthorizationPageScopePlugin(scope_before);
+
+            return getPage("authorize.ftl", getDataModel(checkedScope));
         } else {
             decisionIsAllow = true;
             return authorization(getRequest().getEntity());
@@ -109,7 +110,7 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
         // Validate Redirect URI throw exception
         sessionClient =
                 client.getClientInstance(OAuth2Utils.getRequestParameter(getRequest(),
-                        OAuth2.Params.REDIRECT_URI, String.class));
+                        OAuth2Constants.Params.REDIRECT_URI, String.class));
         switch (endpointType) {
         case AUTHORIZATION_ENDPOINT: {
             resourceOwner = getAuthenticatedResourceOwner();
@@ -136,28 +137,31 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
             // Get the granted scope
             String scope_after =
                     OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
+                            .getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
             // Validate the granted scope
-            Set<String> checkedScope =
-                    getCheckedScope(scope_after, client.getClient().allowedGrantScopes(), client
-                            .getClient().defaultGrantScopes());
+            Set<String> checkedScope = executeAccessTokenScopePlugin(scope_after);
 
             // Generate Token resourceOwner, sessionClient, checkedScope,
             // customParameters
             AuthorizationCode token = createAuthorizationCode(checkedScope);
 
             Reference location = new Reference(sessionClient.getRedirectUri());
-            location.addQueryParameter(OAuth2.Params.CODE, token.getToken());
+            location.addQueryParameter(OAuth2Constants.Params.CODE, token.getToken());
             String state =
                     OAuth2Utils
-                            .getRequestParameter(getRequest(), OAuth2.Params.STATE, String.class);
+                            .getRequestParameter(getRequest(), OAuth2Constants.Params.STATE, String.class);
             if (OAuth2Utils.isNotBlank(state)) {
-                location.addQueryParameter(OAuth2.Params.STATE, state);
+                location.addQueryParameter(OAuth2Constants.Params.STATE, state);
+            }
+            if (isScopeChanged()) {
+                location.addQueryParameter(OAuth2Constants.Params.SCOPE, OAuth2Utils.join(checkedScope, OAuth2Utils
+                        .getScopeDelimiter(getContext())));
             }
             Redirector cb =
                     new Redirector(getContext(), location.toString(), Redirector.MODE_CLIENT_FOUND);
             cb.handle(getRequest(), getResponse());
         } else {
+            OAuth2Utils.DEBUG.warning("AuthorizationCodeServerResource::Resource Owner did not authorize the request");
             throw OAuthProblemException.OAuthError.ACCESS_DENIED.handle(getRequest(),
                     "Resource Owner did not authorize the request");
         }
@@ -181,20 +185,21 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
 
         // Find code
         String code_p =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.CODE, String.class);
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.CODE, String.class);
         AuthorizationCode code = getTokenStore().readAuthorizationCode(code_p);
 
         if (null == code) {
+            OAuth2Utils.DEBUG.error("AuthorizationCodeServerResource::Authorization code doesn't exist.");
             throw OAuthProblemException.OAuthError.INVALID_REQUEST.handle(getRequest(),
-                    "Authorization code has been user.");
+                    "Authorization code doesn't exist.");
         } else if (code.isTokenIssued()) {
-            // TODO throw Exception
+            // TODO Used code 2 times needs to invalidate all tokens associated with this code
+            OAuth2Utils.DEBUG.error("AuthorizationCodeServerResource::Authorization code has been used");
             throw OAuthProblemException.OAuthError.INVALID_REQUEST.handle(getRequest(),
-                    "Authorization code has been user.");
+                    "Authorization code has been used.");
         } else {
-            // TODO Token expire check
-            if (code.getExpireTime() - System.currentTimeMillis() < 0 || code.isExpired()) {
-                // Throw expired code
+            if (code.isExpired()) {
+                OAuth2Utils.DEBUG.error("AuthorizationCodeServerResource::Authorization code expired.");
                 throw OAuthProblemException.OAuthError.INVALID_CODE.handle(getRequest(),
                         "Authorization code expired.");
             }
@@ -205,7 +210,13 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
 
             // Generate Token
             AccessToken token = createAccessToken(code);
+
+            //set access token issued
+            code.setIssued(true);
             Map<String, Object> response = token.convertToMap();
+            if (checkIfRefreshTokenIsRequired(getRequest())){
+                response.put(OAuth2Constants.Params.REFRESH_TOKEN, token.getRefreshToken());
+            }
             return new JacksonRepresentation<Map>(response);
         }
     }
@@ -214,11 +225,12 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
     protected boolean getDecision(Representation entity) {
         if (!decisionIsAllow) {
             String decision =
-                    OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Custom.DECISION,
+                    OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Custom.DECISION,
                             String.class);
-            if (OAuth2.Custom.ALLOW.equalsIgnoreCase(decision)) {
+            if (OAuth2Constants.Custom.ALLOW.equalsIgnoreCase(decision)) {
                 decisionIsAllow = true;
             } else {
+                OAuth2Utils.DEBUG.error("AuthorizationCodeServerResource::Resource Owner did not authorize the request");
                 throw OAuthProblemException.OAuthError.ACCESS_DENIED.handle(getRequest(),
                         "Resource Owner did not authorize the request");
             }
@@ -231,11 +243,11 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
         Set<String> required = null;
         switch (endpointType) {
         case AUTHORIZATION_ENDPOINT: {
-            return new String[] { OAuth2.Params.RESPONSE_TYPE, OAuth2.Params.CLIENT_ID };
+            return new String[] { OAuth2Constants.Params.RESPONSE_TYPE, OAuth2Constants.Params.CLIENT_ID };
         }
         case TOKEN_ENDPOINT: {
-            return new String[] { OAuth2.Params.GRANT_TYPE, OAuth2.Params.CODE,
-                OAuth2.Params.REDIRECT_URI };
+            return new String[] { OAuth2Constants.Params.GRANT_TYPE, OAuth2Constants.Params.CODE,
+                OAuth2Constants.Params.REDIRECT_URI };
         }
         default: {
             return null;
@@ -252,8 +264,16 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
      */
     protected AuthorizationCode createAuthorizationCode(Set<String> checkedScope) {
         return getTokenStore().createAuthorizationCode(checkedScope,
-                OAuth2Utils.getContextRealm(getContext()), resourceOwner.getIdentifier(),
+                OAuth2Utils.getRealm(getRequest()), resourceOwner.getIdentifier(),
                 sessionClient);
+    }
+
+    protected RefreshToken createRefreshToken(AuthorizationCode code){
+        resourceOwner = getAuthenticatedResourceOwner();
+        return getTokenStore().createRefreshToken(code.getScope(),
+                                                    OAuth2Utils.getRealm(getRequest()),
+                                                    code.getUserID(),
+                                                    sessionClient.getClientId());
     }
 
     /**
@@ -264,8 +284,17 @@ public class AuthorizationCodeServerResource extends AbstractFlow {
      * @throws OAuthProblemException
      */
     protected AccessToken createAccessToken(AuthorizationCode code) {
-        return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
-                code.getScope(), code);
+        if (checkIfRefreshTokenIsRequired(getRequest())){
+            //create refresh token
+            RefreshToken token = createRefreshToken(code);
+
+            //pass in refresh token as parent of Access Token
+            return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
+                    code.getScope(), token, OAuth2Utils.getRealm(getRequest()));
+        } else {
+            return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
+                    code.getScope(), code, OAuth2Utils.getRealm(getRequest()));
+        }
     }
 
     protected Form getFormPost(Representation entity) {

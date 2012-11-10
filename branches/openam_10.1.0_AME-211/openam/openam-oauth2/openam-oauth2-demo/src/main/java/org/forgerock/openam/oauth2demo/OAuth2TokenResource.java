@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2demo;
@@ -28,7 +28,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
+import org.forgerock.openam.oauth2.OAuth2Constants;
 import org.forgerock.restlet.ext.oauth2.consumer.OAuth2User;
 import org.restlet.data.Reference;
 import org.restlet.ext.jackson.JacksonRepresentation;
@@ -40,15 +40,13 @@ import org.restlet.security.User;
 import com.iplanet.am.util.SystemProperties;
 
 /**
- * A NAME does ...
- * 
- * @author Laszlo Hordos
+ * Returns token information in the demo
  */
 public class OAuth2TokenResource extends ServerResource {
     /**
-     * TODO Description.
+     * Creates a representation of the token to be displayed
      * 
-     * @return TODO Description
+     * @return Jackson representation of the token to be displayed.
      */
     @Get("json")
     public Representation getStatusInfo() {
@@ -61,7 +59,7 @@ public class OAuth2TokenResource extends ServerResource {
                 Reference tokenInfo =
                         new Reference(SystemProperties
                                 .get(OAuth2DemoApplication.OAUTH2_ENDPOINT_TOKENINFO));
-                tokenInfo.addQueryParameter(OAuth2.Params.ACCESS_TOKEN, user.getAccessToken());
+                tokenInfo.addQueryParameter(OAuth2Constants.Params.ACCESS_TOKEN, user.getAccessToken());
                 response.put("uri", tokenInfo.toString());
             }
             response.put("name", user.getIdentifier());

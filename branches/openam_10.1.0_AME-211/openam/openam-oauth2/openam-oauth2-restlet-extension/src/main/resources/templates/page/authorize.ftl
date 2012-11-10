@@ -1,4 +1,27 @@
 <!doctype html>
+<!--
+  ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~
+  ~ Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+  ~
+  ~ The contents of this file are subject to the terms
+  ~ of the Common Development and Distribution License
+  ~ (the License). You may not use this file except in
+  ~ compliance with the License.
+  ~
+  ~ You can obtain a copy of the License at
+  ~ http://forgerock.org/license/CDDLv1.0.html
+  ~ See the License for the specific language governing
+  ~ permission and limitations under the License.
+  ~
+  ~ When distributing Covered Code, include this CDDL
+  ~ Header Notice in each file and include the License file
+  ~ at http://forgerock.org/license/CDDLv1.0.html
+  ~ If applicable, add the following below the CDDL Header,
+  ~ with the fields enclosed by brackets [] replaced by
+  ~ your own identifying information:
+  ~ "Portions Copyrighted [2012] [ForgeRock Inc]"
+  -->
 <html lang="en">
 <head>
     <title>OAuth2 Authorization Server</title>
@@ -15,15 +38,15 @@
         <section id="intro">
             <h2>Application requesting scope</h2>
 
-            <p>Client ClientId = ${clientId?if_exists} CB = ${clientDescription?if_exists} wants to get access to your
-                information.</p>
+            <p>${display_name?if_exists}:</p>
+            <p>${display_description?if_exists} </p>
         </section>
     </div>
     <aside>
         <form action="${target!'.'}" method="post">
             <h4>The following private info is requested</h4>
-        <#if requestingScopes??>
-            <#list requestingScopes as r><input type="checkbox" name="scope" value="${r}" checked/>
+        <#if display_scope??>
+            <#list display_scope as r><input type="checkbox" name="scope" value="${r}" checked/>
                 <b>${r}</b><br/>
             </#list>
         </#if>

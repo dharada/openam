@@ -19,18 +19,18 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.consumer;
 
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.model.Token;
+import org.forgerock.openam.oauth2.model.Token;
 import org.restlet.security.User;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ * Object that represents an OAuth2User.
+ * Used in the demo.
  */
 public class OAuth2User extends User {
 

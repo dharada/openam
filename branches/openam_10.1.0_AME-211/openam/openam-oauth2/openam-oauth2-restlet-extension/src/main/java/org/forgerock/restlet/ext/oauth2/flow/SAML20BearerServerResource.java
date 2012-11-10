@@ -19,16 +19,16 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
+import org.forgerock.openam.oauth2.OAuth2Constants;
 
 /**
- * @author $author$
- * @version $Revision$ $Date$
+ * Implements a SAML 2.0 Flow. This is an Extension grant.
+ * @see <a href="http://tools.ietf.org/html/rfc6749#section-4.5">4.5.  Extension Grants</a>
  */
 public class SAML20BearerServerResource extends AbstractFlow {
 
@@ -75,6 +75,6 @@ public class SAML20BearerServerResource extends AbstractFlow {
 
     @Override
     protected String[] getRequiredParameters() {
-        return new String[] { OAuth2.Params.GRANT_TYPE };
+        return new String[] { OAuth2Constants.Params.GRANT_TYPE };
     }
 }

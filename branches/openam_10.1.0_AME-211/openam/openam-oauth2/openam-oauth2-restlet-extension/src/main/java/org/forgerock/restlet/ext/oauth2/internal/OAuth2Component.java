@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.internal;
@@ -28,13 +28,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.forgerock.restlet.ext.oauth2.provider.ClientAuthenticationFilter;
-import org.forgerock.restlet.ext.oauth2.provider.ClientVerifier;
+import org.forgerock.openam.oauth2.provider.ClientVerifier;
 import org.forgerock.restlet.ext.oauth2.provider.OAuth2FlowFinder;
-import org.forgerock.restlet.ext.oauth2.provider.OAuth2Provider;
-import org.forgerock.restlet.ext.oauth2.provider.OAuth2TokenStore;
+import org.forgerock.openam.oauth2.provider.OAuth2Provider;
+import org.forgerock.openam.oauth2.provider.OAuth2TokenStore;
 import org.forgerock.restlet.ext.oauth2.representation.ClassDirectoryServerResource;
 import org.restlet.Context;
 import org.restlet.Restlet;
@@ -46,7 +46,7 @@ import org.restlet.security.Verifier;
 
 /**
  * This class can initialise the OAuth2 Endpoint. IT can be a Spring Bean or an
- * OSGi component
+ * OSGi component. Used to test OAuth2
  * 
  * @author $author$
  * @version $Revision$ $Date$
@@ -122,7 +122,7 @@ public class OAuth2Component {
 
         // Define Authorization Endpoint
         OAuth2FlowFinder finder =
-                new OAuth2FlowFinder(childContext, OAuth2.EndpointType.AUTHORIZATION_ENDPOINT)
+                new OAuth2FlowFinder(childContext, OAuth2Constants.EndpointType.AUTHORIZATION_ENDPOINT)
                         .supportAuthorizationCode().supportClientCredentials().supportImplicit()
                         .supportPassword();
         ChallengeAuthenticator au =
@@ -135,7 +135,7 @@ public class OAuth2Component {
 
         // Define Token Endpoint
         finder =
-                new OAuth2FlowFinder(childContext, OAuth2.EndpointType.TOKEN_ENDPOINT)
+                new OAuth2FlowFinder(childContext, OAuth2Constants.EndpointType.TOKEN_ENDPOINT)
                         .supportAuthorizationCode().supportClientCredentials().supportImplicit()
                         .supportPassword();
         // Try to authenticate the client The verifier MUST set
@@ -144,8 +144,8 @@ public class OAuth2Component {
         filter.setNext(finder);
         root.attach(OAuth2Utils.getAccessTokenPath(childContext), filter);
 
-        if (getConfiguration().get(OAuth2.Custom.REALM) instanceof String) {
-            realm = (String) getConfiguration().get(OAuth2.Custom.REALM);
+        if (getConfiguration().get(OAuth2Constants.Custom.REALM) instanceof String) {
+            realm = (String) getConfiguration().get(OAuth2Constants.Custom.REALM);
             realm = OAuth2Utils.isNotBlank(realm) ? realm : null;
         }
 

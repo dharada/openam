@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2.internal;
@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.model.ClientApplication;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.model.ClientApplication;
 
 /**
  * A NAME does ...
@@ -71,7 +71,7 @@ public class ClientApplicationIdentity extends JsonValue implements ClientApplic
 
     @Override
     public String getAccessTokenType() {
-        return OAuth2.Bearer.BEARER;
+        return OAuth2Constants.Bearer.BEARER;
     }
 
     @Override
@@ -80,13 +80,13 @@ public class ClientApplicationIdentity extends JsonValue implements ClientApplic
     }
 
     @Override
-    public Set<String> allowedGrantScopes() {
+    public Set<String> getAllowedGrantScopes() {
         return Collections.unmodifiableSet(new HashSet<String>(get("allowedGrantScopes").required()
                 .asList(String.class)));
     }
 
     @Override
-    public Set<String> defaultGrantScopes() {
+    public Set<String> getDefaultGrantScopes() {
         return Collections.unmodifiableSet(new HashSet<String>(get("defaultGrantScopes").required()
                 .asList(String.class)));
     }
@@ -94,5 +94,17 @@ public class ClientApplicationIdentity extends JsonValue implements ClientApplic
     @Override
     public boolean isAutoGrant() {
         return false;
+    }
+
+    @Override
+    public Set<String> getDisplayName(){
+        return Collections.unmodifiableSet(new HashSet<String>(get("displayName").required()
+                .asList(String.class)));
+    }
+
+    @Override
+    public Set<String> getDisplayDescription(){
+        return Collections.unmodifiableSet(new HashSet<String>(get("displayDescription").required()
+                .asList(String.class)));
     }
 }

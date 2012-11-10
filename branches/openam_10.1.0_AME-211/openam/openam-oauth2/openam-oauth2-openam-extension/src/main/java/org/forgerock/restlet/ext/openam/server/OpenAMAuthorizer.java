@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [Forgerock Inc]"
  */
 
 package org.forgerock.restlet.ext.openam.server;
@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.forgerock.restlet.ext.openam.OpenAMUser;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -46,8 +47,7 @@ import com.sun.identity.policy.client.PolicyEvaluatorFactory;
  * An OpenAMAuthorizer request for a Policy Decision.
  * <p/>
  * It use the remote {@link PolicyEvaluator}
- * 
- * @author Laszlo Hordos
+ *
  */
 public class OpenAMAuthorizer extends AbstractOpenAMAuthorizer {
 
@@ -76,14 +76,19 @@ public class OpenAMAuthorizer extends AbstractOpenAMAuthorizer {
         try {
             pe = PolicyEvaluatorFactory.getInstance().getPolicyEvaluator(WEB_AGENT_SERVICE);
         } catch (SSOException e) {
+            OAuth2Utils.DEBUG.error("Error getting policy for authorizer: ", e );
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getL10NMessage(Locale
                     .getDefault()), e);
         } catch (PolicyException e) {
+            OAuth2Utils.DEBUG.error("Error getting policy for authorizer: ", e );
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e
                     .getCompleteL10NMessage(Locale.getDefault()), e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected boolean getPolicyDecision(OpenAMUser user, Request request, Response response)
             throws SSOException, PolicyException {

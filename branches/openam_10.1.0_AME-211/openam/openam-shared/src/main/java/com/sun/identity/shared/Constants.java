@@ -1214,7 +1214,7 @@ public interface Constants {
     static final String DEFAULT_SAML2_HA_ROOT_SUFFIX = "ou=openam-saml2";
 
     /**
-     * Default SAML2 Root Suffix
+     * Default OAUTH2 Root Suffix
      */
     static final String DEFAULT_OAUTH2_HA_ROOT_SUFFIX = "ou=openam-oauth2";
 

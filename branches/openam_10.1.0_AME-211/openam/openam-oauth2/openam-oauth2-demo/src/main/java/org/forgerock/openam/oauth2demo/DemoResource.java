@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2demo;
@@ -34,14 +34,14 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerOAuth2Proxy;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerToken;
 import org.forgerock.restlet.ext.oauth2.consumer.OAuth2Proxy;
 import org.forgerock.restlet.ext.oauth2.consumer.RequestCallbackHandler;
-import org.forgerock.restlet.ext.oauth2.provider.OAuth2TokenStore;
+import org.forgerock.openam.oauth2.provider.OAuth2TokenStore;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.data.Form;
@@ -62,9 +62,8 @@ import org.restlet.routing.Redirector;
 import org.restlet.util.Series;
 
 /**
- * A NAME does ...
- * 
- * @author Laszlo Hordos
+ * Evaluates the url tokens and acts as a protected resource for the OAuth 2 flow demos
+ *
  */
 public class DemoResource extends ServerResource implements RequestCallbackHandler<BearerToken> {
 
@@ -78,9 +77,9 @@ public class DemoResource extends ServerResource implements RequestCallbackHandl
     private volatile boolean redirected = false;
 
     /**
-     * TODO Description.
+     * Parses the input request from the main demo interface and sends the necessary response
      * 
-     * @return TODO Description
+     * @return a template representation
      */
     @Get("html")
     public Representation getStatusInfo() {
@@ -159,8 +158,8 @@ public class DemoResource extends ServerResource implements RequestCallbackHandl
         } catch (OAuthProblemException e) {
             response = e.getErrorMessage();
         } catch (ResourceException e) {
-            response.put(OAuth2.Error.ERROR, e.getMessage());
-            response.put(OAuth2.Error.ERROR_DESCRIPTION, e.getStatus().getDescription());
+            response.put(OAuth2Constants.Error.ERROR, e.getMessage());
+            response.put(OAuth2Constants.Error.ERROR_DESCRIPTION, e.getStatus().getDescription());
             response.put("status", e.getStatus().getCode());
         }
 
@@ -176,9 +175,9 @@ public class DemoResource extends ServerResource implements RequestCallbackHandl
     }
 
     /**
-     * TODO Description.
+     * Returns the servlet request
      * 
-     * @return TODO Description
+     * @return HttpServletRequest for current request
      */
     protected HttpServletRequest getHttpServletRequest() {
         if (null == servletRequest) {
@@ -188,13 +187,13 @@ public class DemoResource extends ServerResource implements RequestCallbackHandl
     }
 
     /**
-     * TODO Description.
+     * Gets the client resource
      * 
      * @param reference
-     *            TODO Description
+     *            URI to something
      * @param flow
-     *            TODO Description
-     * @return TODO Description
+     *            An OAuth2 flow
+     * @return The ClientResource containing the reference.
      */
     protected ClientResource getClientResource(Reference reference, OAuth2Proxy.Flow flow) {
         ClientResource clientResource = new ClientResource(getContext(), reference);

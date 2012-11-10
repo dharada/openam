@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * ""Portions Copyrighted [2012] [ForgeRock Inc]""
  */
 
 package org.forgerock.restlet.ext.oauth2.consumer;
@@ -27,7 +27,7 @@ package org.forgerock.restlet.ext.oauth2.consumer;
 import org.restlet.security.User;
 
 /**
- * A BearerTokenVerifier does ...
+ * A BearerTokenVerifier verifies a {@link BearerToken}
  * 
  * @author Laszlo Hordos
  */

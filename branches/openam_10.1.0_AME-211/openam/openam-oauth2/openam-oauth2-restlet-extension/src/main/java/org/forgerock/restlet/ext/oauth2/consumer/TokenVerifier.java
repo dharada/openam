@@ -19,12 +19,12 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 package org.forgerock.restlet.ext.oauth2.consumer;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.OAuthProblemException;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.exceptions.OAuthProblemException;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.Form;
@@ -35,9 +35,8 @@ import org.restlet.security.User;
 import org.restlet.security.Verifier;
 
 /**
- * A NAME does ...
- * 
- * @author Laszlo Hordos
+ * Verifies and a generic token.
+ *
  */
 public abstract class TokenVerifier<T extends AccessTokenExtractor<U>, U extends AbstractAccessToken> {
 
@@ -98,7 +97,7 @@ public abstract class TokenVerifier<T extends AccessTokenExtractor<U>, U extends
                 }
 
             } catch (OAuthProblemException e) {
-                // TODO add logging
+                OAuth2Utils.DEBUG.error("Unable to verify token", e);
                 throw e;
             }
             return result;

@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.openam.oauth2demo;
@@ -31,7 +31,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
 import org.forgerock.restlet.ext.oauth2.consumer.AccessTokenValidator;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerOAuth2Proxy;
 import org.forgerock.restlet.ext.oauth2.consumer.BearerToken;
@@ -63,9 +63,7 @@ import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 
 /**
- * A NAME does ...
- * 
- * @author Laszlo Hordos
+ * Sets up the OAuth2DemoApplication
  */
 public class OAuth2DemoApplication extends Application {
 
@@ -79,6 +77,8 @@ public class OAuth2DemoApplication extends Application {
     public static final String OAUTH2_CLIENT_SECRET = "org.forgerock.openam.oauth2.client_secret";
     public static final String OAUTH2_USERNAME = "org.forgerock.openam.oauth2.username";
     public static final String OAUTH2_PASSWORD = "org.forgerock.openam.oauth2.password";
+    public static final String OAUTH2_ENDPOINT_REDIRECTION =
+            "org.forgerock.openam.oauth2.endpoint.redirection";
     /**
      * The Freemarker's configuration.
      */
@@ -93,34 +93,39 @@ public class OAuth2DemoApplication extends Application {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_ENDPOINT_AUTHORIZE);
         }
+        String redirectionEndpoint = SystemProperties.get(OAUTH2_ENDPOINT_REDIRECTION);
+        if (OAuth2Utils.isBlank(redirectionEndpoint)) {
+            throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
+                    + OAUTH2_ENDPOINT_REDIRECTION);
+        }
         String accessTokenEndpoint = SystemProperties.get(OAUTH2_ENDPOINT_ACCESS_TOKEN);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(accessTokenEndpoint)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_ENDPOINT_ACCESS_TOKEN);
         }
         String tokenInfoEndpoint = SystemProperties.get(OAUTH2_ENDPOINT_TOKENINFO);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(tokenInfoEndpoint)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_ENDPOINT_TOKENINFO);
         }
 
         String clientId = SystemProperties.get(OAUTH2_CLIENT_ID);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(clientId)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_CLIENT_ID);
         }
         String clientSecret = SystemProperties.get(OAUTH2_CLIENT_SECRET);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(clientSecret)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_CLIENT_SECRET);
         }
         String username = SystemProperties.get(OAUTH2_USERNAME);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(username)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_USERNAME);
         }
         String password = SystemProperties.get(OAUTH2_PASSWORD);
-        if (OAuth2Utils.isBlank(authorizeEndpoint)) {
+        if (OAuth2Utils.isBlank(password)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Missing required AMConfig:"
                     + OAUTH2_PASSWORD);
         }
@@ -146,7 +151,7 @@ public class OAuth2DemoApplication extends Application {
         auth2Proxy.setChallengeResponse(new ChallengeResponse(ChallengeScheme.HTTP_BASIC, clientId,
                 clientSecret.toCharArray()));
         auth2Proxy.setClientCredentials(clientId, clientSecret);
-        auth2Proxy.setRedirectionEndpoint(new Reference(current.resolve("./redirect")));
+        auth2Proxy.setRedirectionEndpoint(new Reference(URI.create(redirectionEndpoint)));
         auth2Proxy.setResourceOwnerCredentials(username, password);
         auth2Proxy.setScope(OAuth2Utils.split(scope, ","));
 
@@ -194,9 +199,9 @@ public class OAuth2DemoApplication extends Application {
     }
 
     /**
-     * TODO Description.
+     * Parses the current servlet request and creates a URI
      * 
-     * @return TODO Description
+     * @return URI representing the current servlet request
      */
     protected URI getCurrentURI() {
         Object o = getContext().getAttributes().get(OAuth2DemoApplication.class.getName());
@@ -214,10 +219,6 @@ public class OAuth2DemoApplication extends Application {
                 int serverPort = servletRequest.getServerPort(); // 8080
                 String contextPath = servletRequest.getContextPath(); // /openam
                 String servletPath = servletRequest.getServletPath(); // /oauth2demo
-                // String pathInfo = servletRequest.getPathInfo(); //
-                // /static/index.html
-                // String queryString = servletRequest.getQueryString(); //
-                // d=789
 
                 try {
                     root =

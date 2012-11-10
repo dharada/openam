@@ -19,44 +19,44 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [Forgerock Inc]"
  */
 
 package org.forgerock.openam.oauth2.model.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
-import org.forgerock.restlet.ext.oauth2.model.SessionClient;
-import org.forgerock.restlet.ext.oauth2.model.Token;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.model.Token;
+import org.forgerock.openam.oauth2.model.SessionClient;
 
 /**
- * Created by IntelliJ IDEA. User: jonathan Date: 26/3/12 Time: 10:37 AM To
- * change this template use File | Settings | File Templates.
+ * Implementation of AccessToken
  */
 public class AccessTokenImpl extends TokenImpl implements AccessToken {
 
     /**
-     * Constructor. TODO Description
+     * Constructor. Creates an Access Token
      * 
      * @param id
-     *            TODO Description
+     *            Id of the access token
      * @param parent
-     *            TODO Description
+     *            Id of the parent token
      * @param userID
-     *            TODO Description
+     *            UserID of the user creating the token
      * @param client
-     *            TODO Description
+     *            The sessionClient of the client creating the token
      * @param realm
-     *            TODO Description
+     *            The realm this token is created in
      * @param scope
-     *            TODO Description
+     *            The scope of this token
      * @param expireTime
-     *            TODO Description
+     *            The amount of time in seconds this token will expire in
      */
     public AccessTokenImpl(String id, String parent, String userID, SessionClient client,
             String realm, Set<String> scope, long expireTime) {
@@ -66,29 +66,30 @@ public class AccessTokenImpl extends TokenImpl implements AccessToken {
     }
 
     /**
-     * Constructor. TODO javadoc
+     * Constructor. Creates an Access Token
      * 
      * @param id
-     *            TODO Description
+     *            Id of the access token
      * @param scope
-     *            TODO Description
+     *            The scope of this token
      * @param expireTime
-     *            TODO Description
+     *            The amount of time in seconds this token will expire in
      * @param token
-     *            TODO Description
+     *            The parent token of this token
      */
     public AccessTokenImpl(String id, Set<String> scope, long expireTime, Token token) {
         super(id, token.getUserID(), token.getClient(), token.getRealm(), scope, expireTime);
         setType();
+        setParentToken(token.getToken());
     }
 
     /**
-     * TODO Description.
+     * Creates an Access Token
      * 
      * @param id
-     *            TODO Description
+     *            Id of the access Token
      * @param value
-     *            TODO Description
+     *            A JsonValue map to populate this token with.
      */
     public AccessTokenImpl(String id, JsonValue value) {
         super(id, value);
@@ -96,42 +97,58 @@ public class AccessTokenImpl extends TokenImpl implements AccessToken {
     }
 
     /**
-     * TODO Description.
+     * Sets the parent token
      * 
      * @param parent
-     *            TODO Description
+     *            The parent token
      */
     public void setParentToken(String parent) {
-        this.put(OAuth2.StoredToken.PARENT, parent);
+        Set<String> s = new HashSet<String>();
+        s.add(parent);
+        this.put(OAuth2Constants.StoredToken.PARENT, s);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getParentToken() {
-        return this.get(OAuth2.StoredToken.PARENT).asString();
+        String parent = null;
+        Set parentSet = (Set) get(OAuth2Constants.StoredToken.PARENT).getObject();
+        if (parentSet != null && !parentSet.isEmpty()){
+            parent = parentSet.iterator().next().toString();
+        }
+        return parent;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public RefreshTokenImpl getRefreshToken() {
-        // TODO implement or change interface
-        return null; // To change body of implemented methods use File |
-                     // Settings | File Templates.
+    public String getRefreshToken() {
+        //refresh tokens are stored as parent tokens
+        return getParentToken();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, Object> convertToMap() {
         Map<String, Object> tokenMap = new HashMap<String, Object>();
-        tokenMap.put(OAuth2.Params.ACCESS_TOKEN, getToken());
-        tokenMap.put(OAuth2.Params.TOKEN_TYPE, OAuth2.Bearer.BEARER);
-        tokenMap.put(OAuth2.Params.EXPIRES_IN, getExpireTime() - System.currentTimeMillis());
-        // TODO implement or change interface
+        tokenMap.put(OAuth2Constants.Params.ACCESS_TOKEN, getToken());
+        tokenMap.put(OAuth2Constants.Params.TOKEN_TYPE, OAuth2Constants.Bearer.BEARER);
+        tokenMap.put(OAuth2Constants.Params.EXPIRES_IN, getExpireTime());
         return tokenMap;
     }
 
     /**
-     * TODO Description.
+     * Sets the type of the token
      */
     protected void setType() {
-        this.put(OAuth2.StoredToken.TYPE, OAuth2.Params.ACCESS_TOKEN);
+        Set<String> s = new HashSet<String>();
+        s.add(OAuth2Constants.Params.ACCESS_TOKEN);
+        this.put(OAuth2Constants.StoredToken.TYPE, s);
     }
 
 }

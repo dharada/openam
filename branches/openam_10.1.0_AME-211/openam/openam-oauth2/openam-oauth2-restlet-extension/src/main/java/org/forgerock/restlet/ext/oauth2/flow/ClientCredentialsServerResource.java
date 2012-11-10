@@ -19,7 +19,7 @@
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * "Portions Copyrighted [2012] [ForgeRock Inc]"
  */
 
 package org.forgerock.restlet.ext.oauth2.flow;
@@ -27,16 +27,17 @@ package org.forgerock.restlet.ext.oauth2.flow;
 import java.util.Map;
 import java.util.Set;
 
-import org.forgerock.restlet.ext.oauth2.OAuth2;
-import org.forgerock.restlet.ext.oauth2.OAuth2Utils;
-import org.forgerock.restlet.ext.oauth2.model.AccessToken;
+import org.forgerock.openam.oauth2.OAuth2Constants;
+import org.forgerock.openam.oauth2.utils.OAuth2Utils;
+import org.forgerock.openam.oauth2.model.AccessToken;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Post;
 
 /**
+ * Implements the Client Credentials Flow
  * @see <a
- *      href="http://tools.ietf.org/html/draft-ietf-oauth-v2-24#section-4.4>4.4.
+ *      href="http://tools.ietf.org/html/rfc6749#section-4.4>4.4.
  *      Client Credentials Grant</a>
  */
 public class ClientCredentialsServerResource extends AbstractFlow {
@@ -48,11 +49,9 @@ public class ClientCredentialsServerResource extends AbstractFlow {
 
         // Get the requested scope
         String scope_before =
-                OAuth2Utils.getRequestParameter(getRequest(), OAuth2.Params.SCOPE, String.class);
+                OAuth2Utils.getRequestParameter(getRequest(), OAuth2Constants.Params.SCOPE, String.class);
         // Validate the granted scope
-        Set<String> checkedScope =
-                getCheckedScope(scope_before, client.getClient().allowedGrantScopes(), client
-                        .getClient().defaultGrantScopes());
+        Set<String> checkedScope = executeAccessTokenScopePlugin(scope_before);
 
         AccessToken token = createAccessToken(checkedScope);
 
@@ -61,7 +60,7 @@ public class ClientCredentialsServerResource extends AbstractFlow {
 
     @Override
     protected String[] getRequiredParameters() {
-        return new String[] { OAuth2.Params.GRANT_TYPE };
+        return new String[] { OAuth2Constants.Params.GRANT_TYPE };
     }
 
     /**
@@ -69,12 +68,12 @@ public class ClientCredentialsServerResource extends AbstractFlow {
      * 
      * @param checkedScope
      * @return
-     * @throws org.forgerock.restlet.ext.oauth2.OAuthProblemException
+     * @throws org.forgerock.openam.oauth2.exceptions.OAuthProblemException
      * 
      */
     private AccessToken createAccessToken(Set<String> checkedScope) {
         return getTokenStore().createAccessToken(client.getClient().getAccessTokenType(),
-                checkedScope, OAuth2Utils.getContextRealm(getContext()),
+                checkedScope, OAuth2Utils.getRealm(getRequest()),
                 client.getClient().getClientId());
     }
 }
