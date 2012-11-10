@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted 2010-2012 ForgeRock AS
+ * Portions Copyrighted 2010-2012 ForgeRock Inc
  */
 
 package com.iplanet.dpro.session;
@@ -225,6 +225,8 @@ public class Session extends GeneralTaskRunnable {
 
     public static final int APPLICATION_SESSION = 1;
 
+    private static final int DEFAULT_REMOTE_SESSION_CACHE_DURATION = 3;
+
     public static final String SESSION_HANDLE_PROP = "SessionHandle";
 
     public static final String TOKEN_RESTRICTION_PROP = "TokenRestriction";
@@ -312,6 +314,7 @@ public class Session extends GeneralTaskRunnable {
     static private ThreadPool threadPool = null;
     private static final int DEFAULT_POOL_SIZE = 5;
     private static final int DEFAULT_THRESHOLD = 10000;
+    private static int remoteSessionCacheDuration;
     private static boolean cacheBasedPolling = Boolean.valueOf(
             SystemProperties
                     .get("com.iplanet.am.session.client.polling.cacheBased",
@@ -339,7 +342,16 @@ public class Session extends GeneralTaskRunnable {
         }
         if (pollingEnabled || sessionCleanupEnabled){
             timerPool = SystemTimerPool.getTimerPool();
-        }        
+        }
+
+        String remoteSessionCacheDurationValue = SystemProperties.get(
+             Constants.REMOTE_SESSION_CACHE_DURATION, "3");
+
+        try {
+            remoteSessionCacheDuration = Integer.parseInt(remoteSessionCacheDurationValue);
+        } catch (Exception ex) {
+            remoteSessionCacheDuration = DEFAULT_REMOTE_SESSION_CACHE_DURATION;
+        }
     }
 
     static private String getAMServerID() {
@@ -519,10 +531,8 @@ public class Session extends GeneralTaskRunnable {
                 sessionDebug.error("Exception encountered while polling", ex);
             }
         } else {
-            if (sessionCleanupEnabled) {
-                if (sessionDebug.messageEnabled()) {
-                    sessionDebug.message("Session Cache Cleaner started");
-                }
+            if (isLocal()) {
+                // schedule at the max session time
                 long expectedTime = -1;
                 if (maxSessionTime < (Long.MAX_VALUE / 60)) {
                     expectedTime = (latestRefreshTime + (maxSessionTime * 60))
@@ -532,7 +542,7 @@ public class Session extends GeneralTaskRunnable {
                     timerPool.schedule(this, new Date(expectedTime));
                     return;
                 }
-                try {                        
+                try {
                     Session.removeSID(getID());
                     if (sessionDebug.messageEnabled()) {
                         sessionDebug.message("Session Destroyed, Caching "
@@ -542,10 +552,34 @@ public class Session extends GeneralTaskRunnable {
                     sessionDebug.error("Exception occured while cleaning "
                         + "up Session Cache", ex);
                 }
+            } else {
+                // schedule at the remote session cache duration interval
+                long expectedTime = -1;
+                expectedTime = (latestRefreshTime + (remoteSessionCacheDuration * 60)) * 1000;
+                if (expectedTime > scheduledExecutionTime()) {
+                    SystemTimerPool.getTimerPool().schedule(this, new Date(expectedTime));
+                    return;
+                }
+
+                clearRemoteSession(this);
             }
         }
     }
-    
+
+    public static void clearRemoteSession(Session session) {
+        if (session == null) {
+            return;
+        }
+
+        if (session.isLocal()) {
+            return;
+        }
+
+        session.cancel();
+        session.setState(Session.DESTROYED);
+        sessionTable.remove(session.getID());
+    }
+
     /**
      * Returns load balancer cookie value for the Session.
      *
@@ -1118,10 +1152,15 @@ public class Session extends GeneralTaskRunnable {
                 timerPool.schedule(this, new Date(timeoutTime));
             }
         } else {
-            if ((sessionCleanupEnabled) && (maxSessionTime < (Long.MAX_VALUE /
-                60))) {
-                long timeoutTime = (latestRefreshTime + (maxSessionTime * 60))
-                    * 1000;
+            if ((sessionCleanupEnabled) && (maxSessionTime < (Long.MAX_VALUE / 60))) {
+                long timeoutTime;
+
+                if (isLocal()) {
+                    timeoutTime = (latestRefreshTime + (maxSessionTime * 60)) * 1000;
+                } else {
+                    timeoutTime = (latestRefreshTime + (remoteSessionCacheDuration * 60)) * 1000;
+                }
+
                 if (scheduledExecutionTime() > timeoutTime) {
                     cancel();
                 }

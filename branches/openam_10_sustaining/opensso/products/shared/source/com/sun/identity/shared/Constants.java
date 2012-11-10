@@ -1155,4 +1155,10 @@ public interface Constants {
      */
     public static final String USE_LOCAL_SESSIONS_IN_MULTI_SERVER_MODE =
         "openam.session.useLocalSessionsInMultiServerMode";
+
+    /**
+     * Controls how long remote Session objects are held in the sessionTable
+     */
+    public static final String REMOTE_SESSION_CACHE_DURATION =
+        "openam.remote.session.cache.duration";
 }
