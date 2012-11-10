@@ -27,7 +27,7 @@
 -->
 
 <!--
-   Portions Copyrighted 2011 ForgeRock AS
+   Portions Copyrighted 2011-2012 ForgeRock Inc
 -->
 <project name="Open Federation Library" default="usage">
                 
@@ -57,7 +57,7 @@
             excludes="webservices-api.jar,webservices-rt.jar,webservices-tools.jar"/>
     </path>
 
-    <target name="xsd.liberty" depends="preparebuild" unless="library.xsd.liberty.done">
+    <!--target name="xsd.liberty" depends="preparebuild" unless="library.xsd.liberty.done">
         <java classname="com.sun.tools.xjc.Driver" 
             maxmemory="128m" failonerror="true" fork="true">
             <classpath refid="build.class.path"/>
@@ -87,7 +87,7 @@
         </java>
         <property name="library.xsd.wsfederation.done" value="true" />
         <concat destfile="${libtracker}" append="true">library.xsd.wsfederation.done=true&#10;</concat>
-    </target>
+    </target-->
 
     <target name="jaxb.properties" unless="library.jaxb.done">
         <copy todir="${library.classes.dir}">
@@ -117,7 +117,7 @@
         <copy file="${library.docs.dir}/nightly.html" tofile="${fedlibrary.dist.dir}/index.html" filtering="true" />
     </target>
 
-    <target name="build" depends="preparebuild, xsd.liberty, xsd.saml2, xsd.wsfederation">
+    <target name="build" depends="preparebuild">
          <javac memoryInitialSize="256m" memoryMaximumSize="512m" fork="true"
             destdir="${library.classes.dir}"
             source="${target.jdk.set}" target="${target.jdk.set}"
@@ -272,7 +272,7 @@
     </target>
 
     <target name="clean" depends="clientsdk-clean">
-        <delete dir="${jaxb.liberty.authnsvc}"/>
+        <!--delete dir="${jaxb.liberty.authnsvc}"/>
         <delete dir="${jaxb.liberty.common}"/>
         <delete dir="${jaxb.liberty.disco.plugins}"/>
         <delete dir="${jaxb11.liberty.disco}"/>
@@ -287,7 +287,7 @@
         <delete dir="${jaxb11.liberty.soapbinding}"/>
         <delete dir="${jaxb.w3c}"/>
         <delete dir="${jaxb.saml2}"/>
-        <delete dir="${jaxb.wsfederation}"/>
+        <delete dir="${jaxb.wsfederation}"/-->
         <delete dir="${library.built.publicapidocs.dir}"/>
         <delete dir="${library.built.apidocs.dir}"/>
         <delete dir="${library.built.docs.dir}"/>
