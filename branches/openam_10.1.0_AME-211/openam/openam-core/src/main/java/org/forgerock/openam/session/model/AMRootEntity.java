@@ -80,7 +80,7 @@ public abstract class AMRootEntity implements Serializable {
     private String auxData = null;
     // byte[] encoded as Base64
     private String data = null;
-    // Used During Serialization of InternalSession.
+    // Used During Serialization of InternalSession and Other Token Objects for SAML2 and OATH2.
     private byte[] serializedInternalSessionBlob = null;
 
 

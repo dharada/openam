@@ -138,25 +138,25 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     /**
      * Define Global DN and Container Constants
      */
-    private static final String TOKEN_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_ROOT_SUFFIX, Constants.DEFAULT_TOKEN_ROOT_SUFFIX);
+    private static final String CTS_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_CTS_ROOT_SUFFIX, Constants.DEFAULT_CTS_ROOT_SUFFIX);
 
-    private static final String TOKEN_SESSION_HA_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX,
-                    Constants.DEFAULT_SESSION_HA_ROOT_SUFFIX);
+    private static final String CTS_SESSION_HA_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_CTS_SESSION_SUFFIX,
+                    Constants.DEFAULT_CTS_SESSION_HA_ROOT_SUFFIX);
 
-    private static final String TOKEN_SAML2_HA_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_SAML2_REPOSITORY_ROOT_SUFFIX, Constants.DEFAULT_SAML2_HA_ROOT_SUFFIX);
+    private static final String CTS_SAML2_HA_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_CTS_SAML2_SUFFIX, Constants.DEFAULT_CTS_SAML2_HA_ROOT_SUFFIX);
 
-    private static final String TOKEN_OAUTH2_HA_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_OAUTH2_REPOSITORY_ROOT_SUFFIX, Constants.DEFAULT_OAUTH2_HA_ROOT_SUFFIX);
+    private static final String CTS_OAUTH2_HA_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_CTS_OAUTH2_SUFFIX, Constants.DEFAULT_CTS_OAUTH2_HA_ROOT_SUFFIX);
 
     /**
-     * Define Session DN Constants
+     * Define Session DN Constants and Associated Templates.
      */
     private static final String SESSION_FAILOVER_HA_BASE_DN =
-            TOKEN_SESSION_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            CTS_SESSION_HA_ROOT_SUFFIX +
+                    Constants.COMMA + CTS_ROOT_SUFFIX;
 
     private static final String SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE =
             AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +
@@ -174,8 +174,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
      * Define SAML2 DN Constants
      */
     private static final String SAML2_HA_BASE_DN =
-            TOKEN_SAML2_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            CTS_SAML2_HA_ROOT_SUFFIX +
+                    Constants.COMMA + CTS_ROOT_SUFFIX;
 
     private static final String TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE =
             AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +
@@ -185,8 +185,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
      * Define OAUTH2 DN Constants
      */
     private static final String OAUTH2_HA_BASE_DN =
-            TOKEN_OAUTH2_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            CTS_OAUTH2_HA_ROOT_SUFFIX +
+                    Constants.COMMA + CTS_ROOT_SUFFIX;
 
     private static final String TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE =
             AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +

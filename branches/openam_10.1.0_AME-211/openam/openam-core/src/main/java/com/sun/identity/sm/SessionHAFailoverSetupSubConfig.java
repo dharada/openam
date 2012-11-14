@@ -92,6 +92,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
     // Example of Depicted DN:
     //dn: ou=default,ou=GlobalConfig,ou=1.0,ou=iPlanetAMSessionService,
     //       ou=services,dc=openam,dc=forgerock,dc=org
+    // TODO -- Use Message Formatter!!!!
     private static final String SITE_SESSION_FAILOVER_HA_SERVICES_BASE_DN_TEMPLATE =
             "ou" + Constants.EQUALS + "default" + Constants.COMMA +
                     "ou" + Constants.EQUALS + "GlobalConfig" + Constants.COMMA +
@@ -142,6 +143,7 @@ public class SessionHAFailoverSetupSubConfig implements Constants {
     private static synchronized boolean createServiceSubConfig(SSOToken adminToken, String siteName, String serviceID,
                                                                String serviceName, Map values) throws StoreException {
         boolean successful;
+        // TODO Use MessageFormatter.
         String baseDN = SITE_SESSION_FAILOVER_HA_SERVICES_BASE_DN_TEMPLATE.
                 replace("%1", serviceName);
         try {

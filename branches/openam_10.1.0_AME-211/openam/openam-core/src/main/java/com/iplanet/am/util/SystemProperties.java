@@ -143,8 +143,17 @@ public class SystemProperties {
         mapTagswap.put("%SERVER_HOST%",  Constants.AM_SERVER_HOST);
         mapTagswap.put("%SERVER_PROTO%", Constants.AM_SERVER_PROTOCOL);
         mapTagswap.put("%BASE_DIR%", CONFIG_PATH);
-        mapTagswap.put("%SESSION_ROOT_SUFFIX%",
-                AMTokenRepository.SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX);
+        mapTagswap.put("%CTS_BACKEND_NAME%",
+                AMTokenRepository.SYS_PROPERTY_CTS_BACKEND_NAME);
+        mapTagswap.put("%CTS_ROOT_SUFFIX%",
+                AMTokenRepository.SYS_PROPERTY_CTS_ROOT_SUFFIX);
+        mapTagswap.put("%CTS_OAUTH2_SUFFIX%",
+                AMTokenRepository.SYS_PROPERTY_CTS_OAUTH2_SUFFIX);
+        mapTagswap.put("%CTS_SAML2_SUFFIX%",
+                AMTokenRepository.SYS_PROPERTY_CTS_SAML2_SUFFIX);
+        mapTagswap.put("%CTS_SESSION_SUFFIX%",
+                AMTokenRepository.SYS_PROPERTY_CTS_SESSION_SUFFIX);
+
         mapTagswap.put("%SESSION_STORE_TYPE%",
                 AMTokenRepository.SYS_PROPERTY_SESSION_HA_REPOSITORY_TYPE);
 

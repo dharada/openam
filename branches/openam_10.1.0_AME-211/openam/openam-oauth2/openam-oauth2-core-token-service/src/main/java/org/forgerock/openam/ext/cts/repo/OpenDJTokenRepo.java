@@ -79,7 +79,7 @@ public class OpenDJTokenRepo extends GeneralTaskRunnable implements JsonResource
     private static final String SM_CONFIG_ROOT_SUFFIX =
             SystemPropertiesManager.get(SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX, Constants.DEFAULT_ROOT_SUFFIX);
 
-    private static final String OAUTH2_ROOT_SUFFIX = Constants.DEFAULT_OAUTH2_ROOT_SUFFIX;
+    private static final String OAUTH2_ROOT_SUFFIX = Constants.DEFAULT_CTS_OAUTH2_HA_ROOT_SUFFIX;
 
     private static final String OAUTH2_BASE_DN =
             OAUTH2_ROOT_SUFFIX +

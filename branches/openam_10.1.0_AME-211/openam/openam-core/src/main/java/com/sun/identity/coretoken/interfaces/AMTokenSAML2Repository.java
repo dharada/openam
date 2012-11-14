@@ -34,12 +34,6 @@ import java.util.List;
  */
 public interface AMTokenSAML2Repository {
 
-    static final String SYS_PROPERTY_TOKEN_SAML2_REPOSITORY_ROOT_SUFFIX =
-            "iplanet-am-token-saml2-root-suffix";
-
-    static final String SYS_PROPERTY_TOKEN_OAUTH2_REPOSITORY_ROOT_SUFFIX =
-            "iplanet-am-token-oauth2-root-suffix";
-
    /**
     * Retrives existing SAML2 object from persistent Repository.
     *

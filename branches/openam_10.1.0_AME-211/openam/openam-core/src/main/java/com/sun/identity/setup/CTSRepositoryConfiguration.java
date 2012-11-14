@@ -1,33 +1,22 @@
-/**
+/*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2008 Sun Microsystems Inc. All Rights Reserved
+ * Copyright (c) 2012 ForgeRock US Inc. All Rights Reserved
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the License). You may not use this file except in
- * compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and
+ * Distribution License (the License). You may not use this file except in compliance with the
+ * License.
  *
- * You can obtain a copy of the License at
- * https://opensso.dev.java.net/public/CDDLv1.0.html or
- * opensso/legal/CDDLv1.0.txt
- * See the License for the specific language governing
- * permission and limitations under the License.
+ * You can obtain a copy of the License at legal/CDDLv1.0.txt. See the License for the
+ * specific language governing permission and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * Header Notice in each file and include the License file
- * at opensso/legal/CDDLv1.0.txt.
- * If applicable, add the following below the CDDL Header,
- * with the fields enclosed by brackets [] replaced by
- * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
+ * When distributing Covered Software, include this CDDL Header Notice in each file and include
+ * the License file at legal/CDDLv1.0.txt. If applicable, add the following below the CDDL
+ * Header, with the fields enclosed by brackets [] replaced by your own identifying
+ * information:
  *
- * $Id: UserIdRepo.java,v 1.21 2009/12/23 00:22:34 goodearth Exp $
+ * "Portions copyright [year] [name of copyright owner]".
  *
- */
-
-/*
- * Portions Copyrighted [2011] [ForgeRock AS]
  */
 package com.sun.identity.setup;
 
@@ -37,78 +26,80 @@ import com.iplanet.sso.SSOToken;
 import com.sun.identity.common.LDAPUtils;
 import com.sun.identity.idm.IdConstants;
 import com.sun.identity.shared.StringUtils;
+import com.sun.identity.shared.ldap.*;
 import com.sun.identity.shared.xml.XMLUtils;
-import com.sun.identity.sm.AttributeSchema;
-import com.sun.identity.sm.OrganizationConfigManager;
-import com.sun.identity.sm.SMSException;
-import com.sun.identity.sm.ServiceConfig;
-import com.sun.identity.sm.ServiceConfigManager;
-import com.sun.identity.sm.ServiceManager;
-import com.sun.identity.sm.ServiceSchema;
-import com.sun.identity.sm.ServiceSchemaManager;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.StringTokenizer;
+import com.sun.identity.sm.*;
+
 import javax.servlet.ServletContext;
-import com.sun.identity.shared.ldap.LDAPAttribute;
-import com.sun.identity.shared.ldap.LDAPConnection;
-import com.sun.identity.shared.ldap.LDAPEntry;
-import com.sun.identity.shared.ldap.LDAPException;
-import com.sun.identity.shared.ldap.LDAPSearchResults;
-import com.sun.identity.shared.ldap.LDAPv2;
+import java.io.*;
+import java.util.*;
 
 
 /**
- * This class does Directory Server User Repository related tasks for
- * OpenAM.
+ * Provide a CTS Repository Configuration class for the internal/external
+ * Configuration Directory as OpenAM's Session and Token Store.
+ * <p/>
+ *
+ * ** This is a package protected Class! **
+ *
+ * @author jeff.schenk@forgerock.com
  */
-class UserIdRepo {
-    private static final String umSunDSForAM;
-    private static final String umSunDSGeneric;
-    private static UserIdRepo instance = new UserIdRepo();
+class CTSRepositoryConfiguration {
+    private static final String CTSRepository;
+    /**
+     * Our CTS Repository Configuration Setup Instance.
+     */
+    private static CTSRepositoryConfiguration instance = new CTSRepositoryConfiguration();
 
+    // Initialization Static Stanza.
     static {
         ResourceBundle rb = ResourceBundle.getBundle(
             SetupConstants.PROPERTY_FILENAME);
-        umSunDSForAM = rb.getString("umSunDSForAM");
-        umSunDSGeneric = rb.getString("umSunDSGeneric");
+        CTSRepository = rb.getString("ctsRepository");
     }
-   
-    private UserIdRepo() {
+
+    // Limit to a Singleton Instance.
+    private CTSRepositoryConfiguration() {
     }
     
-    public static UserIdRepo getInstance() {
+    public static CTSRepositoryConfiguration getInstance() {
         return instance;
     }
-    
+
+    /**
+     * Perform configuration of the CTS Repository.
+     *
+     * @param ctsRepository - Map Key Value pairs for CTS Repository Configuration.
+     * @param basedir - Specified Base Directory for Repository.
+     * @param servletCtx - Servlet Context for accessing files.
+     * @param adminToken - OpenAM Admin Token for Authorized Access.
+     * @throws Exception
+     */
     void configure(
-        Map userRepo, 
+        Map ctsRepository,
         String basedir,
         ServletContext servletCtx,
         SSOToken adminToken
     ) throws Exception {
         String type = 
-            (String) userRepo.get(SetupConstants.USER_STORE_TYPE);
+            (String) ctsRepository.get(SetupConstants.CONFIG_VAR_DATA_STORE);
+        // If type not specified, use the Default of 'dirServer'.
         if (type == null) {
-            type = SetupConstants.UM_LDAPv3ForODSEE;
+            type = SetupConstants.SMS_DS_DATASTORE;
         }
 
         ResourceBundle rb = ResourceBundle.getBundle(
             SetupConstants.SCHEMA_PROPERTY_FILENAME);
         String configName = "";
+
+        //opendsSmsSchema
+        //OPENDS_SMS_PROPERTY_FILENAME = "opendsSmsSchema";
+
+        //dsSmsSchema
+        //DS_SMS_PROPERTY_FILENAME
+
         String strFiles = rb.getString(SetupConstants.ODSEE_LDIF);
+
         if (type.equals(SetupConstants.UM_LDAPv3ForOpenDS)) {
             strFiles = rb.getString(SetupConstants.OpenDS_LDIF);
             configName = "OpenDJ";
@@ -127,43 +118,38 @@ class UserIdRepo {
             configName = "Tivoli Directory Server";
         }
 
-        loadSchema(userRepo, basedir, servletCtx, strFiles, type);
-        addSubConfig(userRepo, type, configName, adminToken);
+        loadSchema(ctsRepository, basedir, servletCtx, strFiles, type);
+        addSubConfig(ctsRepository, type, configName, adminToken);
     }
 
     private void addSubConfig(
-        Map userRepo, 
+        Map ctsRepository,
         String type,
         String configName,
         SSOToken adminToken
     ) throws SMSException, SSOException, IOException {
-        String xml = null;
-        if (type.equals(SetupConstants.UM_LDAPv3ForODSEE)) {
-            xml = getResourceContent(umSunDSForAM);
-        } else {
-            xml = getResourceContent(umSunDSGeneric);
-        }
-
+        // Obtain our
+        String xml =  getResourceContent(CTSRepository);
         if (xml != null) {
             Map data = ServicesDefaultValues.getDefaultValues();
             xml = StringUtils.strReplaceAll(xml, "@SM_CONFIG_ROOT_SUFFIX@",
                 XMLUtils.escapeSpecialCharacters((String)data.get(
                     SetupConstants.SM_CONFIG_ROOT_SUFFIX)));
             xml = StringUtils.strReplaceAll(xml, "@UM_CONFIG_ROOT_SUFFIX@",
-                XMLUtils.escapeSpecialCharacters((String) userRepo.get(
+                XMLUtils.escapeSpecialCharacters((String) ctsRepository.get(
                     SetupConstants.USER_STORE_ROOT_SUFFIX)));
             xml = StringUtils.strReplaceAll(xml,
                 "@" + SetupConstants.UM_DIRECTORY_SERVER + "@",
-                XMLUtils.escapeSpecialCharacters(getHost(userRepo)));
+                XMLUtils.escapeSpecialCharacters(getHost(ctsRepository)));
             xml = StringUtils.strReplaceAll(xml,
                 "@" + SetupConstants.UM_DIRECTORY_PORT + "@",
-                XMLUtils.escapeSpecialCharacters(getPort(userRepo)));
+                XMLUtils.escapeSpecialCharacters(getPort(ctsRepository)));
             xml = StringUtils.strReplaceAll(xml, "@UM_DS_DIRMGRDN@", 
-                XMLUtils.escapeSpecialCharacters(getBindDN(userRepo)));
+                XMLUtils.escapeSpecialCharacters(getBindDN(ctsRepository)));
             xml = StringUtils.strReplaceAll(xml, "@UM_DS_DIRMGRPASSWD@",
-                XMLUtils.escapeSpecialCharacters(getBindPassword(userRepo)));
+                XMLUtils.escapeSpecialCharacters(getBindPassword(ctsRepository)));
 
-            String s = (String) userRepo.get(SetupConstants.USER_STORE_SSL);
+            String s = (String) ctsRepository.get(SetupConstants.USER_STORE_SSL);
             String ssl = ((s != null) && s.equals("SSL")) ? "true" : "false";
             xml = StringUtils.strReplaceAll(xml, "@UM_SSL@", ssl);
             xml = StringUtils.strReplaceAll(xml, "@CONFIG_NAME@", configName);
@@ -172,86 +158,25 @@ class UserIdRepo {
             registerService(xml, adminToken);
         }
     }
-    
-    private void registerService(String xml, SSOToken adminSSOToken) 
-        throws SSOException, SMSException, IOException {
-        ServiceManager serviceManager = new ServiceManager(adminSSOToken);
-        InputStream serviceStream = null;
-        try {
-            serviceStream = (InputStream) new ByteArrayInputStream(
-                xml.getBytes());
-            serviceManager.registerServices(serviceStream);
-        } finally {
-            if (serviceStream != null) {
-                serviceStream.close();
-            }
-        }
-    }
-    
-    static ServiceConfig getOrgConfig(SSOToken adminToken) 
-        throws SMSException, SSOException {
-        ServiceConfigManager svcCfgMgr = new ServiceConfigManager(
-            IdConstants.REPO_SERVICE, adminToken);
-        ServiceConfig cfg = svcCfgMgr.getOrganizationConfig("", null);
-        Map values = new HashMap();
-        if (cfg == null) {
-            OrganizationConfigManager orgCfgMgr =
-                new OrganizationConfigManager(adminToken, "/");
-            ServiceSchemaManager schemaMgr = new ServiceSchemaManager(
-                IdConstants.REPO_SERVICE, adminToken);
-            ServiceSchema orgSchema = schemaMgr.getOrganizationSchema();
-            Set attrs = orgSchema.getAttributeSchemas();
 
-            for (Iterator iter = attrs.iterator(); iter.hasNext();) {
-                AttributeSchema as = (AttributeSchema) iter.next();
-                values.put(as.getName(), as.getDefaultValues());
-            }
-            cfg = orgCfgMgr.addServiceConfig(IdConstants.REPO_SERVICE,
-                values);
-        }
-        return cfg;
+    static String getHost(Map ctsRepository) {
+        return (String)ctsRepository.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_HOST);
     }
     
-    static String getHost(Map userRepo) {
-        return (String)userRepo.get(SetupConstants.USER_STORE_HOST);
+    static String getPort(Map ctsRepository) {
+        return (String)ctsRepository.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
     }
     
-    static String getPort(Map userRepo) {
-        return (String)userRepo.get(SetupConstants.USER_STORE_PORT);
+    static String getBindDN(Map ctsRepository) {
+        return (String) ctsRepository.get(SetupConstants.CONFIG_VAR_DS_MGR_DN);
     }
     
-    static String getBindDN(Map userRepo) {
-        return (String) userRepo.get(SetupConstants.USER_STORE_LOGIN_ID);
+    static String getBindPassword(Map ctsRepository) {
+        return (String) ctsRepository.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
     }
-    
-    static String getBindPassword(Map userRepo) {
-        return (String) userRepo.get(SetupConstants.USER_STORE_LOGIN_PWD);
-    }
-    
-    private String getADAMInstanceGUID(Map userRepo) throws Exception {
-        LDAPConnection ld = null;
-        try {
-            ld = getLDAPConnection(userRepo);
-            String attrName = "schemaNamingContext";
-            String[] attrs = { attrName };
-            LDAPSearchResults res = ld.search("", LDAPv2.SCOPE_BASE,
-                "(objectclass=*)", null, false );
-            if (res.hasMoreElements()) {
-                LDAPEntry entry = (LDAPEntry)res.nextElement();
-                LDAPAttribute ldapAttr = entry.getAttribute(attrName);
-                if (ldapAttr != null) {
-                    String value = ldapAttr.getStringValueArray()[0];
-                    int index = value.lastIndexOf("=");
-                    if (index != -1) {
-                        return value.substring(index + 1).trim();
-                    }
-                }
-            }
-        } finally {
-            disconnectDServer(ld);
-        }
 
-        return null;
+    static String getSSL(Map ctsRepository) {
+        return (String) ctsRepository.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_SSL);
     }
 
     private void loadSchema(
@@ -287,7 +212,7 @@ class UserIdRepo {
         String dbName,
         ServletContext servletCtx,
         String strFiles,
-        Map userRepo,
+        Map ctsRepository,
         String type
     ) throws Exception {
         List files = new ArrayList();
@@ -313,18 +238,11 @@ class UserIdRepo {
                 String inpStr = sbuf.toString();
                 inpStr = StringUtils.strReplaceAll(inpStr, 
                     "@DB_NAME@", dbName);
-                String suffix = (String) userRepo.get(
-                    SetupConstants.USER_STORE_ROOT_SUFFIX);
+                String suffix = (String) ctsRepository.get(
+                    SetupConstants.CTS_VAR_ROOT_SUFFIX);
                 if (suffix != null) {
                     inpStr = StringUtils.strReplaceAll(inpStr, 
-                        "@userStoreRootSuffix@", suffix);
-                }
-                if (type.equals(SetupConstants.UM_LDAPv3ForADAM)) {
-                    String adamInstanceGUID = getADAMInstanceGUID(userRepo);
-                    if (adamInstanceGUID != null) {
-                        inpStr = StringUtils.strReplaceAll(inpStr, 
-                            "@INSTANCE_GUID@", adamInstanceGUID);
-                    }
+                        "@ctsRootSuffix@", suffix);
                 }
                 fout.write(ServicesDefaultValues.tagSwap(inpStr));
                 files.add(outfile);
@@ -382,25 +300,65 @@ class UserIdRepo {
         }
     }
     
-    private LDAPConnection getLDAPConnection(Map userRepo)
+    private LDAPConnection getLDAPConnection(Map ctsRepository)
         throws Exception {
-        String s = (String) userRepo.get(SetupConstants.USER_STORE_SSL);
+        String s = (String) ctsRepository.get(SetupConstants.USER_STORE_SSL);
         boolean ssl = ((s != null) && s.equals("SSL"));
         LDAPConnection ld = (ssl) ? new LDAPConnection(
             SSLSocketFactoryManager.getSSLSocketFactory()) :
             new LDAPConnection();
         ld.setConnectTimeout(300);
 
-        int port = Integer.parseInt(getPort(userRepo));
-        ld.connect(3, getHost(userRepo), port,
-            getBindDN(userRepo), getBindPassword(userRepo));
+        int port = Integer.parseInt(getPort(ctsRepository));
+        ld.connect(3, getHost(ctsRepository), port,
+            getBindDN(ctsRepository), getBindPassword(ctsRepository));
         return ld;
     }
 
-    private String getDBName(Map userRepo, LDAPConnection ld)
+    private String getDBName(Map ctsRepository, LDAPConnection ld)
         throws LDAPException {
-        String suffix = (String) userRepo.get(
+        String suffix = (String) ctsRepository.get(
             SetupConstants.USER_STORE_ROOT_SUFFIX);
         return LDAPUtils.getDBName(suffix, ld);
     }
+
+    private void registerService(String xml, SSOToken adminSSOToken)
+            throws SSOException, SMSException, IOException {
+        ServiceManager serviceManager = new ServiceManager(adminSSOToken);
+        InputStream serviceStream = null;
+        try {
+            serviceStream = (InputStream) new ByteArrayInputStream(
+                    xml.getBytes());
+            serviceManager.registerServices(serviceStream);
+        } finally {
+            if (serviceStream != null) {
+                serviceStream.close();
+            }
+        }
+    }
+
+    static ServiceConfig getOrgConfig(SSOToken adminToken)
+            throws SMSException, SSOException {
+        ServiceConfigManager svcCfgMgr = new ServiceConfigManager(
+                IdConstants.REPO_SERVICE, adminToken);
+        ServiceConfig cfg = svcCfgMgr.getOrganizationConfig("", null);
+        Map values = new HashMap();
+        if (cfg == null) {
+            OrganizationConfigManager orgCfgMgr =
+                    new OrganizationConfigManager(adminToken, "/");
+            ServiceSchemaManager schemaMgr = new ServiceSchemaManager(
+                    IdConstants.REPO_SERVICE, adminToken);
+            ServiceSchema orgSchema = schemaMgr.getOrganizationSchema();
+            Set attrs = orgSchema.getAttributeSchemas();
+
+            for (Iterator iter = attrs.iterator(); iter.hasNext();) {
+                AttributeSchema as = (AttributeSchema) iter.next();
+                values.put(as.getName(), as.getDefaultValues());
+            }
+            cfg = orgCfgMgr.addServiceConfig(IdConstants.REPO_SERVICE,
+                    values);
+        }
+        return cfg;
+    }
+
 }

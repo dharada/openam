@@ -482,12 +482,14 @@ public class AMSetupServlet extends HttpServlet {
     public void doPost(HttpServletRequest request,
         HttpServletResponse response)
         throws IOException, ServletException, ConfiguratorException {
-        
+
+
         HttpServletRequestWrapper req = 
             new HttpServletRequestWrapper(request);
         HttpServletResponseWrapper res = 
             new HttpServletResponseWrapper(response);
-           
+
+        // Setup Site
         String loadBalancerHost = 
             request.getParameter("LB_SITE_NAME");
         String primaryURL = request.getParameter("LB_PRIMARY_URL");
@@ -501,8 +503,9 @@ public class AMSetupServlet extends HttpServlet {
             req.addParameter(
                 SetupConstants.CONFIG_VAR_SITE_CONFIGURATION, siteConfig);
         }
-                
-        String userStoreType = request.getParameter("USERSTORE_TYPE");        
+
+       // Setup User Store
+       String userStoreType = request.getParameter("USERSTORE_TYPE");
 
        if (userStoreType != null) {     
             // site configuration is passed as a map of the site information 
@@ -561,14 +564,19 @@ public class AMSetupServlet extends HttpServlet {
 
             req.addParameter("UserStore", store);
         }
-        
+
+        // Setup CTS Repository
+        // TODO
+
+        // Now Process the Request with all Key Value Pairs Established.
         boolean result = processRequest(req, res);
-       
+        // Did we have a successful Installation?
         if (result == false) {
             response.getWriter().write( 
                     "Configuration failed - check installation logs!" );
-        } else
+        } else {
             response.getWriter().write( "Configuration complete!" );
+        }
     }
         
     /**
@@ -614,11 +622,13 @@ public class AMSetupServlet extends HttpServlet {
         // used for site configuration later
         Map siteMap = (Map)map.remove(
             SetupConstants.CONFIG_VAR_SITE_CONFIGURATION);
-
+        // Pull in User Repository Key Value Pairs.
         Map userRepo = (Map)map.remove("UserStore");
+        // Pull in CTS Repository Key Value Pairs.
+        Map ctsRepo  = (Map)map.remove("CTSRepository");
         
         try {
-            isConfiguredFlag = configure(request, map, userRepo);
+            isConfiguredFlag = configure(request, map, userRepo, ctsRepo);
             if (isConfiguredFlag) {
                 FQDNUtils.getInstance().init();
                 //postInitialize was called at the end of configure????
@@ -938,7 +948,8 @@ public class AMSetupServlet extends HttpServlet {
     private static boolean configure(
         IHttpServletRequest request,
         Map map,
-        Map userRepo
+        Map userRepo,
+        Map ctsRepo
     ) throws Exception {
         boolean configured = false;
         boolean existingConfiguration = false;
@@ -1019,8 +1030,26 @@ public class AMSetupServlet extends HttpServlet {
                         "EmbeddedDS : failed to setup serverid", ex);
                     throw ex;
                 }
+            } // End of embedded check.
+
+            // Now Setup a Secondary Root Suffix or Backend for Our CTS Repository Storage.
+            SetupProgress.reportStart("emb.setupcts", null);
+            int ctsBackEndReturnCode = EmbeddedOpenDS.runOpenDJCreateBackEnd(ctsRepo);
+
+            if (ctsBackEndReturnCode == 0) {
+                SetupProgress.reportEnd("emb.setupcts.success", null);
+                Debug.getInstance(SetupConstants.DEBUG_NAME).message(
+                        "EmbeddedOpenDS.setupCTS: CTS Repository BackEnd Store Definition succeeded.");
+            } else {
+                Object[] cts_params = {Integer.toString(ctsBackEndReturnCode)};
+                SetupProgress.reportEnd("emb.setupcts.failed.param", cts_params);
+                Debug.getInstance(SetupConstants.DEBUG_NAME).error(
+                        "EmbeddedOpenDS.setupCTS. Error setting up the Definition for the CTS Repository BackEnd Store.");
+                throw new ConfiguratorException(
+                        "configurator.embsetupctsfailed");
             }
 
+            // Process the Templates.
             SystemProperties.setServerInstanceName(serverInstanceName);
             LDIFTemplates.copy(basedir, servletCtx);
             ServiceXMLTemplates.copy(basedir + "/template/xml", 
@@ -1032,8 +1061,8 @@ public class AMSetupServlet extends HttpServlet {
             if (!isDITLoaded && (userRepo != null) && 
                 !userRepo.isEmpty()) {
                 // Construct the SMSEntry for the node to check to 
-                // see if this is an existing configuration store, 
-                // or new store.
+                // see if this is an existing user store,
+                // or new user store.
                 ServiceConfig sc = 
                     UserIdRepo.getOrgConfig(adminSSOToken);
                 if (sc != null) {
@@ -1150,6 +1179,10 @@ public class AMSetupServlet extends HttpServlet {
                 map.get(SetupConstants.CONFIG_VAR_ADMIN_PWD));
             initMap.put(BootstrapData.DS_PWD, 
                 map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD));
+
+            // TODO
+            // Establish CTS Repository Bootstrap Data.
+
         }
         initMap.put(BootstrapData.SERVER_INSTANCE, serverURL + deployuri);
         return initMap;
@@ -2054,14 +2087,14 @@ public class AMSetupServlet extends HttpServlet {
                 try {
                     fout.close();
                 } catch (Exception ex) {
-                    //No handling requried
+                    //No handling required
                 }
             }
         }
     }
 
     /**
-      * Update Embedded Idrepo instance with new embedded opends isntance.
+      * Update Embedded Idrepo instance with new embedded opends instance.
       */
     private static void  updateEmbeddedIdRepo(
         String orgName, 

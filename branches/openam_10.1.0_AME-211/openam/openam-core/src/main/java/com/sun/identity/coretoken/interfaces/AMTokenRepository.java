@@ -54,14 +54,23 @@ public interface AMTokenRepository {
     static final String SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX =
             "iplanet-am-config-root-suffix";
 
-    static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX =
-            "iplanet-am-session-sfo-store-root-suffix";
+    static final String SYS_PROPERTY_CTS_BACKEND_NAME =
+            "forgerock-ctsrepo-ldapv3-config-backend_name";
+
+    static final String SYS_PROPERTY_CTS_ROOT_SUFFIX =
+            "forgerock-ctsrepo-ldapv3-config-organization_name";
+
+    static final String SYS_PROPERTY_CTS_SAML2_SUFFIX =
+            "forgerock-ctsrepo-saml2-suffix";
+
+    static final String SYS_PROPERTY_CTS_OAUTH2_SUFFIX =
+            "forgerock-ctsrepo-oauth2-suffix";
+
+    static final String SYS_PROPERTY_CTS_SESSION_SUFFIX =
+            "forgerock-ctsrepo-session-suffix";
 
     static final String SYS_PROPERTY_SESSION_HA_REPOSITORY_TYPE =
             "iplanet-am-session-sfo-store-type";
-
-    static final String SYS_PROPERTY_TOKEN_ROOT_SUFFIX =
-            "iplanet-am-config-token-root-suffix";
 
     static final String CLEANUP_GRACE_PERIOD =
             "com.sun.identity.session.repository.cleanupGracePeriod";

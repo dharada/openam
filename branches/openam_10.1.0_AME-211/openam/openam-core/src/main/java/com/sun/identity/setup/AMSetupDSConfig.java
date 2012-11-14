@@ -49,8 +49,8 @@ import com.sun.identity.shared.ldap.util.DN;
 import com.sun.identity.shared.ldap.util.RDN;
 
 /**
- * This class does Directory Server related tasks for 
- * OpenSSO deployed as single web-application. 
+ * This class does Embedded Directory Server related tasks for
+ * OpenAM deployed as single web-application.
  */
 public class AMSetupDSConfig {
     private String dsManager;
@@ -78,6 +78,10 @@ public class AMSetupDSConfig {
         dsAdminPwd = (String)map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
         basedir = (String)map.get(SetupConstants.CONFIG_VAR_BASE_DIR);
         deployuri = (String)map.get(SetupConstants.CONFIG_VAR_SERVER_URI);
+
+        // Construct Additional fields for the new CTS Repository
+        // TODO
+
     }
 
     /**
