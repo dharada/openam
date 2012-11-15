@@ -32,19 +32,18 @@ import com.iplanet.dpro.session.service.InternalSession;
 import com.iplanet.dpro.session.service.SessionService;
 import com.sun.identity.common.GeneralTaskRunnable;
 import com.sun.identity.coretoken.interfaces.AMTokenSAML2Repository;
+import com.sun.identity.coretoken.interfaces.OAuth2TokenRepository;
 import com.sun.identity.session.util.SessionUtils;
 import com.sun.identity.shared.Constants;
+import com.sun.identity.shared.OAuth2Constants;
 import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.debug.Debug;
 
 import com.sun.identity.shared.ldap.*;
 
 import com.sun.identity.shared.ldap.LDAPException;
-import com.sun.identity.sm.model.AMRecord;
-import com.sun.identity.sm.model.AMRecordDataEntry;
-import com.sun.identity.sm.model.AMSessionRepositoryDeferredOperation;
+import com.sun.identity.sm.model.*;
 
-import com.sun.identity.sm.model.FAMRecord;
 import org.forgerock.i18n.LocalizableMessage;
 
 import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
@@ -53,6 +52,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.iplanet.dpro.session.exceptions.NotFoundException;
 import com.iplanet.dpro.session.exceptions.StoreException;
+import org.forgerock.json.fluent.JsonValue;
+import org.forgerock.json.resource.JsonResourceException;
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
 
@@ -73,7 +74,7 @@ import org.opends.server.types.*;
  * @author steve
  * @author jeff.schenk@forgerock.com
  */
-public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRepository, AMTokenSAML2Repository {
+public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRepository, AMTokenSAML2Repository, OAuth2TokenRepository {
 
     /**
      * Globals Constants, so not to pollute entire product.
@@ -189,7 +190,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                     Constants.COMMA + TOKEN_ROOT_SUFFIX;
 
     private static final String TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE =
-            AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +
+            OAuth2Constants.Params.ID + Constants.EQUALS + "%" + Constants.COMMA +
                     OAUTH2_HA_BASE_DN;
 
 
@@ -199,11 +200,17 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     private static LinkedHashSet<String> returnAttrs;
     private static String[] returnAttrs_ARRAY;
 
+    private static LinkedHashSet<String> returnAttrs_OAuth2;
+    private static String[] returnAttrs_OAuth2_ARRAY;
+
     private static LinkedHashSet<String> returnAttrs_PKEY_ONLY;
     private static String[] returnAttrs_PKEY_ONLY_ARRAY;
 
     private static LinkedHashSet<String> returnAttrs_DN_ONLY;
     private static String[] returnAttrs_DN_ONLY_ARRAY;
+
+    private static LinkedHashSet<String> returnAttrs_ID_ONLY;
+    private static String[] returnAttrs_ID_ONLY_ARRAY;
 
     /**
      * Expired Session Search Limit and Date & Time Formatter.
@@ -304,6 +311,25 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         returnAttrs_DN_ONLY.add("dn");
         returnAttrs_DN_ONLY_ARRAY = returnAttrs_DN_ONLY.toArray(new String[returnAttrs_DN_ONLY.size()]);
 
+        //create OAuth2 attribute Lined Sets
+        returnAttrs_OAuth2 = new LinkedHashSet<String>();
+        returnAttrs_OAuth2.add(OAuth2Constants.StoredToken.EXPIRYTIME);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.SCOPE);
+        returnAttrs_OAuth2.add(OAuth2Constants.StoredToken.PARENT);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.USERNAME);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.REDIRECTURI);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.REFRESHTOKEN);
+        returnAttrs_OAuth2.add(OAuth2Constants.StoredToken.ISSUED);
+        returnAttrs_OAuth2.add(OAuth2Constants.StoredToken.TYPE);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.REALM);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.ID);
+        returnAttrs_OAuth2.add(OAuth2Constants.Params.CLIENTID);
+        returnAttrs_OAuth2_ARRAY = returnAttrs_OAuth2.toArray(new String[returnAttrs_OAuth2.size()]);
+
+        returnAttrs_ID_ONLY = new LinkedHashSet<String>();
+        returnAttrs_ID_ONLY.add(OAuth2Constants.Params.ID);
+        returnAttrs_ID_ONLY_ARRAY = returnAttrs_ID_ONLY.toArray(new String[returnAttrs_ID_ONLY.size()]);
+
         // Set Up Our Expired Search Limit
         try {
             EXPIRED_SESSION_SEARCH_LIMIT =
@@ -336,7 +362,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
      * @return CTSPersistentStore Singleton Instance.
      * @throws StoreException
      */
-    public static AMTokenRepository getInstance() throws StoreException {
+    public static CTSPersistentStore getInstance() throws StoreException {
         return instance;
     }
 
@@ -1704,6 +1730,412 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         Calendar expirationDateOnCalendar = Calendar.getInstance();
         expirationDateOnCalendar.setTimeInMillis(expirationDate);
         return expirationDateOnCalendar;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JsonValue oauth2Create(JsonValue request) throws JsonResourceException {
+
+        if ((request == null) || (request.size() == 0)) {
+            return null;
+        }
+        String messageTag = "CTSPersistenceStore.storeImmediate: ";
+
+        TokenDataEntry token = new TokenDataEntry(request);
+        List<RawAttribute> attrList = token.getAttrList();
+        attrList.addAll(token.getObjectClasses());
+
+        String dn = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", token.getDN());
+
+        LDAPAttributeSet ldapAttributeSet = new LDAPAttributeSet();
+        // Obtain a Connection.
+        LDAPConnection ldapConnection = null;
+        LDAPException lastLDAPException = null;
+        try {
+            ldapConnection = getDirectoryConnection();
+            // Iterate over and convert RawAttribute List to actual LDAPAttributes.
+            for (RawAttribute rawAttribute : attrList) {
+                LDAPAttribute ldapAttribute = new LDAPAttribute(rawAttribute.getAttributeType());
+                for (ByteString value : rawAttribute.getValues()) {
+                    ldapAttribute.addValue(value.toByteArray());
+                }
+                ldapAttributeSet.add(ldapAttribute);
+            }
+            // Add the new Directory Entry.
+            LDAPEntry ldapEntry = new LDAPEntry(dn, ldapAttributeSet);
+            ldapConnection.add(ldapEntry);
+            if (DEBUG.messageEnabled()) {
+                final LocalizableMessage message = DB_SVR_CREATE.get(dn);
+                DEBUG.message(messageTag + message.toString());
+            }
+            request.get("value").put(OAuth2Constants.Params.ID, token.getDN());
+            return new JsonValue(request.get("values"));
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            if (ldapException.getLDAPResultCode() == LDAPException.ENTRY_ALREADY_EXISTS) {
+                final LocalizableMessage message = DB_SVR_CRE_FAIL.get(dn);
+                DEBUG.warning(messageTag + message.toString());
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR, message.toString());
+            } else if (ldapException.getLDAPResultCode() == LDAPException.OBJECT_CLASS_VIOLATION) {
+                // This usually indicates schema has not been applied to the Directory Information Base (DIB) Instance.
+                final LocalizableMessage message = OBJECTCLASS_VIOLATION.get(dn);
+                DEBUG.warning(messageTag + message.toString());
+            } else {
+                final LocalizableMessage message = DB_SVR_CRE_FAIL2.get(dn, Integer.toString(ldapException.getLDAPResultCode()));
+                DEBUG.warning(message.toString());
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR, messageTag + message.toString(), ldapException);
+            }
+        } catch(StoreException e){
+            throw new JsonResourceException(JsonResourceException.UNAVAILABLE, e.getMessage(), e);
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JsonValue oauth2Read(JsonValue request) throws JsonResourceException{
+
+        if ((request == null) || (request.size() == 0)) {
+            return null;
+        }
+        // Establish our DN
+        String dn = request.get("id").required().asString();
+        String baseDN = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", dn);
+        // Initialize LDAP Objects
+        LDAPConnection ldapConnection = null;
+        LDAPSearchResults searchResults = null;
+        LDAPException lastLDAPException = null;
+        String messageTag = "CTSPersistenceStore.read: ";
+        try {
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            searchResults = ldapConnection.search(baseDN,
+                    LDAPv2.SCOPE_BASE, ANY_OBJECTCLASS_FILTER, returnAttrs_OAuth2_ARRAY, false, new LDAPSearchConstraints());
+            // Anything Found?
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
+                return null;
+            }
+            // UnMarshal LDAP Entry to a Map.
+            LDAPEntry ldapEntry = searchResults.next();
+            LDAPAttributeSet attributes = ldapEntry.getAttributeSet();
+            Map<String, Set<String>> results =
+                    CTSEmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(attributes);
+            // UnMarshal
+            AMRecordDataEntry dataEntry = new AMRecordDataEntry(baseDN, AMRecord.READ, results);
+            // Log Action
+            logAMRootEntity(dataEntry.getAMRecord(), messageTag + "\nBaseDN:[" + baseDN + "] ");
+            // Return UnMarshaled Object
+            addUnderScoresToParams(results);
+            return new JsonValue(results);
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            // Not Found, No Such Object
+            if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
+                // This can be due to the session has expired and removed from the store.
+                final LocalizableMessage message = DB_ENT_NOT_P.get(baseDN);
+                DEBUG.message(messageTag + message.toString());
+                throw new JsonResourceException(JsonResourceException.NOT_FOUND, messageTag + message.toString());
+            }
+            final LocalizableMessage message = DB_ENT_ACC_FAIL.get(baseDN, ldapException.errorCodeToString());
+            DEBUG.error(messageTag + message.toString());
+            throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR, messageTag + message.toString(), ldapException);
+        } catch(StoreException e){
+            throw new JsonResourceException(JsonResourceException.UNAVAILABLE, e.getMessage(), e);
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JsonValue oauth2Update(JsonValue request) throws JsonResourceException{
+        return oauth2Create(request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JsonValue oauth2Delete(JsonValue request) throws JsonResourceException{
+        if ((request == null) || (request.size() == 0)) {
+            return null;
+        }
+
+        String id = request.get("id").required().asString();
+        String dn = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+
+        String messageTag = "CTSPersistenceStore.deleteImmediate: ";
+        LDAPConnection ldapConnection = null;
+        LDAPException lastLDAPException = null;
+        try {
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            // Delete the Entry, our Entries are flat,
+            // so we have no children to contend with, if this
+            // changes however, this deletion will need to
+            // specify a control to delete child entries.
+            ldapConnection.delete(dn);
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            // Not Found  No Such Object, simple Ignore a Not Found,
+            // as another OpenAM instance could have purged already and replicated
+            // the change across the OpenDJ Bus.
+            if (ldapException.getLDAPResultCode() != LDAPException.NO_SUCH_OBJECT) {
+                final LocalizableMessage message = DB_ENT_DEL_FAIL.get(dn, ldapException.errorCodeToString());
+                DEBUG.error(messageTag + message.toString());
+            }
+        } catch(StoreException e){
+            throw new JsonResourceException(JsonResourceException.UNAVAILABLE, e.getMessage(), e);
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+        }
+
+        return new JsonValue(null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JsonValue oauth2Query(JsonValue request) throws JsonResourceException{
+        if ((request == null) || (request.size() == 0)) {
+            return null;
+        }
+
+        Map<String, Object> filters = (Map<String, Object>)request.get("params").required().asMap().get("filter");
+        Set<Map<String, Set<String>>> tokens = new HashSet<Map<String, Set<String>>>();
+        StringBuilder filter;
+        if (filters == null){
+            filter = null;
+        } else {
+            filter = new StringBuilder();
+            filter.append("(&");
+            for(String key: filters.keySet()){
+                filter.append("(").append(key).append(Constants.EQUALS)
+                        .append(filters.get(key).toString()).append(")");
+            }
+            filter.append(")");
+        }
+        StringBuilder baseDN = new StringBuilder();
+        baseDN.append(OAUTH2_HA_BASE_DN);
+
+        String messageTag = "CTSPersistenceStore.deleteExpired: ";
+        LDAPConnection ldapConnection = null;
+        LDAPException lastLDAPException = null;
+        int objectsDeleted = 0;
+        try {
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            // Create our Search Constraints to limit number of expired sessions returned during this tick,
+            // otherwise we could stall this Service Background thread.
+            LDAPSearchConstraints ldapSearchConstraints = new LDAPSearchConstraints();
+            ldapSearchConstraints.setMaxResults(EXPIRED_SESSION_SEARCH_LIMIT);
+            // Perform Search
+            LDAPSearchResults searchResults = ldapConnection.search(baseDN.toString(),
+                    LDAPv2.SCOPE_SUB, filter.toString(), returnAttrs_OAuth2_ARRAY, false, ldapSearchConstraints);
+            // Anything Found?
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
+                return new JsonValue(null);
+            }
+            // Iterate over results and delete each entry.
+            while (searchResults.hasMoreElements()) {
+                LDAPEntry ldapEntry = searchResults.next();
+                if (ldapEntry == null) {
+                    continue;
+                }
+                Map<String, Set<String>> results =
+                        EmbeddedSearchResultIterator.convertLDAPAttributeSetToMap(ldapEntry.getAttributeSet());
+                addUnderScoresToParams(results);
+                tokens.add(results);
+            } // End of while loop.
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            // Determine specific actions per LDAP Return Code.
+            if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
+                // Not Found  No Such Object, Nothing to Delete?
+                // Possibly the Expired Session has been already deleted
+                // by a peer OpenAM Instance.
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR);
+            } else if (ldapException.getLDAPResultCode() == LDAPException.SIZE_LIMIT_EXCEEDED) {
+                // Our Size Limit was Exceed, so there are more results, but we have consumed
+                // our established limit. @see LDAPSearchConstraints setting above.
+                // Let our Next Pass obtain another chuck to delete.
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR);
+            } else {
+                // Some other type of Error has occurred...
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(OAUTH2_HA_BASE_DN, ldapException.errorCodeToString());
+                DEBUG.error(messageTag + message.toString(), ldapException);
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR, messageTag + message.toString(), ldapException);
+            }
+        } catch (Exception ex) {
+            // Are we in Shutdown Mode?
+            if (!shutdown) {
+                DEBUG.error(DB_ENT_EXP_FAIL.get().toString(), ex);
+            } else {
+                DEBUG.error(DB_ENT_EXP_FAIL.get().toString(), ex);
+            }
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+        }
+
+        return new JsonValue(tokens);
+    }
+
+    public void oauth2DeleteExpired() throws JsonResourceException{
+
+        StringBuilder baseDN = new StringBuilder();
+        StringBuilder filter = new StringBuilder();
+        filter.append(EXPDATE_FILTER_PRE_OAUTH).append(System.currentTimeMillis()).append(EXPDATE_FILTER_POST_OAUTH);
+        baseDN.append(OAUTH2_HA_BASE_DN);
+
+        String messageTag = "CTSPersistenceStore.deleteExpired: ";
+        LDAPConnection ldapConnection = null;
+        LDAPException lastLDAPException = null;
+        int objectsDeleted = 0;
+        try {
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            // Create our Search Constraints to limit number of expired sessions returned during this tick,
+            // otherwise we could stall this Service Background thread.
+            LDAPSearchConstraints ldapSearchConstraints = new LDAPSearchConstraints();
+            ldapSearchConstraints.setMaxResults(EXPIRED_SESSION_SEARCH_LIMIT);
+            // Perform Search
+            LDAPSearchResults searchResults = ldapConnection.search(baseDN.toString(),
+                    LDAPv2.SCOPE_SUB, filter.toString(), returnAttrs_ID_ONLY_ARRAY, false, ldapSearchConstraints);
+
+            // Anything Found?
+            if ((searchResults == null) || (!searchResults.hasMoreElements())) {
+                return;
+            }
+            // Iterate over results and delete each entry.
+            while (searchResults.hasMoreElements()) {
+                LDAPEntry ldapEntry = searchResults.next();
+                if (ldapEntry == null) {
+                    continue;
+                }
+                // Process the Entry to perform a delete Against it.
+                LDAPAttribute primaryKeyAttribute = ldapEntry.getAttribute(OAuth2Constants.Params.ID);
+                if ((primaryKeyAttribute == null) || (primaryKeyAttribute.size() <= 0) ||
+                        (primaryKeyAttribute.getStringValueArray() == null)) {
+                    continue;
+                }
+                // Obtain the primary Key and perform the Deletion.
+                String[] values = primaryKeyAttribute.getStringValueArray();
+                oauth2Delete(values[0]);
+                objectsDeleted++;
+            } // End of while loop.
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            // Determine specific actions per LDAP Return Code.
+            if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
+                // Not Found  No Such Object, Nothing to Delete?
+                // Possibly the Expired Session has been already deleted
+                // by a peer OpenAM Instance.
+                return;
+            } else if (ldapException.getLDAPResultCode() == LDAPException.SIZE_LIMIT_EXCEEDED) {
+                // Our Size Limit was Exceed, so there are more results, but we have consumed
+                // our established limit. @see LDAPSearchConstraints setting above.
+                // Let our Next Pass obtain another chuck to delete.
+                return;
+            } else {
+                // Some other type of Error has occurred...
+                final LocalizableMessage message = DB_ENT_ACC_FAIL.get(OAUTH2_HA_BASE_DN, ldapException.errorCodeToString());
+                DEBUG.error(messageTag + message.toString(), ldapException);
+                throw new JsonResourceException(JsonResourceException.INTERNAL_ERROR, messageTag + message.toString(), ldapException);
+            }
+        } catch (Exception ex) {
+            // Are we in Shutdown Mode?
+            if (!shutdown) {
+                DEBUG.error(DB_ENT_EXP_FAIL.get().toString(), ex);
+            } else {
+                DEBUG.error(DB_ENT_EXP_FAIL.get().toString(), ex);
+            }
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+            if (objectsDeleted > 0) {
+                //if (DEBUG.messageEnabled()) {  // TODO -- Uncomment to limit verbosity.
+                DEBUG.error(messageTag + "Number of Expired Sessions Deleted:[" + objectsDeleted + "]");
+                //}
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void oauth2Delete(String id) throws JsonResourceException{
+
+        if ((id == null) || (id.isEmpty())) {
+            return;
+        }
+        // Initialize.
+        String messageTag = "CTSPersistenceStore.deleteImmediate: ";
+        LDAPConnection ldapConnection = null;
+        LDAPException lastLDAPException = null;
+        String baseDN = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+        try {
+            // Obtain a Connection.
+            ldapConnection = getDirectoryConnection();
+            // Delete the Entry, our Entries are flat,
+            // so we have no children to contend with, if this
+            // changes however, this deletion will need to
+            // specify a control to delete child entries.
+            ldapConnection.delete(baseDN);
+        } catch (LDAPException ldapException) {
+            lastLDAPException = ldapException;
+            // Not Found  No Such Object, simple Ignore a Not Found,
+            // as another OpenAM instance could have purged already and replicated
+            // the change across the OpenDJ Bus.
+            if (ldapException.getLDAPResultCode() != LDAPException.NO_SUCH_OBJECT) {
+                final LocalizableMessage message = DB_ENT_DEL_FAIL.get(baseDN, ldapException.errorCodeToString());
+                DEBUG.error(messageTag + message.toString());
+            }
+        } catch(StoreException e){
+            throw new JsonResourceException(JsonResourceException.UNAVAILABLE, e.getMessage(), e);
+        } finally {
+            if (ldapConnection != null) {
+                // Release the Connection.
+                CTSDataLayer.releaseConnection(ldapConnection, lastLDAPException);
+            }
+        }
+        return;
+    }
+
+    private void addUnderScoresToParams(Map<String, Set<String>> results){
+        //need to add the _ back into expiry_time, client_id, redirect_uri
+        //and remove objectClass(by product of LDAP)
+        for (String key : results.keySet()){
+            if (key.equalsIgnoreCase("expirytime")){
+                results.put(OAuth2Constants.StoredToken.EXPIRY_TIME, results.remove(key));
+            } else if (key.equalsIgnoreCase("clientid")){
+                results.put(OAuth2Constants.Params.CLIENT_ID, results.remove(key));
+            } else if (key.equalsIgnoreCase("redirecturi")){
+                results.put(OAuth2Constants.Params.REDIRECT_URI, results.remove(key));
+            } else if (key.equalsIgnoreCase("objectClass")){
+                results.remove(key);
+            }
+        }
     }
 
 }
