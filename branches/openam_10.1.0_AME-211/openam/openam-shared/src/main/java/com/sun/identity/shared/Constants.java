@@ -1206,7 +1206,10 @@ public interface Constants {
     /**
      * Default Token Root Context, this will be used to create a Secondary Suffix during installation.
      */
+    // TODO -- Set this to the proper Secondary BackEnd Suffix.
     static final String DEFAULT_CTS_ROOT_SUFFIX = "o=tokens,dc=forgerock,dc=org";
+    // For now we prepend this CTS Suffix to create the Complete Base for CTS Repository Storage.
+    //static final String DEFAULT_CTS_ROOT_SUFFIX = "o=tokens";
 
     /**
      * Default Session SFO/HA Root DN

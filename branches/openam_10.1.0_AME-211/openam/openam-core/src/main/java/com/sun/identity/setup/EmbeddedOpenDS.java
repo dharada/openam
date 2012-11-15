@@ -46,14 +46,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -561,7 +554,7 @@ public class EmbeddedOpenDS {
      * command like this:
      * $ dsconfig create-backend \
      *          --backend-name backend03 \
-     *          --set base-dn:dc=jeff,dc=org \
+     *          --add base-dn:o=tokens,dc=forgerock,dc=org \
      *          --set enabled:true \
      *          --type local-db \
      *          --hostName hornbeam.local \
@@ -578,6 +571,10 @@ public class EmbeddedOpenDS {
      * @since 10.1.0
      */
     public static int runOpenDJCreateBackEnd(Map map) {
+        // If no Map Elements
+        if (map == null)
+            { return 1; }
+       // Construct the Argument Array for Command.
         String[] setupCmd = {
                 "create-backend",               // 0
                 "--backend-name",               // 1

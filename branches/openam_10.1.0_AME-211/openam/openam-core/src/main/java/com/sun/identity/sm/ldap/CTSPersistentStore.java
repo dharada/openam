@@ -138,6 +138,9 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     /**
      * Define Global DN and Container Constants
      */
+    private static final String SM_CONFIG_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX, Constants.DEFAULT_ROOT_SUFFIX);
+
     private static final String CTS_ROOT_SUFFIX =
             SystemPropertiesManager.get(SYS_PROPERTY_CTS_ROOT_SUFFIX, Constants.DEFAULT_CTS_ROOT_SUFFIX);
 

@@ -25,6 +25,7 @@
 dn: @CTS_SESSION_SUFFIX@,@CTS_ROOT_SUFFIX@
 objectClass: organization
 objectClass: top
+ou: openam-session
 aci: (target="ldap:///@CTS_SESSION_SUFFIX@,@CTS_ROOT_SUFFIX@")(targetattr = "*")(version 3.0; acl "OpenAM deny anonymous access"; deny (all) userdn = "ldap:///anyone";)
 
 dn: ou=famrecords,@CTS_SESSION_SUFFIX@,@CTS_ROOT_SUFFIX@
@@ -32,11 +33,13 @@ ou: famrecords
 objectClass: organizationalUnit
 
 dn: @CTS_OAUTH2_SUFFIX@,@CTS_ROOT_SUFFIX@
-objectClass: organization
+objectClass: organizationalUnit
 objectClass: top
+ou: openam-oauth2
 aci: (target="ldap:///@CTS_OAUTH2_SUFFIX@,@CTS_ROOT_SUFFIX@")(targetattr = "*")(version 3.0; acl "OpenAM deny anonymous access"; deny (all) userdn = "ldap:///anyone";)
 
 dn: @CTS_SAML2_SUFFIX@,@CTS_ROOT_SUFFIX@
-objectClass: organization
+objectClass: organizationalUnit
 objectClass: top
+ou: openam-saml2
 aci: (target="ldap:///@CTS_SAML2_SUFFIX@,@CTS_ROOT_SUFFIX@")(targetattr = "*")(version 3.0; acl "OpenAM deny anonymous access"; deny (all) userdn = "ldap:///anyone";)
