@@ -34,6 +34,7 @@ import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.sm.model.AMRecord;
 import com.sun.identity.sm.model.FAMRecord;
+import org.forgerock.openam.session.model.AMRootEntity;
 
 import java.util.*;
 
@@ -246,7 +247,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
      * @param samlKey primary key
      * @return Object - SAML2 unMarshaled Object, if failed, return null.
      */
-   public Object retrieveSAML2Token(String samlKey) throws StoreException {
+   public Object retrieveSAML2Token(String samlKey) {
         if (!isDatabaseUp) {
             return null;
         }
@@ -279,7 +280,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
     * @param secKey Secondary Key 
     * @return SAML2 object, if failed, return null. 
     */
-   public List<Object> retrieveSAML2TokenWithSecondaryKey(String secKey) throws StoreException {
+   public List<Object> retrieveSAML2TokenWithSecondaryKey(String secKey) {
         if (!isDatabaseUp) {
             return null;
         }
@@ -324,7 +325,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
     * Deletes the SAML2 object by given primary key from the repository
     * @param samlKey primary key 
     */
-   public void deleteSAML2Token(String samlKey) throws StoreException {
+   public void deleteSAML2Token(String samlKey)  {
         if (!isDatabaseUp) {
             return;
         }
@@ -346,7 +347,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
      * Deletes expired SAML2 object from the repository
      * @exception Exception When Unable to delete the expired SAML2 objects
      */
-    public void deleteExpiredSAML2Tokens() throws StoreException  {
+    public void deleteExpiredSAML2Tokens()  {
         if (!isDatabaseUp) {
             return;
         }
@@ -372,7 +373,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
     * @param secKey Secondary Key 
     */
     public void saveSAML2Token(String samlKey, Object samlObj, long expirationTime,
-        String secKey) throws StoreException {
+        String secKey) {
         // Is our Token Repository Available?
         if (!isDatabaseUp) {
             return;

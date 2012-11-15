@@ -132,7 +132,7 @@ public class ServicesDefaultValues {
         AMSetupDSConfig dsConfig = AMSetupDSConfig.getInstance();
         dsConfig.setDSValues();
 
-        if (!embedded) { // Use OpenDJ as our SM Datastore
+        if (!embedded) { //Sun DS as SM datastore
             String sslEnabled = (String) map.get(
                 SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_SSL);
             boolean ssl = (sslEnabled != null) && sslEnabled.equals("SSL");
@@ -578,7 +578,9 @@ public class ServicesDefaultValues {
                     key.equals(SetupConstants.SM_ROOT_SUFFIX_HAT) ||
                     key.equals(SetupConstants.NORMALIZED_RS) ||
                     key.equals(SetupConstants.NORMALIZED_ORG_BASE) ||
-                    key.equals(SetupConstants.SM_ROOT_SUFFIX_HAT)
+                    key.equals(SetupConstants.SM_ROOT_SUFFIX_HAT) ||
+                    key.equals(SetupConstants.CONFIG_VAR_SESSION_ROOT_SUFFIX) ||
+                    key.equals(SetupConstants.CONFIG_VAR_SESSION_STORE_TYPE)
                 ) {
                     orig = orig.replaceAll("@" + key + "@", value);
                 } else {

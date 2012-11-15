@@ -185,9 +185,6 @@ public class Wizard extends AjaxPage implements Constants {
         tmp = getAttribute("configStorePassword", "");
         request.addParameter(
             SetupConstants.CONFIG_VAR_DS_MGR_PWD, tmp);
-
-        // CTS Repository
-        // TODO
                 
         // user store repository
         tmp = (String)getContext().getSessionAttribute(

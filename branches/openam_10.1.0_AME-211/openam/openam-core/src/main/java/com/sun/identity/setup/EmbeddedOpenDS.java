@@ -46,7 +46,14 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -347,7 +354,6 @@ public class EmbeddedOpenDS {
 
             //EmbeddedOpenDS.startServer(odsRoot);
         } // End of single / first server check.
-
     }
 
     /**
@@ -484,7 +490,6 @@ public class EmbeddedOpenDS {
             throw new ConfiguratorException(
                     "configurator.embsetupopendsfailed");
         }
-
     }
 
     /**
@@ -539,80 +544,6 @@ public class EmbeddedOpenDS {
                 SetupProgress.getOutputStream(),
                 SetupProgress.getOutputStream(),
                 null);
-
-        if (ret == 0) {
-            SetupProgress.reportEnd("emb.success", null);
-        } else {
-            SetupProgress.reportEnd("emb.failed", null);
-        }
-
-        return ret;
-    }
-
-    /**
-     * Runs the OpenDJ Configuration to establish a secondary Root Suffix,
-     * command like this:
-     * $ dsconfig create-backend \
-     *          --backend-name backend03 \
-     *          --add base-dn:o=tokens,dc=forgerock,dc=org \
-     *          --set enabled:true \
-     *          --type local-db \
-     *          --hostName hornbeam.local \
-     *          --port 4444 \
-     *          --bindDN cn=Directory\ Manager \
-     *          --bindPassword ******** \
-     *          --trustAll \
-     *          --noPropertiesFile \
-     *          --no-prompt
-     *
-     * @param map Map of properties collected by the configurator.
-     * @return status : 0 == success, !0 == failure
-     *
-     * @since 10.1.0
-     */
-    public static int runOpenDJCreateBackEnd(Map map) {
-        // If no Map Elements
-        if (map == null)
-            { return 1; }
-       // Construct the Argument Array for Command.
-        String[] setupCmd = {
-                "create-backend",               // 0
-                "--backend-name",               // 1
-                Constants.DEFAULT_CTS_BACKEND_NAME, // 2
-                "--type",                       // 3
-                "local-db",                     // 4
-                "--set",                        // 5
-                "base-dn:"+Constants.DEFAULT_CTS_ROOT_SUFFIX,  // 6
-                "--set",                        // 7
-                "enabled:"+"true",              // 8
-                "--bindDN",                     // 9
-                "cn=Directory Manager",         // 10
-                "--bindPassword",               // 11
-                "xxxxxxx",                      // 12
-                "--port",                       // 13
-                "50389",                        // 14
-                "--skipPortCheck",              // 15
-                "--no-prompt",                  // 16
-                "--noPropertiesFile",           // 17
-                "--trustAll",                   // 18
-                "--hostname",                   // 19
-                "hostname"                      // 20
-        };
-
-        setupCmd[2] = (String) map.get(SetupConstants.CTS_VAR_BACKEND_NAME);
-        setupCmd[6] = "base-dn:" +  map.get(SetupConstants.CTS_VAR_ROOT_SUFFIX);
-        setupCmd[10] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_DN);
-        setupCmd[14] = (String) map.get(SetupConstants.CONFIG_VAR_DIRECTORY_SERVER_PORT);
-        setupCmd[20] = getOpenDJHostName(map);
-
-        Object[] params = {concat(setupCmd)};
-        SetupProgress.reportStart("emb.setupcommand", params);
-
-        setupCmd[15] = (String) map.get(SetupConstants.CONFIG_VAR_DS_MGR_PWD);
-
-        int ret = org.opends.server.tools.dsconfig.DSConfig.main(setupCmd, false,
-                SetupProgress.getOutputStream(),
-                SetupProgress.getOutputStream());
 
         if (ret == 0) {
             SetupProgress.reportEnd("emb.success", null);

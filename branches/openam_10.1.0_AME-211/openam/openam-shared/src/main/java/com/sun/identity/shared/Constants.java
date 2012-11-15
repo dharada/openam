@@ -1199,32 +1199,29 @@ public interface Constants {
     static final String DEFAULT_ROOT_SUFFIX = "dc=openam,dc=forgerock,dc=org";
 
     /**
-     * Default Root Context
-     */
-    static final String DEFAULT_CTS_BACKEND_NAME = "ctsRoot";
-
-    /**
      * Default Token Root Context, this will be used to create a Secondary Suffix during installation.
      */
-    // TODO -- Set this to the proper Secondary BackEnd Suffix.
-    static final String DEFAULT_CTS_ROOT_SUFFIX = "o=tokens,dc=forgerock,dc=org";
-    // For now we prepend this CTS Suffix to create the Complete Base for CTS Repository Storage.
-    //static final String DEFAULT_CTS_ROOT_SUFFIX = "o=tokens";
+    static final String DEFAULT_TOKEN_ROOT_SUFFIX = "o=tokens,dc=forgerock,dc=org";
 
     /**
      * Default Session SFO/HA Root DN
      */
-    static final String DEFAULT_CTS_SESSION_HA_ROOT_SUFFIX = "ou=openam-session";
+    static final String DEFAULT_SESSION_HA_ROOT_SUFFIX = "ou=openam-session";
 
     /**
      * Default SAML2 Root Suffix
      */
-    static final String DEFAULT_CTS_SAML2_HA_ROOT_SUFFIX = "ou=openam-saml2";
+    static final String DEFAULT_SAML2_HA_ROOT_SUFFIX = "ou=openam-saml2";
 
     /**
      * Default OAUTH2 Root Suffix
      */
-    static final String DEFAULT_CTS_OAUTH2_HA_ROOT_SUFFIX = "ou=openam-oauth2";
+    static final String DEFAULT_OAUTH2_HA_ROOT_SUFFIX = "ou=openam-oauth2";
+
+    /**
+     * Default Session SFO/HA Store Type.
+     */
+    static final String DEFAULT_SESSION_HA_STORE_TYPE = "none";
 
     /**
      * Additional Directory Constants

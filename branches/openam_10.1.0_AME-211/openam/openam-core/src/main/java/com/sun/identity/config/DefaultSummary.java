@@ -119,26 +119,13 @@ public class DefaultSummary extends AjaxPage {
             SetupConstants.DEFAULT_PLATFORM_LOCALE);
         request.addParameter("locale", configLocale.toString());
 
-        // Setup  CTS Repository Variables. @since 10.1
         request.addParameter(
-                SetupConstants.CTS_VAR_BACKEND_NAME,
-                Constants.DEFAULT_CTS_BACKEND_NAME);
+                SetupConstants.CONFIG_VAR_SESSION_ROOT_SUFFIX,
+                Constants.DEFAULT_SESSION_HA_ROOT_SUFFIX);
 
         request.addParameter(
-                SetupConstants.CTS_VAR_ROOT_SUFFIX,
-                Constants.DEFAULT_CTS_ROOT_SUFFIX);
-
-        request.addParameter(
-                SetupConstants.CTS_VAR_SESSION_SUFFIX,
-                Constants.DEFAULT_CTS_SESSION_HA_ROOT_SUFFIX);
-
-        request.addParameter(
-                SetupConstants.CTS_VAR_SAML2_SUFFIX,
-                Constants.DEFAULT_CTS_SAML2_HA_ROOT_SUFFIX);
-
-        request.addParameter(
-                SetupConstants.CTS_VAR_OAUTH2_SUFFIX,
-                Constants.DEFAULT_CTS_OAUTH2_HA_ROOT_SUFFIX);
+                SetupConstants.CONFIG_VAR_SESSION_STORE_TYPE,
+                Constants.DEFAULT_SESSION_HA_STORE_TYPE);
 
         try {
             if (!AMSetupServlet.processRequest(request, response)) {

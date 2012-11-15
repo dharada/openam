@@ -136,7 +136,7 @@ public interface SetupConstants {
 
     /**
      * Property keys in <code>SCHEMA_PROPERTY_FILENAME</code> file.
-     * Oracle Directory Server Enterprise Edition SMS/Configuration Datastore Schema.
+     * Sun Directory Server Schema File for configuration data.
      */
     static final String DS_SMS_PROPERTY_FILENAME = "dsSmsSchema";
     
@@ -148,13 +148,13 @@ public interface SetupConstants {
     
     /**
      * Property keys in <code>SCHEMA_PROPERTY_FILENAME</code> file.
-     * OpenDJ User Management and SMS/Configuration Datastore Schema.
+     * Microsoft Active Directory Schema File for configuration data.
      */
     static final String OPENDS_SMS_PROPERTY_FILENAME = "opendsSmsSchema";
     
     /**
      * Property keys in <code>SCHEMA_PROPERTY_FILENAME</code> file.
-     * Oracle Directory Server Enterprise Edition User Management Datastore Schema.
+     * Sun Directory Server Schema File for user management data.
      */
     static final String ODSEE_LDIF = "odseeSchema";
 
@@ -425,32 +425,17 @@ public interface SetupConstants {
     static final String CONFIG_VAR_ROOT_SUFFIX = "ROOT_SUFFIX";
 
     /**
-     * Configuration Variable for CTS Back End Name.
+     * Configuration Variable for Session root suffix.
      */
-    static final String CTS_VAR_BACKEND_NAME = "CTS_BACKEND_NAME";
+    static final String CONFIG_VAR_SESSION_ROOT_SUFFIX = "SESSION_ROOT_SUFFIX";
 
     /**
-     * Configuration Variable for root suffix.
+     * Configuration Variable for Session Store Type.
      */
-    static final String CTS_VAR_ROOT_SUFFIX = "CTS_ROOT_SUFFIX";
+    static final String CONFIG_VAR_SESSION_STORE_TYPE = "SESSION_STORE_TYPE";
 
     /**
-     * Configuration Variable for CTS Repository Session suffix.
-     */
-    static final String CTS_VAR_SESSION_SUFFIX = "CTS_SESSION_SUFFIX";
-
-    /**
-     * Configuration Variable for CTS Repository SAML2 suffix.
-     */
-    static final String CTS_VAR_SAML2_SUFFIX = "CTS_SAML2_SUFFIX";
-
-    /**
-     * Configuration Variable for CTS Repository OAUTH2 suffix.
-     */
-    static final String CTS_VAR_OAUTH2_SUFFIX = "CTS_OAUTH2_SUFFIX";
-
-    /**
-     * Configuration Variable for bootstrap file base directory.
+     * Configuration Variable for bootstarp file base directory.
      */
     static final String CONFIG_VAR_BOOTSTRAP_BASE_DIR = ".openamcfg";
     static final String CONFIG_VAR_BOOTSTRAP_LEGACY_BASE_DIR = ".openssocfg";
