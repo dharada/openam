@@ -80,15 +80,44 @@ public class OpenDJTokenRepo implements JsonResource {
     public JsonValue handle(JsonValue request) throws JsonResourceException {
         try {
             try {
+                JsonValue result = null;
                 switch (request.get("method").required().asEnum(SimpleJsonResource.Method.class)) {
                     case create:
-                        return cts.oauth2Create(request);
+                        try{
+                            result = cts.oauth2Create(request);
+                            if (OAuth2Utils.logStatus) {
+                                String[] obs = {"CREATED_TOKEN", request.toString()};
+                                OAuth2Utils.logAccessMessage("CREATED_TOKEN", obs, OAuth2Utils.getSSOToken(Request.getCurrent()));
+                            }
+                            return  result;
+                        } catch(JsonResourceException e){
+                            OAuth2Utils.DEBUG.error("Create Token failed", e);
+                            if (OAuth2Utils.logStatus) {
+                                String[] obs = {"FAILED_CREATE_TOKEN", request.toString()};
+                                OAuth2Utils.logErrorMessage("FAILED_CREATE_TOKEN", obs, OAuth2Utils.getSSOToken(Request.getCurrent()));
+                            }
+                            throw e;
+                        }
                     case read:
                         return cts.oauth2Read(request);
                     case update:
                         return cts.oauth2Update(request);
                     case delete:
-                        return cts.oauth2Delete(request);
+                        try{
+                            result = cts.oauth2Delete(request);
+                            if (OAuth2Utils.logStatus) {
+                                String[] obs = {"FAILED_DELETE_TOKEN", request.toString()};
+                                OAuth2Utils.logAccessMessage("FAILED_DELETE_TOKEN", obs, OAuth2Utils.getSSOToken(Request.getCurrent()));
+                            }
+                            return  result;
+                        } catch(JsonResourceException e){
+                            OAuth2Utils.DEBUG.error("Delete Token failed", e);
+                            if (OAuth2Utils.logStatus) {
+                                String[] obs = {"DELETE_FAILED", request.toString()};
+                                OAuth2Utils.logErrorMessage("DELETE_FAILED", obs, OAuth2Utils.getSSOToken(Request.getCurrent()));
+                            }
+                            throw e;
+                        }
                     case query:
                         return cts.oauth2Query(request);
                     default:

@@ -431,6 +431,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                 try {
                     // Delete any expired Sessions up to now.
                     deleteExpired(Calendar.getInstance());
+                    // Delete expired OAuth2 tokens
+                    oauth2DeleteExpired();
                     // Process any Deferred Operations
                     processDeferredAMSessionRepositoryOperations();
                     // Wait for next tick or interrupt.
@@ -439,6 +441,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                     DEBUG.warning(DB_THD_INT.get().toString(), ie);
                 } catch (StoreException se) {
                     DEBUG.warning(DB_STR_EX.get().toString(), se);
+                } catch (JsonResourceException e){
+                    DEBUG.error(DB_STR_EX.get().toString(), e);
                 }
             }
         }
@@ -1740,7 +1744,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         if ((request == null) || (request.size() == 0)) {
             return null;
         }
-        String messageTag = "CTSPersistenceStore.storeImmediate: ";
+        String messageTag = "CTSPersistenceStore.oauth2Create: ";
 
         TokenDataEntry token = new TokenDataEntry(request);
         List<RawAttribute> attrList = token.getAttrList();
@@ -1813,7 +1817,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         LDAPConnection ldapConnection = null;
         LDAPSearchResults searchResults = null;
         LDAPException lastLDAPException = null;
-        String messageTag = "CTSPersistenceStore.read: ";
+        String messageTag = "CTSPersistenceStore.oauth2Read: ";
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
@@ -1875,7 +1879,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         String id = request.get("id").required().asString();
         String dn = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
 
-        String messageTag = "CTSPersistenceStore.deleteImmediate: ";
+        String messageTag = "CTSPersistenceStore.oauth2Delete: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
         try {
@@ -1932,7 +1936,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         StringBuilder baseDN = new StringBuilder();
         baseDN.append(OAUTH2_HA_BASE_DN);
 
-        String messageTag = "CTSPersistenceStore.deleteExpired: ";
+        String messageTag = "CTSPersistenceStore.oauth2Query: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
         int objectsDeleted = 0;
@@ -2004,7 +2008,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         filter.append(EXPDATE_FILTER_PRE_OAUTH).append(System.currentTimeMillis()).append(EXPDATE_FILTER_POST_OAUTH);
         baseDN.append(OAUTH2_HA_BASE_DN);
 
-        String messageTag = "CTSPersistenceStore.deleteExpired: ";
+        String messageTag = "CTSPersistenceStore.oauth2DeleteExpired: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
         int objectsDeleted = 0;
@@ -2090,7 +2094,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
             return;
         }
         // Initialize.
-        String messageTag = "CTSPersistenceStore.deleteImmediate: ";
+        String messageTag = "CTSPersistenceStore.oauth2Delete: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
         String baseDN = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
