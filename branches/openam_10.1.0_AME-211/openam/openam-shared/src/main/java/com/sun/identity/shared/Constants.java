@@ -1201,7 +1201,7 @@ public interface Constants {
     /**
      * Default Token Root Context, this will be used to create a Secondary Suffix during installation.
      */
-    static final String DEFAULT_TOKEN_ROOT_SUFFIX = "o=tokens,dc=forgerock,dc=org";
+    static final String DEFAULT_TOKEN_ROOT_SUFFIX = "ou=tokens";
 
     /**
      * Default Session SFO/HA Root DN
@@ -1223,6 +1223,7 @@ public interface Constants {
      */
     static final String DEFAULT_SESSION_HA_STORE_TYPE = "none";
 
+    public static final String ATTR_NAME_AGENT_TYPE = "AgentType";
     /**
      * Additional Directory Constants
      */

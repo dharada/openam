@@ -44,6 +44,7 @@ import com.sun.identity.shared.ldap.*;
 import com.sun.identity.shared.ldap.LDAPException;
 import com.sun.identity.sm.model.*;
 
+import com.sun.identity.tools.objects.MapFormat;
 import org.forgerock.i18n.LocalizableMessage;
 
 import static org.forgerock.openam.session.ha.i18n.AmsessionstoreMessages.*;
@@ -73,15 +74,24 @@ import org.opends.server.types.*;
  *
  * @author steve
  * @author jeff.schenk@forgerock.com
+ * @author jason.lemay@forgerock.com
+ *
  */
-public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRepository, AMTokenSAML2Repository, OAuth2TokenRepository {
+public class CTSPersistentStore extends GeneralTaskRunnable
+        implements AMTokenRepository, AMTokenSAML2Repository, OAuth2TokenRepository {
 
     /**
      * Globals Constants, so not to pollute entire product.
      */
     public static final String FR_FAMRECORD = "frFamRecord";
 
-    private static final String AMRECORD_NAMING_ATTR = "pKey";
+    private static final String PKEY_NAMING_ATTR = "pKey";
+
+    private static final String FORMATTED_EXPIRATION_DATE_NAME = "formattedExpirationDate";
+
+    private static final String SAML2_KEY_NAME = "samlKey";
+
+    private static final String OAUTH2_KEY_NAME = "oauth2Key";
 
     private static final String OBJECTCLASS = "objectClass";
 
@@ -133,34 +143,52 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     static public final String SAML2 = "saml2";
     static public final String OAUTH2 = "oauth2";
 
+    private static final String FAMRECORDS_NAMING = "ou=famrecords";
+    private static final String OAUTH2TOKENS_NAMING = "ou="+OAUTH2+"tokens";
+
     private static boolean caseSensitiveUUID =
             SystemProperties.getAsBoolean(com.sun.identity.shared.Constants.CASE_SENSITIVE_UUID);
 
     /**
      * Define Global DN and Container Constants
      */
-    private static final String TOKEN_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_ROOT_SUFFIX, Constants.DEFAULT_TOKEN_ROOT_SUFFIX);
+    // Our default for SM_CONFIG_ROOT_SUFFIX = dc=openam,dc=forgerock,dc=org
+    private static final String SM_CONFIG_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_SM_CONFIG_ROOT_SUFFIX, Constants.DEFAULT_ROOT_SUFFIX);
 
+    // Our default for TOKEN_ROOT_SUFFIX = ou=tokens
+    private static final String TOKEN_ROOT_SUFFIX =
+            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_ROOT_SUFFIX,
+                    Constants.DEFAULT_TOKEN_ROOT_SUFFIX);
+
+    //  Our default for TOKEN_ROOT = ou=tokens,dc=openam,dc=forgerock,dc=org
+    private static final String TOKEN_ROOT =  TOKEN_ROOT_SUFFIX +
+            Constants.COMMA + SM_CONFIG_ROOT_SUFFIX;
+
+    // Our default for TOKEN_SESSION_HA_ROOT_SUFFIX = ou=openam-session
     private static final String TOKEN_SESSION_HA_ROOT_SUFFIX =
             SystemPropertiesManager.get(SYS_PROPERTY_SESSION_HA_REPOSITORY_ROOT_SUFFIX,
                     Constants.DEFAULT_SESSION_HA_ROOT_SUFFIX);
 
+    // Our default for TOKEN_SAML2_HA_ROOT_SUFFIX = ou=openam-saml2
     private static final String TOKEN_SAML2_HA_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_SAML2_REPOSITORY_ROOT_SUFFIX, Constants.DEFAULT_SAML2_HA_ROOT_SUFFIX);
+            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_SAML2_REPOSITORY_ROOT_SUFFIX,
+                    Constants.DEFAULT_SAML2_HA_ROOT_SUFFIX);
 
+    // Our default for TOKEN_OAUTH2_HA_ROOT_SUFFIX = ou-openam-oauth2
     private static final String TOKEN_OAUTH2_HA_ROOT_SUFFIX =
-            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_OAUTH2_REPOSITORY_ROOT_SUFFIX, Constants.DEFAULT_OAUTH2_HA_ROOT_SUFFIX);
+            SystemPropertiesManager.get(SYS_PROPERTY_TOKEN_OAUTH2_REPOSITORY_ROOT_SUFFIX,
+                    Constants.DEFAULT_OAUTH2_HA_ROOT_SUFFIX);
 
     /**
      * Define Session DN Constants
      */
     private static final String SESSION_FAILOVER_HA_BASE_DN =
-            TOKEN_SESSION_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            FAMRECORDS_NAMING+Constants.COMMA+
+            TOKEN_SESSION_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE =
-            AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +
+            PKEY_NAMING_ATTR + Constants.EQUALS + "{"+PKEY_NAMING_ATTR+"}" + Constants.COMMA +
                     SESSION_FAILOVER_HA_BASE_DN;
 
     /**
@@ -168,31 +196,42 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
      */
     private final static String TOKEN_EXPIRATION_FILTER_TEMPLATE =
             "(&(" + OBJECTCLASS + Constants.EQUALS + FR_FAMRECORD +
-                    ")" + EXPDATE_FILTER_PRE + "?" + EXPDATE_FILTER_POST + ")";
+                    ")" + EXPDATE_FILTER_PRE + "{"+FORMATTED_EXPIRATION_DATE_NAME+"}" + EXPDATE_FILTER_POST + ")";
 
 
     /**
      * Define SAML2 DN Constants
      */
     private static final String SAML2_HA_BASE_DN =
-            TOKEN_SAML2_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            FAMRECORDS_NAMING+Constants.COMMA+
+            TOKEN_SAML2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE =
-            AMRECORD_NAMING_ATTR + Constants.EQUALS + "%" + Constants.COMMA +
+            PKEY_NAMING_ATTR + Constants.EQUALS + "{"+SAML2_KEY_NAME+"}" + Constants.COMMA +
                     SAML2_HA_BASE_DN;
 
     /**
      * Define OAUTH2 DN Constants
      */
     private static final String OAUTH2_HA_BASE_DN =
-            TOKEN_OAUTH2_HA_ROOT_SUFFIX +
-                    Constants.COMMA + TOKEN_ROOT_SUFFIX;
+            OAUTH2TOKENS_NAMING+Constants.COMMA+
+            TOKEN_OAUTH2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE =
-            OAuth2Constants.Params.ID + Constants.EQUALS + "%" + Constants.COMMA +
-                    OAUTH2_HA_BASE_DN;
+            OAuth2Constants.Params.ID + Constants.EQUALS + "{"+OAUTH2_KEY_NAME+"}" + Constants.COMMA + OAUTH2_HA_BASE_DN;
 
+    /**
+     * Define all our Top Level DN for Validation.
+     * This DIT hierarchy must exist for this component to operate.
+     *
+     * The Squence of these should be in DIT order.
+     */
+    private static final String[] containersToBeValidated = {
+            SM_CONFIG_ROOT_SUFFIX,
+            SESSION_FAILOVER_HA_BASE_DN,
+            SAML2_HA_BASE_DN,
+            OAUTH2_HA_BASE_DN
+    };
 
     /**
      * Return Attribute Constructs
@@ -406,7 +445,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     /**
      * Perform Service Shutdown.
      */
-    @Override
+     @Override
     public void shutdown() {
         internalShutdown();
         DEBUG.warning(DB_AM_SHUT.get().toString());
@@ -431,6 +470,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                 try {
                     // Delete any expired Sessions up to now.
                     deleteExpired(Calendar.getInstance());
+                    // Delete any expired SAML2 Artifacts
+                    deleteExpiredSAML2Tokens();
                     // Delete expired OAuth2 tokens
                     oauth2DeleteExpired();
                     // Process any Deferred Operations
@@ -523,7 +564,10 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                     type, FAMRecord.WRITE, key, expirationTime, uuid,
                     is.getState(), sid.toString(), serializedInternalSession);
             // Construct the Entry's DN and Persist Record
-            writeImmediate(famRec, SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", famRec.getPrimaryKey()));
+
+
+
+            writeImmediate(famRec, getFormattedString(SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, famRec.getPrimaryKey()));
         } catch (Exception e) {
             DEBUG.error(messageTag + "Failed to Save Session", e);
         }
@@ -542,7 +586,9 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
             return;
         }
         // Construct our Entity's DN and Write this AM Root Entity Object now.
-        writeImmediate(amRootEntity, SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", amRootEntity.getPrimaryKey()));
+        writeImmediate(amRootEntity,
+                getFormattedString(SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR,
+                        amRootEntity.getPrimaryKey()));
     }
 
     /**
@@ -763,7 +809,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         String messageTag = "CTSPersistenceStore.deleteImmediate: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
-        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+        String baseDN = getFormattedString(SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, id);
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
@@ -827,7 +873,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         timeDuration.start();
         try {
             // Initialize Filter.
-            String filter = TOKEN_EXPIRATION_FILTER_TEMPLATE.replace("?", formattedExpirationDate);
+            String filter = getFormattedString(TOKEN_EXPIRATION_FILTER_TEMPLATE,
+                    FORMATTED_EXPIRATION_DATE_NAME, formattedExpirationDate);
             if (DEBUG.messageEnabled()) {
                 DEBUG.error(messageTag + "Searching Expired Sessions Older than:["
                         + formattedExpirationDate + "]");
@@ -978,7 +1025,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
             return null;
         }
         // Establish our DN
-        String baseDN = SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+        String baseDN = getFormattedString(SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, id);
         // Initialize LDAP Objects
         LDAPConnection ldapConnection = null;
         LDAPSearchResults searchResults = null;
@@ -1242,7 +1289,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
             return null;
         }
         // Establish our DN
-        String baseDN = TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE.replace("%", samlKey);
+        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, samlKey);
         // Initialize LDAP Objects
         LDAPConnection ldapConnection = null;
         LDAPSearchResults searchResults = null;
@@ -1387,7 +1434,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
                     SAML2, FAMRecord.WRITE, samlKey, expirationTime, secKey,
                     1, null, serializedInternalSession);
             // Construct the Entry's DN and Persist Record
-            writeImmediate(famRec, TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE.replace("%", famRec.getPrimaryKey()));
+            writeImmediate(famRec, getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, famRec.getPrimaryKey()));
         } catch (Exception e) {
             DEBUG.error("Failed to Save Session", e);
         }
@@ -1408,7 +1455,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         // Initialize.
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
-        String baseDN = TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE.replace("%", samlKey);
+        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, samlKey);
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
@@ -1454,7 +1501,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         timeDuration.start();
         try {
             // Initialize Filter.
-            String filter = TOKEN_EXPIRATION_FILTER_TEMPLATE.replace("?", formattedExpirationDate);
+            String filter = getFormattedString(TOKEN_EXPIRATION_FILTER_TEMPLATE, FORMATTED_EXPIRATION_DATE_NAME, formattedExpirationDate);
             if (DEBUG.messageEnabled()) {
                 DEBUG.error(messageTag + "Searching Expired Sessions Older than:["
                         + formattedExpirationDate + "]");
@@ -1522,7 +1569,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
             }
             timeDuration.stop();
             if (objectsDeleted > 0) {
-                DEBUG.error(messageTag + "Number of Expired Sessions Deleted:[" + objectsDeleted + "], Duration:[" + timeDuration.getDurationToString() + "]");
+                DEBUG.error(messageTag + "Number of Expired SAML2 Artifacts Deleted:[" + objectsDeleted + "], Duration:[" + timeDuration.getDurationToString() + "]");
             }
         }
 
@@ -1660,20 +1707,31 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     }
 
     /**
-     * Private Helper Method to perform Validation of our LDAP Connection.
+     * Private Helper Method to perform Validation of our LDAP Connection and
+     * the existence of our DIT hierarchy which this component requires.
      *
      * @return boolean - indicates if validation was successful or not.
      * @throws StoreException - Exception thrown if Error condition exists.
      */
     private static boolean validateCTSPersistenceStore() throws StoreException {
-        if (instance.doesDNExist(SESSION_FAILOVER_HA_BASE_DN)) {
-            if (DEBUG.messageEnabled()) {
-                final LocalizableMessage message = DB_ENT_P.get(SESSION_FAILOVER_HA_BASE_DN);
-                DEBUG.message("CTSPersistenceStore.validateCTSPersistenceStore: " + message.toString());
-            }
-            return true;
+        // Iterate over our Token DIT Structure to Verify.
+        Map<String, Boolean> validationResultMap = new HashMap<String, Boolean>(containersToBeValidated.length);
+        for(String ctsTopLevelDN : containersToBeValidated) {
+            validationResultMap.put(ctsTopLevelDN, instance.doesDNExist(ctsTopLevelDN));
         }
-        return false;
+        // Now Iterate over the Validation Result Map to supply information, especially if we have
+        // detected something missing...
+        int validatedSuccessfully=0;
+        for(String ctsTopLevelDN : validationResultMap.keySet()) {
+          if (validationResultMap.get(ctsTopLevelDN).booleanValue()) {
+              validatedSuccessfully++;
+          } else {
+              final LocalizableMessage message = DB_ENT_NOT_P.get(ctsTopLevelDN);
+              DEBUG.message("CTSPersistenceStore.validateCTSPersistenceStore: " + message.toString());
+          }
+        } // End of KeySet for each loop...
+        // Determine if we are good to go or not....
+        return (containersToBeValidated.length == validatedSuccessfully);
     }
 
     /**
@@ -1737,6 +1795,28 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
     }
 
     /**
+     * Helper method to correctly format a String with a name,value pair.
+     * This uses the include Open Source @see MapFormat Source.
+     *
+     * @param template
+     * @param name
+     * @param value
+     * @return String of Formatted Template
+     */
+    private static String getFormattedString(String template, String name, String value) {
+        Map<String,String> map = new HashMap<String,String>();
+        map.put(name,value);
+        return MapFormat.format(template, map);
+    }
+
+    // ***************************************************************************************************
+    //
+    // OAuth2TokenRepository Implementation Methods.
+    //
+    // ***************************************************************************************************
+
+
+    /**
      * {@inheritDoc}
      */
     public JsonValue oauth2Create(JsonValue request) throws JsonResourceException {
@@ -1750,7 +1830,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         List<RawAttribute> attrList = token.getAttrList();
         attrList.addAll(token.getObjectClasses());
 
-        String dn = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", token.getDN());
+        String dn = getFormattedString(TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE, OAUTH2_KEY_NAME, token.getDN());
 
         LDAPAttributeSet ldapAttributeSet = new LDAPAttributeSet();
         // Obtain a Connection.
@@ -1812,7 +1892,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         }
         // Establish our DN
         String dn = request.get("id").required().asString();
-        String baseDN = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", dn);
+        String baseDN = getFormattedString(TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE, OAUTH2_KEY_NAME, dn);
         // Initialize LDAP Objects
         LDAPConnection ldapConnection = null;
         LDAPSearchResults searchResults = null;
@@ -1877,7 +1957,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         }
 
         String id = request.get("id").required().asString();
-        String dn = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+        String dn = getFormattedString(TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE, OAUTH2_KEY_NAME, id);
 
         String messageTag = "CTSPersistenceStore.oauth2Delete: ";
         LDAPConnection ldapConnection = null;
@@ -2097,7 +2177,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         String messageTag = "CTSPersistenceStore.oauth2Delete: ";
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
-        String baseDN = TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE.replace("%", id);
+        String baseDN = getFormattedString(TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE, OAUTH2_KEY_NAME, id);
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
@@ -2126,6 +2206,11 @@ public class CTSPersistentStore extends GeneralTaskRunnable implements AMTokenRe
         return;
     }
 
+    /**
+     * Private helper method to Add Underscores to named elements whose name have spaces.
+     *
+     * @param results<String, Set<String>>
+     */
     private void addUnderScoresToParams(Map<String, Set<String>> results){
         //need to add the _ back into expiry_time, client_id, redirect_uri
         //and remove objectClass(by product of LDAP)
