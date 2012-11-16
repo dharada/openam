@@ -186,13 +186,17 @@
         <module>openam-rest</module>
 
         <!-- OpenAM ForgeRock REST - CORE Module -->
-        <!-- Commenting out until it gets stable -->
-        <!-- <module>openam-forgerock-rest</module> -->
+        <module>openam-forgerock-rest</module>
+
+        <module>openam-plugins</module>
 
         <module>openam-console</module>
 
         <!-- OpenAM Core Module -->
         <module>openam-core</module>
+
+        <!-- OpenAM CLI Module -->
+        <module>openam-cli</module>
 
         <!-- OpenAM Common Test Suite -->
         <module>openam-test</module>
@@ -986,6 +990,18 @@
                 <!-- <scope>compile</scope> -->
             </dependency>
 
+            <!-- Dependencies for the Build Helper Maven Plugin -->
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-plugin-api</artifactId>
+                <version>3.0.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-project</artifactId>
+                <version>3.0-alpha-2</version>
+            </dependency>
+
             <dependency>
                 <groupId>external</groupId>
                 <artifactId>authapi</artifactId>
@@ -1452,7 +1468,7 @@
             <plugin>
                 <groupId>org.forgerock.maven.plugins</groupId>
                 <artifactId>linktester-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0</version>
                 <inherited>false</inherited>
                 <configuration>
                     <includes>
