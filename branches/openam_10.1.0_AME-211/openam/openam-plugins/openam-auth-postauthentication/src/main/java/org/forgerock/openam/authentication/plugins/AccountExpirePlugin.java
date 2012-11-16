@@ -39,17 +39,20 @@ import com.sun.identity.shared.locale.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.security.AccessController;
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Calendar;
 
 
 public class AccountExpirePlugin implements AMPostAuthProcessInterface {
     static final String EXPIRPROPERTY = "org.forgerock.openam.authentication.accountExpire.days";
 
-    @Override
     public void onLoginSuccess(Map requestParamsMap, HttpServletRequest request,
                                HttpServletResponse response, SSOToken token)
             throws AuthenticationException {
-        Map<String, Set> attrMap = new HashMap<String, Set>();
+        Map<String, Set<String>> attrMap = new HashMap<String, Set<String>>();
         Debug debug = Debug.getInstance("AccountExpirePlugin");
 
         try {
@@ -61,8 +64,8 @@ public class AccountExpirePlugin implements AMPostAuthProcessInterface {
             String daysToExpireDefault = SystemProperties.get(EXPIRPROPERTY);
             int daysToExpire = Integer.getInteger(daysToExpireDefault, 30);
 
-            Calendar cal = java.util.Calendar.getInstance();
-            cal.add(cal.DATE, daysToExpire);
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, daysToExpire);
             Set attrValue = new HashSet();
             attrValue.add(Locale.getNormalizedDateString(cal.getTime()));
             attrMap.put(ISAuthConstants.ACCOUNT_LIFE, attrValue);
@@ -76,12 +79,10 @@ public class AccountExpirePlugin implements AMPostAuthProcessInterface {
         }
     }
 
-    @Override
     public void onLoginFailure(Map requestParamsMap, HttpServletRequest request,
                                HttpServletResponse response) throws AuthenticationException {
     }
 
-    @Override
     public void onLogout(HttpServletRequest request,
                          HttpServletResponse response, SSOToken token)
             throws AuthenticationException {
