@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
 <web-app>
-<display-name>OpenSSO Services</display-name>
+<display-name>OpenAM Services</display-name>
 <distributable/>
 
     <!-- context param -->
@@ -102,10 +102,6 @@
     <servlet>
         <servlet-name>SMSServlet</servlet-name>
         <servlet-class>com.sun.identity.sm.SMServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>WebCLI</servlet-name>
-        <servlet-class>com.sun.identity.cli.WebCLI</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>PWResetServlet</servlet-name>
@@ -223,10 +219,6 @@
     <servlet-mapping>
         <servlet-name>jaxrpc</servlet-name>
         <url-pattern>/jaxrpc/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>WebCLI</servlet-name>
-        <url-pattern>/webcli</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>SMSServlet</servlet-name>
