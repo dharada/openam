@@ -27,7 +27,7 @@
 --%>
 
 <%--
-   Portions Copyrighted 2010 ForgeRock AS
+   Portions Copyrighted 2010-2012 ForgeRock Inc
 --%>
 
 <%@ page pageEncoding="UTF-8" %>
@@ -43,6 +43,7 @@
         com.sun.identity.idm.IdType,
         com.sun.identity.idm.IdUtils,
         com.sun.identity.shared.debug.Debug,
+        com.sun.identity.shared.encode.Hash,
         java.text.MessageFormat,
         java.util.ArrayList,
         java.util.Enumeration,
@@ -55,12 +56,19 @@
         java.util.ResourceBundle,
         java.util.Set,
         java.util.StringTokenizer,
-        com.sun.identity.shared.ldap.util.DN"
+        com.sun.identity.shared.ldap.util.DN,
+        org.owasp.esapi.ESAPI"
 %>
 
 <% 
     String category= request.getParameter("category");
     String level= request.getParameter("level");
+    if (!ESAPI.validator().isValidInput("category", category, "HTTPParameterValue", 512, true)
+        || !ESAPI.validator().isValidInput("level", level, "HTTPParameterValue", 512, true)) {
+        //Invalid values received, let's null them out and ignore them.
+        category = null;
+        level = null;
+    }
     boolean performAction = Boolean.valueOf(request.getParameter("do")).
         booleanValue();
 
@@ -69,7 +77,7 @@
     Map categories = new HashMap();
     Set adminUserSet = new HashSet();
     AMIdentity adminUserId = null;
-
+    String formToken = null;
     try {
         SSOTokenManager sMgr = SSOTokenManager.getInstance();
         SSOToken ssoToken = sMgr.createSSOToken(request);
@@ -94,6 +102,7 @@
             out.println(resourceBundle.getString("message-no-privileges"));
             return;
         }
+        formToken = Hash.hash(ssoToken.getTokenID().toString());
 
         for (Enumeration e = rbFiles.getKeys();
             e.hasMoreElements();
@@ -114,6 +123,13 @@
         out.println(e.getMessage());
         return;
     }
+    if (performAction) {
+        String receivedToken = request.getParameter("formToken");
+        if (!formToken.equals(receivedToken)) {
+            out.println("Invalid form token provided!");
+            return;
+        }
+    }
 %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -128,7 +144,7 @@
     <table class="MstTblBot" title="" border="0" cellpadding="0" cellspacing="0" width="100%">
         <tr>
         <td class="MstTdTtl" width="99%">
-        <div class="MstDivTtl"><img name="AMConfig.configurator.ProdName" src="console/images/PrimaryProductName.png" alt="OpenSSO" border="0" /></div>
+        <div class="MstDivTtl"><img name="AMConfig.configurator.ProdName" src="console/images/PrimaryProductName.png" alt="OpenAM" border="0" /></div>
         </td>
         <td class="MstTdLogo" width="1%"><img name="AMConfig.configurator.BrandLogo" src="com_sun_web_ui/images/other/javalogo.gif" alt="Java(TM) Logo" border="0" height="55" width="31" /></td>
         </tr>
@@ -147,7 +163,7 @@ if ((category == null) || (level == null) ||
     (category.length() == 0) || (level.length() == 0)
 ) {
 %>
-<form name="frm" action="Debug.jsp" method="GET">
+<form name="frm" action="Debug.jsp" method="POST">
 <table>
 <tr>
 <td>
@@ -260,12 +276,13 @@ if ((category == null) || (level == null) ||
     String backURL = "Debug.jsp";
 
     if (!performAction) {
-       String url = "?category=" + category + "&level=" +
-            levelint + "&do=true";
-        out.println("<form name='frm' method='GET' action='Debug.jsp'>");
-        out.println("<input name='category' type='hidden' value='" + category + "' />");
+        out.println("<form name='frm' method='POST' action='Debug.jsp'>");
+        if (category != null) {
+            out.println("<input name='category' type='hidden' value='" + category + "' />");
+        }
         out.println("<input name='level' type='hidden' value='" + levelint + "' />");
         out.println("<input name='do' type='hidden' value='true' />");
+        out.println("<input type='hidden' name='formToken' value='" + formToken + "' />");
         out.println("<table border=0>");
         out.println("<tr><td>");
         out.println("<input type=\"button\" name=\"do\" value=\"" + resourceBundle.getString("button-confirm") + "\" class=\"Btn1\" onclick=\"this.form.submit();\" onmouseover=\"javascript: this.className='Btn1Hov'\" onmouseout=\"javascript: this.className='Btn1'\" onblur=\"javascript: javascript: this.className='Btn1'\" onfocus=\"javascript: this.className='Btn1Hov'\" /></form>");
