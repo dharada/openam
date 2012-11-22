@@ -26,7 +26,7 @@
  *
  */
 
-/**
+ /*
  * Portions Copyrighted 2010-2012 ForgeRock Inc
  */
 
@@ -42,12 +42,10 @@ import com.sun.identity.plugin.session.SessionException;
 import com.sun.identity.plugin.session.SessionManager;
 import com.sun.identity.plugin.session.SessionProvider;
 import com.sun.identity.saml.common.SAMLUtils;
-import com.sun.identity.saml2.assertion.AssertionFactory;
 import com.sun.identity.saml2.assertion.AuthnContext;
 import com.sun.identity.saml2.common.QuerySignatureUtil;
 import com.sun.identity.saml2.common.SAML2Constants;
 import com.sun.identity.saml2.common.SAML2Exception;
-import com.sun.identity.saml2.common.SAML2Repository;
 import com.sun.identity.saml2.common.SAML2Utils;
 import com.sun.identity.saml2.jaxb.metadata.IDPSSODescriptorElement;
 import com.sun.identity.saml2.jaxb.metadata.SPSSODescriptorElement;
@@ -72,8 +70,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.cert.X509Certificate;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -101,11 +97,6 @@ import org.w3c.dom.Element;
 public class IDPSSOFederate {
 
     private static final String REQ_ID = "ReqID";
-    private static final String AUTHN_REQUEST_JMQ_PREFIX = "authnRequest-";
-    private static final String AUTHN_CONTEXT_JMQ_PREFIX = "authnContext-";
-    private static final String RELAY_STATE_JMQ_PREFIX = "relayState-";
-    private static final String OLD_IDP_SESSION_JMQ_PREFIX = "oldIdPSession-";
-    private static final String IS_SESSION_UPGRADE_JMQ_PREFIX = "isSessionUpgrade-";
 
     private static FedMonAgent agent;
     private static FedMonSAML2Svc saml2Svc;
@@ -533,46 +524,7 @@ public class IDPSSOFederate {
                     if (relayState != null && relayState.trim().length() != 0) {
                         IDPCache.relayStateCache.put(reqID, relayState);
                     }
-
-                    if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        try {
-                            // sessionExpireTime is counted in seconds
-                            long sessionExpireTime = System.currentTimeMillis() / 1000 + SPCache.interval;
-                            SAML2Repository.getInstance().save(
-                                    AUTHN_REQUEST_JMQ_PREFIX + reqID,
-                                    authnReq.toXMLString(true, true),
-                                    sessionExpireTime, null);
-                            if (SAML2Utils.debug.messageEnabled()) {
-                                SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                        + " SAVE AuthnRequest for requestID " + reqID
-                                        + "until " + new SimpleDateFormat().format(new Date(sessionExpireTime))
-                                        + " with interval: " + SPCache.interval);
-                            }
-                            SAML2Repository.getInstance().save(
-                                    AUTHN_CONTEXT_JMQ_PREFIX + reqID,
-                                    matchingAuthnContext.toXMLString(true, true),
-                                    sessionExpireTime, null);
-                            if (SAML2Utils.debug.messageEnabled()) {
-                                SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                        + " SAVE AuthnContext for requestID " + reqID);
-                            }
-                            if (relayState != null && !relayState.trim().isEmpty()) {
-                                SAML2Repository.getInstance().save(
-                                        RELAY_STATE_JMQ_PREFIX + reqID,
-                                        relayState, sessionExpireTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE RelayState for requestID " + reqID);
-                                }
-                            }
-                        } catch (SAML2Exception saml2ex) {
-                            SAML2Utils.debug.error(classMethod, saml2ex);
-                            sendError(request, response, SAML2Constants.SERVER_FAULT,
-                                    "unexpectedError", saml2ex.getMessage(), isFromECP);
-                            return;
-                        }
-                    }
-
+     
                     //IDP Proxy: Initiate proxying
                     try {
                         boolean isProxy = IDPProxyUtil.isIDPProxyEnabled(
@@ -691,23 +643,7 @@ public class IDPSSOFederate {
                             // Save the original IDP Session
                             oldIDPSession = (IDPSession) IDPCache.
                                     idpSessionsByIndices.get(sessionIndex);
-                            if (oldIDPSession != null) {
-                                IDPCache.oldIDPSessionCache.put(reqID, oldIDPSession);
-                                if (SAML2Utils.isSAML2FailOverEnabled()) {
-                                    long expTime = System.currentTimeMillis() / 1000 + SPCache.interval;
-                                    try {
-                                        SAML2Repository.getInstance().save(OLD_IDP_SESSION_JMQ_PREFIX + reqID, new IDPSessionCopy(oldIDPSession), expTime, null);
-                                    } catch (SAML2Exception saml2ex) {
-                                        SAML2Utils.debug.error(classMethod, saml2ex);
-                                        sendError(request, response, SAML2Constants.SERVER_FAULT,
-                                                "unexpectedError", saml2ex.getMessage(), isFromECP);
-                                        return;
-                                    }
-                                }
-                            } else {
-                                SAML2Utils.debug.error(classMethod + "The old SAML2 session "
-                                        + " was not found in the idp session by indices cache");
-                            }
+                            IDPCache.oldIDPSessionCache.put(reqID, oldIDPSession);
                         }
 
                         // Save the new requestId and AuthnRequest
@@ -725,52 +661,6 @@ public class IDPSSOFederate {
                         if ((relayState != null) &&
                             (relayState.trim().length() != 0)) {
                             IDPCache.relayStateCache.put(reqID, relayState);
-                        }
-
-                        if (SAML2Utils.isSAML2FailOverEnabled()) {
-                            try {
-                                // sessionExpireTime is counted in seconds
-                                long expTime = System.currentTimeMillis() / 1000 + SPCache.interval;
-                                SAML2Repository.getInstance().save(
-                                        AUTHN_REQUEST_JMQ_PREFIX + reqID,
-                                        authnReq.toXMLString(true, true),
-                                        expTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE AuthnRequest for requestID " + reqID
-                                            + "until " + new SimpleDateFormat().format(new Date(expTime))
-                                        + " with interval: " + SPCache.interval);
-                                }
-                                SAML2Repository.getInstance().save(
-                                        AUTHN_CONTEXT_JMQ_PREFIX + reqID,
-                                        matchingAuthnContext.toXMLString(true, true),
-                                        expTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE AuthnContext for requestID " + reqID);
-                                }
-                                SAML2Repository.getInstance().save(
-                                        IS_SESSION_UPGRADE_JMQ_PREFIX,
-                                        Boolean.TRUE, expTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE isSessionUpgrade for requestID " + reqID);
-                                }
-                                if (relayState != null && !relayState.trim().isEmpty()) {
-                                    SAML2Repository.getInstance().save(
-                                            RELAY_STATE_JMQ_PREFIX + reqID,
-                                            relayState, expTime, null);
-                                    if (SAML2Utils.debug.messageEnabled()) {
-                                        SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                                + " SAVE RelayState for requestID " + reqID);
-                                    }
-                                }
-                            } catch (SAML2Exception saml2ex) {
-                                SAML2Utils.debug.error(classMethod, saml2ex);
-                                sendError(request, response, SAML2Constants.SERVER_FAULT,
-                                        "unexpectedError", saml2ex.getMessage(), isFromECP);
-                                return;
-                            }
                         }
 
                         //IDP Proxy: Initiate proxying when session upgrade is requested
@@ -918,45 +808,6 @@ public class IDPSSOFederate {
                             IDPCache.relayStateCache.put(reqID, relayState);
                         }
 
-                        if (SAML2Utils.isSAML2FailOverEnabled()) {
-                            try {
-                                // sessionExpireTime is counted in seconds
-                                long expTime = System.currentTimeMillis() / 1000 + SPCache.interval;
-                                SAML2Repository.getInstance().save(
-                                        AUTHN_REQUEST_JMQ_PREFIX + reqID,
-                                        authnReq.toXMLString(true, true),
-                                        expTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE AuthnRequest for requestID " + reqID
-                                            + "until " + new SimpleDateFormat().format(new Date(expTime))
-                                        + " with interval: " + SPCache.interval);
-                                }
-                                SAML2Repository.getInstance().save(
-                                        AUTHN_CONTEXT_JMQ_PREFIX + reqID,
-                                        matchingAuthnContext.toXMLString(true, true),
-                                        expTime, null);
-                                if (SAML2Utils.debug.messageEnabled()) {
-                                    SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                            + " SAVE AuthnContext for requestID " + reqID);
-                                }
-                                if (relayState != null && !relayState.trim().isEmpty()) {
-                                    SAML2Repository.getInstance().save(
-                                            RELAY_STATE_JMQ_PREFIX + reqID,
-                                            relayState, expTime, null);
-                                    if (SAML2Utils.debug.messageEnabled()) {
-                                        SAML2Utils.debug.message("IDPSSOFederate.doSSOFederate:"
-                                                + " SAVE RelayState for requestID " + reqID);
-                                    }
-                                }
-                            } catch (SAML2Exception saml2ex) {
-                                SAML2Utils.debug.error(classMethod, saml2ex);
-                                sendError(request, response, SAML2Constants.SERVER_FAULT,
-                                        "unexpectedError", saml2ex.getMessage(), isFromECP);
-                                return;
-                            }
-                        }
-
                         try {
                             SAML2Utils.debug.message(classMethod + " Invoking the " +
                                     "IDP Adapter after NO session upgrade requested");
@@ -1015,27 +866,9 @@ public class IDPSSOFederate {
                 }
                 if (cacheObj != null) {
                     authnReq = (AuthnRequest)cacheObj.getObject();
-                } else if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        SAML2Utils.debug.message("Trying to retrieve the AuthnRequest from SFO");
-                        String authnReqXML = (String) SAML2Repository.getInstance().retrieve(AUTHN_REQUEST_JMQ_PREFIX + reqID);
-                        if (authnReqXML != null) {
-                            authnReq = ProtocolFactory.getInstance().createAuthnRequest(authnReqXML);
-                        }
-                    } catch (SAML2Exception saml2ex) {
-                        SAML2Utils.debug.error(classMethod + "Unable to get AuthnRequest from SAMLv2 SFO", saml2ex);
-                    }
                 }
 
                 relayState =(String)IDPCache.relayStateCache.get(reqID);
-
-                if (relayState == null && SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        relayState = (String) SAML2Repository.getInstance().retrieve(RELAY_STATE_JMQ_PREFIX + reqID);
-                    } catch (SAML2Exception saml2ex) {
-                        SAML2Utils.debug.error(classMethod + "Unable to get RelayState from SAMLv2 SFO", saml2ex);
-                    }
-                }
 
                 // Invoke the IDP Adapter after the user has been authenticated
                 try {
@@ -1064,21 +897,6 @@ public class IDPSSOFederate {
                 if (cacheObj != null) {
                     authnReq = (AuthnRequest)cacheObj.getObject();
                 }
-                if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        if (cacheObj == null) {
-                            SAML2Utils.debug.message("Trying to retrieve the AuthnRequest from SFO");
-                            String authnReqXML = (String) SAML2Repository.getInstance().retrieve(AUTHN_REQUEST_JMQ_PREFIX + reqID);
-                            if (authnReqXML != null) {
-                                authnReq = ProtocolFactory.getInstance().createAuthnRequest(authnReqXML);
-                            }
-                        }
-                        SAML2Utils.debug.message("Trying to remove AuthnRequest from SFO");
-                        SAML2Repository.getInstance().delete(AUTHN_REQUEST_JMQ_PREFIX + reqID);
-                    } catch (SAML2Exception saml2ex) {
-                        SAML2Utils.debug.error(classMethod + "Unable to get/remove AuthnRequest from SAMLv2 SFO", saml2ex);
-                    }
-                }
                 AuthnContext matchingAuthnContext = null;
                 synchronized (IDPCache.idpAuthnContextCache) {
                     cacheObj = (CacheObject)
@@ -1087,32 +905,8 @@ public class IDPSSOFederate {
                 if (cacheObj != null) {
                     matchingAuthnContext = (AuthnContext)cacheObj.getObject();
                 }
-                if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        if (cacheObj == null) {
-                            String authnContextXML = (String) SAML2Repository.getInstance().retrieve(AUTHN_CONTEXT_JMQ_PREFIX + reqID);
-                            if (authnContextXML != null) {
-                                matchingAuthnContext = AssertionFactory.getInstance().createAuthnContext(authnContextXML);
-                            }
-                        }
-                        SAML2Repository.getInstance().delete(AUTHN_CONTEXT_JMQ_PREFIX + reqID);
-                    } catch (SAML2Exception saml2ex) {
-                        SAML2Utils.debug.error(classMethod + "Unable to get/remove AuthnContext from SAMLv2 SFO", saml2ex);
-                    }
-                }
                 
                 relayState = (String)IDPCache.relayStateCache.remove(reqID);
-                if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        if (relayState == null) {
-                            relayState = (String) SAML2Repository.getInstance().retrieve(RELAY_STATE_JMQ_PREFIX + reqID);
-                        }
-                        SAML2Repository.getInstance().delete(RELAY_STATE_JMQ_PREFIX + reqID);
-                    } catch (SAML2Exception saml2ex) {
-                        SAML2Utils.debug.error(classMethod + "Unable to get/remove RelayState from SAMLv2 SFO", saml2ex);
-                    }
-                }
-
                 if (authnReq == null) {
                     SAML2Utils.debug.error(classMethod +
                         "Unable to get AuthnRequest from cache.");
@@ -1131,31 +925,10 @@ public class IDPSSOFederate {
                     if (IDPCache.isSessionUpgradeCache.contains(reqID)) {
                         isSessionUpgrade =  true;
                     }
-                } else if (SAML2Utils.isSAML2FailOverEnabled()) {
-                    try {
-                        Object isUpgrade = SAML2Repository.getInstance().retrieve(IS_SESSION_UPGRADE_JMQ_PREFIX + reqID);
-                        isSessionUpgrade = isUpgrade != null;
-                    } catch (SAML2Exception saml2ex) {
-                        //there is no isSessionUpgrade in SFO
-                    }
                 }
                 if (isSessionUpgrade) {
                     IDPSession oldSess = 
                         (IDPSession)IDPCache.oldIDPSessionCache.remove(reqID);
-                    if (SAML2Utils.isSAML2FailOverEnabled()) {
-                        try {
-                            if (oldSess == null) {
-                                IDPSessionCopy oldSessCopy =
-                                        (IDPSessionCopy) SAML2Repository.getInstance().retrieve(OLD_IDP_SESSION_JMQ_PREFIX + reqID);
-                                if (oldSessCopy != null) {
-                                    oldSess = new IDPSession(oldSessCopy);
-                                }
-                            }
-                            SAML2Repository.getInstance().delete(OLD_IDP_SESSION_JMQ_PREFIX + reqID);
-                        } catch (SAML2Exception saml2ex) {
-                            SAML2Utils.debug.error("Unable to get/remove old IdP Session from SAMLv2 SFO", saml2ex);
-                        }
-                    }
                     String sessionIndex = IDPSSOUtil.getSessionIndex(session);
                     if (sessionIndex != null && (sessionIndex.length() != 0 )) { 
                         IDPCache.idpSessionsByIndices.put(sessionIndex,oldSess);
@@ -1529,16 +1302,5 @@ public class IDPSSOFederate {
         IDPCache.authnRequestCache.remove(reqID);
         IDPCache.idpAuthnContextCache.remove(reqID);
         IDPCache.isSessionUpgradeCache.remove(reqID); 
-        if (SAML2Utils.isSAML2FailOverEnabled()) {
-            try {
-                SAML2Utils.debug.message("Cleaning up the cache for reqID: " + reqID);
-                SAML2Repository.getInstance().delete(OLD_IDP_SESSION_JMQ_PREFIX + reqID);
-                SAML2Repository.getInstance().delete(AUTHN_REQUEST_JMQ_PREFIX + reqID);
-                SAML2Repository.getInstance().delete(AUTHN_CONTEXT_JMQ_PREFIX + reqID);
-                SAML2Repository.getInstance().delete(IS_SESSION_UPGRADE_JMQ_PREFIX + reqID);
-            } catch (SAML2Exception saml2ex) {
-                SAML2Utils.debug.message("SAML2 SFO error while cleaning up cache: " + saml2ex.getMessage());
-            }
-        }
     }
 }

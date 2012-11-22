@@ -26,16 +26,13 @@
  *
  */
 
-/**
- * Portions Copyrighted 2012 ForgeRock Inc
- */
+
+
 package com.sun.identity.saml2.profile;
 
 /**
  * This is a base class to be extended by classes that needs to be
  * cached and cleaned up by the <code>CacheCleanUpThread</code>.
- *
- * @deprecated the features this class provides are no longer used
  */
 public class CacheObject {
 
