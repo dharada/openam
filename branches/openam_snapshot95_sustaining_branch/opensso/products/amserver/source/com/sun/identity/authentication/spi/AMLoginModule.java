@@ -2488,8 +2488,8 @@ public abstract class AMLoginModule implements LoginModule {
      * their session quota.<br>
      * <i>NB</i>The existing session count is exclusive of any session created
      * as part of the running authentication process
-     * 
-     * @param userName the username of the user who's sessio quota will be checked
+     *
+     * @param userName the username of the user who's session quota will be checked
      * @return true if the user session quota is reached, false otherwise
      * @supported.api
      */
@@ -2561,10 +2561,9 @@ public abstract class AMLoginModule implements LoginModule {
     
     /**
      * Returns the set of SSOTokens for a specified user
-     * 
-     * @param userName
-     * @return The set of SSOTokens for the users current sessions, returns null
-     * on error
+     *
+     * @param userName The username to be used to query the sessions
+     * @return The set of SSOTokens for the user's current sessions, returns null on error
      * @supported.api
      */ 
     public Set<SSOToken> getUserSessions(String userName) {
@@ -2577,8 +2576,7 @@ public abstract class AMLoginModule implements LoginModule {
 
         try {
             // Get the universal ID
-            AMIdentity amIdUser = ad.getIdentity(IdType.USER, userName,
-                    loginState.getOrgDN());
+            AMIdentity amIdUser = ad.getIdentity(IdType.USER, userName, loginState.getOrgDN());
 
             String univId = IdUtils.getUniversalId(amIdUser);
 
