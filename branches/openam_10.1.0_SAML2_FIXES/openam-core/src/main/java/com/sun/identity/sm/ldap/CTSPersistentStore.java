@@ -105,9 +105,14 @@ class CTSPersistentStore extends GeneralTaskRunnable
     private final static String EXPDATE_FILTER_POST = ")";
 
     /**
+     * Common Injectors to inject the proper implementation when necessary.
+     */
+    private static final CTSPersistentStoreInjector ctsPersistentStoreInjector = new CTSPersistentStoreInjector();
+
+    /**
      * Singleton Instance
      */
-    private static volatile CTSPersistentStore instance = new CTSPersistentStore();
+    private static volatile CTSPersistentStore instance;
 
     /**
      * Shared SM Data Layer Accessor.
@@ -296,6 +301,14 @@ class CTSPersistentStore extends GeneralTaskRunnable
      * - Set all Timing Periods.
      */
     static {
+        // Instantiate the Singleton Instance.
+        try {
+            instance = (CTSPersistentStore) ctsPersistentStoreInjector.getInstance();
+            initialize();
+        } catch(Exception e) {
+            DEBUG.error("Unable to Instantiate "+CTSPersistentStore.class.getName()+" for Session Failover and HA Persistence",e);
+        }
+
         try {
             gracePeriod = Integer.parseInt(SystemProperties.get(
                     CLEANUP_GRACE_PERIOD, String.valueOf(gracePeriod)));
