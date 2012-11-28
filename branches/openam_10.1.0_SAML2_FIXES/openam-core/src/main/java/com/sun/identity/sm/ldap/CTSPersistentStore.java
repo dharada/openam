@@ -1268,6 +1268,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable
     // ***************************************************************************************************
     //
     // AMTokenSAML2Repository Implementation Methods.
+    //
     // These methods are called directly from the CTSPersistentSAML2Store, if that is the configured and
     // desired implementation.
     //
@@ -1288,7 +1289,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable
             return null;
         }
         // Establish our DN
-        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, samlKey);
+        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, AMRecordDataEntry.encodeKey(samlKey));
         // Initialize LDAP Objects
         LDAPConnection ldapConnection = null;
         LDAPSearchResults searchResults = null;
@@ -1348,7 +1349,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable
             return null;
         }
         StringBuilder filter = new StringBuilder();
-        filter.append(SKEY_FILTER_PRE).append(secKey).append(SKEY_FILTER_POST);
+        filter.append(SKEY_FILTER_PRE).append(AMRecordDataEntry.encodeKey(secKey)).append(SKEY_FILTER_POST);
         if (DEBUG.messageEnabled()) {
             DEBUG.message(messageTag + "Attempting Read of BaseDN:[" + SAML2_HA_BASE_DN + "]");
         }
@@ -1422,12 +1423,13 @@ public class CTSPersistentStore extends GeneralTaskRunnable
             DEBUG.error(messageTag + "Unable to Persist SAML2 Token Object, as Object was not provided or null!");
             return;
         }
-        // Marshal our Object and establish a FAMRecord for this Token Instance.
+        // Now Marshal our Object and establish a FAMRecord for this Token Instance.
         try {
             byte[] serializedInternalSession = SessionUtils.encode(samlObj);
             // Create a FAMRecord Object to wrap our SAML2 Object.
             FAMRecord famRec = new FAMRecord(
-                    SAML2, FAMRecord.WRITE, samlKey, expirationTime, secKey,
+                    SAML2, FAMRecord.WRITE, AMRecordDataEntry.encodeKey(samlKey), expirationTime,
+                    ((secKey==null) ? secKey: AMRecordDataEntry.encodeKey(secKey)),
                     1, null, serializedInternalSession);
             // Construct the Entry's DN and Persist Record
             writeImmediate(famRec, getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, famRec.getPrimaryKey()));
@@ -1442,6 +1444,16 @@ public class CTSPersistentStore extends GeneralTaskRunnable
      * @param samlKey primary key
      */
     public void deleteSAML2Token(String samlKey) throws StoreException {
+        deleteSAML2Token(samlKey, true);
+    }
+
+    /**
+     * Deletes the SAML2 object by given primary key from the repository
+     *
+     * @param samlKey primary key
+     * @param encodePrimaryKey
+     */
+    private void deleteSAML2Token(String samlKey, boolean  encodePrimaryKey) throws StoreException {
         final String messageTag = "CTSPersistenceStore.deleteSAML2Token: ";
         // Arguments Valid?
         if ((samlKey == null) || (samlKey.isEmpty())) {
@@ -1451,7 +1463,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable
         // Initialize.
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
-        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, samlKey);
+        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME,
+                ((encodePrimaryKey)?AMRecordDataEntry.encodeKey(samlKey):samlKey) );
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
@@ -1529,7 +1542,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable
                 }
                 // Obtain the primary Key and perform the Deletion.
                 String[] values = primaryKeyAttribute.getStringValueArray();
-                deleteSAML2Token(values[0]);
+                deleteSAML2Token(values[0],false); // Do not to encode, as our Primary Key is already encoded from Store.
                 objectsDeleted++;
             } // End of while loop.
         } catch (LDAPException ldapException) {
@@ -1568,7 +1581,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable
                 DEBUG.error(messageTag + "Number of Expired SAML2 Artifacts Deleted:[" + objectsDeleted + "], Duration:[" + timeDuration.getDurationToString() + "]");
             }
         }
-
 
     }
 
