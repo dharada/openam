@@ -44,12 +44,12 @@ import java.util.*;
  * This class is used in SAML2  mode to store/recover serialized
  * state of Assertion/Response object.
  *
- * This class acts as a proxy to perform distinct SAML2
+ * This class acts as a Proxy to perform distinct SAML2
  * operations and allow the CTSPersistentStore implementation
  * to handle the actual CRUD for Tokens.
  *
  */
-public class CTSPersistentSAML2Store extends GeneralTaskRunnable
+public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
     implements AMTokenSAML2Repository {
 
     /**
@@ -69,7 +69,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
      *
      * This instance is this classes Singleton.
      */
-    private static volatile AMTokenSAML2Repository instance = new CTSPersistentSAML2Store();
+    private static volatile AMTokenSAML2Repository instance = new CTSPersistentSAML2StoreProxy();
 
     /**
      * OpenAM CTS Repository.
@@ -170,7 +170,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
         try {
             initialize();
         } catch(Exception e) {
-            debug.error("Unable to Instantiate "+CTSPersistentSAML2Store.class.getName()+" for SAML2 Persistence",e);
+            debug.error("Unable to Instantiate "+CTSPersistentSAML2StoreProxy.class.getName()+" for SAML2 Persistence",e);
         }
 
     }
@@ -178,12 +178,12 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
     /**
      * Package Protected from instantiation.
      */
-    private CTSPersistentSAML2Store() {
+    private CTSPersistentSAML2StoreProxy() {
     }
 
    /**
     *
-    * Constructs new CTSPersistentSAML2Store
+    * Constructs new CTSPersistentSAML2StoreProxy
     * @exception Exception when cannot create a new SAML2 repository
     *
     */
@@ -215,7 +215,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
         // Initialize our Persistence Layer.
         initPersistSession();   
         // Schedule our Runnable Background Thread Task. @see run() method for associated Task.
-        SystemTimer.getTimer().schedule((CTSPersistentSAML2Store) instance, new Date((
+        SystemTimer.getTimer().schedule((CTSPersistentSAML2StoreProxy) instance, new Date((
             System.currentTimeMillis() / 1000) * 1000));
     }
 
@@ -248,7 +248,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
      *
      * @return AMTokenSAML2Repository Singleton Instance.
      */
-    public AMTokenSAML2Repository getInstance() {
+    public static AMTokenSAML2Repository getInstance() {
         return instance;
     }
 
@@ -487,7 +487,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
      * healthCheckPeriod.
      */
      public void run() {
-        String classMethod="CTSPersistentSAML2Store.run: ";
+        String classMethod="CTSPersistentSAML2StoreProxy.run: ";
         try {
 
             if (debug.messageEnabled()) {
@@ -513,7 +513,7 @@ public class CTSPersistentSAML2Store extends GeneralTaskRunnable
                 logDBStatus();
             }
         } catch (Exception e) {
-            debug.error("CTSPersistentSAML2Store.run(): Exception in thread",
+            debug.error("CTSPersistentSAML2StoreProxy.run(): Exception in thread",
                     e);
         }
 

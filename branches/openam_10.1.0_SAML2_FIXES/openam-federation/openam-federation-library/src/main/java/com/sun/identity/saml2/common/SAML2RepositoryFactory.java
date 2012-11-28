@@ -22,16 +22,15 @@ package com.sun.identity.saml2.common;
 
 import com.sun.identity.common.SystemConfigurationUtil;
 import com.sun.identity.coretoken.interfaces.AMTokenSAML2Repository;
-import com.sun.identity.sm.ldap.CTSPersistentStore;
 
 /**
  * <code>SAML2RepositoryFactory</code> represents the saml2 repository,
- * default repository is <code>CTSPersistentSAML2Store</code>.
+ * default repository is <code>CTSPersistentSAML2StoreProxy</code>.
  */
 public class SAML2RepositoryFactory {
 
     private static final String DEFAULT_REPOSITORY_CLASS =
-            "com.sun.identity.saml2.common.CTSPersistentSAML2Store";
+            "com.sun.identity.saml2.common.CTSPersistentSAML2StoreProxy";
 
     private static final String REPOSITORY_CLASS_PROPERTY =
             "com.sun.identity.saml2.plugins.SAML2RepositoryImpl";
@@ -63,8 +62,8 @@ public class SAML2RepositoryFactory {
     public static AMTokenSAML2Repository getInstance()
             throws SAML2Exception {
         if (saml2Repository == null) {
-            if (CTS_SAML2_REPOSITORY_CLASS_NAME.equals(CTSPersistentStore.class.getName())) {
-                saml2Repository = CTSPersistentStore.getInstance();
+            if (CTS_SAML2_REPOSITORY_CLASS_NAME.equals(DEFAULT_REPOSITORY_CLASS)) {
+                saml2Repository = CTSPersistentSAML2StoreProxy.getInstance();
             } else if (CTS_SAML2_REPOSITORY_CLASS_NAME.equals(DEPRECATED_JMQ_REPOSITORY_CLASS)) {
                 saml2Repository = com.sun.identity.sm.mq.JMQSessionRepository.getInstance();
             } else {
@@ -78,6 +77,14 @@ public class SAML2RepositoryFactory {
                             "AMTokenSAML2Repository", e);
                     saml2Repository = null;
                 }
+            }
+            // Determine if we were able to obtain the Instance for our AMTokenSAML2Repository.
+            if (saml2Repository == null)
+            {
+                SAML2Utils.debug.error("Failed to instantiate " +
+                        "AMTokenSAML2Repository Implementation using "+CTS_SAML2_REPOSITORY_CLASS_NAME+", very bad!");
+                throw new SAML2Exception(
+                        SAML2Utils.bundle.getString("nullSAML2Repository"));
             }
         }
         // Return Instance.
