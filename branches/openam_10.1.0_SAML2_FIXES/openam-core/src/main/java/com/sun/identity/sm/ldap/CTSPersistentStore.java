@@ -566,9 +566,6 @@ public class CTSPersistentStore extends GeneralTaskRunnable
                     type, FAMRecord.WRITE, key, expirationTime, uuid,
                     is.getState(), sid.toString(), serializedInternalSession);
             // Construct the Entry's DN and Persist Record
-
-
-
             writeImmediate(famRec, getFormattedString(SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, famRec.getPrimaryKey()));
         } catch (Exception e) {
             DEBUG.error(messageTag + "Failed to Save Session", e);
@@ -1421,11 +1418,8 @@ public class CTSPersistentStore extends GeneralTaskRunnable
         if ((samlKey == null) || (samlKey.isEmpty())) {
             DEBUG.error(messageTag + "Unable to Persist SAML2 Token Object, as Primary SAML2 Key was not provided!");
             return;
-        } else if ((secKey == null) || (secKey.isEmpty())) {
-            DEBUG.error(messageTag + "Unable to Persist SAML2 Token Object, as Secondary SAML2 Key was not provided!");
-            return;
         } else if (samlObj == null) {
-            DEBUG.error(messageTag + "Unable to Persist SAML2 Token Object, as Object was not provided!");
+            DEBUG.error(messageTag + "Unable to Persist SAML2 Token Object, as Object was not provided or null!");
             return;
         }
         // Marshal our Object and establish a FAMRecord for this Token Instance.
@@ -1436,9 +1430,9 @@ public class CTSPersistentStore extends GeneralTaskRunnable
                     SAML2, FAMRecord.WRITE, samlKey, expirationTime, secKey,
                     1, null, serializedInternalSession);
             // Construct the Entry's DN and Persist Record
-            writeImmediate(famRec, getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, famRec.getPrimaryKey()));
+            writeImmediate(famRec, getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, famRec.getPrimaryKey()));
         } catch (Exception e) {
-            DEBUG.error("Failed to Save Session", e);
+            DEBUG.error("Failed to Save SAML2 Token", e);
         }
     }
 
@@ -1457,7 +1451,7 @@ public class CTSPersistentStore extends GeneralTaskRunnable
         // Initialize.
         LDAPConnection ldapConnection = null;
         LDAPException lastLDAPException = null;
-        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, PKEY_NAMING_ATTR, samlKey);
+        String baseDN = getFormattedString(TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE, SAML2_KEY_NAME, samlKey);
         try {
             // Obtain a Connection.
             ldapConnection = getDirectoryConnection();
