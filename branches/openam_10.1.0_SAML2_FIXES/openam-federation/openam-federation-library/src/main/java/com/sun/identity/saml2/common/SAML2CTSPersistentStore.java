@@ -49,7 +49,7 @@ import java.util.*;
  * to handle the actual CRUD for Tokens.
  *
  */
-public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
+public class SAML2CTSPersistentStore extends GeneralTaskRunnable
     implements AMTokenSAML2Repository {
 
     /**
@@ -69,7 +69,7 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
      *
      * This instance is this classes Singleton.
      */
-    private static volatile AMTokenSAML2Repository instance = new CTSPersistentSAML2StoreProxy();
+    private static volatile AMTokenSAML2Repository instance = new SAML2CTSPersistentStore();
 
     /**
      * OpenAM CTS Repository.
@@ -170,7 +170,7 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
         try {
             initialize();
         } catch(Exception e) {
-            debug.error("Unable to Instantiate "+CTSPersistentSAML2StoreProxy.class.getName()+" for SAML2 Persistence",e);
+            debug.error("Unable to Instantiate "+SAML2CTSPersistentStore.class.getName()+" for SAML2 Persistence",e);
         }
 
     }
@@ -178,12 +178,12 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
     /**
      * Package Protected from instantiation.
      */
-    private CTSPersistentSAML2StoreProxy() {
+    private SAML2CTSPersistentStore() {
     }
 
    /**
     *
-    * Constructs new CTSPersistentSAML2StoreProxy
+    * Constructs new SAML2CTSPersistentStore
     * @exception Exception when cannot create a new SAML2 repository
     *
     */
@@ -215,7 +215,7 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
         // Initialize our Persistence Layer.
         initPersistSession();   
         // Schedule our Runnable Background Thread Task. @see run() method for associated Task.
-        SystemTimer.getTimer().schedule((CTSPersistentSAML2StoreProxy) instance, new Date((
+        SystemTimer.getTimer().schedule((SAML2CTSPersistentStore) instance, new Date((
             System.currentTimeMillis() / 1000) * 1000));
     }
 
@@ -487,7 +487,7 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
      * healthCheckPeriod.
      */
      public void run() {
-        String classMethod="CTSPersistentSAML2StoreProxy.run: ";
+        String classMethod="SAML2CTSPersistentStore.run: ";
         try {
 
             if (debug.messageEnabled()) {
@@ -513,7 +513,7 @@ public class CTSPersistentSAML2StoreProxy extends GeneralTaskRunnable
                 logDBStatus();
             }
         } catch (Exception e) {
-            debug.error("CTSPersistentSAML2StoreProxy.run(): Exception in thread",
+            debug.error("SAML2CTSPersistentStore.run(): Exception in thread",
                     e);
         }
 
