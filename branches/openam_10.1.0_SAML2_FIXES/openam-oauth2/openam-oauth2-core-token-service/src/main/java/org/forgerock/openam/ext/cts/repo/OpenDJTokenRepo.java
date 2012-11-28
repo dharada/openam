@@ -18,34 +18,27 @@ package org.forgerock.openam.ext.cts.repo;
 
 import com.sun.identity.coretoken.interfaces.OAuth2TokenRepository;
 import com.sun.identity.shared.debug.Debug;
-import com.sun.identity.sm.ldap.CTSPersistentStoreInjector;
+import com.sun.identity.sm.ldap.CTSPersistentStore;
 import org.forgerock.json.fluent.JsonValue;
 import org.forgerock.json.fluent.JsonValueException;
 import org.forgerock.json.resource.JsonResource;
 import org.forgerock.json.resource.JsonResourceException;
 import org.forgerock.json.resource.SimpleJsonResource;
 import org.forgerock.openam.oauth2.utils.OAuth2Utils;
-import org.forgerock.openam.shared.service.OpenAMService;
 import org.restlet.Request;
 
-public class OpenDJTokenRepo implements JsonResource, OpenAMService {
+public class OpenDJTokenRepo implements JsonResource {
 
 
     final static Debug debug = Debug.getInstance("CTS");
-    private OAuth2TokenRepository cts = null;
+    private static volatile OAuth2TokenRepository cts = CTSPersistentStore.getInstance();
+    private static volatile OpenDJTokenRepo instance = new OpenDJTokenRepo();
 
     /**
-     * Create the CTSPersistentStore connection based on settings in system properties, and start the timer for cleanup operations.
+     * Default Singleton Constructor.
      *
-     * @throws Exception
      */
-    public OpenDJTokenRepo() throws Exception {
-
-            CTSPersistentStoreInjector ctsPersistentStoreInjector = new CTSPersistentStoreInjector();
-            cts = (OAuth2TokenRepository) ctsPersistentStoreInjector.getInstance();
-            if (cts == null) {
-                throw new JsonResourceException(JsonResourceException.UNAVAILABLE, "Core Token Service is Unavailable");
-            }
+    private OpenDJTokenRepo() {
     }
 
     /**
@@ -53,17 +46,8 @@ public class OpenDJTokenRepo implements JsonResource, OpenAMService {
      *
      * @return OpenAMService - Obtain Instance of OpenAM Service Implementation.
      */
-    public OpenAMService getInstance() {
-        return this;
-    }
-
-    /**
-     * Obtain the Instance Class Name of the implementing Service class.
-     *
-     * @return
-     */
-    public String getInstanceClassName() {
-        return OpenDJTokenRepo.class.getName();
+    public static OpenDJTokenRepo getInstance() {
+        return instance;
     }
 
     /**

@@ -58,7 +58,6 @@ import org.forgerock.json.resource.JsonResourceException;
 import org.forgerock.openam.session.model.AMRootEntity;
 import org.forgerock.openam.session.model.DBStatistics;
 
-import org.forgerock.openam.shared.service.OpenAMService;
 import org.forgerock.openam.utils.TimeDuration;
 import org.opends.server.protocols.ldap.LDAPModification;
 import org.opends.server.types.*;
@@ -78,11 +77,16 @@ import org.opends.server.types.*;
  * @author jason.lemay@forgerock.com
  *
  */
-class CTSPersistentStore extends GeneralTaskRunnable
-        implements OpenAMService, AMTokenRepository, AMTokenSAML2Repository, OAuth2TokenRepository {
+public class CTSPersistentStore extends GeneralTaskRunnable
+        implements  AMTokenRepository, AMTokenSAML2Repository, OAuth2TokenRepository {
 
     /**
-     * Globals Constants, so not to pollute entire product.
+     * Globals public Constants, so not to pollute entire product.
+     */
+    public static final String FR_FAMRECORD = "frFamRecord";
+
+    /**
+     * Globals private Constants, so not to pollute entire product.
      */
     private static final String PKEY_NAMING_ATTR = "pKey";
 
@@ -105,14 +109,9 @@ class CTSPersistentStore extends GeneralTaskRunnable
     private final static String EXPDATE_FILTER_POST = ")";
 
     /**
-     * Common Injectors to inject the proper implementation when necessary.
-     */
-    private static final CTSPersistentStoreInjector ctsPersistentStoreInjector = new CTSPersistentStoreInjector();
-
-    /**
      * Singleton Instance
      */
-    private static volatile CTSPersistentStore instance;
+    private static volatile CTSPersistentStore instance = new CTSPersistentStore();
 
     /**
      * Shared SM Data Layer Accessor.
@@ -189,7 +188,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
      */
     private static final String SESSION_FAILOVER_HA_BASE_DN =
             FAMRECORDS_NAMING+Constants.COMMA+
-            TOKEN_SESSION_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
+                    TOKEN_SESSION_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String SESSION_FAILOVER_HA_ELEMENT_DN_TEMPLATE =
             PKEY_NAMING_ATTR + Constants.EQUALS + "{"+PKEY_NAMING_ATTR+"}" + Constants.COMMA +
@@ -199,7 +198,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
      * Session Expiration Filter.
      */
     private final static String TOKEN_EXPIRATION_FILTER_TEMPLATE =
-            "(&(" + OBJECTCLASS + Constants.EQUALS + CTSPersistentStoreInjector.FR_FAMRECORD +
+            "(&(" + OBJECTCLASS + Constants.EQUALS + CTSPersistentStore.FR_FAMRECORD +
                     ")" + EXPDATE_FILTER_PRE + "{"+FORMATTED_EXPIRATION_DATE_NAME+"}" + EXPDATE_FILTER_POST + ")";
 
 
@@ -208,7 +207,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
      */
     private static final String SAML2_HA_BASE_DN =
             FAMRECORDS_NAMING+Constants.COMMA+
-            TOKEN_SAML2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
+                    TOKEN_SAML2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String TOKEN_SAML2_HA_ELEMENT_DN_TEMPLATE =
             PKEY_NAMING_ATTR + Constants.EQUALS + "{"+SAML2_KEY_NAME+"}" + Constants.COMMA +
@@ -219,7 +218,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
      */
     private static final String OAUTH2_HA_BASE_DN =
             OAUTH2TOKENS_NAMING+Constants.COMMA+
-            TOKEN_OAUTH2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
+                    TOKEN_OAUTH2_HA_ROOT_SUFFIX + Constants.COMMA + TOKEN_ROOT;
 
     private static final String TOKEN_OAUTH2_HA_ELEMENT_DN_TEMPLATE =
             OAuth2Constants.Params.ID + Constants.EQUALS + "{"+OAUTH2_KEY_NAME+"}" + Constants.COMMA + OAUTH2_HA_BASE_DN;
@@ -301,14 +300,6 @@ class CTSPersistentStore extends GeneralTaskRunnable
      * - Set all Timing Periods.
      */
     static {
-        // Instantiate the Singleton Instance.
-        try {
-            instance = (CTSPersistentStore) ctsPersistentStoreInjector.getInstance();
-            initialize();
-        } catch(Exception e) {
-            DEBUG.error("Unable to Instantiate "+CTSPersistentStore.class.getName()+" for Session Failover and HA Persistence",e);
-        }
-
         try {
             gracePeriod = Integer.parseInt(SystemProperties.get(
                     CLEANUP_GRACE_PERIOD, String.valueOf(gracePeriod)));
@@ -404,7 +395,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
     /**
      * Private restricted to preserve Singleton Instantiation.
      */
-    protected CTSPersistentStore() {
+    private CTSPersistentStore() {
     }
 
     /**
@@ -412,17 +403,8 @@ class CTSPersistentStore extends GeneralTaskRunnable
      *
      * @return CTSPersistentStore Singleton Instance.
      */
-    public CTSPersistentStore getInstance() {
+    public static final CTSPersistentStore getInstance() {
         return instance;
-    }
-
-    /**
-     * Provide Service Instance Access to our Singleton
-     *
-     * @return CTSPersistentStore Singleton Instance.
-     */
-    public String getInstanceClassName() {
-        return CTSPersistentStore.class.getName();
     }
 
     /**
@@ -465,7 +447,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
     /**
      * Perform Service Shutdown.
      */
-     @Override
+    @Override
     public void shutdown() {
         internalShutdown();
         DEBUG.warning(DB_AM_SHUT.get().toString());
@@ -1153,7 +1135,7 @@ class CTSPersistentStore extends GeneralTaskRunnable
             // return result
             return result;
         } catch (LDAPException ldapException) {
-             lastLDAPException = ldapException;
+            lastLDAPException = ldapException;
             // Not Found  No Such Object
             if (ldapException.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 // This can be due to the session has expired and removed from the store.
@@ -1743,12 +1725,12 @@ class CTSPersistentStore extends GeneralTaskRunnable
         // detected something missing...
         int validatedSuccessfully=0;
         for(String ctsTopLevelDN : validationResultMap.keySet()) {
-          if (validationResultMap.get(ctsTopLevelDN).booleanValue()) {
-              validatedSuccessfully++;
-          } else {
-              final LocalizableMessage message = DB_ENT_NOT_P.get(ctsTopLevelDN);
-              DEBUG.message("CTSPersistenceStore.validateCTSPersistenceStore: " + message.toString());
-          }
+            if (validationResultMap.get(ctsTopLevelDN).booleanValue()) {
+                validatedSuccessfully++;
+            } else {
+                final LocalizableMessage message = DB_ENT_NOT_P.get(ctsTopLevelDN);
+                DEBUG.message("CTSPersistenceStore.validateCTSPersistenceStore: " + message.toString());
+            }
         } // End of KeySet for each loop...
         // Determine if we are good to go or not....
         return (containersToBeValidated.length == validatedSuccessfully);

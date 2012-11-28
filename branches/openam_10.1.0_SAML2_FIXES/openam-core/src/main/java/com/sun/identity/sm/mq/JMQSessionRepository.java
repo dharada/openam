@@ -54,7 +54,6 @@ import com.sun.identity.sm.model.FAMRecord;
 import com.sun.identity.ha.FAMRecordPersister;
 import com.sun.identity.ha.FAMPersisterManager;
 import com.sun.identity.shared.Constants;
-import org.forgerock.openam.shared.service.OpenAMService;
 
 /**
  * This class implements JMQ-based session repository which
@@ -62,8 +61,7 @@ import org.forgerock.openam.shared.service.OpenAMService;
  * state of InternalSession object
  */
 @Deprecated
-class JMQSessionRepository extends GeneralTaskRunnable implements
-        OpenAMService, AMTokenRepository, AMTokenSAML2Repository {
+public class JMQSessionRepository extends GeneralTaskRunnable implements AMTokenRepository, AMTokenSAML2Repository {
 
     /**
      * Singleton Definition.
@@ -183,7 +181,7 @@ class JMQSessionRepository extends GeneralTaskRunnable implements
      * @return JMQSessionRepository Singleton Instance.
      *
      */
-    public JMQSessionRepository getInstance() {
+    public static final JMQSessionRepository getInstance() {
         initPersistSession();
         SystemTimer.getTimer().schedule(instance, new Date((
                 System.currentTimeMillis() / 1000) * 1000));
@@ -193,12 +191,8 @@ class JMQSessionRepository extends GeneralTaskRunnable implements
    /**
     * Constructs new JMQSessionRepository
     */
-   protected JMQSessionRepository() {
+   private JMQSessionRepository() {
    }
-
-    public String getInstanceClassName() {
-        return JMQSessionRepository.class.getName();
-    }
 
     /**
      *
