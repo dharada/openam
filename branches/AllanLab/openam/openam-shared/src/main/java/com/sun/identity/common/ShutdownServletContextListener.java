@@ -31,6 +31,8 @@ package com.sun.identity.common;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.forgerock.openam.osgi.OSGILoader;
+
 /**
  * The <code>ShutdownServletContextListener</code> class is used to trigger
  * ShutdownManager to shutdown everything when it is undeployed, or the web
@@ -40,6 +42,8 @@ import javax.servlet.ServletContextListener;
 public class ShutdownServletContextListener implements ServletContextListener
 {
     public void contextInitialized(ServletContextEvent sce) {
+        OSGILoader ldr = new OSGILoader();
+        ldr.startup();
     }
 
     public void contextDestroyed(ServletContextEvent sce) {

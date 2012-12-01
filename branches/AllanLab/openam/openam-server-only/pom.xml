@@ -443,6 +443,12 @@
             <version>10.1.0-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-osgi</artifactId>
+            <version>10.1.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- Include all Authentication Modules -->
         <dependency>
             <groupId>org.forgerock.openam</groupId>

@@ -148,12 +148,17 @@
             <groupId>external</groupId>
             <artifactId>jss4</artifactId>
         </dependency>
-		
+
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
         </dependency>
-		
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-osgi</artifactId>
+            <version>10.1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
     
 </project>

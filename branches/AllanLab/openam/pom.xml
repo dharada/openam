@@ -233,6 +233,7 @@
         <module>openam-distribution</module>
         <!-- Final Packaging Distribution Kit -->
         <module>openam-dashboard</module>
+        <module>openam-osgi</module>
 
     </modules>
 
