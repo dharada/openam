@@ -465,3 +465,4 @@ com/sun/identity/monitoring/MonitoringUtil.class
 
 org/forgerock/openam/authentication/service/protocol/*.class
 org/forgerock/openam/services/cdm/BasicClientTypesManager.class
+org/forgerock/openam/validation/*.class
