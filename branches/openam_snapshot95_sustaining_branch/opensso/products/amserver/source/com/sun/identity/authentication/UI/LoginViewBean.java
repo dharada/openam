@@ -28,6 +28,7 @@
 
 /*
  * Portions Copyrighted 2010-2012 ForgeRock Inc
+ * Portions Copyrighted 2012 Nomura Research Institute, Ltd
  */
 
 package com.sun.identity.authentication.UI;
@@ -1951,6 +1952,8 @@ public class LoginViewBean extends AuthViewBeanBase {
         String authErrorCode = null;
         
         if ((e != null) && (e instanceof L10NMessage)) {
+            // if exception is instance of L10NMessage,
+            // then get error code from exception
             L10NMessage l10nE = (L10NMessage) e;
             authErrorCode = l10nE.getErrorCode();
             // in case this AuthLoginException is only a wrapper of
@@ -1960,11 +1963,14 @@ public class LoginViewBean extends AuthViewBeanBase {
                 ErrorMessage = l10nE.getL10NMessage(
                         com.sun.identity.shared.locale.Locale.getLocale(
                         AuthUtils.getLocale(ac)));
-            } else {
-                if (ac != null) {
-                    ErrorMessage = ac.getErrorMessage();
-                    errorCode = ac.getErrorCode();
-                }
+            }
+        }
+        if (authErrorCode == null) {
+            // if error code can not be got from exception,
+            // then get error code and message from auth context
+            if (ac != null) {
+                errorCode = ac.getErrorCode();
+                ErrorMessage = ac.getErrorMessage();
             }
         }
 
@@ -1972,8 +1978,13 @@ public class LoginViewBean extends AuthViewBeanBase {
             //if error code is still null, let's set it to AUTH_ERROR, so the
             //template lookup will succeed
             errorCode = AMAuthErrorCode.AUTH_ERROR;
+        }
+        if (ErrorMessage == null || ErrorMessage.isEmpty()) {
+            // if error message is still null,
+            // then get error message by using error code
             ErrorMessage = AuthUtils.getErrorMessage(errorCode);
         }
+        
         if (ac != null) {
             errorTemplate = ac.getErrorTemplate();
         } else {
