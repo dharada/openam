@@ -65,6 +65,7 @@ public class AMCertStore {
     protected LDAPConnection ldapconn = null;
     protected X509Certificate certificate = null;
     protected static CertificateFactory cf = null;
+    protected long certType = 0;
 
     static final String amSecurity = "amSecurity";
     static com.sun.identity.shared.debug.Debug debug = SecurityDebug.debug;

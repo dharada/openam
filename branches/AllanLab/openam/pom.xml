@@ -1004,11 +1004,14 @@
                 <version>3.0-alpha-2</version>
             </dependency>
 
+            <!-- RSA Auth API -->
             <dependency>
                 <groupId>external</groupId>
                 <artifactId>authapi</artifactId>
                 <version>2005-08-12</version>
             </dependency>
+
+            <!-- Doesnt seem to be used -->
             <dependency>
                 <groupId>external</groupId>
                 <artifactId>FastInfoset</artifactId>
@@ -1072,6 +1075,7 @@
             </dependency>
 
             <!-- Session HA Module Dependencies-->
+            <!-- Seems unused -->
             <dependency>
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
@@ -1097,6 +1101,7 @@
                 <artifactId>org.restlet.ext.jackson</artifactId>
                 <version>${restlet.version}</version>
             </dependency>
+            <!-- Dont think we need these osgi -->
             <dependency>
                 <groupId>org.restlet.osgi</groupId>
                 <artifactId>org.restlet</artifactId>
@@ -1180,6 +1185,19 @@
     <build>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>com.google.code.maven-svn-revision-number-plugin</groupId>

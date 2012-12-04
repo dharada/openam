@@ -32,33 +32,56 @@ import org.osgi.framework.launch.FrameworkFactory;
 import java.util.*;
 
 public class OSGILoader {
+    private static OSGILoader instance;
 
-    public OSGILoader() {
+    protected FrameworkFactory frameworkFactory;
+    protected Map<String, String> config;
+    protected Framework framework;
+
+    private OSGILoader() {
+        try {
+        frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
+        config = new HashMap<String, String>();
+
+            config.put("org.osgi.framework.storage.clean","onFirstInit");
+            config.put("gosh.args","--nointeractive");
+        framework = frameworkFactory.newFramework(config);
+        framework.start();
+    } catch (Exception ex) {
+        System.out.println("Exception :" + ex);
+    }
+}
+    public static OSGILoader getInstance() {
+        if ( instance == null) {
+            instance = new OSGILoader();
+        }
+        return instance;
 
     }
 
     public void startup() {
         try {
-            FrameworkFactory frameworkFactory = ServiceLoader.load(
-                    FrameworkFactory.class).iterator().next();
-            Map<String, String> config = new HashMap<String, String>();
-// TODO: add some config properties
-            Framework framework = frameworkFactory.newFramework(config);
-            framework.start();
 
             BundleContext context = framework.getBundleContext();
             List<Bundle> installedBundles = new LinkedList<Bundle>();
 
             installedBundles.add(context.installBundle(
-                    "file:org.apache.felix.shell-1.4.2.jar"));
+                    "http://repo1.maven.org/maven2/org/apache/felix/org.apache.felix.gogo.command/0.12.0/org.apache.felix.gogo.command-0.12.0.jar"));
             installedBundles.add(context.installBundle(
-                    "file:org.apache.felix.shell.tui-1.4.1.jar"));
+                    "http://repo1.maven.org/maven2/org/apache/felix/org.apache.felix.gogo.runtime/0.10.0/org.apache.felix.gogo.runtime-0.10.0.jar"));
+            installedBundles.add(context.installBundle(
+                    "http://repo1.maven.org/maven2/org/apache/felix/org.apache.felix.gogo.shell/0.10.0/org.apache.felix.gogo.shell-0.10.0.jar"));
+            installedBundles.add(context.installBundle(
+                    "http://repo1.maven.org/maven2/org/apache/felix/org.apache.felix.shell/1.4.3/org.apache.felix.shell-1.4.3.jar"));
+            installedBundles.add(context.installBundle(
+                   "http://repo1.maven.org/maven2/org/apache/felix/org.apache.felix.shell.remote/1.1.2/org.apache.felix.shell.remote-1.1.2.jar"));
 
             for (Bundle bundle : installedBundles) {
+                System.out.println("Starting: "+bundle);
                 bundle.start();
             }
         } catch (Exception ex) {
-
+            System.out.println("Exception :" + ex);
         }
     }
 }

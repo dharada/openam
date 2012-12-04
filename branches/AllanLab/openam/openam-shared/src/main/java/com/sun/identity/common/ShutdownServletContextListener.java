@@ -42,7 +42,7 @@ import org.forgerock.openam.osgi.OSGILoader;
 public class ShutdownServletContextListener implements ServletContextListener
 {
     public void contextInitialized(ServletContextEvent sce) {
-        OSGILoader ldr = new OSGILoader();
+        OSGILoader ldr = OSGILoader.getInstance();
         ldr.startup();
     }
 

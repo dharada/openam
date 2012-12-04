@@ -370,7 +370,7 @@ public class LDAPAuthUtils {
                             SSLContext sslContext = builder.getSSLContext();
                             options.setSSLContext(sslContext);
                         }
-                        
+
                         ConnectionFactory connFactory  = new LDAPConnectionFactory(hostName, portNumber, options);
                         
                         if (adminPool) {
