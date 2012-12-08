@@ -26,8 +26,8 @@
  *
  */
 
-/*
- * Portions Copyrighted 2010-2012 ForgeRock Inc
+/**
+ * Portions Copyrighted 2010-2012 ForgeRock, Inc.
  */
 package com.sun.identity.authentication;
 
@@ -1746,6 +1746,10 @@ public class AuthContext extends Object implements java.io.Serializable {
         if (localFlag) {
             return (acLocal.getErrorTemplate());
         } else {
+            if (receivedDocument == null) {
+                //something went terribly wrong, let's return with internal error template
+                return AuthClientUtils.getErrorTemplate(AMAuthErrorCode.AUTH_ERROR);
+            }
             String errTemplate = "";
             Node exceptionNode = XMLUtils.getRootNode(receivedDocument,
             AuthXMLTags.EXCEPTION);
@@ -1766,6 +1770,10 @@ public class AuthContext extends Object implements java.io.Serializable {
         if (localFlag) {
             return (acLocal.getErrorMessage());
         } else {
+            if (receivedDocument == null) {
+                //something went terribly wrong, let's return with internal error message
+                return AuthClientUtils.getErrorMessage(AMAuthErrorCode.AUTH_ERROR);
+            }
             String errMessage = null;
             Node exceptionNode = XMLUtils.getRootNode(receivedDocument,
             AuthXMLTags.EXCEPTION);
@@ -1786,6 +1794,10 @@ public class AuthContext extends Object implements java.io.Serializable {
         if (localFlag) {
             return (acLocal.getErrorCode());
         } else {
+            if (receivedDocument == null) {
+                //something went terribly wrong
+                return AMAuthErrorCode.AUTH_ERROR;
+            }
             String errCode = "";
             Node exceptionNode = XMLUtils.getRootNode(receivedDocument,
             AuthXMLTags.EXCEPTION);
