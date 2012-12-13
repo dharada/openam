@@ -20,7 +20,7 @@
   !
   ! CCPL HEADER END
   !
-  !      Copyright 2011 ForgeRock AS
+  !      Copyright 2011-2012 ForgeRock AS
   !    
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -63,6 +63,7 @@
       <plugin>
     <groupId>org.bsc.maven</groupId>
     <artifactId>maven-processor-plugin</artifactId>
+    <version>2.0.5</version>
     <inherited>false</inherited>
     <executions>
      <execution>

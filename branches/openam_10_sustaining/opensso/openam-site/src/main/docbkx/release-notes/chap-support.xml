@@ -31,6 +31,10 @@
  xmlns:xinclude='http://www.w3.org/2001/XInclude'>
  <title>Support</title>
 
+ <note>
+  <para>The content of this chapter has not changed since OpenAM 10.0.0.</para>
+ </note>
+
  <para>You can purchase OpenAM support subscriptions and training courses
  from ForgeRock and from consulting partners around the world and in your
  area. To contact ForgeRock, send mail to <link

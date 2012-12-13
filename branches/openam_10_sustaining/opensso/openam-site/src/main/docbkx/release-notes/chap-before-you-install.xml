@@ -35,7 +35,11 @@
  and running OpenAM software. If you have a special request to support a
  component or combination not listed here, contact ForgeRock at <link
  xlink:href="mailto:info@forgerock.com">info@forgerock.com</link>.</para>
- 
+
+ <note>
+  <para>The content of this chapter has not changed since OpenAM 10.0.0.</para>
+ </note>
+
  <section xml:id="java-requirements">
   <title>Java Requirements</title>
 

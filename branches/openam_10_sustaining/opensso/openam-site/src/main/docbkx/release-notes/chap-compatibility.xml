@@ -34,6 +34,10 @@
  <para>This chapter covers both major changes to existing functionality, and
  also deprecated and removed functionality.</para>
 
+ <note>
+  <para>The content of this chapter has not changed since OpenAM 10.0.0.</para>
+ </note>
+
  <section xml:id="changes">
   <title>Major Changes to Existing Functionality</title>
 

@@ -49,13 +49,15 @@
   </authorgroup>
   <xinclude:include href="../legal.xml" />
   <date><?dbtimestamp format="B d, Y"?></date>
-  <pubdate>Last updated: <?dbtimestamp format="B d, Y"?></pubdate>
+  <pubdate>Publication date: <?dbtimestamp format="B d, Y"?></pubdate>
+  <releaseinfo><?eval ${softwareReleaseDate}?></releaseinfo>
  </info>
 
  <toc />
 
  <xinclude:include href='chap-whats-new.xml' />
  <xinclude:include href='chap-before-you-install.xml' />
+ <xinclude:include href='chap-update-install.xml' />
  <xinclude:include href='chap-compatibility.xml' />
  <xinclude:include href='chap-issues.xml' />
  <xinclude:include href="chap-feedback.xml" />

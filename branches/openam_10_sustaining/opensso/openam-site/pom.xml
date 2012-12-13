@@ -112,7 +112,7 @@
   </license>
  </licenses>
  <properties>
-  <serverDocTargetVersion>10.0.0</serverDocTargetVersion>
+  <serverDocTargetVersion>10.0.1</serverDocTargetVersion>
   <agentsDocTargetVersion>3</agentsDocTargetVersion>
   <webAgentsDocTargetVersion>3.0.5</webAgentsDocTargetVersion>
   <javaEEAgentsDocTargetVersion>3.0.5</javaEEAgentsDocTargetVersion>
@@ -120,6 +120,14 @@
   <siteDistributionURL>scp://forgerock.org/var/www/vhosts/openam.forgerock.org/httpdocs</siteDistributionURL>
   <products-basedir>${basedir}/../products</products-basedir>
   <gaId>UA-23412190-7</gaId>
+  <!--
+       Release date is specified only when building the documentation
+       for publication. For example:
+           -D"releaseDate=Software release date: January 1, 1970"
+       Otherwise release date should remain empty.
+  -->
+  <releaseDate />
+  <softwareReleaseDate>${releaseDate}</softwareReleaseDate>
  </properties>
  <distributionManagement>
   <site>
@@ -271,7 +279,7 @@
      <projectName>OpenAM</projectName>
      <googleAnalyticsId>${gaId}</googleAnalyticsId>
     </configuration>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <executions>
      <execution>
       <id>build-doc</id>

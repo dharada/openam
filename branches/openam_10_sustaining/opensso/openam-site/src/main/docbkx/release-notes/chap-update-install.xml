@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ! CCPL HEADER START
+  !
+  ! This work is licensed under the Creative Commons
+  ! Attribution-NonCommercial-NoDerivs 3.0 Unported License.
+  ! To view a copy of this license, visit
+  ! http://creativecommons.org/licenses/by-nc-nd/3.0/
+  ! or send a letter to Creative Commons, 444 Castro Street,
+  ! Suite 900, Mountain View, California, 94041, USA.
+  !
+  ! You can also obtain a copy of the license at
+  ! src/main/resources/legal-notices/CC-BY-NC-ND.txt.
+  ! See the License for the specific language governing permissions
+  ! and limitations under the License.
+  !
+  ! If applicable, add the following below this CCPL HEADER, with the fields
+  ! enclosed by brackets "[]" replaced with your own identifying information:
+  !      Portions Copyright [yyyy] [name of copyright owner]
+  !
+  ! CCPL HEADER END
+  !
+  !      Copyright 2012 ForgeRock AS
+  !    
+-->
+<chapter xml:id='chap-update-install'
+ xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en'
+ xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+ xsi:schemaLocation='http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd'
+ xmlns:xlink='http://www.w3.org/1999/xlink'
+ xmlns:xinclude='http://www.w3.org/2001/XInclude'>
+ <title>Updating &amp; Installing OpenAM</title>
+
+ <para>ForgeRock recommends that you update OpenAM 10.0.0 installations to this
+ release. If you are installing OpenAM for the first time, you can use the same
+ installation instructions as for 10.0.0.</para>
+
+ <procedure xml:id="update-from-earlier-release">
+  <title>To Update From OpenAM 10.0.0</title>
+
+  <para>If you have already installed OpenAM, follow these steps.</para>
+
+  <step>
+   <para>Download and unzip OpenAM <?eval ${serverDocTargetVersion}?>.</para>
+   <para>The download page is <link xlink:show="new"
+   xlink:href="http://forgerock.org/openam.html">http://forgerock.org/openam.html</link>.</para>
+  </step>
+
+  <step>
+   <para>If you have made any customizations, apply them to the
+   <?eval ${serverDocTargetVersion}?> .war file.</para>
+  </step>
+
+  <step>
+   <para>Redeploy the .war file to your web container, using the web container
+   administration console or deployment command.</para>
+
+   <para>If you are using session failover, do not yet restart OpenAM.</para>
+  </step>
+
+  <step performance="optional">
+   <para>If you are using session failover, you must ensure the session
+   failover database is cleared as part of the update to OpenAM. OpenAM's
+   internal representation of session objects has changed in this release.
+   The session failover database must be restarted before starting the updated
+   OpenAM.</para>
+
+   <para>To clear OpenMQ, run <command>amsfo stop</command> and then run
+   <command>amsfo start</command>.</para>
+  </step>
+
+  <step>
+   <para>Start OpenAM, and run the upgrade process for the server.</para>
+  </step>
+ </procedure>
+
+ <procedure xml:id="install-fresh">
+  <title>To Install OpenAM</title>
+
+  <para>If you have not yet installed OpenAM, install this release instead of
+  OpenAM 10.0.0.</para>
+
+  <step>
+   <para>Download and unzip OpenAM <?eval ${serverDocTargetVersion}?>.</para>
+   <para>The download page is <link xlink:show="new"
+   xlink:href="http://forgerock.org/openam.html">http://forgerock.org/openam.html</link>.</para>
+  </step>
+
+  <step>
+   <para>Follow the instructions in the <link
+   xlink:href="http://docs.forgerock.org/en/openam/10.0.0/"
+   xlink:show="new"><citetitle>OpenAM 10.0.0 Installation
+   Guide</citetitle></link>.</para>
+  </step>
+ </procedure>
+</chapter>

@@ -20,7 +20,7 @@
   !
   ! CCPL HEADER END
   !
-  !      Copyright 2011 ForgeRock AS
+  !      Copyright 2011-2012 ForgeRock AS
   !    
 -->
 <chapter xml:id='chap-feedback'
@@ -30,6 +30,10 @@
  xmlns:xlink='http://www.w3.org/1999/xlink'
  xmlns:xinclude='http://www.w3.org/2001/XInclude'>
  <title>How to Report Problems &amp; Provide Feedback</title>
+
+ <note>
+  <para>The content of this chapter has not changed since OpenAM 10.0.0.</para>
+ </note>
 
  <para>If you have questions regarding OpenAM which are not answered by the
  documentation, there is a mailing list which can be found at
