@@ -1,4 +1,0 @@
-<project name="wssproxy">
-    <dirname property="wssproxy.basedir" file="${ant.file.wssproxy}"/>
-    <property file="${wssproxy.basedir}/wssproxy.properties"/>
-</project>
