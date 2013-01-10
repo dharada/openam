@@ -48,6 +48,8 @@ import com.sun.identity.shared.xml.XMLUtils;
 import com.sun.identity.xacml.context.ContextFactory;
 import org.w3c.dom.Element;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -55,9 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -84,12 +84,80 @@ public class XipRequestHandlerServlet extends HttpServlet {
     static final String  XSI_TYPE_ATTR = "xsi:type";
     static final String XACML_AUTHZ_QUERY = "XACMLAuthzDecisionQuery";
     static final String METAALIAS_KEY = "/metaAlias" ;
+
     static Debug debug = Debug.getInstance("libSAML2");
+
 
     static HashMap handlers = new HashMap();
 
+    private static String wsdl;
+    private static ServletContext servletCtx;
 
-    public void init() throws ServletException {
+    /**
+     * Initialize our Servlet
+     *
+     * @param config
+     * @throws ServletException
+     */
+    public void init(ServletConfig config) throws ServletException {
+        servletCtx = config.getServletContext();
+        super.init(config);
+    }
+
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     *
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doGet";
+        debug.error(classMethod + " processing...");
+
+        String queryParam = request.getQueryString();
+        if ((queryParam != null) && (queryParam.equalsIgnoreCase("wsdl"))) {
+            try {
+                // Check if the wsdl is cached
+                if (wsdl == null) {
+                    // Read the wsdl from deployment
+                    InputStream is = servletCtx.getResourceAsStream(
+                            "/WEB-INF/wsdl/IdentityServices.wsdl");    // TODO Specify the right WSDL.
+                    BufferedReader br = new BufferedReader(
+                            new InputStreamReader(is));
+                    StringBuilder sb = new StringBuilder(1000);
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                    // Replace host, port & protocols
+                    wsdl = sb.toString();
+                    int start = wsdl.indexOf("REPLACE_WITH_ACTUAL_URL");
+                    if (start != -1) {
+                        String nwsdl = wsdl.substring(0, start);
+                        nwsdl += request.getRequestURL().toString();
+                        if (!nwsdl.endsWith("/xip")) {
+                            nwsdl += "/xip";
+                        }
+                        wsdl = nwsdl + wsdl.substring(start + 23);
+                    }
+                }
+                response.setContentType("text/xml");
+                PrintWriter out = response.getWriter();
+                out.write(wsdl);
+                out.flush();
+                out.close();
+            } catch (IOException ioe) {
+                // Debug and return null
+            }
+        } else {
+            // TODO Determine if there are any other Get Request Types we need to deal with,
+            // TODO otherwise pass along.
+            response.setCharacterEncoding("UTF-8");
+            super.doGet(request, response);
+        }
     }
 
     /**
@@ -101,13 +169,89 @@ public class XipRequestHandlerServlet extends HttpServlet {
      *         handled.
      * @exception java.io.IOException if an input or output error occurs.
      */
-
+    @Override
     public void doPost(
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doPost";
+        debug.error(classMethod + " processing...");
+        processRequest(request, response);
+    }
 
-        processRequest(request,response);
+    /**
+     * Handles the HTTP <code>PUT</code> method.
+     *
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doPut";
+        debug.error(classMethod + " processing...");
+        super.doPut(req, resp);    // TODO
+    }
+
+    /**
+     * Handles the HTTP <code>DELETE</code> method.
+     *
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doDelete";
+        debug.error(classMethod + " processing...");
+        super.doDelete(req, resp);    // TODO
+    }
+
+    /**
+     * Handles the HTTP <code>OPTIONS</code> method.
+     *
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doOptions";
+        debug.error(classMethod + " processing...");
+        super.doOptions(req, resp);    // TODO
+    }
+
+    /**
+     * Handles the HTTP <code>TRACE</code> method.
+     *
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doTrace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doTrace";
+        debug.error(classMethod + " processing...");
+        super.doTrace(req, resp);    // TODO
+    }
+
+    /**
+     * Handles the HTTP <code>HEAD</code> method.
+     *
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String classMethod = "XipRequestHandlerServlet:doHead";
+        debug.error(classMethod + " processing...");
+        super.doHead(req, resp);    // TODO
     }
 
     /**

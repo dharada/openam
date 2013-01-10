@@ -486,8 +486,11 @@
     </servlet>
 
     <servlet>
-        <servlet-name>xip</servlet-name>
+        <description>XACML3 InterOp Endpoint - xip</description>
+        <display-name>XIP</display-name>
+        <servlet-name>XIP</servlet-name>
         <servlet-class>org.forgerock.identity.openam.xip.services.XipRequestHandlerServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
     </servlet>
 
     <!-- servlet declaration -->
@@ -892,7 +895,7 @@
 
     <!-- OpenAM XACML3 InterOp Prototype servlet mapping -->
     <servlet-mapping>
-        <servlet-name>xip</servlet-name>
+        <servlet-name>XIP</servlet-name>
         <url-pattern>/xip/*</url-pattern>
     </servlet-mapping>
 
