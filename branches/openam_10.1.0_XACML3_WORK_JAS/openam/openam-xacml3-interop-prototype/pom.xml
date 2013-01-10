@@ -32,12 +32,8 @@
     </parent>
 
     <artifactId>openam-xacml3-interop-prototype</artifactId>
-    <name>OpenAM XACML3 InterOp Prototype</name>
+    <name>OpenAM XACML3 InterOp Prototype - XIP</name>
     <packaging>jar</packaging>
-
-    <dependencies>
-
-    </dependencies>
 
     <build>
         <resources>
@@ -59,7 +55,65 @@
 
         <plugins>
 
+            <!-- Surefire Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <templateLoaderPath>${notification.template.path}</templateLoaderPath>
+                    </systemPropertyVariables>
+                    <excludes>
+                        <exclude>**/IT_*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>openam-xip-${project.version}</finalName>
+                    <archive>
+                        <index>true</index>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Specification-Title>OpenAM XACML3 InterOp Prototype - XIP</Specification-Title>
+                            <Specification-Version>${project.version} - ${maven.build.timestamp}</Specification-Version>
+                            <Specification-Vendor>ForgeRock</Specification-Vendor>
+                            <Implementation-Title>OpenAM XACML3 InterOp Prototype - XIP</Implementation-Title>
+                            <Implementation-Version>${project.version} - ${maven.build.timestamp}
+                            </Implementation-Version>
+                            <Implementation-Vendor>ForgeRock</Implementation-Vendor>
+                            <Built-By>${user.name}</Built-By>
+                            <Build-Jdk>${java.version}</Build-Jdk>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Version>${project.version}</Version>
+                            <Create-On>${maven.build.timestamp}</Create-On>
+                            <SVN-Revision>R${svn-revision.revision}</SVN-Revision>
+                            <!-- TODO Add License to Manifest -->
+                            <License />
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-xacml3-schema</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>
 
