@@ -112,13 +112,13 @@ public class XipRequestHandlerServlet extends HttpServlet {
     }
 
     /**
-     * Processes the <code>HttppServletRequest</code>.
+     * Processes the <code>HttpServletRequest</code>.
      */
 
     private void processRequest(HttpServletRequest request,
                                 HttpServletResponse response)
             throws ServletException, IOException {
-        String classMethod = "QueryHandlerServlet:processRequest";
+        String classMethod = "XipRequestHandlerServ;et:processRequest";
         try {
             // handle DOS attack
             SAMLUtils.checkHTTPContentLength(request);
@@ -204,7 +204,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
             String realm,
             String pdpEntityID) throws SOAPException {
 
-        String classMethod = "QueryHandlerServlet:onMessage:";
+        String classMethod = "XipRequestHandlerServ;et:onMessage:";
         SOAPMessage soapMessage = null;
         String pepEntityID = null;
         try {
@@ -239,7 +239,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
      */
     static void signAssertion(String realm,String pdpEntityID,
                               Assertion assertion) throws SAML2Exception {
-        String classMethod = "QueryHandlerServlet.signAssertion: ";
+        String classMethod = "XipRequestHandlerServ;et.signAssertion: ";
 
         // Don't load the KeyProvider object in static block as it can
         // cause issues when doing a container shutdown/restart.
@@ -279,7 +279,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
     Response processSAMLRequest(String realm,String pdpEntityID,Element reqAbs,
                                 HttpServletRequest request,SOAPMessage soapMsg)
             throws SAML2Exception {
-        String classMethod = "QueryHandlerServlet:processSAMLRequest";
+        String classMethod = "XipRequestHandlerServ;et:processSAMLRequest";
         Response samlResponse = null;
         if (reqAbs != null) {
             String xsiType = reqAbs.getAttribute(XSI_TYPE_ATTR);
@@ -347,7 +347,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
                                   RequestAbstract samlRequest,HttpServletRequest request,
                                   SOAPMessage soapMsg) throws SAML2Exception {
 
-        String classMethod = "QueryHandlerServlet:processXACMLResponse";
+        String classMethod = "XipRequestHandlerServ;et:processXACMLResponse";
         Response samlResponse = null;
         String path = request.getPathInfo();
         String key = path.substring(path.indexOf(METAALIAS_KEY) + 10);
