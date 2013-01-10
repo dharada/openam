@@ -43,7 +43,6 @@ import com.sun.identity.saml2.meta.SAML2MetaUtils;
 import com.sun.identity.saml2.protocol.RequestAbstract;
 import com.sun.identity.saml2.protocol.Response;
 import com.sun.identity.saml2.soapbinding.RequestHandler;
-import com.sun.identity.saml2.soapbinding.SOAPBindingService;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.xml.XMLUtils;
 import com.sun.identity.xacml.context.ContextFactory;
@@ -118,7 +117,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
     private void processRequest(HttpServletRequest request,
                                 HttpServletResponse response)
             throws ServletException, IOException {
-        String classMethod = "XipRequestHandlerServ;et:processRequest";
+        String classMethod = "XipRequestHandlerServlet:processRequest";
         try {
             // handle DOS attack
             SAMLUtils.checkHTTPContentLength(request);
@@ -204,7 +203,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
             String realm,
             String pdpEntityID) throws SOAPException {
 
-        String classMethod = "XipRequestHandlerServ;et:onMessage:";
+        String classMethod = "XipRequestHandlerServlet:onMessage:";
         SOAPMessage soapMessage = null;
         String pepEntityID = null;
         try {
@@ -239,7 +238,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
      */
     static void signAssertion(String realm,String pdpEntityID,
                               Assertion assertion) throws SAML2Exception {
-        String classMethod = "XipRequestHandlerServ;et.signAssertion: ";
+        String classMethod = "XipRequestHandlerServlet.signAssertion: ";
 
         // Don't load the KeyProvider object in static block as it can
         // cause issues when doing a container shutdown/restart.
@@ -279,7 +278,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
     Response processSAMLRequest(String realm,String pdpEntityID,Element reqAbs,
                                 HttpServletRequest request,SOAPMessage soapMsg)
             throws SAML2Exception {
-        String classMethod = "XipRequestHandlerServ;et:processSAMLRequest";
+        String classMethod = "XipRequestHandlerServlet:processSAMLRequest";
         Response samlResponse = null;
         if (reqAbs != null) {
             String xsiType = reqAbs.getAttribute(XSI_TYPE_ATTR);
@@ -333,7 +332,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
     /**
      * Returns the received Response to the Requester.
      * Validates the message signature if signed and invokes the
-     * Request Handler to pass the request for futher processing.
+     * Request Handler to pass the request for further processing.
      *
      * @param realm realm of the entity.
      * @param pdpEntityID entity identifier of Policy Decision Point (PDP).
@@ -347,7 +346,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
                                   RequestAbstract samlRequest,HttpServletRequest request,
                                   SOAPMessage soapMsg) throws SAML2Exception {
 
-        String classMethod = "XipRequestHandlerServ;et:processXACMLResponse";
+        String classMethod = "XipRequestHandlerServlet:processXACMLResponse";
         Response samlResponse = null;
         String path = request.getPathInfo();
         String key = path.substring(path.indexOf(METAALIAS_KEY) + 10);
