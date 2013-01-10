@@ -257,6 +257,9 @@
         <!-- Final Packaging Distribution Kit -->
         <module>openam-dashboard</module>
 
+        <!-- OpenAM XACML3 InterOp Prototype -->
+        <module>openam-xacml3-interop-prototype</module>
+
     </modules>
 
     <!-- Developers -->
