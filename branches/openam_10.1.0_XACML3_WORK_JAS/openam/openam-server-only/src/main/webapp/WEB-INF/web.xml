@@ -485,6 +485,11 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>xip</servlet-name>
+        <servlet-class>org.forgerock.identity.openam.xip.services.XipRequestHandlerServlet</servlet-class>
+    </servlet>
+
     <!-- servlet declaration -->
 
     <servlet-mapping>
@@ -885,7 +890,11 @@
         <url-pattern>/sts/mexsoap11</url-pattern>
     </servlet-mapping>
 
-    <!-- servlet mapping -->
+    <!-- OpenAM XACML3 InterOp Prototype servlet mapping -->
+    <servlet-mapping>
+        <servlet-name>xip</servlet-name>
+        <url-pattern>/xip/*</url-pattern>
+    </servlet-mapping>
 
      <!-- Servlet to Restlet adapter declaration (Mandatory) -->
    <servlet>

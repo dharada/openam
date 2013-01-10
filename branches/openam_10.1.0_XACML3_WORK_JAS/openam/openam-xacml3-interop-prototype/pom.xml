@@ -73,7 +73,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <finalName>openam-xip-${project.version}</finalName>
                     <archive>
                         <index>true</index>
                         <manifest>
@@ -107,11 +106,23 @@
     <dependencies>
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-core</artifactId>
+            <artifactId>openam-shared</artifactId>
         </dependency>
         <dependency>
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-xacml3-schema</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-federation-library</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>OpenFM</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
         </dependency>
     </dependencies>
 

@@ -22,4 +22,4 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
  */
-package org.forgerock.identity.openam.xip.protocol;
+package org.forgerock.identity.openam.xip.services;
