@@ -115,8 +115,12 @@ public class XipRequestHandlerServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doGet";
-        debug.error(classMethod + " processing...");
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
 
+        // Determine based upon the contentType on how to consume and respond to the incoming Request.
+
+
+        // Check our query string.
         String queryParam = request.getQueryString();
         if ((queryParam != null) && (queryParam.equalsIgnoreCase("wsdl"))) {
             try {
@@ -153,10 +157,28 @@ public class XipRequestHandlerServlet extends HttpServlet {
                 // Debug and return null
             }
         } else {
+            // Formulate the Default Access Decision to a GET Response and no other parameters
+            StringBuilder sb = new StringBuilder();
+            sb.append("<resources xmlns=\042http://ietf.org/ns/home-documents\042\n");
+            sb.append("xmlns:atom=\042http://www.w3.org/2005/Atom\042>\n");
+            sb.append("<resource rel=\042http://docs.oasis-open.org/ns/xacml/relation/pdp\042>");
+                    sb.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
+            sb.append("</resource>");
+            sb.append(" </resources>");
+
             // TODO Determine if there are any other Get Request Types we need to deal with,
             // TODO otherwise pass along.
-            response.setCharacterEncoding("UTF-8");
-            super.doGet(request, response);
+
+            try {
+                response.setContentType("application/xml");
+                response.setCharacterEncoding("UTF-8");
+                PrintWriter out = response.getWriter();
+                out.write(sb.toString());
+                out.flush();
+                out.close();
+            } catch (IOException ioe) {
+            // Debug and return null
+            }
         }
     }
 
@@ -175,83 +197,83 @@ public class XipRequestHandlerServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doPost";
-        debug.error(classMethod + " processing...");
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
         processPostRequest(request, response);
     }
 
     /**
      * Handles the HTTP <code>PUT</code> method.
      *
-     * @param req
-     * @param resp
+     * @param request
+     * @param response
      * @throws ServletException
      * @throws IOException
      */
     @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doPut";
-        debug.error(classMethod + " processing...");
-        super.doPut(req, resp);    // TODO
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        // TODO Handle Put
     }
 
     /**
      * Handles the HTTP <code>DELETE</code> method.
      *
-     * @param req
-     * @param resp
+     * @param request
+     * @param response
      * @throws ServletException
      * @throws IOException
      */
     @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doDelete";
-        debug.error(classMethod + " processing...");
-        super.doDelete(req, resp);    // TODO
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        // TODO Handle Delete
     }
 
     /**
      * Handles the HTTP <code>OPTIONS</code> method.
      *
-     * @param req
-     * @param resp
+     * @param request
+     * @param response
      * @throws ServletException
      * @throws IOException
      */
     @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doOptions";
-        debug.error(classMethod + " processing...");
-        super.doOptions(req, resp);    // TODO
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        // TODO Handle Options??
     }
 
     /**
      * Handles the HTTP <code>TRACE</code> method.
      *
-     * @param req
-     * @param resp
+     * @param request
+     * @param response
      * @throws ServletException
      * @throws IOException
      */
     @Override
-    protected void doTrace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doTrace(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doTrace";
-        debug.error(classMethod + " processing...");
-        super.doTrace(req, resp);    // TODO
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        super.doTrace(request, response);    // TODO
     }
 
     /**
      * Handles the HTTP <code>HEAD</code> method.
      *
-     * @param req
-     * @param resp
+     * @param request
+     * @param response
      * @throws ServletException
      * @throws IOException
      */
     @Override
-    protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doHead";
-        debug.error(classMethod + " processing...");
-        super.doHead(req, resp);    // TODO
+        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        super.doHead(request, response);    // TODO
     }
 
     /**

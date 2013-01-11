@@ -258,7 +258,7 @@
         <module>openam-dashboard</module>
 
         <!-- OpenAM XACML3 InterOp Prototype -->
-        <module>openam-xacml3-interop-prototype</module>
+        <module>openam-xip</module>
 
     </modules>
 
@@ -1880,11 +1880,18 @@
                     <inherited>true</inherited>
                 </plugin>
 
+                <!--
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>jaxb2-maven-plugin</artifactId>
                     <version>1.3.1</version>
                     <inherited>true</inherited>
+                </plugin>
+                -->
+                <plugin>
+                    <groupId>org.jvnet.jaxb2.maven2</groupId>
+                    <artifactId>maven-jaxb2-plugin</artifactId>
+                    <version>0.8.2</version>
                 </plugin>
 
                 <plugin>

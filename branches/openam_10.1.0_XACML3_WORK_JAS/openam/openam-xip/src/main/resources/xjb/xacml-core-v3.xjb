@@ -29,15 +29,15 @@
 -->
 
 <!--
-Portions Copyrighted [2010] [ForgeRock AS]
+Portions Copyrighted [2013] [ForgeRock US]
 -->
 
 <jaxb:bindings xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                version="2.0">
-  <jaxb:bindings schemaLocation="xacml-core-v3-schema-cd-1.xsd"  node="/xsd:schema">
+  <jaxb:bindings schemaLocation="xacml-core-v3-schema-wd-17.xsd"  node="/xsd:schema">
     <jaxb:schemaBindings>
-      <jaxb:package name="com.sun.identity.entitlement.xacml3.core"/>
+      <jaxb:package name="org.forgerock.identity.openam.xip.entitlement.xacml3.core"/>
     </jaxb:schemaBindings>
 
 <jaxb:bindings node="//xsd:complexType[@name='RequestType']">

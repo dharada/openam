@@ -611,7 +611,7 @@
         <!-- Latest Dependencies for supporting XACML3 InterOp Prototype -->
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-xacml3-interop-prototype</artifactId>
+            <artifactId>openam-xip</artifactId>
             <version>${project.version}</version>
         </dependency>
 
