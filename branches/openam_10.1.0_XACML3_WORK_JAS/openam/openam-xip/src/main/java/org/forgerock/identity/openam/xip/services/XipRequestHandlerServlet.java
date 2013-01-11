@@ -176,7 +176,7 @@ public class XipRequestHandlerServlet extends HttpServlet {
             throws ServletException, IOException {
         String classMethod = "XipRequestHandlerServlet:doPost";
         debug.error(classMethod + " processing...");
-        processRequest(request, response);
+        processPostRequest(request, response);
     }
 
     /**
@@ -257,11 +257,10 @@ public class XipRequestHandlerServlet extends HttpServlet {
     /**
      * Processes the <code>HttpServletRequest</code>.
      */
-
-    private void processRequest(HttpServletRequest request,
-                                HttpServletResponse response)
+    private void processPostRequest(HttpServletRequest request,
+                                    HttpServletResponse response)
             throws ServletException, IOException {
-        String classMethod = "XipRequestHandlerServlet:processRequest";
+        String classMethod = "XipRequestHandlerServlet:processPostRequest";
         try {
             // handle DOS attack
             SAMLUtils.checkHTTPContentLength(request);
