@@ -486,9 +486,9 @@
     </servlet>
 
     <servlet>
-        <description>XACML3 InterOp Endpoint - xip</description>
-        <display-name>XACML</display-name>
-        <servlet-name>XIP</servlet-name>
+        <description>OpenAM XACML Resources</description>
+        <display-name>XACML Resources</display-name>
+        <servlet-name>XACML</servlet-name>
         <servlet-class>org.forgerock.identity.openam.xacml.resources.XacmlResourceRouterServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -895,7 +895,7 @@
 
     <!-- OpenAM XACML3 InterOp Prototype servlet mapping -->
     <servlet-mapping>
-        <servlet-name>XIP</servlet-name>
+        <servlet-name>XACML</servlet-name>
         <url-pattern>/xacml/*</url-pattern>
     </servlet-mapping>
 
