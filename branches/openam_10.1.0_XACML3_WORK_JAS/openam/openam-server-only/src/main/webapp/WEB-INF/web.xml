@@ -489,7 +489,7 @@
         <description>XACML3 InterOp Endpoint - xip</description>
         <display-name>XACML</display-name>
         <servlet-name>XIP</servlet-name>
-        <servlet-class>org.forgerock.identity.openam.xip.services.XipRequestHandlerServlet</servlet-class>
+        <servlet-class>org.forgerock.identity.openam.xacml.resources.XacmlResourceRouterServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
