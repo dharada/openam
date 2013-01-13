@@ -363,6 +363,8 @@
 
 
     <dependencies>
+
+        <!--
         <dependency>
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-ui-ria</artifactId>
@@ -370,6 +372,7 @@
             <classifier>www</classifier>
             <type>zip</type>
         </dependency>
+        -->
 
         <dependency>
             <groupId>org.forgerock.openam</groupId>
@@ -611,7 +614,7 @@
         <!-- Latest Dependencies for supporting XACML3 InterOp Prototype -->
         <dependency>
             <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-xip</artifactId>
+            <artifactId>openam-xacml-resources</artifactId>
             <version>${project.version}</version>
         </dependency>
 

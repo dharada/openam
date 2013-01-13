@@ -29,15 +29,15 @@
 -->
 
 <!--
-Portions Copyrighted [2013] [ForgeRock US]
+Portions Copyrighted [2010] [ForgeRock AS]
 -->
 
 <jaxb:bindings xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                version="2.0">
-  <jaxb:bindings schemaLocation="../xsd/xacml-core-v3-schema-wd-17.xsd"  node="/xsd:schema">
+  <jaxb:bindings schemaLocation="xacml-core-v3-schema-cd-1.xsd"  node="/xsd:schema">
     <jaxb:schemaBindings>
-      <jaxb:package name="org.forgerock.identity.openam.xacml.entitlement.xacml3.core.wd17"/>
+      <jaxb:package name="com.sun.identity.entitlement.xacml3.core"/>
     </jaxb:schemaBindings>
 
 <jaxb:bindings node="//xsd:complexType[@name='RequestType']">
@@ -54,6 +54,9 @@ Portions Copyrighted [2013] [ForgeRock US]
 </jaxb:bindings>
 <jaxb:bindings node="//xsd:complexType[@name='ResultType']">
 <jaxb:class name="Result"/>
+</jaxb:bindings>
+<jaxb:bindings node="//xsd:complexType[@name='PolicyIdentifierType']">
+<jaxb:class name="PolicyIdentifier"/>
 </jaxb:bindings>
 <jaxb:bindings node="//xsd:complexType[@name='PolicyIdentifierListType']">
 <jaxb:class name="PolicyIdentifierList"/>
@@ -193,8 +196,6 @@ Portions Copyrighted [2013] [ForgeRock US]
 <jaxb:bindings node="//xsd:complexType[@name='ApplyType']">
 <jaxb:class name="Apply"/>
 </jaxb:bindings>
-
-
 
   </jaxb:bindings>
 </jaxb:bindings>

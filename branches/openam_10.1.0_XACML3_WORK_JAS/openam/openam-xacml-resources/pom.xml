@@ -139,11 +139,12 @@
         <dependency>
             <groupId>org.forgerock.openam</groupId>
             <artifactId>openam-federation-library</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.forgerock.openam</groupId>
-            <artifactId>OpenFM</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>xerces-J</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
