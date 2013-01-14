@@ -485,6 +485,14 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <description>OpenAM XACML Resources</description>
+        <display-name>XACML Resources</display-name>
+        <servlet-name>XACML</servlet-name>
+        <servlet-class>org.forgerock.identity.openam.xacml.resources.XacmlResourceRouterServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
     <!-- servlet declaration -->
 
     <servlet-mapping>
@@ -886,6 +894,12 @@
     </servlet-mapping>
 
     <!-- servlet mapping -->
+
+    <!-- OpenAM XACML -->
+    <servlet-mapping>
+        <servlet-name>XACML</servlet-name>
+        <url-pattern>/xacml/*</url-pattern>
+    </servlet-mapping>
 
      <!-- Servlet to Restlet adapter declaration (Mandatory) -->
    <servlet>
