@@ -608,6 +608,13 @@
             <artifactId>xml-serializer</artifactId>
         </dependency>
 
+        <!-- XACML Resources-->
+        <dependency>
+            <groupId>org.forgerock.openam</groupId>
+            <artifactId>openam-xacml-resources</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
 </project>
