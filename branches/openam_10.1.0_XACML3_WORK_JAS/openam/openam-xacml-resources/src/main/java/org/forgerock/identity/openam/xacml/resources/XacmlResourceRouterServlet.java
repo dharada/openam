@@ -82,10 +82,10 @@ public class XacmlResourceRouterServlet extends HttpServlet {
 
     static final String REQUEST_ABSTRACT = "RequestAbstract";
     static final String  XSI_TYPE_ATTR = "xsi:type";
-    static final String XACML_AUTHZ_QUERY = "XACMLAuthzDecisionQuery";
+    static final String XACML_AUTHZ_QUERY = "XACMLAuthzDecisionQuery";   // [SAML4XACML]
     static final String METAALIAS_KEY = "/metaAlias" ;
 
-    static Debug debug = Debug.getInstance("libSAML2");
+    static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML3.
 
 
     static HashMap handlers = new HashMap();
