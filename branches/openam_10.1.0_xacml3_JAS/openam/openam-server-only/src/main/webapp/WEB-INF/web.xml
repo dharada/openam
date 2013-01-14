@@ -490,7 +490,6 @@
         <display-name>XACML Resources</display-name>
         <servlet-name>XACML</servlet-name>
         <servlet-class>org.forgerock.identity.openam.xacml.resources.XacmlResourceRouterServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
     </servlet>
 
     <!-- servlet declaration -->
