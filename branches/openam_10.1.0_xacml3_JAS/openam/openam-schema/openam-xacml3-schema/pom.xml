@@ -41,6 +41,50 @@
     <artifactId>openam-xacml3-schema</artifactId>
     <packaging>jar</packaging>
 
+    <!-- Profiles -->
+    <profiles>
+        <!-- Place Default Profiles here to override and determine Environment. -->
+
+        <profile>
+            <id>generate-xacml3-code</id>
+            <build>
+                <plugins>
+                    <!-- Generate the Latest XACML Java POJOs for WD-17 -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>jaxb2-maven-plugin</artifactId>
+                        <version>1.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>xjc-xacml</id>
+                                <goals>
+                                    <goal>xjc</goal>
+                                </goals>
+                                <configuration>
+                                    <packageName>com.sun.identity.entitlement.xacml3.core</packageName>
+                                    <failOnNoSchemas>true</failOnNoSchemas>
+                                    <bindingDirectory>${project.basedir}/src/main/resources/xjb</bindingDirectory>
+                                    <schemaDirectory>${project.basedir}/src/main/resources/xsd</schemaDirectory>
+                                    <verbose>true</verbose>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <extension>true</extension>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.sun.xml.bind</groupId>
+                                <artifactId>jaxb-xjc</artifactId>
+                                <version>2.1.9</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <!-- Build -->
     <build>
         <plugins>
@@ -57,25 +101,6 @@
                    </excludes>
                 </configuration>
             </plugin>
-
-<!--
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>1.3.1</version>
-                <executions>
-                    <execution>
-                        <id>xjc-xacml</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                    </execution>
-               </executions>
-               <configuration>
-                    <extension>true</extension>
-               </configuration>
-           </plugin>
--->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -127,45 +152,7 @@
                 </includes>
             </resource>
         </resources>
-        <testResources>
-            <testResource>
-                <filtering>false</filtering>
-                <directory>src/test/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
-            </testResource>
-        </testResources>
     </build>
 
-    
-    <dependencies>
-    	<dependency>
-            <groupId>org.forgerock.openam</groupId>
-            <artifactId>openam-shared</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-libs</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-xjc</artifactId>
-        </dependency>
-
-    </dependencies>
-    
 </project>
 
