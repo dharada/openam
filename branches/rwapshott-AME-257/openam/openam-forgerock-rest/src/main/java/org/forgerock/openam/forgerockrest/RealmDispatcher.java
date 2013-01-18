@@ -16,37 +16,16 @@
 package org.forgerock.openam.forgerockrest;
 
 
-import java.lang.Exception;
-import java.lang.String;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.LinkedHashMap;
-import java.util.logging.Logger;
-import javax.servlet.ServletException;
-import javax.servlet.ServletContext;
-
-
-import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.json.resource.Connection;
-import org.forgerock.json.resource.ConnectionFactory;
-import org.forgerock.json.resource.CreateRequest;
-import org.forgerock.json.resource.Requests;
-import org.forgerock.json.resource.ResourceException;
-import org.forgerock.json.resource.RequestHandler;
-import org.forgerock.json.resource.Router;
-
-import static org.forgerock.json.resource.RoutingMode.EQUALS;
-
 import com.iplanet.sso.SSOToken;
-import com.iplanet.sso.SSOException;
-import com.iplanet.sso.SSOTokenManager;
+import com.sun.identity.security.AdminTokenAction;
+import com.sun.identity.sm.OrganizationConfigManager;
+import org.forgerock.json.resource.Router;
+import org.forgerock.openam.forgerockrest.session.SessionResource;
 
 import java.security.AccessController;
+import java.util.Set;
 
-import com.sun.identity.security.AdminTokenAction;
-
-
-import com.sun.identity.sm.OrganizationConfigManager;
+import static org.forgerock.json.resource.RoutingMode.EQUALS;
 
 /**
  * A simple {@code Map} based collection resource provider.
@@ -69,6 +48,10 @@ public final class RealmDispatcher {
             router.addRoute(EQUALS, rName + "users", new IdentityResource("user", rName));
             router.addRoute(EQUALS, rName + "agents", new IdentityResource("agent", rName));
             router.addRoute(EQUALS, rName + "groups", new IdentityResource("group", rName));
+
+            // Add Session Routing
+            router.addRoute(EQUALS, rName + "sessions", new SessionResource(SessionResource.getServerIds()));
+//            SessionResource.applyRouting(ocm, router);
 
             Set subOrgs = ocm.getSubOrganizationNames();           //grab subrealms
             router.addRoute(EQUALS, "/realms", new RealmResource(subOrgs));
