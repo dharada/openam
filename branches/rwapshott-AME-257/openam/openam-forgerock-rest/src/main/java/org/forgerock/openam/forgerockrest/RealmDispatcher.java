@@ -49,10 +49,6 @@ public final class RealmDispatcher {
             router.addRoute(EQUALS, rName + "agents", new IdentityResource("agent", rName));
             router.addRoute(EQUALS, rName + "groups", new IdentityResource("group", rName));
 
-            // Add Session Routing
-            router.addRoute(EQUALS, rName + "sessions", new SessionResource(SessionResource.getServerIds()));
-//            SessionResource.applyRouting(ocm, router);
-
             Set subOrgs = ocm.getSubOrganizationNames();           //grab subrealms
             router.addRoute(EQUALS, "/realms", new RealmResource(subOrgs));
             //Recursively calls on each realm registring users agents groups for each subrealm
@@ -65,12 +61,29 @@ public final class RealmDispatcher {
         }
     }
 
+    /**
+     * Provides routing definitions for routing end points that are not associated with realms.
+     *
+     * @param ocm Non null.
+     * @param router Non null.
+     */
+    private static void initGlobalEndpoints(OrganizationConfigManager ocm, Router router) {
+        String rName = ocm.getOrganizationName();
+        if (rName.length() > 1) rName = rName + "/";
+
+        // Routing for all sessions across all servers.
+        router.addRoute(EQUALS, rName + "sessions", new SessionResource(SessionResource.getServerIds()));
+        // Routing for a function to access the id's of all servers.
+        // Routing for each server
+    }
+
     static public void initDispatcher(Router router) {
         try {
             SSOToken adminToken = (SSOToken) AccessController.doPrivileged(
                     AdminTokenAction.getInstance());
             OrganizationConfigManager ocm = new OrganizationConfigManager(adminToken, "/");
             initRealmEndpoints(ocm, router);
+            initGlobalEndpoints(ocm, router);
         } catch (Exception e) {
 
         }
