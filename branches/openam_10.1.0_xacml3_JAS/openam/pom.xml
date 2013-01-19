@@ -133,7 +133,7 @@
         <commons.json-patch.version>1.0.0</commons.json-patch.version>
         <forgerock.json.version>2.0.0-Xpress2</forgerock.json.version>
 
-        <restlet.version>2.1-RC4</restlet.version>
+        <restlet.version>2.1.1</restlet.version>
         <xercesj.version>2.11.0</xercesj.version>
 
         <!--  Project web site -->
@@ -1545,6 +1545,13 @@
                 <groupId>xerces-J</groupId>
                 <artifactId>xml-serializer</artifactId>
                 <version>${xercesj.version}</version>
+            </dependency>
+
+            <!-- Native Json Manipulation -->
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20090211</version>
             </dependency>
 
         </dependencies>

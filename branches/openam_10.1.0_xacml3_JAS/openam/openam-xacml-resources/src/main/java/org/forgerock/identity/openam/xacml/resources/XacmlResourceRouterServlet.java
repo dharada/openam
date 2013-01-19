@@ -46,6 +46,12 @@ import com.sun.identity.saml2.soapbinding.RequestHandler;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.xml.XMLUtils;
 import com.sun.identity.xacml.context.ContextFactory;
+import org.forgerock.identity.openam.xacml.commons.ContentType;
+import org.forgerock.identity.openam.xacml.model.XACML3Constants;
+import org.forgerock.identity.openam.xacml.model.XACMLRequestInformation;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Element;
 
 import javax.servlet.ServletConfig;
@@ -60,37 +66,32 @@ import javax.xml.soap.SOAPMessage;
 import java.io.*;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
- * XIP
- * OpenAM XACML3 InterOP Prototype
- *
+ * XACML Resource Router
+ * <p/>
  * Provides main end-point for all XACML3 requests, either SOAP or REST based.
  * This code was originally used from the @see com.sun.identity.saml2.soapbinding.QueryHandlerServlet.
  *
- *
- *
  * @author Jeff.Schenk@forgerock.com
- *
  */
-public class XacmlResourceRouterServlet extends HttpServlet {
+public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Constants {
+    /**
+     * Define our Static resource Bundle for our debugger.
+     */
+    private static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML3.
 
-    static final String REQUEST_ABSTRACT = "RequestAbstract";
-    static final String  XSI_TYPE_ATTR = "xsi:type";
-    static final String XACML_AUTHZ_QUERY = "XACMLAuthzDecisionQuery";   // [SAML4XACML]
-    static final String METAALIAS_KEY = "/metaAlias" ;
+    /**
+     * Defined and established Handlers.
+     */
+    private static HashMap handlers = new HashMap();
 
-    static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML3.
-
-
-    static HashMap handlers = new HashMap();
-
-    private static String wsdl;
+    /**
+     * Preserve our Servlet Context PlaceHolder,
+     * for referencing Artifacts.
+     */
     private static ServletContext servletCtx;
 
     /**
@@ -101,6 +102,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
      */
     public void init(ServletConfig config) throws ServletException {
         servletCtx = config.getServletContext();
+        debug.error("Initialization of XACML Resource Router, Server Information: "+servletCtx.getServerInfo());
         super.init(config);
     }
 
@@ -115,54 +117,111 @@ public class XacmlResourceRouterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String classMethod = "XacmlResourceRouterServlet:doGet";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
+        debug.error(classMethod + " processing context path:[" + request.getContextPath() + "]");
+
+        // ************************************************************
+        // Authorized?
+
+        // ************************************************************
+        // Accept a pre-determined entry point for the Home Documents
+        try {
+            if (resourceHomeRequested(request, response)) {
+                // Request was satisfied.
+                return;
+            }
+        } catch(JSONException je) {
+            debug.error("JSON processing Exception: "+je.getMessage(),je);
+        }
+        // ***************************************************************
+        // returning here, indicates we still need to process the request
+        // now found the requested relation from the context.
+
+        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
 
         // Determine based upon the contentType on how to consume and respond to the incoming Request.
+
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:home:status
+         ￼
+         Normative Source
+         ￼
+         GET on the home location MUST return status code 200
+         ￼
+         Target
+         ￼
+         Response to GET request on the home location
+         ￼
+         Predicate
+         ￼
+         The HTTP status code in the [response] is 200
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
+
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:home:body
+         ￼
+         Normative Source
+         ￼
+         GET on the home location MUST return a home document
+         ￼
+         Target
+         ￼
+         Response to GET request on the home location
+         ￼
+         Predicate
+         ￼
+         The HTTP body in the [response] follows the home document schema
+         [HomeDocument]
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
+
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:home:pdp
+         ￼
+         Normative Source
+         ￼
+         The XACML entry point representation SHOULD contain a link to the PDP
+         ￼
+         Target
+         ￼
+         Response to GET request on the home location
+         ￼
+         Predicate
+         ￼
+         The home document in the [response] body contains a resource with link relation http://docs.oasis-open.org/ns/xacml/relation/pdp and a valid URL
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
 
 
         // Check our query string.
         String queryParam = request.getQueryString();
         if ((queryParam != null) && (queryParam.equalsIgnoreCase("wsdl"))) {
-            try {
-                // Check if the wsdl is cached
-                if (wsdl == null) {
-                    // Read the wsdl from deployment
-                    InputStream is = servletCtx.getResourceAsStream(
-                            "/WEB-INF/wsdl/IdentityServices.wsdl");    // TODO Specify the right WSDL.
-                    BufferedReader br = new BufferedReader(
-                            new InputStreamReader(is));
-                    StringBuilder sb = new StringBuilder(1000);
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line).append("\n");
-                    }
-                    // Replace host, port & protocols
-                    wsdl = sb.toString();
-                    int start = wsdl.indexOf("REPLACE_WITH_ACTUAL_URL");
-                    if (start != -1) {
-                        String nwsdl = wsdl.substring(0, start);
-                        nwsdl += request.getRequestURL().toString();
-                        if (!nwsdl.endsWith("/xip")) {
-                            nwsdl += "/xip";
-                        }
-                        wsdl = nwsdl + wsdl.substring(start + 23);
-                    }
-                }
-                response.setContentType("text/xml");
-                PrintWriter out = response.getWriter();
-                out.write(wsdl);
-                out.flush();
-                out.close();
-            } catch (IOException ioe) {
-                // Debug and return null
-            }
+            // Nothing here yet.....
         } else {
-            // Formulate the Default Access Decision to a GET Response and no other parameters
+            // Formulate the Home Document.
             StringBuilder sb = new StringBuilder();
             sb.append("<resources xmlns=\042http://ietf.org/ns/home-documents\042\n");
             sb.append("xmlns:atom=\042http://www.w3.org/2005/Atom\042>\n");
             sb.append("<resource rel=\042http://docs.oasis-open.org/ns/xacml/relation/pdp\042>");
-                    sb.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
+            sb.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
             sb.append("</resource>");
             sb.append(" </resources>");
 
@@ -177,7 +236,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 out.flush();
                 out.close();
             } catch (IOException ioe) {
-            // Debug and return null
+                // Debug and return null
             }
         }
     }
@@ -185,11 +244,11 @@ public class XacmlResourceRouterServlet extends HttpServlet {
     /**
      * Handles the HTTP <code>POST</code> method.
      *
-     * @param request the <code>HttpServletRequest</code> object.
+     * @param request  the <code>HttpServletRequest</code> object.
      * @param response the <code>HttpServletResponse</code> object.
-     * @exception ServletException if the request could not be
-     *         handled.
-     * @exception java.io.IOException if an input or output error occurs.
+     * @throws ServletException    if the request could not be
+     *                             handled.
+     * @throws java.io.IOException if an input or output error occurs.
      */
     @Override
     public void doPost(
@@ -197,113 +256,176 @@ public class XacmlResourceRouterServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XacmlResourceRouterServlet:doPost";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        processPostRequest(request, response);
+        debug.error(classMethod + " processing context path:[" + request.getContextPath() + "]");
+
+        // Authorized?
+
+
+        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
+
+        // POST operations to PDP.
+
+        /**
+         * ￼
+         Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:xacml:status
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with a valid XACML request MUST return status code 200
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with valid XACML request in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP status code in the [response] is 200
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
+
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:xacml:body
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with a valid XACML request MUST return a valid XACML response in the body
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with valid XACML request in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP body in the [response] is a valid XACML response
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
+
+
+        /**
+         * ￼
+         Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:xacml:invalid
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with an invalid XACML request MUST return status code 400 (Bad Request)
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with invalid XACML request in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP status code in the [response] is 400
+         ￼
+         Prescription Level
+         ￼
+         mandatory
+         */
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:saml:status
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with a valid XACML request MUST return status code 200
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with valid XACML request wrapped in a
+         xacml-samlp:XACMLAuthzDecisionQuery in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP status code in the [response] is 200
+         ￼
+         Prescription Level
+         ￼
+         optional
+         */
+
+
+        /**
+         * Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:saml:body
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with a valid XACML request MUST return a valid XACML response in the body
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with valid XACML request wrapped in a
+         xacml-samlp:XACMLAuthzDecisionQuery in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP body in the [response] is a valid XACML response wrapped in a
+         samlp:Response
+         ￼
+         Prescription Level
+         ￼
+         optional
+         */
+
+
+        /**
+         * ￼
+         Id
+         ￼
+         urn:oasis:names:tc:xacml:3.0:profile:rest:assertion:pdp:saml:invalid
+         ￼
+         Normative Source
+         ￼
+         POST on the PDP with an invalid XACML request MUST return status code 400 (Bad Request)
+         ￼
+         Target
+         ￼
+         Response to POST request on the PDP location with invalid XACML request wrapped in a xacml-samlp:XACMLAuthzDecisionQuery in the body
+         ￼
+         Predicate
+         ￼
+         The HTTP status code in the [response] is 400
+         ￼
+         Prescription Level
+         ￼
+         optional
+         */
+
+
+        processPDPRequest(request, response);
     }
 
     /**
-     * Handles the HTTP <code>PUT</code> method.
+     * Processes the POST Request for the PDP.
      *
      * @param request
      * @param response
      * @throws ServletException
-     * @throws java.io.IOException
+     * @throws IOException
      */
-    @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doPut";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        // TODO Handle Put
-    }
-
-    /**
-     * Handles the HTTP <code>DELETE</code> method.
-     *
-     * @param request
-     * @param response
-     * @throws ServletException
-     * @throws java.io.IOException
-     */
-    @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doDelete";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        // TODO Handle Delete
-    }
-
-    /**
-     * Handles the HTTP <code>OPTIONS</code> method.
-     *
-     * @param request
-     * @param response
-     * @throws ServletException
-     * @throws java.io.IOException
-     */
-    @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doOptions";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        // TODO Handle Options??
-    }
-
-    /**
-     * Handles the HTTP <code>TRACE</code> method.
-     *
-     * @param request
-     * @param response
-     * @throws ServletException
-     * @throws java.io.IOException
-     */
-    @Override
-    protected void doTrace(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doTrace";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        super.doTrace(request, response);    // TODO
-    }
-
-    /**
-     * Handles the HTTP <code>HEAD</code> method.
-     *
-     * @param request
-     * @param response
-     * @throws ServletException
-     * @throws java.io.IOException
-     */
-    @Override
-    protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doHead";
-        debug.error(classMethod + " processing context path:["+request.getContextPath()+"]");
-        super.doHead(request, response);    // TODO
-    }
-
-    /**
-     * Processes the <code>HttpServletRequest</code>.
-     */
-    private void processPostRequest(HttpServletRequest request,
-                                    HttpServletResponse response)
+    private void processPDPRequest(HttpServletRequest request,
+                                   HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XacmlResourceRouterServlet:processPostRequest";
         try {
-            // handle DOS attack
-            SAMLUtils.checkHTTPContentLength(request);
-            // Get PDP entity ID
-            String requestURI = request.getRequestURI();
-            String queryMetaAlias =
-                    SAML2MetaUtils.getMetaAliasByUri(requestURI);
-            if (debug.messageEnabled()) {
-                debug.message(classMethod + "queryMetaAlias is :"
-                        + queryMetaAlias);
-            }
-            String pdpEntityID =
-                    SAML2Utils.getSAML2MetaManager().getEntityByMetaAlias(
-                            queryMetaAlias);
-            String realm = SAML2MetaUtils.getRealmByMetaAlias(queryMetaAlias);
 
-            if (debug.messageEnabled()) {
-                debug.message(classMethod + "uri : " + requestURI
-                        + ",queryMetaAlias=" + queryMetaAlias
-                        + ", pdpEntityID=" + pdpEntityID);
-            }
+            XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
 
             // Get all the headers from the HTTP request
             MimeHeaders headers = SAML2Utils.getHeaders(request);
@@ -319,7 +441,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                         + XMLUtils.print(soapBody));
             }
             SOAPMessage reply = null;
-            reply = onMessage(soapMsg,request,response,realm,pdpEntityID);
+            reply = onMessage(soapMsg, request, response, xacmlRequestInformation.getRealm(), xacmlRequestInformation.getPdpEntityID());
             if (reply != null) {
                 if (reply.saveRequired()) {
                     reply.saveChanges();
@@ -331,7 +453,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 debug.error(classMethod + "SOAPMessage is null");
                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                 reply = SAML2Utils.createSOAPFault(
-                        SAML2Constants.SERVER_FAULT,"invalidQuery",null);
+                        SAML2Constants.SERVER_FAULT, "invalidQuery", null);
             }
             // Write out the message on the response stream
             OutputStream os = response.getOutputStream();
@@ -354,10 +476,10 @@ public class XacmlResourceRouterServlet extends HttpServlet {
      * Process the incoming SOAP message containing the Query Request and
      * generates outgoing SOAP message containing the Query Response.
      *
-     * @param soapMsg incoming SOAP message.
-     * @param request HTTP servlet request.
-     * @param response HTTP servlet response.
-     * @param realm realm of the Policy Decision Point (PDP).
+     * @param soapMsg     incoming SOAP message.
+     * @param request     HTTP servlet request.
+     * @param response    HTTP servlet response.
+     * @param realm       realm of the Policy Decision Point (PDP).
      * @param pdpEntityID Entity ID of the Policy Decision Point (PDP).
      * @return SOAP message containing the outgoing Response.
      */
@@ -381,13 +503,13 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                     REQUEST_ABSTRACT);
 
             Response samlResponse =
-                    processSAMLRequest(realm,pdpEntityID,reqAbs,request,soapMsg);
+                    processSAMLRequest(realm, pdpEntityID, reqAbs, request, soapMsg);
             soapMessage = SAML2Utils.createSOAPMessage(
-                    samlResponse.toXMLString(true,true), false);
+                    samlResponse.toXMLString(true, true), false);
         } catch (SAML2Exception se) {
             debug.error(classMethod + "XACML Response Error SOAP Fault", se);
             soapMessage = SAML2Utils.createSOAPFault(
-                    SAML2Constants.SERVER_FAULT,"invalidQuery",se.getMessage());
+                    SAML2Constants.SERVER_FAULT, "invalidQuery", se.getMessage());
         }
         return soapMessage;
     }
@@ -395,13 +517,13 @@ public class XacmlResourceRouterServlet extends HttpServlet {
     /**
      * Signs an <code>Assertion</code>.
      *
-     * @param realm the realm name of the Policy Decision Point (PDP).
+     * @param realm       the realm name of the Policy Decision Point (PDP).
      * @param pdpEntityID the entity id of the policy decision provider.
-     * @param assertion the <code>Assertion</code> to be signed.
-     * @exception <code>SAML2Exception</code> it there is an error signing
-     *            the assertion.
+     * @param assertion   the <code>Assertion</code> to be signed.
+     * @throws <code>SAML2Exception</code> it there is an error signing
+     *                                     the assertion.
      */
-    static void signAssertion(String realm,String pdpEntityID,
+    static void signAssertion(String realm, String pdpEntityID,
                               Assertion assertion) throws SAML2Exception {
         String classMethod = "XacmlResourceRouterServlet.signAssertion: ";
 
@@ -414,13 +536,13 @@ public class XacmlResourceRouterServlet extends HttpServlet {
             throw new SAML2Exception("nullKeyProvider");
         }
         String pdpSignCertAlias = SAML2Utils.getAttributeValueFromXACMLConfig(
-                realm, SAML2Constants.PDP_ROLE,pdpEntityID,
+                realm, SAML2Constants.PDP_ROLE, pdpEntityID,
                 SAML2Constants.SIGNING_CERT_ALIAS);
         if (pdpSignCertAlias == null) {
             debug.error(classMethod +
                     "Unable to get the hosted PDP signing certificate alias.");
-            String[] data = { realm , pdpEntityID };
-            LogUtil.error(Level.INFO,LogUtil.NULL_PDP_SIGN_CERT_ALIAS,data);
+            String[] data = {realm, pdpEntityID};
+            LogUtil.error(Level.INFO, LogUtil.NULL_PDP_SIGN_CERT_ALIAS, data);
             throw new SAML2Exception("missingSigningCertAlias");
         }
         assertion.sign(keyProvider.getPrivateKey(pdpSignCertAlias),
@@ -431,17 +553,17 @@ public class XacmlResourceRouterServlet extends HttpServlet {
      * Returns the SAMLv2 <code>Response</code> received in response to
      * the Request.
      *
-     * @param realm the realm of the entity.
+     * @param realm       the realm of the entity.
      * @param pdpEntityID entity identifier of the Policy Decision Point.
-     * @param reqAbs the Document Element object.
-     * @param request the <code>HttpServletRequest</code> object.
-     * @param soapMsg the <code>SOAPMessage</code> object
+     * @param reqAbs      the Document Element object.
+     * @param request     the <code>HttpServletRequest</code> object.
+     * @param soapMsg     the <code>SOAPMessage</code> object
      * @return the <code>Response</code> object.
-     * @exception <code>SAML2Exception</code> if there is an error processing
-     *            the request.
+     * @throws <code>SAML2Exception</code> if there is an error processing
+     *                                     the request.
      */
-    Response processSAMLRequest(String realm,String pdpEntityID,Element reqAbs,
-                                HttpServletRequest request,SOAPMessage soapMsg)
+    Response processSAMLRequest(String realm, String pdpEntityID, Element reqAbs,
+                                HttpServletRequest request, SOAPMessage soapMsg)
             throws SAML2Exception {
         String classMethod = "XacmlResourceRouterServlet:processSAMLRequest";
         Response samlResponse = null;
@@ -454,11 +576,11 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 RequestAbstract samlRequest =
                         ContextFactory.getInstance()
                                 .createXACMLAuthzDecisionQuery(reqAbs);
-                String requestStr = samlRequest.toXMLString(true,true);
-                String[] data = { requestStr , pdpEntityID };
-                LogUtil.access(Level.FINE,LogUtil.REQUEST_MESSAGE,data);
+                String requestStr = samlRequest.toXMLString(true, true);
+                String[] data = {requestStr, pdpEntityID};
+                LogUtil.access(Level.FINE, LogUtil.REQUEST_MESSAGE, data);
 
-                Issuer issuer  = samlRequest.getIssuer();
+                Issuer issuer = samlRequest.getIssuer();
                 String pepEntityID = null;
                 if (issuer != null) {
                     pepEntityID = issuer.getValue().trim();
@@ -469,24 +591,24 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 boolean isTrusted = false;
                 try {
                     isTrusted = SAML2Utils.getSAML2MetaManager().
-                            isTrustedXACMLProvider(realm,pdpEntityID,pepEntityID,
+                            isTrustedXACMLProvider(realm, pdpEntityID, pepEntityID,
                                     SAML2Constants.PDP_ROLE);
                 } catch (SAML2MetaException sme) {
-                    debug.error("Error retreiving meta",sme);
+                    debug.error("Error retreiving meta", sme);
                 }
                 if (!isTrusted) {
                     if (debug.messageEnabled()) {
                         debug.message(classMethod +
-                                "Issuer in Request is not valid."+ pepEntityID);
+                                "Issuer in Request is not valid." + pepEntityID);
                     }
-                    String[] args = { realm, pepEntityID, pdpEntityID};
+                    String[] args = {realm, pepEntityID, pdpEntityID};
                     LogUtil.error(Level.INFO,
                             LogUtil.INVALID_ISSUER_IN_PEP_REQUEST,
                             args);
                     throw new SAML2Exception("invalidIssuerInRequest");
                 }
                 samlResponse =
-                        processXACMLResponse(realm,pdpEntityID,samlRequest,request,
+                        processXACMLResponse(realm, pdpEntityID, samlRequest, request,
                                 soapMsg);
 
             }
@@ -499,16 +621,16 @@ public class XacmlResourceRouterServlet extends HttpServlet {
      * Validates the message signature if signed and invokes the
      * Request Handler to pass the request for further processing.
      *
-     * @param realm realm of the entity.
+     * @param realm       realm of the entity.
      * @param pdpEntityID entity identifier of Policy Decision Point (PDP).
      * @param samlRequest the <code>RequestAbstract</code> object.
-     * @param request the <code>HttpServletRequest</code> object.
-     * @param soapMsg the <code>SOAPMessage</code> object.
-     * @exception <code>SAML2Exception</code> if there is an error processing
-     *            the request and returning a  response.
+     * @param request     the <code>HttpServletRequest</code> object.
+     * @param soapMsg     the <code>SOAPMessage</code> object.
+     * @throws <code>SAML2Exception</code> if there is an error processing
+     *                                     the request and returning a  response.
      */
-    Response processXACMLResponse(String realm,String pdpEntityID,
-                                  RequestAbstract samlRequest,HttpServletRequest request,
+    Response processXACMLResponse(String realm, String pdpEntityID,
+                                  RequestAbstract samlRequest, HttpServletRequest request,
                                   SOAPMessage soapMsg) throws SAML2Exception {
 
         String classMethod = "XacmlResourceRouterServlet:processXACMLResponse";
@@ -523,7 +645,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
         //Retreive metadata
         boolean pdpWantAuthzQuerySigned =
                 SAML2Utils.getWantXACMLAuthzDecisionQuerySigned(realm,
-                        pdpEntityID,SAML2Constants.PDP_ROLE);
+                        pdpEntityID, SAML2Constants.PDP_ROLE);
 
         if (debug.messageEnabled()) {
             debug.message(classMethod + "PDP wantAuthzQuerySigned:" +
@@ -534,9 +656,9 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 XACMLAuthzDecisionQueryDescriptorElement pep =
                         SAML2Utils.getSAML2MetaManager().
                                 getPolicyEnforcementPointDescriptor(
-                                        realm,pepEntityID);
+                                        realm, pepEntityID);
                 X509Certificate cert =
-                        KeyUtil.getPEPVerificationCert(pep,pepEntityID);
+                        KeyUtil.getPEPVerificationCert(pep, pepEntityID);
                 if (cert == null ||
                         !samlRequest.isSignatureValid(cert)) {
                     // error
@@ -560,8 +682,8 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 debug.message(classMethod + "Found handler");
             }
 
-            samlResponse = handler.handleQuery(pdpEntityID,pepEntityID,
-                    samlRequest,soapMsg);
+            samlResponse = handler.handleQuery(pdpEntityID, pepEntityID,
+                    samlRequest, soapMsg);
             // set response attributes
             samlResponse.setID(SAML2Utils.generateID());
             samlResponse.setVersion(SAML2Constants.VERSION_2_0);
@@ -584,32 +706,32 @@ public class XacmlResourceRouterServlet extends HttpServlet {
             // check if assertion needs to be encrypted,signed.
             String wantAssertionEncrypted =
                     SAML2Utils.getAttributeValueFromXACMLConfig(
-                            realm,SAML2Constants.PEP_ROLE,
+                            realm, SAML2Constants.PEP_ROLE,
                             pepEntityID,
                             SAML2Constants.WANT_ASSERTION_ENCRYPTED);
 
 
             XACMLAuthzDecisionQueryDescriptorElement
-                    pepDescriptor  = SAML2Utils.
+                    pepDescriptor = SAML2Utils.
                     getSAML2MetaManager().
                     getPolicyEnforcementPointDescriptor(realm,
                             pepEntityID);
 
             EncInfo encInfo = null;
-            boolean wantAssertionSigned=pepDescriptor.isWantAssertionsSigned();
+            boolean wantAssertionSigned = pepDescriptor.isWantAssertionsSigned();
 
             if (debug.messageEnabled()) {
                 debug.message(classMethod +
                         " wantAssertionSigned :" + wantAssertionSigned);
             }
             if (wantAssertionSigned) {
-                signAssertion(realm,pdpEntityID,assertion);
+                signAssertion(realm, pdpEntityID, assertion);
             }
 
             if (wantAssertionEncrypted != null
                     && wantAssertionEncrypted.equalsIgnoreCase
                     (SAML2Constants.TRUE)) {
-                encInfo = KeyUtil.getPEPEncInfo(pepDescriptor,pepEntityID);
+                encInfo = KeyUtil.getPEPEncInfo(pepDescriptor, pepEntityID);
 
                 // encrypt the Assertion
                 EncryptedAssertion encryptedAssertion =
@@ -619,7 +741,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                                 encInfo.getDataEncStrength(),
                                 pepEntityID);
                 if (encryptedAssertion == null) {
-                    debug.error(classMethod+"Assertion encryption failed.");
+                    debug.error(classMethod + "Assertion encryption failed.");
                     throw new SAML2Exception("FailedToEncryptAssertion");
                 }
                 assertionList = new ArrayList();
@@ -635,7 +757,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                 assertionsList.add(assertion);
                 samlResponse.setAssertion(assertionsList);
             }
-            signResponse(samlResponse,realm,pepEntityID,pdpEntityID);
+            signResponse(samlResponse, realm, pepEntityID, pdpEntityID);
 
         } else {
             // error -  missing request handler.
@@ -648,11 +770,11 @@ public class XacmlResourceRouterServlet extends HttpServlet {
     /**
      * Signs the <code>Response</code>.
      *
-     * @param response the <code>Response<code> object.
-     * @param realm the realm of the entity.
+     * @param response    the <code>Response<code> object.
+     * @param realm       the realm of the entity.
      * @param pepEntityID Policy Enforcement Point Entity Identitifer.
      * @param pdpEntityID Policy Decision Point Entity Identifier.
-     * @exception <code>SAML2Exception</code> if there is an exception.
+     * @throws <code>SAML2Exception</code> if there is an exception.
      */
     static void signResponse(Response response,
                              String realm, String pepEntityID,
@@ -662,7 +784,7 @@ public class XacmlResourceRouterServlet extends HttpServlet {
         String attrName = "wantXACMLAuthzDecisionResponseSigned";
         String wantResponseSigned =
                 SAML2Utils.getAttributeValueFromXACMLConfig(realm,
-                        SAML2Constants.PEP_ROLE,pepEntityID,attrName);
+                        SAML2Constants.PEP_ROLE, pepEntityID, attrName);
 
         if (wantResponseSigned == null ||
                 wantResponseSigned.equalsIgnoreCase("false")) {
@@ -677,16 +799,16 @@ public class XacmlResourceRouterServlet extends HttpServlet {
                             SAML2Constants.SIGNING_CERT_ALIAS);
             if (pdpSignCertAlias == null) {
                 debug.error(classMethod + "PDP certificate alias is null.");
-                String[] data = { realm , pdpEntityID };
-                LogUtil.error(Level.INFO, LogUtil.NULL_PDP_SIGN_CERT_ALIAS,data);
+                String[] data = {realm, pdpEntityID};
+                LogUtil.error(Level.INFO, LogUtil.NULL_PDP_SIGN_CERT_ALIAS, data);
                 throw new SAML2Exception("missingSigningCertAlias");
             }
 
             if (debug.messageEnabled()) {
-                debug.message(classMethod + "realm is : "+ realm);
+                debug.message(classMethod + "realm is : " + realm);
                 debug.message(classMethod + "pepEntityID is :" + pepEntityID);
                 debug.message(classMethod + "pdpEntityID : " + pdpEntityID);
-                debug.message(classMethod+ "wantResponseSigned" +
+                debug.message(classMethod + "wantResponseSigned" +
                         wantResponseSigned);
                 debug.message(classMethod + "Cert Alias:" + pdpSignCertAlias);
             }
@@ -710,5 +832,174 @@ public class XacmlResourceRouterServlet extends HttpServlet {
             }
         }
     }
+
+    /**
+     * Determines if the Home Resources should be shown.
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     */
+    private boolean resourceHomeRequested(HttpServletRequest request, HttpServletResponse response) throws ServletException, JSONException, IOException {
+        String classMethod = "XacmlResourceRouterServlet:resourceHomeRequested";
+        debug.error(classMethod + " processing URI:[" + request.getRequestURI() + "], Content Type:["+request.getContentType()+"]");
+        StringBuilder sb = new StringBuilder();
+        // **************************
+        // Check our request...
+        if ( (request.getRequestURI().equalsIgnoreCase(request.getContextPath())) &&
+             (!request.getRequestURI().contains("home")) ) {
+            return false;
+        }
+        // ************************************************************
+        // Determine how to respond based upon Content Type.
+        if (request.getContentType()==ContentType.NONE.applicationType() ||
+           (request.getContentType().equalsIgnoreCase(ContentType.JSON_HOME.applicationType())) ) {
+            // Formulate the Home Document for JSON Consumption.
+            response.setContentType(ContentType.JSON_HOME.applicationType());
+            sb.append(getJSONHomeDocument().toString());  // TODO -- Cache the Default Home JSON Document Object.
+        } else {
+            // Formulate the Home Document for XML Consumption.
+            response.setContentType(ContentType.XML.toString());
+            sb.append("<resources xmlns=\042http://ietf.org/ns/home-documents\042\n");
+            sb.append("xmlns:atom=\042http://www.w3.org/2005/Atom\042>\n");
+            sb.append("<resource rel=\042http://docs.oasis-open.org/openams/xacml/relation/pdp\042>");  // TODO, Link needs to be real!
+            sb.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
+            sb.append("</resource>");
+            sb.append(" </resources>");
+        } // End of Check for Content Type.
+        // *******************************************************
+        // Output our rendered content.
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(200);
+        PrintWriter out = response.getWriter();
+        out.write(sb.toString());
+        out.flush();
+        out.close();
+        return true;
+
+    }
+
+    /**
+     * Formulate our Home Document.
+     *
+     * @return JSONObject
+     * @throws JSONException
+     *
+     */
+    private JSONObject getJSONHomeDocument() throws JSONException {
+        JSONObject resources = new JSONObject();
+        JSONArray resourceArray = new JSONArray();
+
+        JSONObject resource_1 = new JSONObject();
+        resource_1.append("href", "/xacml/");
+        JSONObject resource_1A = new JSONObject();
+        resource_1A.append("http://example.org/rel/xacml", resource_1);           // TODO Verify!
+
+        JSONObject resource_2 = new JSONObject();
+        resource_2.append("href-template", "/xacml/");
+        resource_2.append("hints", getHints());
+        JSONObject resource_2A = new JSONObject();
+        resource_2A.append("http://example.org/rel/xacml", resource_2);           // TODO Verify!
+
+        resourceArray.put(resource_1A);
+        resourceArray.put(resource_2A);
+
+
+        resources.append("resources", resourceArray);
+        return resources;
+    }
+
+    /**
+     * Formulate our Hints for our REST EndPoint to allow Discovery.
+     * Per Internet Draft: draft-nottingham-json-home-02
+     *
+     * @return JSONObject - Containing Hints for our Home Application.
+     * @throws JSONException
+     */
+    private JSONObject getHints() throws JSONException {
+        JSONObject hints = new JSONObject();
+
+        /**
+         * Hints the HTTP methods that the current client will be able to use to
+         * interact with the resource; equivalent to the Allow HTTP response
+         * header.
+         *
+         * Content MUST be an array of strings, containing HTTP methods.
+         */
+        JSONArray allow = new JSONArray();
+        allow.put("GET");
+        allow.put("POST");
+        hints.append("allow",allow);
+
+        /**
+         * Hints the representation types that the resource produces and
+         * consumes, using the GET and PUT methods respectively, subject to the
+         * ’allow’ hint.
+         *
+         * Content MUST be an array of strings, containing media types.
+         */
+        JSONArray representations = new JSONArray();
+        representations.put(ContentType.JSON.applicationType());
+        representations.put(ContentType.XML.applicationType());
+        representations.put(ContentType.XACML_PLUS_XML.applicationType());
+        hints.append("representations",representations);
+
+        /**
+         * Hints the POST request formats accepted by the resource for this
+         * client.
+         *
+         * Content MUST be an array of strings, containing media types.
+         *
+         * When this hint is present, "POST" SHOULD be listed in the "allow"
+         * hint.
+         */
+        JSONArray accept_post = new JSONArray();
+        accept_post.put(ContentType.JSON.applicationType());
+        accept_post.put(ContentType.XML.applicationType());
+        accept_post.put(ContentType.XACML_PLUS_XML.applicationType());
+        hints.append("accept-post",accept_post);
+
+        /**
+         * Return our Hints for consumption by requester.
+         */
+        return hints;
+    }
+
+    /**
+     * Provide common Entry point Method for Parsing Initial Requests
+     * to obtain information on how to process and route the request.
+     *
+     * @param request
+     * @return XACMLRequestInformation - Object returned with Parsed Request Information.
+     * @throws ServletException
+     */
+    private final XACMLRequestInformation parseRequestInformation(HttpServletRequest request) throws ServletException {
+        final String classMethod = "parseRequestInformation: ";
+        try {
+            // handle DOS attack
+            SAMLUtils.checkHTTPContentLength(request);
+            // Get PDP entity ID
+            String requestURI = request.getRequestURI();
+            String queryMetaAlias =
+                    SAML2MetaUtils.getMetaAliasByUri(requestURI);
+
+            String pdpEntityID =
+                    SAML2Utils.getSAML2MetaManager().getEntityByMetaAlias(
+                            queryMetaAlias);
+            String realm = SAML2MetaUtils.getRealmByMetaAlias(queryMetaAlias);
+
+
+
+            // Return with newly created POJO from parsing initial request.
+            return new XACMLRequestInformation(requestURI, queryMetaAlias, pdpEntityID, realm);
+        } catch (SAML2MetaException s2me) {
+            debug.error("XACML MetaException: " + s2me.getMessage(), s2me);
+            // TODO
+            return null;
+        }
+    }
+
 }
 
