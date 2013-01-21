@@ -3,6 +3,7 @@ package org.forgerock.openam.forgerockrest.session.query.impl;
 import com.iplanet.dpro.session.Session;
 import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.service.SessionService;
+import com.iplanet.dpro.session.share.SessionInfo;
 import com.iplanet.dpro.session.share.SessionRequest;
 import com.iplanet.dpro.session.share.SessionResponse;
 import com.iplanet.sso.SSOToken;
@@ -27,7 +28,7 @@ public class RemoteSessionQuery implements SessionQueryType {
         this.serverId = serverId;
     }
 
-    public Collection<Session> getAllSessions() {
+    public Collection<SessionInfo> getAllSessions() {
         URL svcurl = null;
         try {
             svcurl = Session.getSessionServiceURL(serverId);

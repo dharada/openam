@@ -1,8 +1,12 @@
 package org.forgerock.openam.forgerockrest.session.query;
 
 import com.iplanet.dpro.session.share.SessionInfo;
+import com.sun.identity.shared.debug.Debug;
 
+import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Provides the function to query a collection of OpenAM server instances. Uses the SessionQueryFactory to
@@ -21,6 +25,9 @@ import java.util.Collection;
  *
  */
 public class SessionQueryManager {
+
+    private static Debug debug = Debug.getInstance("frRest");
+
     private SessionQueryFactory queryFactory;
     private Collection<String> serverIds;
     // Refactor this so a Session Query is initialised with a collection of servers and performs its
@@ -60,6 +67,23 @@ public class SessionQueryManager {
     public Collection<SessionInfo> getAllSessions() {
         // impl note, this could be a Map of Server -> Sessions
 
-        return null;
+        List<SessionInfo> sessions = new LinkedList<SessionInfo>();
+
+        for (String server : serverIds) {
+            SessionQueryType queryType = queryFactory.getSessionQueryType(server);
+
+            Collection<SessionInfo> queriedSessions = queryType.getAllSessions();
+
+            if (debug.messageEnabled()) {
+                debug.message(MessageFormat.format(
+                        "SessionQueryManager#getAllSessions() :: Queried {0} from: {1}",
+                        queriedSessions.size(),
+                        server));
+            }
+
+            sessions.addAll(queriedSessions);
+        }
+
+        return sessions;
     }
 }
