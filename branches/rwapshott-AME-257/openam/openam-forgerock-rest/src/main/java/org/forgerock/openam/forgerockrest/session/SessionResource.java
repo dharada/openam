@@ -13,12 +13,12 @@ import org.forgerock.openam.forgerockrest.session.query.SessionQueryManager;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * Represents Sessions that can queried via a REST interface.
  *
- * Currently describe three different ways of accessing the Session information:
+ * Currently describe three different entrypoints for this Resource, useful when querying
+ * Session Information:
  *
  * <ul>
  *     <li>All - All sessions across all servers known to OpenAM.</li>
@@ -34,8 +34,6 @@ public class SessionResource extends ReadOnlyResource {
 
     public static final String KEYWORD_ALL = "all";
     public static final String KEYWORD_LIST = "list";
-
-    // TODO - Convert this to use the SessionQeryManager to complete the query.
 
     /**
      * Applies the routing to the Router that this class supports.
@@ -57,34 +55,52 @@ public class SessionResource extends ReadOnlyResource {
      * Returns a collection of all Server ID that are known to the OpenAM instance.
      * @return A non null, possibly empty collection of server ids.
      */
-    public static Collection<String> getServerIds() {
-        Vector<String> iDs;
+    private static Collection<String> getServerIds() {
         try {
-            iDs = WebtopNaming.getAllServerIDs();
+            return WebtopNaming.getAllServerIDs();
         } catch (Exception e) {
             throw new IllegalStateException("Cannot recover from this error", e);
         }
-        return iDs;
     }
 
 
+    /**
+     * Currently unimplemented method.
+     *
+     * @param context {@inheritDoc}
+     * @param request {@inheritDoc}
+     * @param handler {@inheritDoc}
+     */
     public void queryCollection(ServerContext context, QueryRequest request, QueryResultHandler handler) {
-        handler.handleResource(new Resource("ID", "0", new JsonValue("Query Collection")));
+        handler.handleError(ResourceException.getException(
+                0,
+                "QueryCollection is not yet implemented.",
+                "Unimplmeneted",
+                null));
     }
 
     /**
      * Perform a query against the defined servers.
+     *
+     * This method will resolve the id, provided by the caller, and use this to perfrom the appropriate
+     * query and return these results in an initially hard coded formnat..
      *
      * {@inheritDoc}
      */
     public void readInstance(ServerContext context, String id, ReadRequest request, ResultHandler<Resource> handler) {
 
         Resource resource = null;
+
         if (id.equals(KEYWORD_LIST)) {
             Collection<String> servers = generateListServers();
             resource = new Resource(KEYWORD_LIST, "0", new JsonValue(servers));
         } else {
             List<List<String[]>> table = new LinkedList<List<String[]>>();
+            // Test String values not locallised and
+            //
+            // AM HERE
+            
+            // appropriate for production use.
             table.add(Arrays.asList(new String[]{"User Id", "Time Remaining"}));
 
             Collection<SessionInfo> sessions = null;
@@ -95,6 +111,8 @@ public class SessionResource extends ReadOnlyResource {
             }
 
             for (SessionInfo session : sessions) {
+
+                // TODO The format of the output is easy and likely to change in the future.
 
                 int timeleft = convertTimeLeft(session.timeleft);
                 String username = (String) session.properties.get("UserId");
@@ -112,18 +130,13 @@ public class SessionResource extends ReadOnlyResource {
         handler.handleResult(resource);
     }
 
-    private static int convertTimeLeft(String timeleft) {
-        float seconds = Long.parseLong(timeleft);
-        float mins = seconds / 60;
-        return Math.round(mins);
-    }
-
     private Collection<SessionInfo> generateNamedServerSession(String serverId) {
         List<String> serverList = Arrays.asList(new String[]{serverId});
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), serverList);
         Collection<SessionInfo> sessions = queryManager.getAllSessions();
         return sessions;
     }
+
 
     private Collection<SessionInfo> generateAllSessions() {
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), getServerIds());
@@ -137,5 +150,18 @@ public class SessionResource extends ReadOnlyResource {
      */
     private Collection<String> generateListServers() {
         return getServerIds();
+    }
+
+    /**
+     * Internal function for converting time in seconds to minutes.
+     *
+     * @param timeleft Non null string value of time in seconds.
+     *
+     * @return The parsed time.
+     */
+    private static int convertTimeLeft(String timeleft) {
+        float seconds = Long.parseLong(timeleft);
+        float mins = seconds / 60;
+        return Math.round(mins);
     }
 }
