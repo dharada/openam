@@ -26,6 +26,7 @@ import java.security.AccessController;
 import java.util.Set;
 
 import static org.forgerock.json.resource.RoutingMode.EQUALS;
+import static org.forgerock.json.resource.RoutingMode.STARTS_WITH;
 
 /**
  * A simple {@code Map} based collection resource provider.
@@ -72,7 +73,7 @@ public final class RealmDispatcher {
         if (rName.length() > 1) rName = rName + "/";
 
         // Routing for all sessions across all servers.
-        router.addRoute(EQUALS, rName + "sessions", new SessionResource(SessionResource.getServerIds()));
+        router.addRoute(STARTS_WITH, rName + "sessions", new SessionResource(SessionResource.getServerIds()));
         // Routing for a function to access the id's of all servers.
         // Routing for each server
     }

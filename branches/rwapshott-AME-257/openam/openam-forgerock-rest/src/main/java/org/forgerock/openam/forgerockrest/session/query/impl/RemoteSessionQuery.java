@@ -1,4 +1,4 @@
-package org.forgerock.openam.forgerockrest.session.query;
+package org.forgerock.openam.forgerockrest.session.query.impl;
 
 import com.iplanet.dpro.session.Session;
 import com.iplanet.dpro.session.SessionException;
@@ -9,6 +9,7 @@ import com.iplanet.sso.SSOToken;
 import com.sun.identity.security.AdminTokenAction;
 import com.sun.identity.session.util.RestrictedTokenContext;
 import com.sun.identity.shared.debug.Debug;
+import org.forgerock.openam.forgerockrest.session.query.SessionQueryType;
 
 import java.net.URL;
 import java.security.AccessController;

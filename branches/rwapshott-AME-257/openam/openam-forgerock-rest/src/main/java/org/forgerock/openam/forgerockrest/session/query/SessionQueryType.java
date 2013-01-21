@@ -1,6 +1,6 @@
 package org.forgerock.openam.forgerockrest.session.query;
 
-import com.iplanet.dpro.session.Session;
+import com.iplanet.dpro.session.share.SessionInfo;
 
 import java.util.Collection;
 
@@ -10,5 +10,9 @@ import java.util.Collection;
  * @author robert.wapshott@forgerock.com
  */
 public interface SessionQueryType {
-    public Collection<Session> getAllSessions();
+    /**
+     * Query a server and return the Sessions that are stored on the server.
+     * @return Non null but possibly empty collection of Sessions.
+     */
+    public Collection<SessionInfo> getAllSessions();
 }

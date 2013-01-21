@@ -12,7 +12,7 @@ import com.sun.identity.sm.OrganizationConfigManager;
 import org.forgerock.json.fluent.JsonValue;
 import org.forgerock.json.resource.*;
 import org.forgerock.openam.forgerockrest.ReadOnlyResource;
-import org.forgerock.openam.forgerockrest.session.query.RemoteSessionQuery;
+import org.forgerock.openam.forgerockrest.session.query.impl.RemoteSessionQuery;
 
 import java.net.URL;
 import java.util.Collection;
