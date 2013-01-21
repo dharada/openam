@@ -9,20 +9,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Provides the function to query a collection of OpenAM server instances. Uses the SessionQueryFactory to
- * determine the most appropriate mechanism for performing the query.
+ * Provides the ability to query a collection of OpenAM servers for Session information. Uses the
+ * SessionQueryFactory to determine the most appropriate mechanism for performing the query and handles any
+ * complexity around querying Sessions.
+ *
+ * This manager should easily be expanded to support new functions like 'Session Count' or 'Get Sessions for User'.
  *
  * @author robert.wapshott@forgerock.com
- *
- *
- *
- * Represents an implementation which can perform a query of Sessions against a server.
- *
- * Note: If there is any complexity surrounding performing a query, then it can be wrapped in this call and
- * abstracted from the caller.
- *
- * NB Can be easily expanded with new functions like 'Sessions for a user' and 'Session count'
- *
  */
 public class SessionQueryManager {
 
@@ -30,20 +23,6 @@ public class SessionQueryManager {
 
     private SessionQueryFactory queryFactory;
     private Collection<String> serverIds;
-    // Refactor this so a Session Query is initialised with a collection of servers and performs its
-    // query, probably with no arguments.
-
-    // Return type is probably more important. Do we want Session Info's? Or some other TO?
-
-    // Then Session Resource can be initialised with a collection of Session Queries and select the
-    // appropriate one based on the parameter that is passed in.
-
-    // probaly
-    // session/all
-    // session/servers
-    // sesssion/<server-id>
-
-    /// because we must have something after the routing location ("session")
 
     /**
      * Intialise the SessionQueryManager and provide the OpenAM server ids that it should apply to.

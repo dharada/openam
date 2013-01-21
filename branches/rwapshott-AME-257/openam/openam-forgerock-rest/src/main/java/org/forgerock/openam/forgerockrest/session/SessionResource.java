@@ -110,43 +110,6 @@ public class SessionResource extends ReadOnlyResource {
         }
 
         handler.handleResult(resource);
-
-
-
-
-        // For each server, perform the query
-        // NB, collecting up all the sessions from all servers will not be performant...
-        // Does the framework have any way of pagenating the results?
-        // Does the query framework lend itsself to querying in any way?
-
-        // Should we bypass this anyway and use SFO?...
-
-//        List<SessionInfo> sessions = new LinkedList<SessionInfo>();
-//
-//        for (String serverId : serverIds) {
-//            SSOToken adminToken = RemoteSessionQuery.getAdminToken();
-//
-//
-//            SessionRequest sreq = new SessionRequest(SessionRequest.GetValidSessions, adminToken.getTokenID().toString(), false);
-//            URL serviceURL;
-//            try {
-//                serviceURL = Session.getSessionServiceURL(serverId);
-//            } catch (SessionException e) {
-//                throw new IllegalStateException(e);
-//            }
-//
-//            SessionResponse sres = null;
-//            try {
-//                sres = getSessionResponseWithoutRetry(serviceURL, sreq);
-//            } catch (SessionException e) {
-//                throw new IllegalStateException(e);
-//            }
-//
-//            sessions.addAll(sres.getSessionInfo());
-//
-//        }
-//        Resource resource = new Resource("ID", "Revision", new JsonValue(sessions.size()));
-//        handler.handleResult(resource);
     }
 
     private static int convertTimeLeft(String timeleft) {
