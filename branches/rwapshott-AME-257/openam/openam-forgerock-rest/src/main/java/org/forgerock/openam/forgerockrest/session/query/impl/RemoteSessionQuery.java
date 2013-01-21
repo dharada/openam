@@ -20,22 +20,39 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Performs a query against a remote server.
+ * Provides an implementation of the SessionQueryType that is suitable for use against Remote OpenAM instances.
+ * Also appears suitable against local servers.
+ *
+ * @author robert.wapshott@forgerock.com
  */
 public class RemoteSessionQuery implements SessionQueryType {
+
     private String serverId;
     private static Debug debug = SessionService.sessionDebug;
 
+    /**
+     * Creates an instance which is configured to query the given server.
+     *
+     * @param serverId  Non null Server Id as defined against the result of calling
+     *                  {@link com.iplanet.services.naming.WebtopNaming#getAllServerIDs()}.
+     */
     public RemoteSessionQuery(String serverId) {
         this.serverId = serverId;
     }
 
+    /**
+     * Generates a SessionRequest and uses this to query the remote server.
+     *
+     * @return  Non null but possibly empty collection of Sessions. If the server is down, then this will
+     *          also return no sessions.
+     */
     public Collection<SessionInfo> getAllSessions() {
         List<SessionInfo> sessions = new LinkedList<SessionInfo>();
-        URL svcurl = null;
+
         try {
-            svcurl = Session.getSessionServiceURL(serverId);
-            String sid = getAdminToken().getTokenID().toString();
+            URL svcurl = Session.getSessionServiceURL(serverId);
+            SSOToken adminToken = AccessController.doPrivileged(AdminTokenAction.getInstance());
+            String sid = adminToken.toString();
 
             SessionRequest sreq = new SessionRequest(SessionRequest.GetValidSessions, sid, false);
             SessionResponse sres = getSessionResponse(svcurl, sreq);
@@ -52,28 +69,23 @@ public class RemoteSessionQuery implements SessionQueryType {
         } catch (SessionException e) {
             debug.warning("Failed to fetch sessions from " + serverId, e);
         }
+
         return sessions;
     }
 
-    /**
-     * Fetches the admin token by querying the SessionService.
-     *
-     * @return Non null SSOToken for the admin user.
-     *
-     * @throws IllegalStateException
-     *
-     * TODO Do something sensible with this
-     */
-    public static SSOToken getAdminToken() throws IllegalStateException {
-        SSOToken token = AccessController.doPrivileged(AdminTokenAction.getInstance());
-        if (token == null) {
-            throw new IllegalStateException("Failed to get the admin token.");
-        }
-        return token;
-    }
 
-    private static SessionResponse getSessionResponse(URL svcurl,
-                                                      SessionRequest sreq) throws SessionException {
+    /**
+     * Performs the Session Request and waits for the response.
+     *
+     * @param svcurl URL Non null to perform the request against.
+     *
+     * @param sreq Non null Session Request.
+     *
+     * @return A SessionResponse containing the response from the remote server.
+     *
+     * @throws SessionException
+     */
+    private SessionResponse getSessionResponse(URL svcurl, SessionRequest sreq) throws SessionException {
         try {
             Object context = RestrictedTokenContext.getCurrent();
             if (context != null) {
