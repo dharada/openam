@@ -1,13 +1,7 @@
 package org.forgerock.openam.forgerockrest.session;
 
-import com.iplanet.dpro.session.Session;
-import com.iplanet.dpro.session.SessionException;
 import com.iplanet.dpro.session.share.SessionInfo;
-import com.iplanet.dpro.session.share.SessionRequest;
-import com.iplanet.dpro.session.share.SessionResponse;
 import com.iplanet.services.naming.WebtopNaming;
-import com.iplanet.sso.SSOToken;
-import com.sun.identity.session.util.RestrictedTokenContext;
 import com.sun.identity.sm.OrganizationConfigManager;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import org.forgerock.json.fluent.JsonValue;
@@ -16,8 +10,8 @@ import org.forgerock.openam.forgerockrest.ReadOnlyResource;
 import org.forgerock.openam.forgerockrest.session.query.SessionQueryFactory;
 import org.forgerock.openam.forgerockrest.session.query.SessionQueryManager;
 
-import java.net.URL;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -86,17 +80,35 @@ public class SessionResource extends ReadOnlyResource {
     public void readInstance(ServerContext context, String id, ReadRequest request, ResultHandler<Resource> handler) {
 
         Resource resource = null;
-        if (id.equals(KEYWORD_ALL)) {
-            resource = generateAllSessions();
-        } else if (id.equals(KEYWORD_LIST)) {
-            resource = generateListServers();
+        if (id.equals(KEYWORD_LIST)) {
+            Collection<String> servers = generateListServers();
+            resource = new Resource(KEYWORD_LIST, "0", new JsonValue(servers));
         } else {
-            resource = generateNamedServerSession(id);
+            List<List<String[]>> table = new LinkedList<List<String[]>>();
+            table.add(Arrays.asList(new String[]{"User Id", "Time Remaining"}));
+
+            Collection<SessionInfo> sessions = null;
+            if (id.equals(KEYWORD_ALL)) {
+                sessions = generateAllSessions();
+            } else {
+                sessions = generateNamedServerSession(id);
+            }
+
+            for (SessionInfo session : sessions) {
+
+                int timeleft = convertTimeLeft(session.timeleft);
+                String username = (String) session.properties.get("UserId");
+
+                table.add(Arrays.asList(new String[]{ username, Integer.toString(timeleft) }));
+            }
+
+            resource = new Resource("Sessions", "0", new JsonValue(table));
         }
 
         if (resource == null) {
             throw new IllegalStateException("Resource cannot be undefined.");
         }
+
         handler.handleResult(resource);
 
 
@@ -137,54 +149,30 @@ public class SessionResource extends ReadOnlyResource {
 //        handler.handleResult(resource);
     }
 
-    private SessionResponse getSessionResponseWithoutRetry(URL svcurl,
-                                                           SessionRequest sreq) throws SessionException {
-        SessionResponse sres = null;
-        Object context = RestrictedTokenContext.getCurrent();
-
-        SSOToken appSSOToken = null;
-
-        // This feels like a code smell to me.
-        // Why can't the call coming from an Auth Module get a Context ready before hand?
-//        if (!isServerMode() && !(this.sessionID.getComingFromAuth())) {
-//            appSSOToken = (SSOToken) AccessController.doPrivileged(
-//                    AdminTokenAction.getInstance());
-//            createContext(appSSOToken);
-//        }
-
-        try {
-            if (context != null) {
-                sreq.setRequester(RestrictedTokenContext.marshal(context));
-            }
-            sres = Session.sendPLLRequest(svcurl, sreq);
-        } catch (Exception e) {
-            throw new SessionException(e);
-        }
-
-        return sres;
+    private static int convertTimeLeft(String timeleft) {
+        float seconds = Long.parseLong(timeleft);
+        float mins = seconds / 60;
+        return Math.round(mins);
     }
 
-    private Resource generateNamedServerSession(String serverId) {
+    private Collection<SessionInfo> generateNamedServerSession(String serverId) {
         List<String> serverList = Arrays.asList(new String[]{serverId});
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), serverList);
         Collection<SessionInfo> sessions = queryManager.getAllSessions();
-        Resource r = new Resource(KEYWORD_ALL, "0", new JsonValue(sessions));
-        return r;
+        return sessions;
     }
 
-    private Resource generateAllSessions() {
+    private Collection<SessionInfo> generateAllSessions() {
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), getServerIds());
         Collection<SessionInfo> sessions = queryManager.getAllSessions();
-        Resource r = new Resource(KEYWORD_ALL, "0", new JsonValue(sessions));
-        return r;
+        return sessions;
     }
 
 
     /**
      * @return Returns a JSON Resource which defines the available servers.
      */
-    private Resource generateListServers() {
-        Resource r = new Resource(KEYWORD_LIST, "0", new JsonValue(getServerIds()));
-        return r;
+    private Collection<String> generateListServers() {
+        return getServerIds();
     }
 }

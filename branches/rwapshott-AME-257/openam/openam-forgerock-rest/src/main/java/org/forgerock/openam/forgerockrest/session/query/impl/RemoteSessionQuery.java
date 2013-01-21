@@ -14,8 +14,10 @@ import org.forgerock.openam.forgerockrest.session.query.SessionQueryType;
 
 import java.net.URL;
 import java.security.AccessController;
+import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Performs a query against a remote server.
@@ -29,6 +31,7 @@ public class RemoteSessionQuery implements SessionQueryType {
     }
 
     public Collection<SessionInfo> getAllSessions() {
+        List<SessionInfo> sessions = new LinkedList<SessionInfo>();
         URL svcurl = null;
         try {
             svcurl = Session.getSessionServiceURL(serverId);
@@ -37,14 +40,19 @@ public class RemoteSessionQuery implements SessionQueryType {
             SessionRequest sreq = new SessionRequest(SessionRequest.GetValidSessions, sid, false);
             SessionResponse sres = getSessionResponse(svcurl, sreq);
 
-            Map sessionsMap = sres.getSessionsForGivenUUID();
-            debug.message(sessionsMap.size() + " size of session map.");
+            List<SessionInfo> infoList = sres.getSessionInfo();
 
+            if (debug.messageEnabled()) {
+                debug.message(MessageFormat.format(
+                        "Query returned {0} SessionInfos.",
+                        infoList.size()));
+            }
+
+            sessions.addAll(infoList);
         } catch (SessionException e) {
             debug.warning("Failed to fetch sessions from " + serverId, e);
-            return null;
         }
-        return null;
+        return sessions;
     }
 
     /**
