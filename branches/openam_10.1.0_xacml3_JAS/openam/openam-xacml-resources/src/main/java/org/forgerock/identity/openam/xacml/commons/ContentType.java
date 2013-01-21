@@ -39,6 +39,7 @@ public enum ContentType {
     JSON_HOME      ("application/json-home"),
     JSON           (MediaType.APPLICATION_JSON),
     XML            (MediaType.APPLICATION_XML),
+    XACML_PLUS_JSON("application/xacml+json"),
     XACML_PLUS_XML ("application/xacml+xml"),
     NONE           (null)
     ;
