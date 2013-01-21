@@ -511,6 +511,20 @@
             </snapshots>
         </pluginRepository>
 
+        <pluginRepository>
+            <id>maven-instant-ws-repo</id>
+            <name>maven-instant-ws repository</name>
+            <url>http://maven-instant-ws.googlecode.com/svn/repo/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+        </pluginRepository>
+
     </pluginRepositories>
 
 

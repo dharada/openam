@@ -35,6 +35,11 @@
     <name>OpenAM XACML3 Resources</name>
     <packaging>jar</packaging>
 
+    <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
+    </properties>
+
     <build>
 
         <plugins>
@@ -116,16 +121,6 @@
             </exclusions>
         </dependency>
 
-        <!-- Restlet -->
-        <dependency>
-            <groupId>org.restlet.osgi</groupId>
-            <artifactId>org.restlet</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.restlet.osgi</groupId>
-            <artifactId>org.restlet.ext.jackson</artifactId>
-        </dependency>
-
         <!-- Native Json Manipulation -->
         <dependency>
             <groupId>org.json</groupId>
@@ -142,6 +137,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

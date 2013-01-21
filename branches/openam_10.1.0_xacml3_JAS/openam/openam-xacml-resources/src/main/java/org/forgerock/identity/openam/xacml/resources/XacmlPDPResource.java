@@ -52,12 +52,10 @@ import org.forgerock.identity.openam.xacml.model.XACMLRequestInformation;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.restlet.resource.ServerResource;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.soap.MimeHeaders;
@@ -77,7 +75,7 @@ import java.util.logging.Level;
  *
  * @author Jeff.Schenk@forgerock.com
  */
-public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Constants {
+public class XacmlPDPResource extends ServerResource implements XACML3Constants {
     /**
      * Define our Static resource Bundle for our debugger.
      */
@@ -89,24 +87,6 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
     private static HashMap handlers = new HashMap();
 
     /**
-     * Preserve our Servlet Context PlaceHolder,
-     * for referencing Artifacts.
-     */
-    private static ServletContext servletCtx;
-
-    /**
-     * Initialize our Servlet
-     *
-     * @param config
-     * @throws ServletException
-     */
-    public void init(ServletConfig config) throws ServletException {
-        servletCtx = config.getServletContext();
-        debug.error("Initialization of XACML Resource Router, Server Information: "+servletCtx.getServerInfo());
-        super.init(config);
-    }
-
-    /**
      * Handles the HTTP <code>GET</code> method.
      *
      * @param request
@@ -114,9 +94,8 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
      * @throws ServletException
      * @throws java.io.IOException
      */
-    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doGet";
+        String classMethod = "XacmlPDPResource:doGet";
         debug.error(classMethod + " processing context path:[" + request.getContextPath() + "]");
 
         // ************************************************************
@@ -250,12 +229,11 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
      *                             handled.
      * @throws java.io.IOException if an input or output error occurs.
      */
-    @Override
     public void doPost(
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:doPost";
+        String classMethod = "XacmlPDPResource:doPost";
         debug.error(classMethod + " processing context path:[" + request.getContextPath() + "]");
 
         // Authorized?
@@ -422,7 +400,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
     private void processPDPRequest(HttpServletRequest request,
                                    HttpServletResponse response)
             throws ServletException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:processPostRequest";
+        String classMethod = "XacmlPDPResource:processPostRequest";
         try {
 
             XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
@@ -434,7 +412,11 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
             InputStream is = request.getInputStream();
 
             //create SOAPMessage
+
             SOAPMessage soapMsg = SAML2Utils.mf.createMessage(headers, is);
+
+
+
             Element soapBody = SAML2Utils.getSOAPBody(soapMsg);
             if (debug.messageEnabled()) {
                 debug.message(classMethod + "SOAPMessage received.:"
@@ -490,7 +472,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
             String realm,
             String pdpEntityID) throws SOAPException {
 
-        String classMethod = "XacmlResourceRouterServlet:onMessage:";
+        String classMethod = "XacmlPDPResource:onMessage:";
         SOAPMessage soapMessage = null;
         String pepEntityID = null;
         try {
@@ -525,7 +507,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
      */
     static void signAssertion(String realm, String pdpEntityID,
                               Assertion assertion) throws SAML2Exception {
-        String classMethod = "XacmlResourceRouterServlet.signAssertion: ";
+        String classMethod = "XacmlPDPResource.signAssertion: ";
 
         // Don't load the KeyProvider object in static block as it can
         // cause issues when doing a container shutdown/restart.
@@ -565,7 +547,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
     Response processSAMLRequest(String realm, String pdpEntityID, Element reqAbs,
                                 HttpServletRequest request, SOAPMessage soapMsg)
             throws SAML2Exception {
-        String classMethod = "XacmlResourceRouterServlet:processSAMLRequest";
+        String classMethod = "XacmlPDPResource:processSAMLRequest";
         Response samlResponse = null;
         if (reqAbs != null) {
             String xsiType = reqAbs.getAttribute(XSI_TYPE_ATTR);
@@ -633,7 +615,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
                                   RequestAbstract samlRequest, HttpServletRequest request,
                                   SOAPMessage soapMsg) throws SAML2Exception {
 
-        String classMethod = "XacmlResourceRouterServlet:processXACMLResponse";
+        String classMethod = "XacmlPDPResource:processXACMLResponse";
         Response samlResponse = null;
         String path = request.getPathInfo();
         String key = path.substring(path.indexOf(METAALIAS_KEY) + 10);
@@ -676,7 +658,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
 
         //getRequestHandlerClass
         RequestHandler handler =
-                (RequestHandler) XacmlResourceRouterServlet.handlers.get(key);  // TODO -- THis was referencing handlers in the SOAPBindingService class.
+                (RequestHandler) XacmlPDPResource.handlers.get(key);  // TODO -- THis was referencing handlers in the SOAPBindingService class.
         if (handler != null) {
             if (debug.messageEnabled()) {
                 debug.message(classMethod + "Found handler");
@@ -843,7 +825,7 @@ public class XacmlResourceRouterServlet extends HttpServlet implements XACML3Con
      * @throws IOException
      */
     private boolean resourceHomeRequested(HttpServletRequest request, HttpServletResponse response) throws ServletException, JSONException, IOException {
-        String classMethod = "XacmlResourceRouterServlet:resourceHomeRequested";
+        String classMethod = "XacmlPDPResource:resourceHomeRequested";
         debug.error(classMethod + " processing URI:[" + request.getRequestURI() + "], Content Type:["+request.getContentType()+"]");
         StringBuilder sb = new StringBuilder();
         // **************************

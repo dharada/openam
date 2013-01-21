@@ -25,11 +25,6 @@
  */
 package org.forgerock.identity.openam.xacml.model;
 
-import com.sun.identity.saml.common.SAMLUtils;
-import com.sun.identity.saml2.common.SAML2Utils;
-import com.sun.identity.saml2.meta.SAML2MetaException;
-import com.sun.identity.saml2.meta.SAML2MetaUtils;
-
 /**
  * XACMLRequestInformation
  *
