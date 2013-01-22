@@ -28,7 +28,6 @@ public class SessionQueryManager {
      * Intialise the SessionQueryManager and provide the OpenAM server ids that it should apply to.
      *
      * @param queryFactory Non null instance.
-     *
      * @param serverIds One or more server id's. Typically this value can be generated using
      *                  {@link com.iplanet.services.naming.WebtopNaming#getAllServerIDs()} which will provide all
      *                  server id's known to OpenAM.

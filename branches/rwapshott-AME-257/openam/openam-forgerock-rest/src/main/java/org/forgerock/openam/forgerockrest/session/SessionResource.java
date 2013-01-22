@@ -57,7 +57,6 @@ public class SessionResource extends ReadOnlyResource {
      * Applies the routing to the Router that this class supports.
      *
      * @param ocm Configuration required for organisation name.
-     *
      * @param router Router to apply changes to.
      */
     public static void applyRouting(OrganizationConfigManager ocm, Router router) {
@@ -71,7 +70,8 @@ public class SessionResource extends ReadOnlyResource {
 
     /**
      * Returns a collection of all Server ID that are known to the OpenAM instance.
-     * @return A non null, possibly empty collection of server ids.
+     *
+     *  @return A non null, possibly empty collection of server ids.
      */
     private static Collection<String> getServerIds() {
         try {
@@ -176,7 +176,6 @@ public class SessionResource extends ReadOnlyResource {
      * Internal function for converting time in seconds to minutes.
      *
      * @param timeleft Non null string value of time in seconds.
-     *
      * @return The parsed time.
      */
     private static int convertTimeLeft(String timeleft) {

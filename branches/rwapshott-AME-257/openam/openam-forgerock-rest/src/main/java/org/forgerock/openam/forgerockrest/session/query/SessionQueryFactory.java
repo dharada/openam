@@ -12,7 +12,6 @@ public class SessionQueryFactory {
      * Implementation is currently hard-coded to return the RemoteSessionQuery.
      *
      * @param serverId Non null server id.
-     *
      * @return A non null SessionQueryType based on the id.
      */
     public SessionQueryType getSessionQueryType(String serverId) {
