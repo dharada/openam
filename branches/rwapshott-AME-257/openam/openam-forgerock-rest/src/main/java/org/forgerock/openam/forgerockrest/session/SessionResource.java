@@ -35,6 +35,9 @@ public class SessionResource extends ReadOnlyResource {
     public static final String KEYWORD_ALL = "all";
     public static final String KEYWORD_LIST = "list";
 
+    public static final String HEADER_USER_ID = "User Id";
+    public static final String HEADER_TIME_REMAINING = "Time Remaining";
+
     /**
      * Applies the routing to the Router that this class supports.
      *
@@ -96,12 +99,7 @@ public class SessionResource extends ReadOnlyResource {
             resource = new Resource(KEYWORD_LIST, "0", new JsonValue(servers));
         } else {
             List<List<String[]>> table = new LinkedList<List<String[]>>();
-            // Test String values not locallised and
-            //
-            // AM HERE
-            
-            // appropriate for production use.
-            table.add(Arrays.asList(new String[]{"User Id", "Time Remaining"}));
+            table.add(Arrays.asList(new String[]{HEADER_USER_ID, HEADER_TIME_REMAINING}));
 
             Collection<SessionInfo> sessions = null;
             if (id.equals(KEYWORD_ALL)) {
@@ -112,7 +110,7 @@ public class SessionResource extends ReadOnlyResource {
 
             for (SessionInfo session : sessions) {
 
-                // TODO The format of the output is easy and likely to change in the future.
+                // TODO The format of the output likely to change in the future.
 
                 int timeleft = convertTimeLeft(session.timeleft);
                 String username = (String) session.properties.get("UserId");
@@ -130,6 +128,10 @@ public class SessionResource extends ReadOnlyResource {
         handler.handleResult(resource);
     }
 
+    /**
+     * @param serverId Server to query.
+     * @return A non null collection of SessionInfos from the named server.
+     */
     private Collection<SessionInfo> generateNamedServerSession(String serverId) {
         List<String> serverList = Arrays.asList(new String[]{serverId});
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), serverList);
@@ -138,6 +140,9 @@ public class SessionResource extends ReadOnlyResource {
     }
 
 
+    /**
+     * @return A non null collection of SessionInfo instances queried across all servers.
+     */
     private Collection<SessionInfo> generateAllSessions() {
         SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), getServerIds());
         Collection<SessionInfo> sessions = queryManager.getAllSessions();
