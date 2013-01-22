@@ -27,7 +27,7 @@
  */
 
 /*
- * Portions Copyrighted [2011] [ForgeRock AS]
+ * Portions Copyright 2011-2013 ForgeRock, Inc.
  */
 package com.sun.identity.policy;
 
@@ -367,6 +367,9 @@ public class Policy implements Cloneable {
      * Gets the name of the policy.
      *
      * @return name of the policy
+     *
+     * @supported.api
+     *
      */
     public String getName() {
         return (policyName);
