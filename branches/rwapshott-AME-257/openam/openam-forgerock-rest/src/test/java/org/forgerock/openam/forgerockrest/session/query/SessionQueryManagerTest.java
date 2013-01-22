@@ -1,6 +1,6 @@
 package org.forgerock.openam.forgerockrest.session.query;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 /**
  * @author robert.wapshott@forgerock.com
