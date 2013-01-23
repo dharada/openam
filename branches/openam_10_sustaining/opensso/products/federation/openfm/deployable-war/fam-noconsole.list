@@ -1285,7 +1285,7 @@
 ./WEB-INF/lib/oauth-signature-1.1.5-ea-SNAPSHOT.jar
 ./WEB-INF/lib/oauthservice.jar
 ./WEB-INF/lib/ognl-2.6.9.jar
-./WEB-INF/lib/opendj-ldap-sdk-3.0.0-M2.jar
+./WEB-INF/lib/opendj-ldap-sdk-3.0.0-OPENAMp3.jar
 ./WEB-INF/lib/openfedlib.jar
 ./WEB-INF/lib/opensso-sharedlib.jar
 ./WEB-INF/lib/opensso.jar
