@@ -48,10 +48,10 @@ public class SessionQueryManagerTest {
 
         SessionQueryFactory mockFactory = mock(SessionQueryFactory.class);
         given(mockFactory.getSessionQueryType(anyString())).willReturn(mock(SessionQueryType.class));
-        SessionQueryManager manager = new SessionQueryManager(mockFactory, ids);
+        SessionQueryManager manager = new SessionQueryManager(mockFactory);
 
         // When
-        manager.getAllSessions();
+        manager.getAllSessions(ids);
 
         // Then
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -69,10 +69,10 @@ public class SessionQueryManagerTest {
         SessionQueryFactory mockFactory = mock(SessionQueryFactory.class);
         given(mockFactory.getSessionQueryType(anyString())).willReturn(mockQueryType);
 
-        SessionQueryManager manager = new SessionQueryManager(mockFactory, Arrays.asList(new String[]{"badger"}));
+        SessionQueryManager manager = new SessionQueryManager(mockFactory);
 
         // When
-        manager.getAllSessions();
+        manager.getAllSessions(Arrays.asList(new String[]{"badger"}));
 
         // Then
         verify(mockQueryType, times(1)).getAllSessions();
@@ -96,10 +96,10 @@ public class SessionQueryManagerTest {
         given(mockFactory.getSessionQueryType(badger)).willReturn(typeOne);
         given(mockFactory.getSessionQueryType(weasel)).willReturn(typeTwo);
 
-        SessionQueryManager manager = new SessionQueryManager(mockFactory, Arrays.asList(new String[]{badger, weasel}));
+        SessionQueryManager manager = new SessionQueryManager(mockFactory);
 
         // When
-        Collection<SessionInfo> sessions = manager.getAllSessions();
+        Collection<SessionInfo> sessions = manager.getAllSessions(Arrays.asList(new String[]{badger, weasel}));
 
         // Then
         assertEquals(2, sessions.size());

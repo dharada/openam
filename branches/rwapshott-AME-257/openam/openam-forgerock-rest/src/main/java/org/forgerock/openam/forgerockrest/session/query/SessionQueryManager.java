@@ -22,27 +22,27 @@ public class SessionQueryManager {
     private static Debug debug = Debug.getInstance("frRest");
 
     private SessionQueryFactory queryFactory;
-    private Collection<String> serverIds;
 
     /**
      * Intialise the SessionQueryManager and provide the OpenAM server ids that it should apply to.
      *
      * @param queryFactory Non null instance.
-     * @param serverIds One or more server id's. Typically this value can be generated using
-     *                  {@link com.iplanet.services.naming.WebtopNaming#getAllServerIDs()} which will provide all
-     *                  server id's known to OpenAM.
+     *
      */
-    public SessionQueryManager(SessionQueryFactory queryFactory, Collection<String> serverIds) {
+    public SessionQueryManager(SessionQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
-        this.serverIds = serverIds;
     }
 
     /**
      * Query all servers allocated to this SessionQueryManager for their Sessions.
      *
+     * @param serverIds One or more server id's. Typically this value can be generated using
+     *                  {@link com.iplanet.services.naming.WebtopNaming#getAllServerIDs()} which will provide all
+     *                  server id's known to OpenAM.
+     *
      * @return Returns all sessions across all servers.
      */
-    public Collection<SessionInfo> getAllSessions() {
+    public Collection<SessionInfo> getAllSessions(Collection<String> serverIds) {
         // impl note, this could be a Map of Server -> Sessions
 
         List<SessionInfo> sessions = new LinkedList<SessionInfo>();

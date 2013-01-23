@@ -52,6 +52,11 @@ public class SessionResource extends ReadOnlyResource {
 
     public static final String HEADER_USER_ID = "User Id";
     public static final String HEADER_TIME_REMAINING = "Time Remaining";
+    private SessionQueryManager queryManager;
+
+    public SessionResource(SessionQueryManager queryManager) {
+        this.queryManager = queryManager;
+    }
 
     /**
      * Applies the routing to the Router that this class supports.
@@ -65,7 +70,8 @@ public class SessionResource extends ReadOnlyResource {
             orgName += "/";
         }
 
-        router.addRoute(RoutingMode.STARTS_WITH, orgName + "sessions", new SessionResource());
+        SessionQueryManager sessionQueryManager = new SessionQueryManager(new SessionQueryFactory());
+        router.addRoute(RoutingMode.STARTS_WITH, orgName + "sessions", new SessionResource(sessionQueryManager));
     }
 
     /**
@@ -149,8 +155,7 @@ public class SessionResource extends ReadOnlyResource {
      */
     private Collection<SessionInfo> generateNamedServerSession(String serverId) {
         List<String> serverList = Arrays.asList(new String[]{serverId});
-        SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), serverList);
-        Collection<SessionInfo> sessions = queryManager.getAllSessions();
+        Collection<SessionInfo> sessions = queryManager.getAllSessions(serverList);
         return sessions;
     }
 
@@ -159,8 +164,7 @@ public class SessionResource extends ReadOnlyResource {
      * @return A non null collection of SessionInfo instances queried across all servers.
      */
     private Collection<SessionInfo> generateAllSessions() {
-        SessionQueryManager queryManager = new SessionQueryManager(new SessionQueryFactory(), getServerIds());
-        Collection<SessionInfo> sessions = queryManager.getAllSessions();
+        Collection<SessionInfo> sessions = queryManager.getAllSessions(getServerIds());
         return sessions;
     }
 
