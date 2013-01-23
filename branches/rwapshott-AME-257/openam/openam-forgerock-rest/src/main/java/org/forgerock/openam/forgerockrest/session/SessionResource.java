@@ -79,7 +79,7 @@ public class SessionResource extends ReadOnlyResource {
      *
      *  @return A non null, possibly empty collection of server ids.
      */
-    private static Collection<String> getServerIds() {
+    public Collection<String> getAllServerIds() {
         try {
             return WebtopNaming.getAllServerIDs();
         } catch (Exception e) {
@@ -164,7 +164,7 @@ public class SessionResource extends ReadOnlyResource {
      * @return A non null collection of SessionInfo instances queried across all servers.
      */
     private Collection<SessionInfo> generateAllSessions() {
-        Collection<SessionInfo> sessions = queryManager.getAllSessions(getServerIds());
+        Collection<SessionInfo> sessions = queryManager.getAllSessions(getAllServerIds());
         return sessions;
     }
 
@@ -173,7 +173,7 @@ public class SessionResource extends ReadOnlyResource {
      * @return Returns a JSON Resource which defines the available servers.
      */
     private Collection<String> generateListServers() {
-        return getServerIds();
+        return getAllServerIds();
     }
 
     /**
