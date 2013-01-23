@@ -116,13 +116,6 @@
         </fileSet>
         <fileSet>
             <outputDirectory>resources</outputDirectory>
-            <directory>${project.basedir}/../../openam-core/src/main/resources</directory>
-            <includes>
-                <include>*.properties</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <outputDirectory>resources</outputDirectory>
             <directory>${project.basedir}/../../openam-server-only/src/main/resources/console</directory>
             <includes>
                 <include>*.properties</include>
