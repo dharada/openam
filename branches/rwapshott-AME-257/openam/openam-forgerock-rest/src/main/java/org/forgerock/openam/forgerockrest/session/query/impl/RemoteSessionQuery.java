@@ -51,8 +51,8 @@ public class RemoteSessionQuery implements SessionQueryType {
 
         try {
             URL svcurl = Session.getSessionServiceURL(serverId);
-            SSOToken adminToken = AccessController.doPrivileged(AdminTokenAction.getInstance());
-            String sid = adminToken.toString();
+            SSOToken adminToken = getAdminToken();
+            String sid = adminToken.getTokenID().toString();
 
             SessionRequest sreq = new SessionRequest(SessionRequest.GetValidSessions, sid, false);
             SessionResponse sres = getSessionResponse(svcurl, sreq);
@@ -102,5 +102,12 @@ public class RemoteSessionQuery implements SessionQueryType {
         } catch (Exception e) {
             throw new SessionException(e);
         }
+    }
+
+    /**
+     * @return Non null AdminToken.
+     */
+    private SSOToken getAdminToken() {
+        return AccessController.doPrivileged(AdminTokenAction.getInstance());
     }
 }
