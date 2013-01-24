@@ -15,6 +15,6 @@
  */
 
 /**
- * This package defines the query functionality for Sessions.
+ * This package contains the various implementations for the SessionQueryType interface.
  */
-package org.forgerock.openam.forgerockrest.session.query;
+package org.forgerock.openam.forgerockrest.session.query.impl;
