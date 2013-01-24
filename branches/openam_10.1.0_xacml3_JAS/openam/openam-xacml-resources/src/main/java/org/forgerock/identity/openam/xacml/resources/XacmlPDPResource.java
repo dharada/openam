@@ -46,13 +46,10 @@ import com.sun.identity.saml2.soapbinding.RequestHandler;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.xml.XMLUtils;
 import com.sun.identity.xacml.context.ContextFactory;
-import org.forgerock.identity.openam.xacml.commons.ContentType;
+
 import org.forgerock.identity.openam.xacml.model.XACML3Constants;
 import org.forgerock.identity.openam.xacml.model.XACMLRequestInformation;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.restlet.resource.ServerResource;
+
 import org.w3c.dom.Element;
 
 import javax.servlet.ServletException;
@@ -75,7 +72,7 @@ import java.util.logging.Level;
  *
  * @author Jeff.Schenk@forgerock.com
  */
-public class XacmlPDPResource extends ServerResource implements XACML3Constants {
+public class XacmlPDPResource implements XACML3Constants {
     /**
      * Define our Static resource Bundle for our debugger.
      */
@@ -101,16 +98,6 @@ public class XacmlPDPResource extends ServerResource implements XACML3Constants 
         // ************************************************************
         // Authorized?
 
-        // ************************************************************
-        // Accept a pre-determined entry point for the Home Documents
-        try {
-            if (resourceHomeRequested(request, response)) {
-                // Request was satisfied.
-                return;
-            }
-        } catch(JSONException je) {
-            debug.error("JSON processing Exception: "+je.getMessage(),je);
-        }
         // ***************************************************************
         // returning here, indicates we still need to process the request
         // now found the requested relation from the context.
@@ -813,140 +800,6 @@ public class XacmlPDPResource extends ServerResource implements XACML3Constants 
                 throw new SAML2Exception("metaDataError");
             }
         }
-    }
-
-    /**
-     * Determines if the Home Resources should be shown.
-     *
-     * @param request
-     * @param response
-     * @return
-     * @throws ServletException
-     * @throws IOException
-     */
-    private boolean resourceHomeRequested(HttpServletRequest request, HttpServletResponse response) throws ServletException, JSONException, IOException {
-        String classMethod = "XacmlPDPResource:resourceHomeRequested";
-        debug.error(classMethod + " processing URI:[" + request.getRequestURI() + "], Content Type:["+request.getContentType()+"]");
-        StringBuilder sb = new StringBuilder();
-        // **************************
-        // Check our request...
-        if ( (request.getRequestURI().equalsIgnoreCase(request.getContextPath())) &&
-             (!request.getRequestURI().contains("home")) ) {
-            return false;
-        }
-        // ************************************************************
-        // Determine how to respond based upon Content Type.
-        if (request.getContentType()==ContentType.NONE.applicationType() ||
-           (request.getContentType().equalsIgnoreCase(ContentType.JSON_HOME.applicationType())) ) {
-            // Formulate the Home Document for JSON Consumption.
-            response.setContentType(ContentType.JSON_HOME.applicationType());
-            sb.append(getJSONHomeDocument().toString());  // TODO -- Cache the Default Home JSON Document Object.
-        } else {
-            // Formulate the Home Document for XML Consumption.
-            response.setContentType(ContentType.XML.toString());
-            sb.append("<resources xmlns=\042http://ietf.org/ns/home-documents\042\n");
-            sb.append("xmlns:atom=\042http://www.w3.org/2005/Atom\042>\n");
-            sb.append("<resource rel=\042http://docs.oasis-open.org/openams/xacml/relation/pdp\042>");  // TODO, Link needs to be real!
-            sb.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
-            sb.append("</resource>");
-            sb.append(" </resources>");
-        } // End of Check for Content Type.
-        // *******************************************************
-        // Output our rendered content.
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(200);
-        PrintWriter out = response.getWriter();
-        out.write(sb.toString());
-        out.flush();
-        out.close();
-        return true;
-
-    }
-
-    /**
-     * Formulate our Home Document.
-     *
-     * @return JSONObject
-     * @throws JSONException
-     *
-     */
-    private JSONObject getJSONHomeDocument() throws JSONException {
-        JSONObject resources = new JSONObject();
-        JSONArray resourceArray = new JSONArray();
-
-        JSONObject resource_1 = new JSONObject();
-        resource_1.append("href", "/xacml/");
-        JSONObject resource_1A = new JSONObject();
-        resource_1A.append("http://example.org/rel/xacml", resource_1);           // TODO Verify!
-
-        JSONObject resource_2 = new JSONObject();
-        resource_2.append("href-template", "/xacml/");
-        resource_2.append("hints", getHints());
-        JSONObject resource_2A = new JSONObject();
-        resource_2A.append("http://example.org/rel/xacml", resource_2);           // TODO Verify!
-
-        resourceArray.put(resource_1A);
-        resourceArray.put(resource_2A);
-
-
-        resources.append("resources", resourceArray);
-        return resources;
-    }
-
-    /**
-     * Formulate our Hints for our REST EndPoint to allow Discovery.
-     * Per Internet Draft: draft-nottingham-json-home-02
-     *
-     * @return JSONObject - Containing Hints for our Home Application.
-     * @throws JSONException
-     */
-    private JSONObject getHints() throws JSONException {
-        JSONObject hints = new JSONObject();
-
-        /**
-         * Hints the HTTP methods that the current client will be able to use to
-         * interact with the resource; equivalent to the Allow HTTP response
-         * header.
-         *
-         * Content MUST be an array of strings, containing HTTP methods.
-         */
-        JSONArray allow = new JSONArray();
-        allow.put("GET");
-        allow.put("POST");
-        hints.append("allow",allow);
-
-        /**
-         * Hints the representation types that the resource produces and
-         * consumes, using the GET and PUT methods respectively, subject to the
-         * ’allow’ hint.
-         *
-         * Content MUST be an array of strings, containing media types.
-         */
-        JSONArray representations = new JSONArray();
-        representations.put(ContentType.JSON.applicationType());
-        representations.put(ContentType.XML.applicationType());
-        representations.put(ContentType.XACML_PLUS_XML.applicationType());
-        hints.append("representations",representations);
-
-        /**
-         * Hints the POST request formats accepted by the resource for this
-         * client.
-         *
-         * Content MUST be an array of strings, containing media types.
-         *
-         * When this hint is present, "POST" SHOULD be listed in the "allow"
-         * hint.
-         */
-        JSONArray accept_post = new JSONArray();
-        accept_post.put(ContentType.JSON.applicationType());
-        accept_post.put(ContentType.XML.applicationType());
-        accept_post.put(ContentType.XACML_PLUS_XML.applicationType());
-        hints.append("accept-post",accept_post);
-
-        /**
-         * Return our Hints for consumption by requester.
-         */
-        return hints;
     }
 
     /**

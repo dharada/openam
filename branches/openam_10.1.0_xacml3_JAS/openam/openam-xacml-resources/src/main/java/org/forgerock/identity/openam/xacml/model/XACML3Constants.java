@@ -43,6 +43,8 @@ public interface XACML3Constants extends XACMLConstants {
     public static final String XACML_AUTHZ_QUERY = "XACMLAuthzDecisionQuery";   // [SAML4XACML]
     public static final String METAALIAS_KEY = "/metaAlias" ;
 
+    public static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+
     /**
      * RESTful XACML XACML 3 Name Space Definitions.
      */

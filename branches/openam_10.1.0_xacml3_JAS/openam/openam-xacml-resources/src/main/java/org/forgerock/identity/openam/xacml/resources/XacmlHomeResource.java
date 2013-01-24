@@ -53,6 +53,12 @@ public class XacmlHomeResource implements XACML3Constants {
     private static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML3.
 
     /**
+     * Do not allow instantiation, only static methods.
+     */
+    private XacmlHomeResource() {
+    }
+
+    /**
      * Determines if the Home Resources should be shown.
      *
      * @param request
@@ -108,7 +114,7 @@ public class XacmlHomeResource implements XACML3Constants {
      * @return JSONObject
      * @throws org.json.JSONException
      */
-    private static JSONObject getHomeDocument() throws JSONException {
+    public static JSONObject getHomeDocument() throws JSONException {
         JSONObject resources = new JSONObject();
         JSONArray resourceArray = new JSONArray();
 
