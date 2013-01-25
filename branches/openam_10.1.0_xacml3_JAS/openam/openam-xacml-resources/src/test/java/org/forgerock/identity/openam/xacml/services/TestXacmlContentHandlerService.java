@@ -26,7 +26,6 @@
 package org.forgerock.identity.openam.xacml.services;
 
 import static org.testng.Assert.*;
-import static org.mockito.Mockito.*;
 
 import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import org.junit.runner.RunWith;
@@ -45,15 +44,13 @@ import java.io.IOException;
  * Test XACML Content Handler
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest( { SystemPropertiesManager.class })
+@PrepareForTest( { SystemPropertiesManager.class } )
 public class TestXacmlContentHandlerService {
 
     private static ServletTester servletTester;
-    private static SystemPropertiesManager systemPropertiesManager;
 
     @BeforeClass
     public void before() throws Exception {
-        systemPropertiesManager = mock(SystemPropertiesManager.class);
         servletTester = new ServletTester();
         servletTester.addServlet(XacmlContentHandlerService.class, "/xacml");
         servletTester.start();
