@@ -25,9 +25,9 @@
  */
 package org.forgerock.identity.openam.xacml.services;
 
+import com.sun.identity.common.SystemConfigurationUtil;
 import com.sun.identity.entitlement.xacml3.core.DecisionType;
-import com.sun.identity.entitlement.xacml3.core.Request;
-import com.sun.identity.saml.common.SAMLUtils;
+
 import com.sun.identity.saml.xmlsig.KeyProvider;
 import com.sun.identity.saml2.assertion.Assertion;
 import com.sun.identity.saml2.assertion.AssertionFactory;
@@ -75,11 +75,9 @@ import javax.xml.soap.MimeHeaders;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import javax.xml.xpath.*;
 import java.io.*;
 import java.security.PrivateKey;
@@ -90,8 +88,12 @@ import java.util.logging.Level;
 /**
  * XACML Resource Router
  * <p/>
- * Provides main end-point for all XACML requests, either XML or JSON based over HTTP/HTTPS REST based.
- * This code was originally used from the @see com.sun.identity.saml2.soapbinding.QueryHandlerServlet.
+ * Provides main end-point for all XACML requests, either XML or JSON based over HTTP/HTTPS REST based protocol flow.
+ * This ForgeRock developed XACML Resource Router complies with the following OASIS Specifications:
+ * <p/>
+ * <p/>
+ * <p/>
+ * Some content of this code was originally used from the @see com.sun.identity.saml2.soapbinding.QueryHandlerServlet.
  *
  * @author Jeff.Schenk@forgerock.com
  */
@@ -112,9 +114,29 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             "</xacml-ctx:response>";
 
     /**
+     * Attribute that specifies maximum content length for SAML request in
+     * <code>AMConfig.properties</code> file.
+     */
+    public static final String HTTP_MAX_CONTENT_LENGTH =
+            "com.sun.identity.xacml.request.maxContentLength";
+
+    /**
+     * Default maximum content length is set to 16k.
+     */
+    public static final int defaultMaxLength = 16384;
+
+    /**
+     * Default maximum content length in string format.
+     */
+    public static final String DEFAULT_CONTENT_LENGTH =
+            String.valueOf(defaultMaxLength);
+
+    private static int maxContentLength = 0;
+
+    /**
      * Define our Static resource Bundle for our debugger.
      */
-    private static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML.
+    private static Debug debug;
 
     /**
      * Defined and established Handlers.
@@ -145,6 +167,11 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      * @throws ServletException
      */
     public void init(ServletConfig config) throws ServletException {
+        // ******************************************************
+        // Acquire our Logging Interface.
+        debug = Debug.getInstance("amXACML");
+        // ******************************************************
+        // Acquire Servlet Context and XACML Request Processor.
         servletCtx = config.getServletContext();
         try {
             xacmlRequestProcessor = XACMLRequestProcessor.getInstance();
@@ -152,19 +179,30 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             debug.error("Unable to obtain Reference to XACMLRequestProcessor for Core Functionality, unable to process XACML Requests.");
             xacmlRequestProcessor = null;
         }
-
+        // ***************************************************
+        // Acquire MaxContent Length
+        try {
+            maxContentLength = Integer.parseInt(SystemConfigurationUtil.
+                    getProperty(HTTP_MAX_CONTENT_LENGTH, DEFAULT_CONTENT_LENGTH));
+        } catch (NumberFormatException ne) {
+            debug.error("Wrong format of XACML request max content "
+                    + "length. Using Default Value.");
+            maxContentLength = defaultMaxLength;
+        }
+        // ***************************************************
         // Get Schema for Validation.
         try {
             SchemaFactory constraintFactory =
                     SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            // TODO Make this a Static variable and update server-only to include xacml xsd.
-            Source constraints = new StreamSource(
+            // TODO Make this a Static variable to pick up xsd as a resource from a JAR.
+            Source xacmlSchemaSource = new StreamSource(
                     new File(schemaFileName));
-            xacmlSchema = constraintFactory.newSchema(constraints);
-
+            xacmlSchema = constraintFactory.newSchema(xacmlSchemaSource);
         } catch (SAXException se) {
             debug.error("SAX Exception obtaining XACML Schema for Validation,", se);
         }
+        // ***************************************************
+        // Ensure we are ok and have necessary assets to run.
         if (xacmlSchema != null) {
             debug.error("Initialization of XACML Content Resource Router, Server Information: " + servletCtx.getServerInfo());
         }
@@ -172,7 +210,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
     }
 
     /**
-     * Handles the HTTP <code>GET</code> method.
+     * Handles the HTTP <code>GET</code> method XACML REST Request.
      *
      * @param request
      * @param response
@@ -181,11 +219,51 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String classMethod = "XacmlContentHandlerService:doGet";
+        final String classMethod = "XacmlContentHandlerService:doGet";
+        // ******************************************************************
+        // Handle any DoS Attacks and Threats to the integrity of the PDP.
+        if (maxContentLength != 0) {
+            if (request.getContentLength() < 0) {
+                // We do not have any valid Content Length set.
+                response.setStatus(HttpServletResponse.SC_LENGTH_REQUIRED);
+                response.setCharacterEncoding("UTF-8");
+                return;
+            }
+            if (request.getContentLength() > maxContentLength) {
+                if (debug.messageEnabled()) {
+                    debug.message(
+                            "Content length too large: " + request.getContentLength());
+                }
+                // We do not have any valid Content Length set.
+                response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+                response.setCharacterEncoding("UTF-8");
+                return;
+            }
+        }
+        // ******************************************************************
+        // Set up Method Logging Incoming Request.
+        // TODO Make message level of info.
         debug.error(classMethod + " processing Incoming Request MediaType:[" + request.getContentType() + "], Content Length:[" + request.getContentLength() + "]");
 
         // ******************************************************************
-        // Ensure the incoming PEP Request has been Authorized by our PDP!
+        // Validate Request Media Type
+        if ((request.getContentType() == null) ||
+            (request.getContentType().trim().isEmpty())) {
+            // We do not have a valid Application Content Type!
+            response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+            response.setCharacterEncoding("UTF-8");
+            return;
+        }
+        ContentType requestContentType = ContentType.getNormalizedContentType(request.getContentType());
+        if (requestContentType == null) {
+            // We do not have a valid Application Content Type!
+            response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+            response.setCharacterEncoding("UTF-8");
+            return;
+        }
+
+        // ******************************************************************
+        // Authenticate and Authorize
 
 
 
@@ -310,7 +388,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         try {
             response.setContentType(ContentType.XML.applicationType());
             response.setCharacterEncoding("UTF-8");
-            if ( (xacmlStringBuilderResponse == null) || (xacmlStringBuilderResponse.length() <= 0) ) {
+            if ((xacmlStringBuilderResponse == null) || (xacmlStringBuilderResponse.length() <= 0)) {
                 xacmlStringBuilderResponse = new StringBuilder(DEFAULT_RESPONSE);
             }
             response.setContentLength(xacmlStringBuilderResponse.length());
@@ -342,7 +420,6 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
 
         // ******************************************************************
         // Ensure the incoming PEP Request has been Authorized by our PDP!
-
 
 
         XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
@@ -496,7 +573,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         try {
             response.setContentType(ContentType.XML.applicationType());
             response.setCharacterEncoding("UTF-8");
-            if ( (xacmlStringResponse != null) && (!xacmlStringResponse.trim().isEmpty()) ) {
+            if ((xacmlStringResponse != null) && (!xacmlStringResponse.trim().isEmpty())) {
                 xacmlStringResponse = new String(DEFAULT_RESPONSE);
             }
             response.setContentLength(xacmlStringResponse.length());
@@ -506,7 +583,6 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         } catch (IOException ioe) {
             // Debug and return null
         }
-
 
 
     }
@@ -520,7 +596,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      * @throws IOException
      */
     private String processPDPRequest(HttpServletRequest request,
-                                   HttpServletResponse response)
+                                     HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XacmlContentHandlerService:processPDPRequest";
         // Get our Request Information.
@@ -541,7 +617,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         try {
             InputStream inputStream = request.getInputStream();
             requestBody = new Scanner(inputStream).useDelimiter("\\A").next();
-        } catch (NoSuchElementException nse) {
+        } catch (NoSuchElementException nse) {   // runtime exception.
             // TODO
         }
         if (requestBody != null) {
@@ -553,16 +629,16 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             try {
                 Document requestDocument = parseXMLRequest(requestBody);
                 if (requestDocument != null) {
-                    //Object xacmlRequestObject = null;
-                    //try {
-                    // Formulate the XACML Request Object Graph.
-                    //xacmlRequestObject = xmlToRequestObject(requestDocument);
-                    //     if (xacmlRequestObject != null) {
-                    //         debug.error("processing xacmlRequestObject:[" + xacmlRequestObject.toString() + "]");
-                    //     }
-                    // } catch (Exception e) {
-                    //     debug.error("Exception performing xml to Object Graph.", e);
-                    // }
+                    Object xacmlRequestObject = null;
+                    try {
+                        // Formulate the XACML Request Object Graph.
+                        xacmlRequestObject = xmlToRequestObject(requestDocument);
+                        if (xacmlRequestObject != null) {
+                            debug.error("Unmarshalled Request Object:[" + xacmlRequestObject.toString() + "]");
+                        }
+                    } catch (Exception e) {
+                        debug.error("Exception performing xml to Object Graph.", e);
+                    }
 
                     // TODO Needs Work to process the request....
 
@@ -663,6 +739,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             throws SAML2Exception {
         String classMethod = "XacmlContentHandlerService:processSAMLRequest";
         Response samlResponse = null;
+
         if (reqAbs != null) {
             String xsiType = reqAbs.getAttribute(XSI_TYPE_ATTR);
             if (debug.messageEnabled()) {
@@ -943,8 +1020,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
     private final XACMLRequestInformation parseRequestInformation(HttpServletRequest request) throws ServletException {
         final String classMethod = "XacmlContentHandlerService:parseRequestInformation: ";
         try {
-            // handle DOS attack
-            SAMLUtils.checkHTTPContentLength(request);
+
             // Get URI and MetaAlias Data.
             String requestURI = request.getRequestURI();
             String queryMetaAlias =
@@ -972,77 +1048,61 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      * @return
      */
     private Document parseXMLRequest(final String requestBody) {
-            // Get Document Builder Factory
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        // Get Document Builder Factory
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-            // Leave off validation and namespaces
-            factory.setValidating(false);
-            factory.setNamespaceAware(false);
-            //factory.setSchema(xacmlSchema);
-            factory.setExpandEntityReferences(true);
-            factory.setIgnoringComments(true);
+        // Leave off validation and namespaces
+        factory.setValidating(false);
+        factory.setNamespaceAware(false);
+        //factory.setSchema(xacmlSchema);
+        factory.setExpandEntityReferences(true);
+        factory.setIgnoringComments(true);
 
-            Document document = null;
-            try {
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                ByteArrayInputStream inputStream =
-                        new ByteArrayInputStream((XML_HEADER + requestBody).getBytes());
-                document = builder.parse(inputStream);
-            } catch (SAXException se) {
-                debug.error("SAXException: " + se.getMessage());
-            } catch (ParserConfigurationException pce) {
-                debug.error("The underlying parser does not support the requested features: "+pce.getMessage());
-            } catch (FactoryConfigurationError fce) {
-                debug.error("Error occurred obtaining Document Builder Factory: "+fce.getMessage());
-            } catch (IOException ioe) {
-                debug.error("IO Exception occurred obtaining Document Builder Factory: "+ioe.getMessage());
-            }
-
-            /**
-             // Obtain new Validator.
-             Validator validator = xacmlSchema.newValidator();
-             // Validate the DOM
-             Result result = null;
-             try {
-             validator.validate(new DOMSource(doc), result);
-             debug.error("Document validates fine.");
-             } catch (org.xml.sax.SAXException e) {
-             debug.error("Validation error: " + e.getMessage());
-             } catch (IllegalArgumentException iae) {
-             debug.error("Illegal Argument encountered while validating XML Request");
-             } catch (IOException ioe) {
-             debug.error("IOException Encountered validating XML Request.",ioe);
-             } catch (Exception e) {
-             debug.error("Exception Encountered validating XML Request.",e);
-             }
-             **/
-
-            // Now dig using XPaths.
-            if (document != null) {
-                try {
-                    XPathFactory xPathfactory = XPathFactory.newInstance();
-                    XPath xpath = xPathfactory.newXPath();
-                    XPathExpression expr = xpath.compile("/request");
-                    Node node = (Node) expr.evaluate(document, XPathConstants.NODE);
-                    if (node != null) {
-                        for (int i = 0; i < node.getAttributes().getLength(); i++) {
-                            debug.error("Node: " + node.getNodeName() + " attribute: " + node.getAttributes().item(i));
-                        }
-                    }
-                } catch (XPathExpressionException xee) {
-                    // Our Expression for a Node was invalid,
-                    // Document could be bad or suspect.
-                    debug.error("XPathExpressException: " + xee.getMessage() + ", returning null bad bad content!");
-                    return null;
-                }
-            }
-            // Return the formulated document.
-            return document;
+        Document document = null;
+        try {
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            ByteArrayInputStream inputStream =
+                    new ByteArrayInputStream((XML_HEADER + requestBody).getBytes());
+            document = builder.parse(inputStream);
+        } catch (SAXException se) {
+            debug.error("SAXException: " + se.getMessage());
+        } catch (ParserConfigurationException pce) {
+            debug.error("The underlying parser does not support the requested features: " + pce.getMessage());
+        } catch (FactoryConfigurationError fce) {
+            debug.error("Error occurred obtaining Document Builder Factory: " + fce.getMessage());
+        } catch (IOException ioe) {
+            debug.error("IO Exception occurred obtaining Document Builder Factory: " + ioe.getMessage());
         }
 
-        /**
-         * Marshal information into an xml string represented document.
-         */
+        // Now dig using XPaths to perform a validation.
+        int invalidXPaths = 0;
+
+
+        if (document != null) {
+            try {
+                XPathFactory xPathfactory = XPathFactory.newInstance();
+                XPath xpath = xPathfactory.newXPath();
+                XPathExpression expr = xpath.compile("/request");
+                Node node = (Node) expr.evaluate(document, XPathConstants.NODE);
+                if (node != null) {
+                    for (int i = 0; i < node.getAttributes().getLength(); i++) {
+                        debug.error("Node: " + node.getNodeName() + " attribute: " + node.getAttributes().item(i));
+                    }
+                }
+            } catch (XPathExpressionException xee) {
+                // Our Expression for a Node was invalid,
+                // Document could be bad or suspect.
+                debug.error("XPathExpressException: " + xee.getMessage() + ", returning null bad bad content!");
+                return null;
+            }
+        }
+        // Return the formulated document.
+        return document;
+    }
+
+    /**
+     * Marshal information into an xml string represented document.
+     */
 
     private static String responseToXML(com.sun.identity.entitlement.xacml3.core.Response xacmlResponse) {
         StringWriter stringWriter = new StringWriter();
@@ -1066,15 +1126,21 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         if (xmlDocument == null) {
             return null;
         }
-        // Provide the package name where our ObjectFactory can be found for unMarshaling.
-        JAXBContext jaxbContext = JAXBContext.newInstance("com.sun.identity.entitlement.xacml3.core");
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        unmarshaller.setSchema(xacmlSchema);
+        com.sun.identity.entitlement.xacml3.core.Request request = null;
 
-        // TODO -- This below fails!
-        com.sun.identity.entitlement.xacml3.core.Request request =
-                (com.sun.identity.entitlement.xacml3.core.Request) unmarshaller.unmarshal(xmlDocument);
-        debug.error("************ xacml Request Object: " + request);
+        /**
+
+         // Provide the package name where our ObjectFactory can be found for unMarshaling.
+         JAXBContext jaxbContext = JAXBContext.newInstance("com.sun.identity.entitlement.xacml3.core");
+         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+         //unmarshaller.setSchema(xacmlSchema);
+
+         // TODO -- This below fails!
+         com.sun.identity.entitlement.xacml3.core.Request request =
+         (com.sun.identity.entitlement.xacml3.core.Request) unmarshaller.unmarshal(xmlDocument);
+         debug.error("************ xacml Request Object: " + request);
+
+         **/
 
         /**
          * javax.xml.bind.UnmarshalException

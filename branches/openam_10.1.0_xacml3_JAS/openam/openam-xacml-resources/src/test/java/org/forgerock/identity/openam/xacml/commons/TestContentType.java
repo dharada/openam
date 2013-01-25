@@ -25,16 +25,13 @@
  */
 package org.forgerock.identity.openam.xacml.commons;
 
-import org.forgerock.identity.openam.xacml.model.XACML3Constants;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * Very simple test to check parsing and validation of URNs.

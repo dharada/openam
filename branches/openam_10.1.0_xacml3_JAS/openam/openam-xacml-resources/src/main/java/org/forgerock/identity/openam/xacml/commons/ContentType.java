@@ -29,25 +29,44 @@ import javax.ws.rs.core.MediaType;
 
 /**
  * Various Content Types which are dealt with using XACML 3 via HTTP/REST.
- *
+ * <p/>
  * Extending MediaTypes, @see javax.ws.rs.core.MediaType.
  *
  * @author jeff.schenk@forgerock.com
  */
 public enum ContentType {
 
-    JSON_HOME      ("application/json-home"),
-    JSON           (MediaType.APPLICATION_JSON),
-    XML            (MediaType.APPLICATION_XML),
+    JSON_HOME("application/json-home"),
+    JSON(MediaType.APPLICATION_JSON),
+    XML(MediaType.APPLICATION_XML),
     XACML_PLUS_JSON("application/xacml+json"),
-    XACML_PLUS_XML ("application/xacml+xml"),
-    NONE           (null)
-    ;
+    XACML_PLUS_XML("application/xacml+xml"),
+    NONE(null);
 
     private final String applicationType;
+
     ContentType(String applicationType) {
         this.applicationType = applicationType;
     }
-    public String applicationType() { return applicationType; }
 
+    public String applicationType() {
+        return applicationType;
+    }
+
+    /**
+     * Normalize the Content Received from the actual HTTP Request.
+     * @param contentTypeStringValue
+     * @return
+     */
+    public static ContentType getNormalizedContentType(String contentTypeStringValue) {
+        if ( (contentTypeStringValue == null) || (contentTypeStringValue.isEmpty()) ) {
+            return null;
+        }
+        for (ContentType contentType : ContentType.values()) {
+            if (contentType.applicationType().equalsIgnoreCase(contentTypeStringValue)) {
+                return contentType;
+            }
+        }
+        return null;
+    }
 }
