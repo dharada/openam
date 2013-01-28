@@ -36,21 +36,26 @@ import javax.ws.rs.core.MediaType;
  */
 public enum ContentType {
 
-    JSON_HOME("application/json-home"),
-    JSON(MediaType.APPLICATION_JSON),
-    XML(MediaType.APPLICATION_XML),
-    XACML_PLUS_JSON("application/xacml+json"),
-    XACML_PLUS_XML("application/xacml+xml"),
-    NONE(null);
+    JSON_HOME("application/json-home", CommonType.JSON),
+    JSON(MediaType.APPLICATION_JSON, CommonType.JSON),
+    XML(MediaType.APPLICATION_XML, CommonType.XML),
+    XACML_PLUS_JSON("application/xacml+json", CommonType.JSON),
+    XACML_PLUS_XML("application/xacml+xml", CommonType.XML),
+    NONE(null,null);
 
     private final String applicationType;
+    private final CommonType commonType;
 
-    ContentType(String applicationType) {
+    ContentType(String applicationType, CommonType commonType) {
         this.applicationType = applicationType;
+        this.commonType = commonType;
     }
 
     public String applicationType() {
         return applicationType;
+    }
+    public CommonType commonType() {
+        return commonType;
     }
 
     /**

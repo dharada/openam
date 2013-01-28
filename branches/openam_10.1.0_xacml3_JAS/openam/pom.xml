@@ -185,7 +185,7 @@
     <!-- Build order will be determined by the Maven Reactor. -->
     <modules>
 
-        <!-- OpenAM Shared - Common Module -->
+        <!-- OpenAM Locale - Common Module -->
         <module>openam-locale</module>
 
         <!-- OpenAM Shared - Common Module -->
