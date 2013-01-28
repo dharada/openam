@@ -15,8 +15,15 @@
  */
 package org.forgerock.openam.forgerockrest;
 
-import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.json.resource.*;
+import org.forgerock.json.resource.CollectionResourceProvider;
+import org.forgerock.json.resource.CreateRequest;
+import org.forgerock.json.resource.DeleteRequest;
+import org.forgerock.json.resource.NotSupportedException;
+import org.forgerock.json.resource.PatchRequest;
+import org.forgerock.json.resource.Resource;
+import org.forgerock.json.resource.ResultHandler;
+import org.forgerock.json.resource.ServerContext;
+import org.forgerock.json.resource.UpdateRequest;
 
 /**
  * Represents a read only view of a resource.
@@ -25,15 +32,6 @@ public abstract class ReadOnlyResource implements CollectionResourceProvider  {
 
     private NotSupportedException generateException(String type) {
         return new NotSupportedException(type + " are not supported for this Resource");
-    }
-
-    public void actionCollection(ServerContext ctx, ActionRequest request, ResultHandler<JsonValue> handler) {
-        handler.handleError(generateException("Actions"));
-    }
-
-    public void actionInstance(ServerContext ctx, String resId, ActionRequest request,
-                               ResultHandler<JsonValue> handler) {
-        handler.handleError(generateException("Actions"));
     }
 
     public void createInstance(ServerContext ctx, CreateRequest request, ResultHandler<Resource> handler) {

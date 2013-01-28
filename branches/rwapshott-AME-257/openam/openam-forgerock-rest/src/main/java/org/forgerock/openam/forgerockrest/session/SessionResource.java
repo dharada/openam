@@ -87,6 +87,28 @@ public class SessionResource extends ReadOnlyResource {
         }
     }
 
+    /**
+     * Currently unimplemented.
+     *
+     * @param context {@inheritDoc}
+     * @param request {@inheritDoc}
+     * @param handler {@inheritDoc}
+     */
+    public void actionCollection(ServerContext context, ActionRequest request, ResultHandler<JsonValue> handler) {
+        handler.handleError(new NotSupportedException("Not implemented for this Resource"));
+    }
+
+
+    /**
+     * Currently unimplemented.
+     *
+     * @param context {@inheritDoc}
+     * @param request {@inheritDoc}
+     * @param handler {@inheritDoc}
+     */
+    public void actionInstance(ServerContext context, String resourceId, ActionRequest request, ResultHandler<JsonValue> handler) {
+        handler.handleError(new NotSupportedException("Not implemented for this Resource"));
+    }
 
     /**
      * Currently unimplemented method.
