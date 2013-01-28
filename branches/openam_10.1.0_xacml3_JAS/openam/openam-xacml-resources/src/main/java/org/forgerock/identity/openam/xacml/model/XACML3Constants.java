@@ -34,6 +34,10 @@ import com.sun.identity.entitlement.xacml3.XACMLConstants;
  *
  */
 public interface XACML3Constants extends XACMLConstants {
+    /**
+     * Constant used to identify meta alias.
+     */
+    public static final String NAME_META_ALIAS_IN_URI = "metaAlias";
 
     /**
      * Common Globals Definitions

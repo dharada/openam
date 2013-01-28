@@ -25,6 +25,8 @@
  */
 package org.forgerock.identity.openam.xacml.model;
 
+import org.forgerock.identity.openam.xacml.commons.ContentType;
+
 /**
  * XACMLRequestInformation
  *
@@ -35,6 +37,7 @@ package org.forgerock.identity.openam.xacml.model;
  */
 public class XACMLRequestInformation {
 
+    private ContentType contentType;
     private String requestURI;
     private String metaAlias;
     private String pdpEntityID;
@@ -49,11 +52,21 @@ public class XACMLRequestInformation {
      * @param pdpEntityID
      * @param realm
      */
-    public XACMLRequestInformation(String requestURI, String metaAlias, String pdpEntityID, String realm) {
+    public XACMLRequestInformation(ContentType contentType, String requestURI, String metaAlias, String pdpEntityID,
+                                   String realm) {
+              this.contentType = contentType;
               this.requestURI = requestURI;
               this.metaAlias = metaAlias;
               this.pdpEntityID = pdpEntityID;
               this.realm = realm;
+    }
+
+    public ContentType getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(ContentType contentType) {
+        this.contentType = contentType;
     }
 
     public String getRequestURI() {
@@ -92,7 +105,8 @@ public class XACMLRequestInformation {
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append("XACMLRequestInformation");
-        sb.append("{requestURI='").append(requestURI).append('\'');
+        sb.append("{contentType=").append(contentType.applicationType());
+        sb.append(", requestURI='").append(requestURI).append('\'');
         sb.append(", metaAlias='").append(metaAlias).append('\'');
         sb.append(", pdpEntityID='").append(pdpEntityID).append('\'');
         sb.append(", realm='").append(realm).append('\'');

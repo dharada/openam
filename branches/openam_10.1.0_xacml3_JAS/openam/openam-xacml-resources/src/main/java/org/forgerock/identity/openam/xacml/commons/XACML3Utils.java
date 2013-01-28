@@ -25,34 +25,100 @@
  */
 package org.forgerock.identity.openam.xacml.commons;
 
+import com.sun.identity.plugin.configuration.ConfigurationException;
 import com.sun.identity.saml2.common.SAML2Constants;
 import com.sun.identity.saml2.common.SAML2Exception;
 import com.sun.identity.saml2.common.SAML2Utils;
+import com.sun.identity.saml2.jaxb.entityconfig.BaseConfigType;
+import com.sun.identity.saml2.jaxb.entityconfig.EntityConfigElement;
+import com.sun.identity.saml2.meta.SAML2MetaException;
+import com.sun.identity.saml2.meta.SAML2MetaManager;
+import com.sun.identity.saml2.meta.SAML2MetaUtils;
 import com.sun.identity.shared.debug.Debug;
 import com.sun.identity.shared.locale.Locale;
+import com.sun.identity.xacml.common.XACMLException;
+import org.forgerock.identity.openam.xacml.model.XACML3Constants;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 /**
  * XACML
- * Simple Static Method utility Class for XACML3 Processing.
+ * Various Utils to self contain and reduce dependency.
+ * Some of these methods have been copied from SAML2 code
+ * @see SAML2Utils
  *
  * @author jeff.schenk@forgerock.com
  */
-public class XACML3Utils {
+public class XACML3Utils implements XACML3Constants {
     /**
      * Define our Static resource Bundle for our debugger.
      */
-    private static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML.
+    private static Debug debug = Debug.getInstance("amXACML");
 
-    //  SAML2 Resource bundle
-    public static final String BUNDLE_NAME = "libSAML2";
-    // The resource bundle for SAML 2.0 implementation.
+    //  XACML Resource bundle
+    public static final String BUNDLE_NAME = "amXACML";
+    // The resource bundle for XACML 3.0 implementation.
     public static ResourceBundle bundle = Locale.getInstallResourceBundle(BUNDLE_NAME);
 
+    /**
+     * Returns metaAlias embedded in uri.
+     * @param uri The uri string.
+     * @return the metaAlias embedded in uri or null if not found.
+     */
+    public static String getMetaAliasByUri(String uri) {
+        if (uri == null) {
+            return null;
+        }
+
+        int index = uri.indexOf(NAME_META_ALIAS_IN_URI);
+        if (index == -1 || index + 9 == uri.length()) {
+            return null;
+        }
+
+        return uri.substring(index + 9);
+    }
+
+    /**
+     * Returns the realm by parsing the metaAlias. MetaAlias format is
+     * <pre>
+     * &lt;realm>/&lt;any string without '/'> for non-root realm or
+     * /&lt;any string without '/'> for root realm.
+     * </pre>
+     * @param metaAlias The metaAlias.
+     * @return the realm associated with the metaAlias.
+     */
+    public static String getRealmByMetaAlias(String metaAlias) {
+        if (metaAlias == null) {
+            return null;
+        }
+
+        int index = metaAlias.lastIndexOf("/");
+        if (index == -1 || index == 0) {
+            return "/";
+        }
+
+        return metaAlias.substring(0, index);
+    }
+
+    /**
+     * Returns entity ID associated with the metaAlias.
+     * @param metaAlias The metaAlias.
+     * @return entity ID associated with the metaAlias or null if not found.
+     * @throws SAML2Exception if unable to retrieve the entity ids.
+     */
+    public static String getEntityByMetaAlias(String metaAlias)
+            throws SAML2Exception {
+        if (SAML2Utils.getSAML2MetaManager()==null) {
+            return null;
+        }
+        return SAML2Utils.getSAML2MetaManager().getEntityByMetaAlias(metaAlias);
+    }
 
     /**
      * Returns first Element with given local name in samlp name space inside

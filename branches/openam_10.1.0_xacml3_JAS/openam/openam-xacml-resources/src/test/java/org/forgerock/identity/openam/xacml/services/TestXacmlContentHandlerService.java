@@ -27,12 +27,10 @@ package org.forgerock.identity.openam.xacml.services;
 
 import static org.testng.Assert.*;
 
-import com.sun.identity.shared.configuration.SystemPropertiesManager;
 import org.junit.runner.RunWith;
 import org.mortbay.jetty.testing.HttpTester;
 import org.mortbay.jetty.testing.ServletTester;
 
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,17 +38,20 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+
 /**
- * Test XACML Content Handler
+ * XACML Content Handler Test Suite
+ *
+ * @author Jeff.Schenk@ForgeRock.com
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest( { SystemPropertiesManager.class } )
 public class TestXacmlContentHandlerService {
 
     private static ServletTester servletTester;
 
     @BeforeClass
     public void before() throws Exception {
+
         servletTester = new ServletTester();
         servletTester.addServlet(XacmlContentHandlerService.class, "/xacml");
         servletTester.start();

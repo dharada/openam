@@ -29,6 +29,7 @@ import com.sun.identity.shared.debug.Debug;
 import org.forgerock.identity.openam.xacml.commons.ContentType;
 import org.forgerock.identity.openam.xacml.model.XACML3Constants;
 
+import org.forgerock.identity.openam.xacml.model.XACMLRequestInformation;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,7 +51,7 @@ public class XacmlHomeResource implements XACML3Constants {
     /**
      * Define our Static resource Bundle for our debugger.
      */
-    private static Debug debug = Debug.getInstance("libSAML2"); // TODO Need to create additional Message Bundle for XACML3.
+    private static Debug debug = Debug.getInstance("amXACML");
 
     /**
      * Do not allow instantiation, only static methods.
@@ -59,35 +60,28 @@ public class XacmlHomeResource implements XACML3Constants {
     }
 
     /**
-     * Determines if the Home Resources should be shown.
+     * Creates Home Document Content providing hints.
      *
+     * @param xacmlRequestInformation
      * @param request
-     * @param response
-     * @return boolean -- Indicate if Request was serviced or not.
+     * @return String -- Containing Response in requested ContentType.
      * @throws javax.servlet.ServletException
      * @throws java.io.IOException
      */
-    public static boolean getHome(HttpServletRequest request, HttpServletResponse response) throws ServletException, JSONException, IOException {
+    public static String getHome(XACMLRequestInformation xacmlRequestInformation, HttpServletRequest request) throws ServletException,
+            JSONException, IOException {
         String classMethod = "XacmlHomeResource:resourceHomeRequested";
         debug.error(classMethod + " processing URI:[" + request.getRequestURI() + "], Content Type:["+request.getContentType()+"]");
         StringBuilder sb = new StringBuilder();
-        // **************************
-        // Check our request...
-        if ( (request.getRequestURI().equalsIgnoreCase(request.getContextPath())) &&
-             (!request.getRequestURI().contains("home")) ) {
-            return false;
-        }
+
         // ************************************************************
         // Determine how to respond based upon Content Type.
         if ( (request.getContentType()==ContentType.NONE.applicationType()) ||
              (request.getContentType().equalsIgnoreCase(ContentType.JSON_HOME.applicationType())) ||
              (request.getContentType().equalsIgnoreCase(ContentType.JSON.applicationType())) ) {
-            // Formulate the Home Document for JSON Consumption.
-            response.setContentType(ContentType.JSON_HOME.applicationType());
-            sb.append(getHomeDocument().toString());  // TODO -- Cache the Default Home JSON Document Object.
+            sb.append(getJSONHomeDocument().toString());  // TODO -- Cache the Default Home JSON Document Object.
         } else {
             // Formulate the Home Document for XML Consumption.
-            response.setContentType(ContentType.XML.toString());
             sb.append("<resources xmlns=\042http://ietf.org/ns/home-documents\042\n");
             sb.append("xmlns:atom=\042http://www.w3.org/2005/Atom\042>\n");
             sb.append("<resource rel=\042http://openam.example.org/openam/xacml/authorization/pdp\042>");  // TODO, Link needs to be real!
@@ -98,13 +92,7 @@ public class XacmlHomeResource implements XACML3Constants {
 
         // *******************************************************
         // Render with XML or JSON content.
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(200);
-        PrintWriter out = response.getWriter();
-        out.write(sb.toString());
-        out.flush();
-        out.close();
-        return true;
+        return sb.toString();
     }
 
 
@@ -114,7 +102,7 @@ public class XacmlHomeResource implements XACML3Constants {
      * @return JSONObject
      * @throws org.json.JSONException
      */
-    public static JSONObject getHomeDocument() throws JSONException {
+    public static JSONObject getJSONHomeDocument() throws JSONException {
         JSONObject resources = new JSONObject();
         JSONArray resourceArray = new JSONArray();
 

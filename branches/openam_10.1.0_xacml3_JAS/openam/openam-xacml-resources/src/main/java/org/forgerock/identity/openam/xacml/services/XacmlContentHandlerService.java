@@ -46,10 +46,13 @@ import com.sun.identity.saml2.protocol.RequestAbstract;
 import com.sun.identity.saml2.protocol.Response;
 import com.sun.identity.saml2.soapbinding.RequestHandler;
 import com.sun.identity.shared.debug.Debug;
+import com.sun.identity.shared.locale.*;
 import com.sun.identity.xacml.client.XACMLRequestProcessor;
 import com.sun.identity.xacml.common.XACMLException;
 import com.sun.identity.xacml.context.ContextFactory;
+import org.forgerock.identity.openam.xacml.commons.CommonType;
 import org.forgerock.identity.openam.xacml.commons.ContentType;
+import org.forgerock.identity.openam.xacml.commons.XACML3Utils;
 import org.forgerock.identity.openam.xacml.model.XACML3Constants;
 import org.forgerock.identity.openam.xacml.model.XACMLRequestInformation;
 import org.forgerock.identity.openam.xacml.resources.XacmlHomeResource;
@@ -69,12 +72,9 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.*;
 import javax.xml.soap.MimeHeaders;
-import javax.xml.transform.Result;
 import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -98,6 +98,13 @@ import java.util.logging.Level;
  * @author Jeff.Schenk@forgerock.com
  */
 public class XacmlContentHandlerService extends HttpServlet implements XACML3Constants {
+    /**
+     * Initialize our Resource Bundle.
+     */
+    protected static final String RESOURCE_BUNDLE_NAME = "amXACML";
+    protected static ResourceBundle resourceBundle =
+            com.sun.identity.shared.locale.Locale.getInstallResourceBundle(RESOURCE_BUNDLE_NAME);
+
 
     // TODO Fix this constant.
 
@@ -210,6 +217,87 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
     }
 
     /**
+     * Private helper method to be performed for each incoming Request.
+     * This helper method simply performs some basic checks and validates
+     * our content type.  If not valid content type, then preProcessing
+     * method has set the appropriate HTTP Return Status in the response
+     * and will return null.
+     *
+     * @param request
+     * @param response
+     * @return
+     * @throws ServletException
+     * @throws IOException
+     */
+    private ContentType preProcessingRequest(HttpServletRequest request, HttpServletResponse response) throws
+            ServletException, IOException {
+        final String classMethod = "XacmlContentHandlerService:preProcessingRequest";
+        // ******************************************************************
+        // Handle any DoS Attacks and Threats to the integrity of the PDP.
+        if (maxContentLength != 0) {
+            if (request.getContentLength() < 0) {
+                // We do not have any valid Content Length set.
+                response.setStatus(HttpServletResponse.SC_LENGTH_REQUIRED);
+                response.setCharacterEncoding("UTF-8");
+                return ContentType.NONE;
+            }
+            if (request.getContentLength() > maxContentLength) {
+                if (debug.messageEnabled()) {
+                    debug.message(
+                            "Content length too large: " + request.getContentLength());
+                }
+                // We do not have any valid Content Length set.
+                response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+                response.setCharacterEncoding("UTF-8");
+                return ContentType.NONE;
+            }
+        }
+        // ******************************************************************
+        // Validate Request Media Type
+        ContentType requestContentType = ((request.getContentType() == null) ? null :
+                ContentType.getNormalizedContentType(request.getContentType()));
+        if (requestContentType == null) {
+            // We do not have a valid Application Content Type!
+            response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+            response.setCharacterEncoding("UTF-8");
+            response.setContentLength(0);
+            return ContentType.NONE;
+        }
+        // ******************************************************************
+        // Set up Method Logging Incoming Request.
+        // TODO Make message level of info.
+        debug.error(classMethod + " processing Incoming Request MediaType:[" + request.getContentType() + "], Content Length:[" + request.getContentLength() + "]");
+        // ******************************************************************
+        // Indicate preProcessing was completed with no Issues and Content
+        // Type is valid with our derived ContentType.
+        return requestContentType;
+    }
+
+    /**
+     * Private Helper Method to Render Response Content.
+     *
+     * @param contentType
+     * @param xacmlStringResponse
+     * @param response
+     */
+    private void renderResponse(final ContentType contentType, final String xacmlStringResponse, HttpServletResponse response) {
+        try {
+            response.setContentType(contentType.applicationType());
+            response.setCharacterEncoding("UTF-8");
+            if ((xacmlStringResponse != null) && (!xacmlStringResponse.trim().isEmpty())) {
+                response.setContentLength(xacmlStringResponse.length());
+                response.getOutputStream().write(xacmlStringResponse.getBytes());
+                response.getOutputStream().close();
+            } else {
+                response.setContentLength(0);
+            }
+            return;
+        } catch (IOException ioe) {
+            // Debug and return null
+        }
+    }
+
+    /**
      * Handles the HTTP <code>GET</code> method XACML REST Request.
      *
      * @param request
@@ -221,68 +309,41 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         final String classMethod = "XacmlContentHandlerService:doGet";
         // ******************************************************************
-        // Handle any DoS Attacks and Threats to the integrity of the PDP.
-        if (maxContentLength != 0) {
-            if (request.getContentLength() < 0) {
-                // We do not have any valid Content Length set.
-                response.setStatus(HttpServletResponse.SC_LENGTH_REQUIRED);
-                response.setCharacterEncoding("UTF-8");
-                return;
-            }
-            if (request.getContentLength() > maxContentLength) {
-                if (debug.messageEnabled()) {
-                    debug.message(
-                            "Content length too large: " + request.getContentLength());
-                }
-                // We do not have any valid Content Length set.
-                response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-                response.setCharacterEncoding("UTF-8");
-                return;
-            }
-        }
-        // ******************************************************************
-        // Set up Method Logging Incoming Request.
-        // TODO Make message level of info.
-        debug.error(classMethod + " processing Incoming Request MediaType:[" + request.getContentType() + "], Content Length:[" + request.getContentLength() + "]");
-
-        // ******************************************************************
-        // Validate Request Media Type
-        if ((request.getContentType() == null) ||
-            (request.getContentType().trim().isEmpty())) {
-            // We do not have a valid Application Content Type!
-            response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
-            response.setCharacterEncoding("UTF-8");
-            return;
-        }
-        ContentType requestContentType = ContentType.getNormalizedContentType(request.getContentType());
+        // Validate Request and Obtain Media Type
+        ContentType requestContentType = this.preProcessingRequest(request, response);
         if (requestContentType == null) {
             // We do not have a valid Application Content Type!
             response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
             response.setCharacterEncoding("UTF-8");
+            response.setContentLength(0);
             return;
         }
-
         // ******************************************************************
-        // Authenticate and Authorize
-
+        // now find the requested relation from the context.
+        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(requestContentType, request);
+        // ******************************************************************
+        // Determine our Content Type Language, XML or JSON for now.
+        if (requestContentType.commonType() == CommonType.XML) {
+            // If Content is XML,
+        } else {
+            // Else, our Content is assumed to be JSON.
+        }
 
 
         // ************************************************************
         // Accept a pre-determined entry point for the Home Documents
         try {
-            if (XacmlHomeResource.getHome(request, response)) {
-                // Request was satisfied.
-                return;
-            }
+            // *****************************************************************
+            // Render our Response
+            renderResponse(requestContentType, XacmlHomeResource.getHome(xacmlRequestInformation, request), response);
+            return;
+
         } catch (JSONException je) {
             debug.error("JSON processing Exception: " + je.getMessage(), je);
         }
         // ***************************************************************
-        // returning here, indicates we still need to process the request
-        // now find the requested relation from the context.
-        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
-
-        // Determine based upon the contentType on how to consume and respond to the incoming Request.
+        // Determine based upon the contentType on how to consume and
+        // respond to the incoming Request.
 
 
         /**
@@ -363,10 +424,8 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
         if ((request.getContentType() == ContentType.NONE.applicationType()) ||
                 (request.getContentType().equalsIgnoreCase(ContentType.JSON_HOME.applicationType())) ||
                 (request.getContentType().equalsIgnoreCase(ContentType.JSON.applicationType()))) {
-            // Formulate the Home Document for JSON Consumption.
-            response.setContentType(ContentType.JSON_HOME.applicationType());
             try {
-                xacmlStringBuilderResponse.append(XacmlHomeResource.getHomeDocument().toString()); // TODO -- Cache the Default Home JSON Document Object.
+                xacmlStringBuilderResponse.append(XacmlHomeResource.getHome(xacmlRequestInformation, request)); // TODO -- Cache the Default Home JSON Document Object.
             } catch (JSONException jsonException) {
                 // TODO
             }
@@ -380,24 +439,14 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             xacmlStringBuilderResponse.append("<atom:link href=\042/authorization/pdp\042/>");  // TODO Static?
             xacmlStringBuilderResponse.append("</resource>");
             xacmlStringBuilderResponse.append(" </resources>");
-            response.setContentType(ContentType.XML.applicationType());
         }
         // TODO Determine if there are any other Get Request Types we need to deal with,
         // TODO otherwise pass along.
 
-        try {
-            response.setContentType(ContentType.XML.applicationType());
-            response.setCharacterEncoding("UTF-8");
-            if ((xacmlStringBuilderResponse == null) || (xacmlStringBuilderResponse.length() <= 0)) {
-                xacmlStringBuilderResponse = new StringBuilder(DEFAULT_RESPONSE);
-            }
-            response.setContentLength(xacmlStringBuilderResponse.length());
-            response.getOutputStream().write(xacmlStringBuilderResponse.toString().getBytes());
-            response.getOutputStream().close();
-            return;
-        } catch (IOException ioe) {
-            // Debug and return null
-        }
+
+        // *****************************************************************
+        // Render our Response
+        renderResponse(requestContentType, xacmlStringBuilderResponse.toString(), response);
     }
 
     /**
@@ -415,14 +464,33 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
             HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XacmlContentHandlerService:doPost";
-        debug.error(classMethod + " processing Incoming Request MediaType:[" + request.getContentType() + "], Content Length:[" + request.getContentLength() + "]");
-
-
         // ******************************************************************
-        // Ensure the incoming PEP Request has been Authorized by our PDP!
-
-
-        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
+        // Validate Request and Obtain Media Type
+        ContentType requestContentType = this.preProcessingRequest(request, response);
+        if (requestContentType == null) {
+            // We do not have a valid Application Content Type!
+            response.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+            response.setCharacterEncoding("UTF-8");
+            response.setContentLength(0);
+            return;
+        }
+        // ******************************************************************
+        // now find the requested relation from the context.
+        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(requestContentType, request);
+        // ******************************************************************
+        // Check for any HTTP Digest Authorization, if applicable.
+        // The request can alternatively use the XACMLAuthzDecisionQuery
+        // within the request itself.
+        if (request.getAuthType().isEmpty()) {
+            // TODO
+        }
+        // ******************************************************************
+        // Authenticate and Authorize
+        if (requestContentType.commonType() == CommonType.XML) {
+            // If Content is XML,
+        } else {
+            // Else, our Content is assumed to be JSON.
+        }
 
         // POST operations to PDP.
 
@@ -496,6 +564,7 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
          mandatory
          */
 
+
         /**
          * Id
          ￼
@@ -568,23 +637,22 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
          optional
          */
 
+        // *****************************************************************
+        // perform the PDP Request from the PEP.
+        String xacmlStringResponse = processPDPRequest(xacmlRequestInformation, request, response);
+        // *****************************************************************
+        // Render our Response
+        renderResponse(requestContentType, xacmlStringResponse, response);
+    }
 
-        String xacmlStringResponse = processPDPRequest(request, response);
-        try {
-            response.setContentType(ContentType.XML.applicationType());
-            response.setCharacterEncoding("UTF-8");
-            if ((xacmlStringResponse != null) && (!xacmlStringResponse.trim().isEmpty())) {
-                xacmlStringResponse = new String(DEFAULT_RESPONSE);
-            }
-            response.setContentLength(xacmlStringResponse.length());
-            response.getOutputStream().write(xacmlStringResponse.getBytes());
-            response.getOutputStream().close();
-            return;
-        } catch (IOException ioe) {
-            // Debug and return null
-        }
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doPut(req, resp);    // TODO
+    }
 
-
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doDelete(req, resp);    // TODO
     }
 
     /**
@@ -595,12 +663,10 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      * @throws ServletException
      * @throws IOException
      */
-    private String processPDPRequest(HttpServletRequest request,
+    private String processPDPRequest(XACMLRequestInformation xacmlRequestInformation, HttpServletRequest request,
                                      HttpServletResponse response)
             throws ServletException, IOException {
         String classMethod = "XacmlContentHandlerService:processPDPRequest";
-        // Get our Request Information.
-        XACMLRequestInformation xacmlRequestInformation = this.parseRequestInformation(request);
         // Get all the headers from the HTTP request
         MimeHeaders headers = SAML2Utils.getHeaders(request);
 
@@ -1017,25 +1083,22 @@ public class XacmlContentHandlerService extends HttpServlet implements XACML3Con
      * @return XACMLRequestInformation - Object returned with Parsed Request Information.
      * @throws ServletException
      */
-    private final XACMLRequestInformation parseRequestInformation(HttpServletRequest request) throws ServletException {
+    private final XACMLRequestInformation parseRequestInformation(ContentType contentType, HttpServletRequest request)
+            throws ServletException {
         final String classMethod = "XacmlContentHandlerService:parseRequestInformation: ";
         try {
-
             // Get URI and MetaAlias Data.
             String requestURI = request.getRequestURI();
             String queryMetaAlias =
-                    SAML2MetaUtils.getMetaAliasByUri(requestURI);
+                    XACML3Utils.getMetaAliasByUri(requestURI);
+            String realm = XACML3Utils.getRealmByMetaAlias(queryMetaAlias);
             // Get PDP entity ID
             String pdpEntityID =
-                    SAML2Utils.getSAML2MetaManager().getEntityByMetaAlias(
-                            queryMetaAlias);
-            String realm = SAML2MetaUtils.getRealmByMetaAlias(queryMetaAlias);
-
-
+                    XACML3Utils.getEntityByMetaAlias(queryMetaAlias);
             // Return with newly created POJO from parsing initial request.
-            return new XACMLRequestInformation(requestURI, queryMetaAlias, pdpEntityID, realm);
-        } catch (SAML2MetaException s2me) {
-            debug.error("XACML MetaException: " + s2me.getMessage(), s2me);
+            return new XACMLRequestInformation(contentType, requestURI, queryMetaAlias, pdpEntityID, realm);
+        } catch (SAML2Exception xe) {
+            debug.error("XACML MetaException: " + xe.getMessage(), xe);
             // TODO
             return null;
         }
