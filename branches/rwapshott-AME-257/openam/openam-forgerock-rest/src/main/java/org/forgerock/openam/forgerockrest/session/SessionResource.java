@@ -20,14 +20,25 @@ import com.iplanet.services.naming.WebtopNaming;
 import com.sun.identity.sm.OrganizationConfigManager;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import org.forgerock.json.fluent.JsonValue;
-import org.forgerock.json.resource.*;
+import org.forgerock.json.resource.ActionRequest;
+import org.forgerock.json.resource.NotSupportedException;
+import org.forgerock.json.resource.QueryRequest;
+import org.forgerock.json.resource.QueryResult;
+import org.forgerock.json.resource.QueryResultHandler;
+import org.forgerock.json.resource.ReadRequest;
+import org.forgerock.json.resource.Resource;
+import org.forgerock.json.resource.ResultHandler;
+import org.forgerock.json.resource.Router;
+import org.forgerock.json.resource.RoutingMode;
+import org.forgerock.json.resource.ServerContext;
 import org.forgerock.openam.forgerockrest.ReadOnlyResource;
 import org.forgerock.openam.forgerockrest.session.query.SessionQueryFactory;
 import org.forgerock.openam.forgerockrest.session.query.SessionQueryManager;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents Sessions that can queried via a REST interface.
@@ -50,8 +61,9 @@ public class SessionResource extends ReadOnlyResource {
     public static final String KEYWORD_ALL = "all";
     public static final String KEYWORD_LIST = "list";
 
-    public static final String HEADER_USER_ID = "User Id";
-    public static final String HEADER_TIME_REMAINING = "Time Remaining";
+    public static final String HEADER_USER_ID = "userid";
+    public static final String HEADER_TIME_REMAINING = "timeleft";
+
     private SessionQueryManager queryManager;
 
     public SessionResource(SessionQueryManager queryManager) {
@@ -111,41 +123,26 @@ public class SessionResource extends ReadOnlyResource {
     }
 
     /**
-     * Currently unimplemented method.
+     * Queries the session resources using one of the predefined query filters.
+     *
+     * all - (default) will query all Sessions across all servers.
+     * list - will list the available servers which is useful for the next query
+     * [server-id] - will list the available Sessions on the named server.
      *
      * @param context {@inheritDoc}
      * @param request {@inheritDoc}
      * @param handler {@inheritDoc}
      */
     public void queryCollection(ServerContext context, QueryRequest request, QueryResultHandler handler) {
-        handler.handleError(ResourceException.getException(
-                0,
-                "QueryCollection is not yet implemented.",
-                "Unimplmeneted",
-                null));
-    }
+        String id = request.getQueryId();
 
-    /**
-     * Perform a query against the defined servers.
-     *
-     * This method will resolve the id, provided by the caller, and use this to perfrom the appropriate
-     * query and return these results in an initially hard coded formnat..
-     *
-     * {@inheritDoc}
-     */
-    public void readInstance(ServerContext context, String id, ReadRequest request, ResultHandler<Resource> handler) {
-
-        Resource resource = null;
-
-        if (id.equals(KEYWORD_LIST)) {
+        if (KEYWORD_LIST.equals(id)) {
             Collection<String> servers = generateListServers();
-            resource = new Resource(KEYWORD_LIST, "0", new JsonValue(servers));
+            handler.handleResource(new Resource(KEYWORD_LIST, "0", new JsonValue(servers)));
         } else {
-            List<List<String[]>> table = new LinkedList<List<String[]>>();
-            table.add(Arrays.asList(new String[]{HEADER_USER_ID, HEADER_TIME_REMAINING}));
+            Collection<SessionInfo> sessions;
 
-            Collection<SessionInfo> sessions = null;
-            if (id.equals(KEYWORD_ALL)) {
+            if (KEYWORD_ALL.equals(id)) {
                 sessions = generateAllSessions();
             } else {
                 sessions = generateNamedServerSession(id);
@@ -153,22 +150,27 @@ public class SessionResource extends ReadOnlyResource {
 
             for (SessionInfo session : sessions) {
 
-                // TODO The format of the output likely to change in the future.
-
                 int timeleft = convertTimeLeft(session.timeleft);
                 String username = (String) session.properties.get("UserId");
 
-                table.add(Arrays.asList(new String[]{ username, Integer.toString(timeleft) }));
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(HEADER_USER_ID, username);
+                map.put(HEADER_TIME_REMAINING, timeleft);
+
+                handler.handleResource(new Resource("Sessions", "0", new JsonValue(map)));
             }
 
-            resource = new Resource("Sessions", "0", new JsonValue(table));
+            handler.handleResult(new QueryResult());
         }
+    }
 
-        if (resource == null) {
-            throw new IllegalStateException("Resource cannot be undefined.");
-        }
-
-        handler.handleResult(resource);
+    /**
+     * Perform a read operation against a named session.
+     *
+     * {@inheritDoc}
+     */
+    public void readInstance(ServerContext context, String id, ReadRequest request, ResultHandler<Resource> handler) {
+        handler.handleError(new NotSupportedException("Not implemented for this Resource"));
     }
 
     /**
