@@ -63,12 +63,18 @@ public enum ContentType {
      * @param contentTypeStringValue
      * @return
      */
-    public static ContentType getNormalizedContentType(String contentTypeStringValue) {
+    public static ContentType getNormalizedContentType(final String contentTypeStringValue) {
         if ( (contentTypeStringValue == null) || (contentTypeStringValue.isEmpty()) ) {
             return null;
         }
+        String toCompare = contentTypeStringValue;
+        if (toCompare.contains(";")) {
+              toCompare = toCompare.substring(0, toCompare.indexOf(";"));
+        }
         for (ContentType contentType : ContentType.values()) {
-            if (contentType.applicationType().equalsIgnoreCase(contentTypeStringValue)) {
+            if (contentType.equals(ContentType.NONE))
+                { continue; }
+            if (contentType.applicationType().equalsIgnoreCase(toCompare)) {
                 return contentType;
             }
         }

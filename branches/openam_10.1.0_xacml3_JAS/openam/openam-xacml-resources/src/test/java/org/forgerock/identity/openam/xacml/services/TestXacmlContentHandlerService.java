@@ -27,6 +27,7 @@ package org.forgerock.identity.openam.xacml.services;
 
 import static org.testng.Assert.*;
 
+import org.forgerock.identity.openam.xacml.commons.ContentType;
 import org.junit.runner.RunWith;
 import org.mortbay.jetty.testing.HttpTester;
 import org.mortbay.jetty.testing.ServletTester;
@@ -37,6 +38,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 
 /**
@@ -54,6 +56,7 @@ public class TestXacmlContentHandlerService {
 
         servletTester = new ServletTester();
         servletTester.addServlet(XacmlContentHandlerService.class, "/xacml");
+        servletTester.addServlet(XacmlContentHandlerService.class, "/xacml/authorization");
         servletTester.start();
     }
 
@@ -67,7 +70,7 @@ public class TestXacmlContentHandlerService {
 
         HttpTester request = new HttpTester();
         request.setMethod("GET");
-        request.setHeader("Host", "tester");
+        request.addHeader("Host", "example.org");
         request.setURI("/xacml");
         request.setVersion("HTTP/1.0");
 
@@ -85,13 +88,13 @@ public class TestXacmlContentHandlerService {
     }
 
     @Test
-    public void testUseCase_ZeroContentLengthSpecified() {
+    public void testUseCase_UnsupportedMediaType() {
 
         HttpTester request = new HttpTester();
         request.setMethod("GET");
-        request.setHeader("Host", "tester");
+        request.addHeader("Host", "example.org");
         request.setURI("/xacml");
-        request.setContent("");
+        request.setContent(""); // Set content Length to zero.
         request.setVersion("HTTP/1.0");
 
         try {
@@ -99,6 +102,74 @@ public class TestXacmlContentHandlerService {
             HttpTester response = new HttpTester();
             response.parse(servletTester.getResponses(request.generate()));
             assertEquals(response.getStatus(),415);
+        } catch (IOException ioe) {
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
+    @Test
+    public void testUseCase_JSON_NotAuthorized() {
+
+        HttpTester request = new HttpTester();
+        request.setMethod("GET");
+        request.addHeader("Host", "example.org");
+        request.addHeader("Content-Type", ContentType.JSON.applicationType());
+        request.setURI("/xacml/authorization");
+        request.setContent(""); // Set content Length to zero.
+        request.setVersion("HTTP/1.0");
+
+        try {
+            // Check for a 401 Not Authorized with a WWW-Authenticate Digest.
+            HttpTester response = new HttpTester();
+            response.parse(servletTester.getResponses(request.generate()));
+            assertEquals(response.getStatus(),401);
+        } catch (IOException ioe) {
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
+    @Test
+    public void testUseCase_XML_NotAuthorized() {
+
+        HttpTester request = new HttpTester();
+        request.setMethod("GET");
+        request.addHeader("Host", "example.org");
+        request.addHeader("Content-Type", ContentType.XML.applicationType());
+        request.setURI("/xacml/authorization");
+        request.setContent(""); // Set content Length to zero.
+        request.setVersion("HTTP/1.0");
+
+        try {
+            // Check for a 401 Not Authorized with a WWW-Authenticate Digest.
+            HttpTester response = new HttpTester();
+            response.parse(servletTester.getResponses(request.generate()));
+            assertEquals(response.getStatus(),401);
+            assertNotNull(response.getHeader("Content-Type"));
+            assertTrue(response.getHeader("Content-Type").startsWith(ContentType.XML.applicationType()));
+
+            assertNotNull(response.getHeader("Content-Length"));
+            assertTrue(response.getHeader("Content-Length").equals("0"));
+
+            // Example of Data for WWW-Authenticate.
+            // Digest realm="example.org",qop=auth,nonce="9fc422776b40c52a8a107742f9a08d5c",opaque="aba7d38a079f1a7d2e0ba2d4b84f3aa2"
+            assertNotNull(response.getHeader("WWW-Authenticate"));
+            assertTrue(response.getHeader("WWW-Authenticate").startsWith("Digest "));
+
+
+            // Dump all Headers
+            Enumeration enumeration = response.getHeaderNames();
+            while(enumeration.hasMoreElements())
+            {
+                String headerName = (String) enumeration.nextElement();
+                System.out.println("Header Attribute:["+headerName+"], Value:["+response.getHeader(headerName)+"]");
+            }
+
         } catch (IOException ioe) {
 
         } catch (Exception e) {

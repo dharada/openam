@@ -58,5 +58,21 @@ public class TestContentType {
         assertEquals(MediaType.APPLICATION_XML.toString(),ContentType.XML.applicationType());
     }
 
+    @Test
+    public void testLookup() {
+        ContentType requestContentType =
+                ContentType.getNormalizedContentType(ContentType.JSON_HOME.applicationType()+"; charset=UTF-8");
+        assertEquals(ContentType.JSON_HOME.applicationType(), requestContentType.applicationType());
+
+        requestContentType =
+                ContentType.getNormalizedContentType(ContentType.XACML_PLUS_XML.applicationType()+"; charset=UTF-8");
+        assertEquals(ContentType.XACML_PLUS_XML.applicationType(), requestContentType.applicationType());
+
+        requestContentType =
+                ContentType.getNormalizedContentType(ContentType.XACML_PLUS_JSON.applicationType()+"; charset=UTF-8");
+        assertEquals(ContentType.XACML_PLUS_JSON.applicationType(), requestContentType.applicationType());
+
+    }
+
 
 }
